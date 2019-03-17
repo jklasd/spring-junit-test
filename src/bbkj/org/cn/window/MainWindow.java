@@ -5,12 +5,10 @@ import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.GroupLayout;
-import javax.swing.GroupLayout.Alignment;
-import java.awt.FlowLayout;
-import javax.swing.BoxLayout;
+import java.awt.Button;
 
 public class MainWindow extends JFrame{
 	/**
@@ -18,18 +16,17 @@ public class MainWindow extends JFrame{
 	 */
 	private static final long serialVersionUID = -8499961301917624467L;
 	
-	private JPanel mainPanel;
+	private MainPanel mainPanel;
 
 	public MainWindow() {
 		setTitle("WEB测试工具");
 		setResizable(false);
 		setSize(800, 600);
 		getContentPane().setLayout(null);
-		
 		JButton button = new JButton("新建业务");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				JPanel panel = new ServicePanel();
+				ServicePanel panel = new ServicePanel();
 				mainPanel.add(panel);
 				mainPanel.repaint();
 			}
@@ -49,10 +46,9 @@ public class MainWindow extends JFrame{
 		scrollPane.setBounds(20, 69, 750, 421);
 		getContentPane().add(scrollPane);
 		
-		mainPanel = new JPanel();
+		mainPanel = new MainPanel();
+		mainPanel.setSize(scrollPane.getSize());
 		scrollPane.setViewportView(mainPanel);
-		mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.X_AXIS));
-		
 		
 	}
 }

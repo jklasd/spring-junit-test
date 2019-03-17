@@ -8,19 +8,21 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JProgressBar;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@Getter
 public class ServicePanel extends JPanel {
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = 1L;
-
+	private int height = 44;
 	public ServicePanel() {
 		log.info("新增业务线");
 		JPanel panel_1 = this;
-		panel_1.setSize(728, 44);
+		panel_1.setSize(728, height);
 		panel_1.setLayout(null);
 		
 		JLabel label = new JLabel("1");
