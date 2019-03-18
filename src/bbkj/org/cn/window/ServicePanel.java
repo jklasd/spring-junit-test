@@ -19,10 +19,10 @@ public class ServicePanel extends JPanel {
 	 */
 	private static final long serialVersionUID = 1L;
 	private int height = 44;
-	public ServicePanel() {
+	public ServicePanel(int index) {
 		log.info("新增业务线");
 		JPanel panel_1 = this;
-		panel_1.setSize(728, height);
+		panel_1.setBounds(0, index*height, 728, height);
 		panel_1.setLayout(null);
 		
 		JLabel label = new JLabel("1");

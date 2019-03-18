@@ -7,8 +7,10 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import java.awt.Button;
+import java.awt.Dimension;
 
 public class MainWindow extends JFrame{
 	/**
@@ -26,7 +28,7 @@ public class MainWindow extends JFrame{
 		JButton button = new JButton("新建业务");
 		button.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				ServicePanel panel = new ServicePanel();
+				ServicePanel panel = new ServicePanel(mainPanel.getComponentCount());
 				mainPanel.add(panel);
 				mainPanel.repaint();
 			}
@@ -42,13 +44,15 @@ public class MainWindow extends JFrame{
 		});
 		getContentPane().add(button_1);
 		
-		JScrollPane scrollPane = new JScrollPane();
-		scrollPane.setBounds(20, 69, 750, 421);
-		getContentPane().add(scrollPane);
+		JPanel panel = new JPanel();
+		panel.setBounds(20, 70, 750, 420);
+		panel.setSize(new Dimension(750,420));
+		getContentPane().add(panel);
 		
 		mainPanel = new MainPanel();
-		mainPanel.setSize(scrollPane.getSize());
-		scrollPane.setViewportView(mainPanel);
+		JScrollPane scrollPane = new JScrollPane(mainPanel);
+		scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+		panel.add(scrollPane);
 		
 	}
 }

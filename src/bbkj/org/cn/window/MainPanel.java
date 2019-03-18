@@ -4,6 +4,9 @@ import java.awt.Component;
 
 import javax.swing.JPanel;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MainPanel extends JPanel{
 	/**
 	 * 
@@ -14,6 +17,7 @@ public class MainPanel extends JPanel{
 	
 	@Override
 	public Component add(Component comp) {
+		log.info("height:{}",this.getSize().getHeight());
 		return super.add(comp);
 	}
 }
