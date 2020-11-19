@@ -141,7 +141,7 @@ public class LazyBean {
 	 */
 	public static void processAttr(Object obj, Class objClassOrSuper) {
 		Field[] fields = objClassOrSuper.getDeclaredFields();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fields)).runAndWait(f->{
+		for(Field f : fields){
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
 //				if(f.getName().equals("productConfigService")) {
@@ -203,12 +203,12 @@ public class LazyBean {
 					if (c != null) {
 
 					} else {
-//						log.info("不需要需要注入=>{}", f.getName());
+						log.info("不需要需要注入=>{}", f.getName());
 					}
 				}
 			}
-		});
-		Class superC = objClassOrSuper.getSuperclass();
+		}
+		Class<?> superC = objClassOrSuper.getSuperclass();
 		if (superC != null) {
 			processAttr(obj, superC);
 		}
