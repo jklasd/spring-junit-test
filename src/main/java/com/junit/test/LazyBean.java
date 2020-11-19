@@ -16,7 +16,9 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
+import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
+import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,6 +123,9 @@ public class LazyBean {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+		}else if(classBean == AmqpAdmin.class) {
+			AmqpAdmin amqp = new RabbitAdmin(obj.getConnectionFactory());
+			return amqp;
 		}
 		return null;
 	}
