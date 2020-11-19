@@ -16,7 +16,6 @@ import javax.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
-import org.springframework.amqp.utils.test.TestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.proxy.Enhancer;
@@ -117,7 +116,9 @@ public class LazyBean {
 		for (Field f : fields) {
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
-//				log.info("需要注入=>{}=>{}",f.getName(),f.getType().getName());
+//				if(f.getName().equals("productConfigService")) {
+//					log.info("需要注入=>{}=>{}",f.getName(),f.getType().getName());
+//				}
 				String className = f.getType().getName();
 				if (className.contains("Mapper")) {
 					try {
@@ -267,8 +268,9 @@ class LazyImple implements InvocationHandler {
 			return method.invoke(getTagertObj(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw e;
+			//throw e;
 		}
+		return null;
 	}
 
 	private Object getTagertObj() {
@@ -286,7 +288,11 @@ class LazyImple implements InvocationHandler {
 					if(tagImp == null) {
 						log.info("未找到本地Bean=>{}",tag);
 					}else {
+						/**
+						 * 实现类是本地Bean
+						 */
 						tagertObj = tagImp;
+						LazyBean.processAttr(tagImp, tagImp.getClass());
 					}
 				}
 			}
@@ -294,12 +300,14 @@ class LazyImple implements InvocationHandler {
 		return tagertObj;
 	}
 	
-	public static Object buildDubboService(Class dubboClass) {
-		if(LazyBean.singleton.containsKey(dubboClass)) {
-			return LazyBean.singleton.get(dubboClass);
+	private static RegistryConfig registryConfig;
+	
+	private static Map<Class<?>,Object> dubboSingle = Maps.newHashMap();
+	public static Object buildDubboService(Class<?> dubboClass) {
+		if(dubboSingle.containsKey(dubboClass)) {
+			return dubboSingle.get(dubboClass);
 		}
-		
-		ReferenceConfig referenceConfig = new ReferenceConfig<>();
+		ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
 		referenceConfig.setInterface(dubboClass);
 		String groupStr = dubboClass.getName().replace("com.welab.", "");
 		String[] keys = groupStr.split("\\.");
@@ -313,17 +321,18 @@ class LazyImple implements InvocationHandler {
 		}
 		referenceConfig.setGroup(groupStr);
 		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
-
-		RegistryConfig registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getValue("zookeeper.url"));
-		registryConfig.setUsername(TestUtil.getValue("zookeeper.username"));
-		registryConfig.setPassword(TestUtil.getValue("zookeeper.password"));
-		registryConfig.setClient("curator");
-		registryConfig.setSubscribe(true);
-		registryConfig.setRegister(false);
+		if(registryConfig == null) {
+			registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getValue("zookeeper.url"));
+			registryConfig.setUsername(TestUtil.getValue("zookeeper.username"));
+			registryConfig.setPassword(TestUtil.getValue("zookeeper.password"));
+			registryConfig.setClient("curator");
+			registryConfig.setSubscribe(true);
+			registryConfig.setRegister(false);
+		}
 		referenceConfig.setApplication(applicationConfig);
 		referenceConfig.setRegistry(registryConfig);
 		Object obj = referenceConfig.get();
-		LazyBean.singleton.put(dubboClass,obj);
+		dubboSingle.put(dubboClass,obj);
 		return obj;
 	}
 
