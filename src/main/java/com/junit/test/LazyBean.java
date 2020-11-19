@@ -57,19 +57,27 @@ public class LazyBean {
 	 * @param classBean
 	 * @return
 	 */
+	public static Object buildProxy(Class classBean,String beanName) {
+		if (classBean.isInterface()) {
+			InvocationHandler handler = new LazyImple(classBean,beanName);
+			return Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
+
+		} else {
+			MethodInterceptor handler = new LazyCglib(classBean,beanName);
+			return Enhancer.create(classBean, handler);
+		}
+	}
+	/**
+	 * 构建代理对象
+	 * @param classBean
+	 * @return
+	 */
 	public static Object buildProxy(Class classBean) {
 		Object obj = buildRabbit(classBean);
 		if (obj != null) {
 			return obj;
 		}
-		if (classBean.isInterface()) {
-			InvocationHandler handler = new LazyImple(classBean);
-			return Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-
-		} else {
-			MethodInterceptor handler = new LazyCglib(classBean);
-			return Enhancer.create(classBean, handler);
-		}
+		return buildProxy(classBean,null);
 	}
 	/**
 	 * 构建rabbit应用
@@ -240,9 +248,14 @@ public class LazyBean {
 
 class LazyCglib implements MethodInterceptor {
 	private Class tag;
+	private String beanName;
 
 	public LazyCglib(Class tag) {
 		this.tag = tag;
+	}
+	public LazyCglib(Class tag,String beanName) {
+		this.tag = tag;
+		this.beanName = beanName;
 	}
 
 	@Override
@@ -259,11 +272,16 @@ class LazyCglib implements MethodInterceptor {
 
 	private Object getTagertObj() {
 		if (tagertObj == null) {
-			try {
-				tagertObj = tag.newInstance();
-				LazyBean.processAttr(tagertObj, tag);
-			} catch (InstantiationException | IllegalAccessException e) {
-				e.printStackTrace();
+			if(beanName!=null) {
+				tagertObj = ScanUtil.findBean(beanName);
+				LazyBean.processAttr(tagertObj, tagertObj.getClass());
+			}else {
+				try {
+					tagertObj = tag.newInstance();
+					LazyBean.processAttr(tagertObj, tag);
+				} catch (InstantiationException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
 			}
 		}
 		return tagertObj;
@@ -276,9 +294,14 @@ class LazyImple implements InvocationHandler {
 
 	private Class tag;
 	private Object tagertObj;
+	private String beanName;
 
 	public LazyImple(Class tag) {
 		this.tag = tag;
+	}
+	public LazyImple(Class tag,String beanName) {
+		this.tag = tag;
+		this.beanName = beanName;
 	}
 
 	@Override
@@ -298,22 +321,42 @@ class LazyImple implements InvocationHandler {
 				// 设定为dubbo
 				tagertObj = buildDubboService(tag);
 			} else {
-				if(tag.getName().contains("Mapper")) {
-					//延迟处理
-					tagertObj = TestUtil.getExistBean(tag);
-				}else {
-					// 本地bean
-					Object tagImp = ScanUtil.findBeanByInterface(tag);
-					if(tagImp == null) {
-						log.info("未找到本地Bean=>{}",tag);
+				if(beanName == null) {
+					if(tag.getName().contains("Mapper")) {
+						//延迟处理
+						tagertObj = TestUtil.getExistBean(tag);
 					}else {
-						/**
-						 * 实现类是本地Bean
-						 */
-						tagertObj = tagImp;
-						LazyBean.processAttr(tagImp, tagImp.getClass());
+						// 本地bean
+						Object tagImp = ScanUtil.findBeanByInterface(tag);
+						if(tagImp == null) {
+							log.info("未找到本地Bean=>{}",tag);
+						}else {
+							/**
+							 * 实现类是本地Bean
+							 */
+							tagertObj = tagImp;
+							LazyBean.processAttr(tagImp, tagImp.getClass());
+						}
+					}
+				}else {
+					if(tag.getName().contains("Mapper")) {
+						//延迟处理
+						tagertObj = TestUtil.getExistBean(tag,beanName);
+					}else {
+						// 本地bean
+						Object tagImp = ScanUtil.findBean(beanName);
+						if(tagImp == null) {
+							log.info("未找到本地Bean=>{}",tag);
+						}else {
+							/**
+							 * 实现类是本地Bean
+							 */
+							tagertObj = tagImp;
+							LazyBean.processAttr(tagImp, tagImp.getClass());
+						}
 					}
 				}
+				
 			}
 		}
 		return tagertObj;

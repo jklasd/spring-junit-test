@@ -56,18 +56,22 @@ public class TestUtil implements ApplicationContextAware{
 	
 	private void processConfig() {
 		try {
-			for(Class<?> c : staticClass) {
-				LazyBean.processStatic(c);
+			if(staticClass != null) {
+				for(Class<?> c : staticClass) {
+					LazyBean.processStatic(c);
+				}
 			}
 		} catch (Exception e) {
 			log.error("加载静态类",e);
 		}
 		ApplicationContext context = new BeanFactory();
 		try {
-			for(Class<?> c : contextUtil) {
+			if(contextUtil != null) {
+				for(Class<?> c : contextUtil) {
 					Object obj = c.newInstance();
 					Method m = c.getDeclaredMethod("setApplicationContext", ApplicationContext.class);
 					m.invoke(obj,context);
+				}
 			}
 		} catch (Exception e) {
 			log.error("加载ApplicationContext",e);
