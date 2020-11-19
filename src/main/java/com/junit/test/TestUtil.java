@@ -174,7 +174,7 @@ public class TestUtil implements ApplicationContextAware{
 			if(staticApplicationContext.containsBean(name)) {
 				return staticApplicationContext.getBean(name);
 			}else {
-				return LazyBean.findBean(name);
+				return ScanUtil.findBean(name);
 			}
 		}
 
@@ -185,7 +185,12 @@ public class TestUtil implements ApplicationContextAware{
 
 		@Override
 		public <T> T getBean(Class<T> requiredType) throws BeansException {
-			return staticApplicationContext.getBean(requiredType);
+			try {
+				Object bean = staticApplicationContext.getBean(requiredType);
+				return (T) bean;
+			} catch (NoSuchBeanDefinitionException e) {
+				return (T)ScanUtil.findBean(requiredType);
+			}
 		}
 
 		@Override

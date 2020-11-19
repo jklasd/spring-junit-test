@@ -42,63 +42,6 @@ public class LazyBean {
 	private static String welab;
 
 	public static Map<Class, Object> singleton = Maps.newHashMap();
-
-	public static Object findBean(String beanName) {
-		try {
-			Resource[] resources = new PathMatchingResourcePatternResolver()
-					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" + getWelab().replace(".", "/"));
-			for (Resource r : resources) {
-				Class tag = findClass(r.getFile(), beanName);
-				if (tag != null) {
-					return buildProxy(tag);
-				}
-			}
-		} catch (IOException | ClassNotFoundException e1) {
-			e1.printStackTrace();
-		}
-		return null;
-	}
-	/**
-	 * 扫描类 for bean
-	 * @param file
-	 * @param beanName
-	 * @return
-	 * @throws ClassNotFoundException
-	 */
-	private static Class findClass(File file, String beanName) throws ClassNotFoundException {
-		File[] files = file.listFiles();
-//		if(file.getPath().contains("core")) {
-//			System.out.println("断点");
-//		}
-		for (File f : files) {
-			if (f.isDirectory()) {
-				// 递归
-				Class tag = findClass(f, beanName);
-				if (tag != null) {
-					return tag;
-				}
-			} else if (f.getName().endsWith(".class")) {
-				String p = f.getPath();
-				p = p.substring(p.indexOf(getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
-				// 查看是否class
-//				log.info(f.getPath());
-				if (beanName.toLowerCase().equals(f.getName().replace(".class", ""))) {
-					return Class.forName(p);
-				} else {
-					Class<?> c = Class.forName(p);
-					Service ann = (Service) c.getAnnotation(Service.class);
-					if (ann != null) {
-						if (Objects.equals(ann.value(), beanName)) {
-							return c;
-						}
-					}
-				}
-			} else {
-			}
-		}
-		return null;
-	}
-
 	/**
 	 * 构建代理对象
 	 * @param classBean
@@ -272,7 +215,6 @@ public class LazyBean {
 		}
 		return welab;
 	}
-
 }
 
 class LazyCglib implements MethodInterceptor {
@@ -335,7 +277,7 @@ class LazyImple implements InvocationHandler {
 				tagertObj = buildDubboService(tag);
 			} else {
 				// 本地bean
-				Object tagImp = findBeanByInterface(tag);
+				Object tagImp = ScanUtil.findBeanByInterface(tag);
 				if(tagImp == null) {
 					log.info("未找到本地Bean=>{}",tag);
 				}else {
@@ -346,6 +288,150 @@ class LazyImple implements InvocationHandler {
 		return tagertObj;
 	}
 	
+	public static Object buildDubboService(Class dubboClass) {
+		if(LazyBean.singleton.containsKey(dubboClass)) {
+			return LazyBean.singleton.get(dubboClass);
+		}
+		
+		ReferenceConfig referenceConfig = new ReferenceConfig<>();
+		referenceConfig.setInterface(dubboClass);
+		String groupStr = dubboClass.getName().replace("com.welab.", "");
+		String[] keys = groupStr.split("\\.");
+		for (String k : keys) {
+			String v = TestUtil.getValue("dubbo.group." + k);
+			if (v != null) {
+				groupStr = v;
+				log.info("{}=>{}", dubboClass.getName(), groupStr);
+				break;
+			}
+		}
+		referenceConfig.setGroup(groupStr);
+		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
+
+		RegistryConfig registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getValue("zookeeper.url"));
+		registryConfig.setUsername(TestUtil.getValue("zookeeper.username"));
+		registryConfig.setPassword(TestUtil.getValue("zookeeper.password"));
+		registryConfig.setClient("curator");
+		registryConfig.setSubscribe(true);
+		registryConfig.setRegister(false);
+		referenceConfig.setApplication(applicationConfig);
+		referenceConfig.setRegistry(registryConfig);
+		Object obj = referenceConfig.get();
+		LazyBean.singleton.put(dubboClass,obj);
+		return obj;
+	}
+
+}
+@Slf4j
+class ScanUtil{
+	public static Object findBean(String beanName) {
+		try {
+			Resource[] resources = new PathMatchingResourcePatternResolver()
+					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" + LazyBean.getWelab().replace(".", "/"));
+			for (Resource r : resources) {
+				Class tag = findClass(r.getFile(), beanName);
+				if (tag != null) {
+					if(tag.isInterface() && !tag.getName().contains(LazyBean.getWelab())) {
+						return LazyImple.buildDubboService(tag);
+					}
+					return LazyBean.buildProxy(tag);
+				}
+			}
+		} catch (IOException | ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		return null;
+	}
+	public static Object findBean(Class<?> requiredType) {
+		try {
+			if(requiredType.isInterface() && !requiredType.getName().contains(LazyBean.getWelab())) {
+				return LazyImple.buildDubboService(requiredType);
+			}
+			Resource[] resources = new PathMatchingResourcePatternResolver()
+					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" +LazyBean.getWelab().replace(".", "/"));
+			for (Resource r : resources) {
+				if(requiredType.isInterface()) {
+					Class tag = findClassByInterface(r.getFile(), requiredType);
+					if (tag != null) {
+						return LazyBean.buildProxy(tag);
+					}
+				}else {
+					Class tag = findClass(r.getFile(), requiredType);
+					if (tag != null) {
+						return LazyBean.buildProxy(tag);
+					}
+				}
+			}
+		} catch (IOException | ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+		return null;
+	}
+	private static Class findClass(File file, Class<?> requiredType) {
+		File[] files = file.listFiles();
+		for (File f : files) {
+			if (f.isDirectory()) {
+				// 递归
+				Class tag = findClass(f, requiredType);
+				if (tag != null) {
+					return tag;
+				}
+			} else if (f.getName().endsWith(".class")) {
+				String p = f.getPath();
+				p = p.substring(p.indexOf(LazyBean.getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
+				// 查看是否class
+				try {
+					Class<?> c = Class.forName(p);
+					if(c == requiredType) {
+						return c;
+					}
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else {
+				log.info("=============其他文件=============");
+			}
+		}
+		return null;
+	}
+	/**
+	 * 扫描类 for bean
+	 * @param file
+	 * @param beanName
+	 * @return
+	 * @throws ClassNotFoundException
+	 */
+	private static Class findClass(File file, String beanName) throws ClassNotFoundException {
+		File[] files = file.listFiles();
+		for (File f : files) {
+			if (f.isDirectory()) {
+				// 递归
+				Class tag = findClass(f, beanName);
+				if (tag != null) {
+					return tag;
+				}
+			} else if (f.getName().endsWith(".class")) {
+				String p = f.getPath();
+				p = p.substring(p.indexOf(LazyBean.getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
+				// 查看是否class
+//				log.info(f.getPath());
+				if (beanName.toLowerCase().equals(f.getName().replace(".class", ""))) {
+					return Class.forName(p);
+				} else {
+					Class<?> c = Class.forName(p);
+					Service ann = (Service) c.getAnnotation(Service.class);
+					if (ann != null) {
+						if (Objects.equals(ann.value(), beanName)) {
+							return c;
+						}
+					}
+				}
+			} else {
+				log.info("=============其他文件=============");
+			}
+		}
+		return null;
+	}
 	public static Object findBeanByInterface(Class interfaceClass) {
 		try {
 			Resource[] resources = new PathMatchingResourcePatternResolver()
@@ -393,33 +479,4 @@ class LazyImple implements InvocationHandler {
 		}
 		return null;
 	}
-
-	public Object buildDubboService(Class dubboClass) {
-		ReferenceConfig referenceConfig = new ReferenceConfig<>();
-		referenceConfig.setInterface(dubboClass);
-		String groupStr = dubboClass.getName().replace("com.welab.", "");
-		String[] keys = groupStr.split("\\.");
-		for (String k : keys) {
-			String v = TestUtil.getValue("dubbo.group." + k);
-			if (v != null) {
-				groupStr = v;
-				log.info("{}=>{}", dubboClass.getName(), groupStr);
-				break;
-			}
-		}
-		referenceConfig.setGroup(groupStr);
-		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
-
-		RegistryConfig registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getValue("zookeeper.url"));
-		registryConfig.setUsername(TestUtil.getValue("zookeeper.username"));
-		registryConfig.setPassword(TestUtil.getValue("zookeeper.password"));
-		registryConfig.setClient("curator");
-		registryConfig.setSubscribe(true);
-		registryConfig.setRegister(false);
-		referenceConfig.setApplication(applicationConfig);
-		referenceConfig.setRegistry(registryConfig);
-		Object obj = referenceConfig.get();
-		return obj;
-	}
-
 }
