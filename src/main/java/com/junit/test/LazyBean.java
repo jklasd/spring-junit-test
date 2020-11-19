@@ -6,7 +6,10 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
+import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
@@ -30,12 +33,19 @@ import org.springframework.stereotype.Service;
 import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.junit.util.CountDownLatchUtils;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * @author jubin.zhang
+ * 2020-11-19
+ */
 @Slf4j
 public class LazyBean {
 
@@ -106,6 +116,16 @@ public class LazyBean {
 		}
 		return null;
 	}
+	public static void setObj(Field f,Object obj,Object proxyObj) {
+		try {
+			if (!f.isAccessible()) {
+				f.setAccessible(true);
+			}
+			f.set(obj, proxyObj);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	/**
 	 * 注入
 	 * @param obj
@@ -113,7 +133,7 @@ public class LazyBean {
 	 */
 	public static void processAttr(Object obj, Class objClassOrSuper) {
 		Field[] fields = objClassOrSuper.getDeclaredFields();
-		for (Field f : fields) {
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fields)).runAndWait(f->{
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
 //				if(f.getName().equals("productConfigService")) {
@@ -127,73 +147,59 @@ public class LazyBean {
 						}
 						Object value = f.get(obj);
 						if (value == null) {
-							f.set(obj, TestUtil.getExistBean(f.getType(), f.getName()));
+							setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 						}
-					} catch (IllegalArgumentException | IllegalAccessException e) {
+					} catch (Exception e) {
 						e.printStackTrace();
 					}
 				} else if (className.contains("Impl") || className.contains("Service")) {
-					try {
-						if (!f.isAccessible()) {
-							f.setAccessible(true);
-						}
-						Object proxyObj = null;
-						if (!singleton.containsKey(f.getType())) {
-							proxyObj = buildProxy(f.getType());
-							singleton.put(f.getType(), proxyObj);
-						}
-						proxyObj = singleton.get(f.getType());
-						f.set(obj, proxyObj);
-					} catch (Exception e) {
-						e.printStackTrace();
+					Object proxyObj = null;
+					if (!singleton.containsKey(f.getType())) {
+						proxyObj = buildProxy(f.getType());
+						singleton.put(f.getType(), proxyObj);
 					}
+					setObj(f, obj, singleton.get(f.getType()));
 				} else if (className.contains("jedis")) {
-					try {
-						if (!f.isAccessible()) {
-							f.setAccessible(true);
-						}
-						f.set(obj, TestUtil.getExistBean(f.getType(), f.getName()));
-					} catch (IllegalArgumentException | IllegalAccessException e) {
-						e.printStackTrace();
-					}
+					setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 				} else {
-					log.info(className);
-					try {
-						if (!f.isAccessible()) {
-							f.setAccessible(true);
+					if(f.getType() == List.class) {
+						ParameterizedType t = (ParameterizedType) f.getGenericType();
+						Type[] item = t.getActualTypeArguments();
+						if(item.length == 1) {
+							//处理一个集合注入
+							try {
+								Class<?> c = Class.forName(item[0].getTypeName());
+								setObj(f, obj, ScanUtil.findListBean(c));
+								System.out.println("注入成功");
+							} catch (ClassNotFoundException e) {
+								e.printStackTrace();
+							}
+						}else {
+							System.out.println("其他特殊情况");
 						}
+					}else {
 						Object proxyObj = null;
 						if (!singleton.containsKey(f.getType())) {
 							proxyObj = buildProxy(f.getType());
 							singleton.put(f.getType(), proxyObj);
 						}
-						proxyObj = singleton.get(f.getType());
-						f.set(obj, proxyObj);
-					} catch (Exception e) {
-						e.printStackTrace();
+						setObj(f, obj, singleton.get(f.getType()));
 					}
 				}
 			} else {
 				Value v = f.getAnnotation(Value.class);
 				if (v != null) {
-					try {
-						if (!f.isAccessible()) {
-							f.setAccessible(true);
-						}
-						f.set(obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
-					} catch (IllegalArgumentException | IllegalAccessException e) {
-						e.printStackTrace();
-					}
+					setObj(f, obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
 				} else {
 					Component c = f.getAnnotation(Component.class);
 					if (c != null) {
 
 					} else {
-						log.info("不需要需要注入=>{}", f.getName());
+//						log.info("不需要需要注入=>{}", f.getName());
 					}
 				}
 			}
-		}
+		});
 		Class superC = objClassOrSuper.getSuperclass();
 		if (superC != null) {
 			processAttr(obj, superC);
@@ -216,6 +222,19 @@ public class LazyBean {
 			welab = "com."+TestUtil.getValue("app.id").replace("-", ".");
 		}
 		return welab;
+	}
+	public static void processStatic(Class c) {
+		Object obj = buildProxy(c);
+		Method[] ms = c.getDeclaredMethods();
+		for (Method m : ms) {
+			if (m.getAnnotation(PostConstruct.class) != null) {
+				try {
+					m.invoke(obj, null);
+				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+					e.printStackTrace();
+				}
+			}
+		}
 	}
 }
 
@@ -339,75 +358,128 @@ class LazyImple implements InvocationHandler {
 }
 @Slf4j
 class ScanUtil{
-	public static Object findBean(String beanName) {
-		try {
-			Resource[] resources = new PathMatchingResourcePatternResolver()
-					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" + LazyBean.getWelab().replace(".", "/"));
-			for (Resource r : resources) {
-				Class tag = findClass(r.getFile(), beanName);
-				if (tag != null) {
-					if(tag.isInterface() && !tag.getName().contains(LazyBean.getWelab())) {
-						return LazyImple.buildDubboService(tag);
-					}
-					return LazyBean.buildProxy(tag);
-				}
-			}
-		} catch (IOException | ClassNotFoundException e1) {
-			e1.printStackTrace();
-		}
-		return null;
-	}
-	public static Object findBean(Class<?> requiredType) {
-		try {
-			if(requiredType.isInterface() && !requiredType.getName().contains(LazyBean.getWelab())) {
-				return LazyImple.buildDubboService(requiredType);
-			}
-			Resource[] resources = new PathMatchingResourcePatternResolver()
-					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" +LazyBean.getWelab().replace(".", "/"));
-			for (Resource r : resources) {
-				if(requiredType.isInterface()) {
-					Class tag = findClassByInterface(r.getFile(), requiredType);
-					if (tag != null) {
-						return LazyBean.buildProxy(tag);
-					}
-				}else {
-					Class tag = findClass(r.getFile(), requiredType);
-					if (tag != null) {
-						return LazyBean.buildProxy(tag);
-					}
-				}
-			}
-		} catch (IOException | ClassNotFoundException e1) {
-			e1.printStackTrace();
-		}
-		return null;
-	}
-	private static Class findClass(File file, Class<?> requiredType) {
+	
+	static Map<String,Class> nameMap = Maps.newHashMap();
+	private static void loadClass(File file) throws ClassNotFoundException {
 		File[] files = file.listFiles();
 		for (File f : files) {
 			if (f.isDirectory()) {
 				// 递归
-				Class tag = findClass(f, requiredType);
-				if (tag != null) {
-					return tag;
-				}
+				loadClass(f);
 			} else if (f.getName().endsWith(".class")) {
 				String p = f.getPath();
 				p = p.substring(p.indexOf(LazyBean.getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
 				// 查看是否class
-				try {
-					Class<?> c = Class.forName(p);
-					if(c == requiredType) {
-						return c;
-					}
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
+				Class<?> c = Class.forName(p);
+				nameMap.put(p,c);
 			}else {
 				log.info("=============其他文件=============");
 			}
 		}
+	}
+	public static void loadAllClass() {
+		try {
+			Resource[] resources = new PathMatchingResourcePatternResolver()
+					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" + LazyBean.getWelab().replace(".", "/"));
+			for (Resource r : resources) {
+				loadClass(r.getFile());
+			}
+		} catch (IOException | ClassNotFoundException e1) {
+			e1.printStackTrace();
+		}
+	}
+	public static Map<String,Object> beanMaps = Maps.newHashMap();
+	public static Object findBean(String beanName) {
+		if(beanMaps.containsKey(beanName)) {
+			return beanMaps.get(beanName);
+		}
+		Object bean = null;
+		Class tag = findClassByName(beanName);
+		if (tag != null) {
+			if(tag.isInterface() && !tag.getName().contains(LazyBean.getWelab())) {
+				bean = LazyImple.buildDubboService(tag);
+			}else {
+				bean = LazyBean.buildProxy(tag);
+			}
+			beanMaps.put(beanName, bean);
+		}
+		return bean;
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	private static Class findClassByName(String beanName) {
+		List<Class> list = Lists.newArrayList();
+		
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			if (beanName.toLowerCase().equals(name.replace(".class", ""))) {
+				list.add(nameMap.get(name));
+			} else {
+				Class c = nameMap.get(name);
+				Service ann = (Service) c.getAnnotation(Service.class);
+				Component cAnn = (Component)c.getAnnotation(Component.class);
+				if (ann != null) {
+					if (Objects.equals(ann.value(), beanName)) {
+						list.add(c);
+					}
+				}else if(cAnn != null) {
+					if (Objects.equals(cAnn.value(), beanName)) {
+						list.add(c);
+					}
+				}
+			}
+		});
+		return list.isEmpty()?null:list.get(0);
+	}
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static List findListBean(Class<?> requiredType) {
+		List list = Lists.newArrayList();
+		if(requiredType.isInterface()) {
+			List<Class> tags = findClassByInterface(requiredType);
+			if (!tags.isEmpty()) {
+				tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
+			}
+		}else {
+			/**
+			 * @TODO 存在要查继承类问题
+			 */
+			Class<?> tag = findClass(requiredType);
+			if (tag != null) {
+				list.add(LazyBean.buildProxy(tag));
+			}
+		}
+		return list;
+	}
+	public static Object findBean(Class<?> requiredType) {
+		if(requiredType.isInterface() && !requiredType.getName().contains(LazyBean.getWelab())) {
+			return LazyImple.buildDubboService(requiredType);
+		}
+		
+		if(requiredType.isInterface()) {
+			List<Class> tag = findClassByInterface(requiredType);
+			if (!tag.isEmpty()) {
+				return LazyBean.buildProxy(tag.get(0));
+			}
+		}else {
+			Class tag = findClass(requiredType);
+			if (tag != null) {
+				return LazyBean.buildProxy(tag);
+			}
+		}
 		return null;
+	}
+	private static Class findClass(Class<?> requiredType) {
+		List<Class> list = Lists.newArrayList();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			if(c == requiredType) {
+				if(c.getAnnotation(Component.class)!=null ||
+						c.getAnnotation(Service.class)!=null ) {
+					list.add(c);
+				}
+			}
+		});
+		return list.isEmpty()?null:list.get(0);
 	}
 	/**
 	 * 扫描类 for bean
@@ -416,49 +488,10 @@ class ScanUtil{
 	 * @return
 	 * @throws ClassNotFoundException
 	 */
-	private static Class findClass(File file, String beanName) throws ClassNotFoundException {
-		File[] files = file.listFiles();
-		for (File f : files) {
-			if (f.isDirectory()) {
-				// 递归
-				Class tag = findClass(f, beanName);
-				if (tag != null) {
-					return tag;
-				}
-			} else if (f.getName().endsWith(".class")) {
-				String p = f.getPath();
-				p = p.substring(p.indexOf(LazyBean.getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
-				// 查看是否class
-//				log.info(f.getPath());
-				if (beanName.toLowerCase().equals(f.getName().replace(".class", ""))) {
-					return Class.forName(p);
-				} else {
-					Class<?> c = Class.forName(p);
-					Service ann = (Service) c.getAnnotation(Service.class);
-					if (ann != null) {
-						if (Objects.equals(ann.value(), beanName)) {
-							return c;
-						}
-					}
-				}
-			} else {
-				log.info("=============其他文件=============");
-			}
-		}
-		return null;
-	}
 	public static Object findBeanByInterface(Class interfaceClass) {
-		try {
-			Resource[] resources = new PathMatchingResourcePatternResolver()
-					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" + LazyBean.getWelab().replace(".", "/"));
-			for (Resource r : resources) {
-				Class tag = findClassByInterface(r.getFile(), interfaceClass);
-				if (tag != null) {
-					return LazyBean.buildProxy(tag);
-				}
-			}
-		} catch (IOException | ClassNotFoundException e1) {
-			e1.printStackTrace();
+		List<Class> tags = findClassByInterface(interfaceClass);
+		if (!tags.isEmpty()) {
+			return LazyBean.buildProxy(tags.get(0));
 		}
 		return null;
 	}
@@ -469,29 +502,31 @@ class ScanUtil{
 	 * @return
 	 * @throws ClassNotFoundException
 	 */
-	private static Class findClassByInterface(File file, Class interfaceClass) throws ClassNotFoundException {
-		File[] files = file.listFiles();
-		for (File f : files) {
-			if (f.isDirectory()) {
-				// 递归
-				Class tag = findClassByInterface(f, interfaceClass);
-				if (tag != null) {
-					return tag;
+	private static List<Class> findClassByInterface(Class interfaceClass){
+		List<Class> list = Lists.newArrayList();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			if(isImple(c,interfaceClass)) {
+				if(c.getAnnotation(Component.class)!=null ||
+						c.getAnnotation(Service.class)!=null ) {
+					list.add(c);
 				}
-			} else if (f.getName().endsWith(".class")) {
-				String p = f.getPath();
-				p = p.substring(p.indexOf(LazyBean.getWelab().replace(".", "\\"))).replace("\\", ".").replace(".class", "");
-				// 查看是否class
-				Class<?> c = Class.forName(p);
-				Class[] fcs  = c.getInterfaces();
-				for(int i=0;i<fcs.length;i++) {
-					if(Objects.equals(fcs[i], interfaceClass)) {
-						return c;
-					}
-				}
-			} else {
+			}
+		});
+		return list;
+	}
+	public static boolean isImple(Class c,Class interfaceC) {
+		Class[] ics = c.getInterfaces();
+		for(Class c2 : ics) {
+			if(c2 == interfaceC) {
+				return true;
 			}
 		}
-		return null;
+		Class sc = c.getSuperclass();
+		if(sc!=null) {
+			return isImple(sc, interfaceC);
+		}
+		return false;
 	}
 }

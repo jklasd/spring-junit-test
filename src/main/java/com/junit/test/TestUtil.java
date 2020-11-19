@@ -23,11 +23,19 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import lombok.extern.slf4j.Slf4j;
+
+/**
+ * @author jubin.zhang
+ *	2020-11-19
+ *
+ */
 @Component
+@Slf4j
 public class TestUtil implements ApplicationContextAware{
 	
 	public TestUtil() {
-		System.out.println("实例化TestUtil");
+		log.info("实例化TestUtil");
 	}
 	
 	private static ApplicationContext staticApplicationContext;
@@ -40,12 +48,34 @@ public class TestUtil implements ApplicationContextAware{
 		if(bean != null) {
 			((AutowiredAnnotationBeanPostProcessor)bean).setRequiredParameterValue(false);
 		}else {
-			System.out.println("初始化失败TestUtil");
+			log.info("初始化失败TestUtil");
 		}
+		ScanUtil.loadAllClass();
+		processConfig();
 	}
 	
+	private void processConfig() {
+		try {
+			for(Class<?> c : staticClass) {
+				LazyBean.processStatic(c);
+			}
+		} catch (Exception e) {
+			log.error("加载静态类",e);
+		}
+		ApplicationContext context = new BeanFactory();
+		try {
+			for(Class<?> c : contextUtil) {
+					Object obj = c.newInstance();
+					Method m = c.getDeclaredMethod("setApplicationContext", ApplicationContext.class);
+					m.invoke(obj,context);
+			}
+		} catch (Exception e) {
+			log.error("加载ApplicationContext",e);
+		}
+	}
+
 	@SuppressWarnings("unchecked")
-	public static Object getExistBean(Class classD) {
+	public static Object getExistBean(Class<?> classD) {
 		Object obj = staticApplicationContext.getBean(classD);
 		return obj;
 	}
@@ -93,18 +123,14 @@ public class TestUtil implements ApplicationContextAware{
 		
 		return null;
 	}
-
+	private static Class[] staticClass;
+	public static void configStatic(Class... classArg) {
+		staticClass = classArg;
+	}
+	
+	private static Class[] contextUtil;
 	public static void configBeanFactory(Class... classArg) {
-		ApplicationContext context = new BeanFactory();
-		for(Class c : classArg) {
-			try {
-				Object obj = c.newInstance();
-				Method m = c.getDeclaredMethod("setApplicationContext", ApplicationContext.class);
-				m.invoke(obj,context);
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
+		contextUtil = classArg;
 	}
 	static class BeanFactory implements ApplicationContext{
 		@Override
