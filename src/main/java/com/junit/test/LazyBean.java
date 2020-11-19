@@ -16,6 +16,7 @@ import javax.annotation.PostConstruct;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.amqp.utils.test.TestUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.proxy.Enhancer;
@@ -276,12 +277,17 @@ class LazyImple implements InvocationHandler {
 				// 设定为dubbo
 				tagertObj = buildDubboService(tag);
 			} else {
-				// 本地bean
-				Object tagImp = ScanUtil.findBeanByInterface(tag);
-				if(tagImp == null) {
-					log.info("未找到本地Bean=>{}",tag);
+				if(tag.getName().contains("Mapper")) {
+					//延迟处理
+					tagertObj = TestUtil.getExistBean(tag);
 				}else {
-					tagertObj = tagImp;
+					// 本地bean
+					Object tagImp = ScanUtil.findBeanByInterface(tag);
+					if(tagImp == null) {
+						log.info("未找到本地Bean=>{}",tag);
+					}else {
+						tagertObj = tagImp;
+					}
 				}
 			}
 		}

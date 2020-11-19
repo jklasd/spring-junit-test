@@ -45,11 +45,22 @@ public class TestUtil implements ApplicationContextAware{
 	}
 	
 	@SuppressWarnings("unchecked")
+	public static Object getExistBean(Class classD) {
+		Object obj = staticApplicationContext.getBean(classD);
+		return obj;
+	}
+	
+	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
 			Object obj = staticApplicationContext.getBean(classD);
 			return obj;
-		} catch (NoUniqueBeanDefinitionException e) {
+		}catch(NullPointerException e) {
+			if(classD.getName().contains("Mapper")) {
+				return LazyBean.buildProxy(classD);
+			}
+			return null;
+		}catch (NoUniqueBeanDefinitionException e) {
 			if(beanName != null) {
 				Object obj = staticApplicationContext.getBean(beanName);
 				return obj;
