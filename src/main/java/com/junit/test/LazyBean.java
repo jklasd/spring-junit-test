@@ -332,7 +332,11 @@ class LazyImple implements InvocationHandler {
 		if (tagertObj == null) {
 			if (!tag.getName().contains(LazyBean.getWelab())) {
 				//
-				tagertObj = TestUtil.getExistBean(tag,null);
+				try {
+					tagertObj = TestUtil.getExistBean(tag,null);
+				} catch (Exception e) {
+					log.info("非spring Bean");
+				}
 				if(tagertObj==null) {
 					// 设定为dubbo
 					tagertObj = buildDubboService(tag);
