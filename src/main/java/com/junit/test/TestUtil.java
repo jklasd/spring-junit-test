@@ -64,7 +64,7 @@ public class TestUtil implements ApplicationContextAware{
 		} catch (Exception e) {
 			log.error("加载静态类",e);
 		}
-		ApplicationContext context = new BeanFactory();
+		ApplicationContext context = bf;
 		try {
 			if(contextUtil != null) {
 				for(Class<?> c : contextUtil) {
@@ -87,6 +87,9 @@ public class TestUtil implements ApplicationContextAware{
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
+			if(classD == ApplicationContext.class) {
+				return bf;
+			}
 			Object obj = staticApplicationContext.getBean(classD);
 			return obj;
 		}catch(NullPointerException e) {
@@ -136,6 +139,7 @@ public class TestUtil implements ApplicationContextAware{
 	public static void configBeanFactory(Class... classArg) {
 		contextUtil = classArg;
 	}
+	private static BeanFactory bf = new BeanFactory();
 	static class BeanFactory implements ApplicationContext{
 		@Override
 		public Environment getEnvironment() {
@@ -200,8 +204,7 @@ public class TestUtil implements ApplicationContextAware{
 		@Override
 		public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 				throws BeansException {
-			// TODO Auto-generated method stub
-			return null;
+			return ScanUtil.findBeanWithAnnotation(annotationType);
 		}
 
 		@Override

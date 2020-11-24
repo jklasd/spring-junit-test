@@ -2,6 +2,7 @@ package com.junit.test;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -12,6 +13,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
@@ -37,6 +39,7 @@ import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.junit.util.CountDownLatchUtils;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
@@ -144,14 +147,19 @@ public class LazyBean {
 	 * @param obj
 	 * @param objClassOrSuper
 	 */
+	static Set<String> exist = Sets.newHashSet();
 	public static void processAttr(Object obj, Class objClassOrSuper) {
+//		if(objClassOrSuper.getName().contains("MultiServiceConfiguration")) {
+//			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
+//		}
+		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {
+			return;
+		}
+		exist.add(obj.hashCode()+"="+objClassOrSuper.getName());
 		Field[] fields = objClassOrSuper.getDeclaredFields();
 		for(Field f : fields){
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
-//				if(f.getName().equals("productConfigService")) {
-//					log.info("需要注入=>{}=>{}",f.getName(),f.getType().getName());
-//				}
 				String className = f.getType().getName();
 				if (className.contains("Mapper")) {
 					try {
@@ -219,15 +227,7 @@ public class LazyBean {
 		}
 
 		Method[] ms = obj.getClass().getDeclaredMethods();
-		for (Method m : ms) {
-			if (m.getAnnotation(PostConstruct.class) != null) {
-				try {
-					m.invoke(obj, null);
-				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					e.printStackTrace();
-				}
-			}
-		}
+		postConstruct(obj, ms,superC);
 	}
 
 	public static String getWelab() {
@@ -238,7 +238,15 @@ public class LazyBean {
 	}
 	public static void processStatic(Class c) {
 		Object obj = buildProxy(c);
-		Method[] ms = c.getDeclaredMethods();
+		processAttr(obj, c);
+//		Method[] ms = c.getDeclaredMethods();
+//		postConstruct(obj, ms,c.getSuperclass());
+	}
+	private static void postConstruct(Object obj, Method[] ms,Class sup) {
+		if(sup != null) {
+			ms = sup.getDeclaredMethods();
+			postConstruct(obj, ms, sup.getSuperclass());
+		}
 		for (Method m : ms) {
 			if (m.getAnnotation(PostConstruct.class) != null) {
 				try {
@@ -323,8 +331,12 @@ class LazyImple implements InvocationHandler {
 	private Object getTagertObj() {
 		if (tagertObj == null) {
 			if (!tag.getName().contains(LazyBean.getWelab())) {
-				// 设定为dubbo
-				tagertObj = buildDubboService(tag);
+				//
+				tagertObj = TestUtil.getExistBean(tag,null);
+				if(tagertObj==null) {
+					// 设定为dubbo
+					tagertObj = buildDubboService(tag);
+				}
 			} else {
 				if(beanName == null) {
 					if(tag.getName().contains("Mapper")) {
@@ -576,5 +588,42 @@ class ScanUtil{
 			return isImple(sc, interfaceC);
 		}
 		return false;
+	}
+	
+	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
+		List<Class> list = findClassWithAnnotation(annotationType);
+		Map<String, Object> annoClass = Maps.newHashMap();
+		list.stream().forEach(c ->{
+			String beanName = null;
+			if(c.getAnnotation(Component.class)!=null) {
+				beanName = ((Component)c.getAnnotation(Component.class)).value();
+			}else if(	c.getAnnotation(Service.class)!=null ) {
+				beanName = ((Service)c.getAnnotation(Service.class)).value();
+			}else {
+				beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
+			}
+			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
+		});
+		return annoClass;
+	}
+	
+	/**
+	 * 扫描类 for class
+	 * @param file
+	 * @param interfaceClass
+	 * @return
+	 * @throws ClassNotFoundException
+	 */
+	private static List<Class> findClassWithAnnotation(Class<? extends Annotation> annotationType){
+		List<Class> list = Lists.newArrayList();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			Annotation type = c.getDeclaredAnnotation(annotationType);
+			if(type != null) {
+				list.add(c);
+			}
+		});
+		return list;
 	}
 }
