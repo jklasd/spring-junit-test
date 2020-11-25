@@ -30,30 +30,32 @@ import lombok.extern.slf4j.Slf4j;
  *	2020-11-19
  *
  */
-@Component
 @Slf4j
+@Component
 public class TestUtil implements ApplicationContextAware{
-	
+	public static boolean test;
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
 	
 	private static ApplicationContext staticApplicationContext;
-
+	
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		staticApplicationContext = applicationContext;		
-		DefaultListableBeanFactory bf = (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
-		Object bean = bf.getSingleton("org.springframework.context.annotation.internalAutowiredAnnotationProcessor");
-		if(bean != null) {
-			((AutowiredAnnotationBeanPostProcessor)bean).setRequiredParameterValue(false);
-		}else {
-			log.info("初始化失败TestUtil");
+		staticApplicationContext = applicationContext;
+		if(test) {
+			DefaultListableBeanFactory bf = (DefaultListableBeanFactory) applicationContext.getAutowireCapableBeanFactory();
+			Object bean = bf.getSingleton("org.springframework.context.annotation.internalAutowiredAnnotationProcessor");
+			if(bean != null) {
+				((AutowiredAnnotationBeanPostProcessor)bean).setRequiredParameterValue(false);
+			}else {
+				log.info("初始化失败TestUtil");
+			}
+			ScanUtil.loadAllClass();
+			processConfig();
 		}
-		ScanUtil.loadAllClass();
-		processConfig();
 	}
-	
+	public static void openTest() {test = true;}
 	private void processConfig() {
 		try {
 			if(staticClass != null) {
