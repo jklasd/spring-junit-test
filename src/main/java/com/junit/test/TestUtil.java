@@ -34,6 +34,9 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class TestUtil implements ApplicationContextAware{
 	public static boolean test;
+	static {
+		test = true;
+	}
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
