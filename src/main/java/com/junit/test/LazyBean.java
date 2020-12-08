@@ -65,14 +65,22 @@ public class LazyBean {
 	 * @return
 	 */
 	public static Object buildProxy(Class classBean,String beanName) {
+		if(singletonName.containsKey(beanName)) {
+			return singletonName.get(beanName);
+		}
+		Object tag = null;
 		if (classBean.isInterface()) {
 			InvocationHandler handler = new LazyImple(classBean,beanName);
-			return Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
+			tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
 
 		} else {
 			MethodInterceptor handler = new LazyCglib(classBean,beanName);
-			return Enhancer.create(classBean, handler);
+			tag = Enhancer.create(classBean, handler);
 		}
+		if(StringUtils.isNotBlank(beanName)) {
+			singletonName.put(beanName, tag);
+		}
+		return tag;
 	}
 	/**
 	 * 构建代理对象
@@ -80,11 +88,17 @@ public class LazyBean {
 	 * @return
 	 */
 	public static Object buildProxy(Class classBean) {
+		if (singleton.containsKey(classBean)) {
+			return singleton.get(classBean);
+		}
 		Object obj = buildRabbit(classBean);
 		if (obj != null) {
+			singleton.put(classBean, obj);
 			return obj;
 		}
-		return buildProxy(classBean,null);
+		Object tag = buildProxy(classBean,null);
+		singleton.put(classBean, tag);
+		return tag;
 	}
 	/**
 	 * 构建rabbit应用
@@ -180,12 +194,7 @@ public class LazyBean {
 						e.printStackTrace();
 					}
 				} else if (className.contains("Impl") || className.contains("Service")) {
-					Object proxyObj = null;
-					if (!singleton.containsKey(f.getType())) {
-						proxyObj = buildProxy(f.getType());
-						singleton.put(f.getType(), proxyObj);
-					}
-					setObj(f, obj, singleton.get(f.getType()));
+					setObj(f, obj, buildProxy(f.getType()));
 				} else if (className.contains("jedis")) {
 					setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 				} else {
@@ -205,12 +214,7 @@ public class LazyBean {
 							System.out.println("其他特殊情况");
 						}
 					}else {
-						Object proxyObj = null;
-						if (!singleton.containsKey(f.getType())) {
-							proxyObj = buildProxy(f.getType());
-							singleton.put(f.getType(), proxyObj);
-						}
-						setObj(f, obj, singleton.get(f.getType()));
+						setObj(f, obj, buildProxy(f.getType()));
 					}
 				}
 			} else {
@@ -221,19 +225,9 @@ public class LazyBean {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
 						if(StringUtils.isNotBlank(c.name())) {
-							Object proxyObj = null;
-							if (!singletonName.containsKey(c.name())) {
-								proxyObj = buildProxy(f.getType(),c.name());
-								singletonName.put(c.name(), proxyObj);
-							}
-							setObj(f, obj, proxyObj);
+							setObj(f, obj, buildProxy(f.getType(),c.name()));
 						}else {
-							Object proxyObj = null;
-							if (!singleton.containsKey(f.getType())) {
-								proxyObj = buildProxy(f.getType());
-								singleton.put(f.getType(), proxyObj);
-							}
-							setObj(f, obj, proxyObj);
+							setObj(f, obj, buildProxy(f.getType()));
 						}
 					} else {
 						log.info("不需要需要注入=>{}", f.getName());
