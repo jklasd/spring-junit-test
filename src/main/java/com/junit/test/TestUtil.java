@@ -33,12 +33,19 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Component
 public class TestUtil implements ApplicationContextAware{
-	public static boolean test;
+	private static boolean test;
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
 	
 	private static ApplicationContext staticApplicationContext;
+	
+	public static boolean isTest() {
+		return test;
+	}
+	public static void openTest() {
+		test = true;
+	}
 	
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -55,7 +62,6 @@ public class TestUtil implements ApplicationContextAware{
 			processConfig();
 		}
 	}
-	public static void openTest() {test = true;}
 	private void processConfig() {
 		try {
 			if(staticClass != null) {

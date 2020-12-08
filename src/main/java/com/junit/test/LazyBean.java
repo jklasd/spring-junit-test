@@ -152,8 +152,8 @@ public class LazyBean {
 //		if(objClassOrSuper.getName().contains("MultiServiceConfiguration")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
-		if(!TestUtil.test) {
-			TestUtil.test = true;
+		if(!TestUtil.isTest()) {
+			TestUtil.openTest();
 		}
 		
 		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {
