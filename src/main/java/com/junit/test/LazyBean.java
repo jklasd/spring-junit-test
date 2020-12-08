@@ -18,6 +18,7 @@ import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
@@ -57,6 +58,7 @@ public class LazyBean {
 	private static String welab;
 
 	public static Map<Class, Object> singleton = Maps.newHashMap();
+	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
 	 * 构建代理对象
 	 * @param classBean
@@ -216,9 +218,23 @@ public class LazyBean {
 				if (v != null) {
 					setObj(f, obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
 				} else {
-					Component c = f.getAnnotation(Component.class);
+					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
-
+						if(StringUtils.isNotBlank(c.name())) {
+							Object proxyObj = null;
+							if (!singletonName.containsKey(c.name())) {
+								proxyObj = buildProxy(f.getType(),c.name());
+								singletonName.put(c.name(), proxyObj);
+							}
+							setObj(f, obj, proxyObj);
+						}else {
+							Object proxyObj = null;
+							if (!singleton.containsKey(f.getType())) {
+								proxyObj = buildProxy(f.getType());
+								singleton.put(f.getType(), proxyObj);
+							}
+							setObj(f, obj, proxyObj);
+						}
 					} else {
 						log.info("不需要需要注入=>{}", f.getName());
 					}
