@@ -116,15 +116,15 @@ public class LazyBean {
 				// 定义一个连接工厂
 				ConnectionFactory factory = new ConnectionFactory();
 				// 设置服务端地址（域名地址/ip）
-				factory.setHost(TestUtil.getValue("spring.rabbitmq.host"));
+				factory.setHost(TestUtil.getPropertiesValue("spring.rabbitmq.host"));
 				// 设置服务器端口号
-				factory.setPort(5672);
+				factory.setPort(Integer.valueOf(TestUtil.getPropertiesValue("spring.rabbitmq.port","5672")));
 				// 设置虚拟主机(相当于数据库中的库)
 				factory.setVirtualHost("/");
 				// 设置用户名
-				factory.setUsername(TestUtil.getValue("spring.rabbitmq.username"));
+				factory.setUsername(TestUtil.getPropertiesValue("spring.rabbitmq.username"));
 				// 设置密码
-				factory.setPassword(TestUtil.getValue("spring.rabbitmq.password"));
+				factory.setPassword(TestUtil.getPropertiesValue("spring.rabbitmq.password"));
 				Connection connection = factory.newConnection();
 				obj.setConnectionFactory(new CachingConnectionFactory(factory));
 
@@ -246,7 +246,7 @@ public class LazyBean {
 
 	public static String getWelab() {
 		if(welab == null) {
-			welab = "com."+TestUtil.getValue("app.id").replace("-", ".");
+			welab = "com."+TestUtil.getPropertiesValue("app.id").replace("-", ".");
 		}
 		return welab;
 	}
@@ -409,7 +409,7 @@ class LazyImple implements InvocationHandler {
 		String groupStr = dubboClass.getName().replace("com.welab.", "");
 		String[] keys = groupStr.split("\\.");
 		for (String k : keys) {
-			String v = TestUtil.getValue("dubbo.group." + k);
+			String v = TestUtil.getPropertiesValue("dubbo.group." + k);
 			if (v != null) {
 				groupStr = v;
 				log.info("{}=>{}", dubboClass.getName(), groupStr);
@@ -419,9 +419,9 @@ class LazyImple implements InvocationHandler {
 		referenceConfig.setGroup(groupStr);
 		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
 		if(registryConfig == null) {
-			registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getValue("zookeeper.url"));
-			registryConfig.setUsername(TestUtil.getValue("zookeeper.username"));
-			registryConfig.setPassword(TestUtil.getValue("zookeeper.password"));
+			registryConfig = new RegistryConfig("zookeeper://" + TestUtil.getPropertiesValue("zookeeper.url"));
+			registryConfig.setUsername(TestUtil.getPropertiesValue("zookeeper.username"));
+			registryConfig.setPassword(TestUtil.getPropertiesValue("zookeeper.password"));
 			registryConfig.setClient("curator");
 			registryConfig.setSubscribe(true);
 			registryConfig.setRegister(false);

@@ -113,17 +113,20 @@ public class TestUtil implements ApplicationContextAware{
 			return null;
 		}
 	}
-	public static String getValue(String key) {
+	public static String getPropertiesValue(String key,String defaultStr) {
 		String[] keys = key.split(":");
 		String value = staticApplicationContext.getEnvironment().getProperty(keys[0]);
 		if(StringUtils.isNotBlank(value)) {
 			return value;
 		}else {
-			return keys.length>1?keys[1]:null;
+			return keys.length>1?keys[1]:defaultStr;
 		}
 	}
+	public static String getPropertiesValue(String key) {
+		return getPropertiesValue(key,null);
+	}
 	public static Object value(String key,Class type) {
-		String value = getValue(key);
+		String value = getPropertiesValue(key);
 		try {
 			if(type == null || type == String.class) {
 				return	value;
