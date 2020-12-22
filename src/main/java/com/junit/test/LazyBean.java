@@ -125,11 +125,11 @@ public class LazyBean {
 				factory.setUsername(TestUtil.getPropertiesValue("spring.rabbitmq.username"));
 				// 设置密码
 				factory.setPassword(TestUtil.getPropertiesValue("spring.rabbitmq.password"));
-				Connection connection = factory.newConnection();
+//				Connection connection = factory.newConnection();
 				obj.setConnectionFactory(new CachingConnectionFactory(factory));
 
 				return obj;
-			} catch (InstantiationException | IllegalAccessException | IOException | TimeoutException e) {
+			} catch (InstantiationException | IllegalAccessException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
