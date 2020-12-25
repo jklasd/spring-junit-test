@@ -34,6 +34,8 @@ import lombok.extern.slf4j.Slf4j;
 @Component
 public class TestUtil implements ApplicationContextAware{
 	private static boolean test;
+	public static String mapperPath = "classpath*:/mapper/**/*.xml";
+	public static String mapperScanPath = "com.mapper";
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
@@ -85,7 +87,7 @@ public class TestUtil implements ApplicationContextAware{
 			log.error("加载ApplicationContext",e);
 		}
 	}
-
+	
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class<?> classD) {
 		Object obj = staticApplicationContext.getBean(classD);
@@ -110,6 +112,8 @@ public class TestUtil implements ApplicationContextAware{
 				Object obj = staticApplicationContext.getBean(beanName);
 				return obj;
 			}
+			return null;
+		}catch (NoSuchBeanDefinitionException e) {
 			return null;
 		}
 	}
@@ -153,7 +157,12 @@ public class TestUtil implements ApplicationContextAware{
 	public static void configBeanFactory(Class... classArg) {
 		contextUtil = classArg;
 	}
+	public static Resource[] getResources(String locationPattern) throws IOException {
+		return bf.getResources(locationPattern);
+	}
 	private static BeanFactory bf = new BeanFactory();
+	public static String dubboXml;
+	
 	static class BeanFactory implements ApplicationContext{
 		@Override
 		public Environment getEnvironment() {
@@ -348,8 +357,7 @@ public class TestUtil implements ApplicationContextAware{
 
 		@Override
 		public Resource[] getResources(String locationPattern) throws IOException {
-			// TODO Auto-generated method stub
-			return null;
+			return staticApplicationContext.getResources(locationPattern);
 		}
 
 		@Override
