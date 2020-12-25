@@ -45,7 +45,7 @@ public class ScanUtil{
 					log.error("加载类异常",e);
 				}
 			}else {
-				log.info("=============其他文件=={}===========",file);
+//				log.info("=============其他文件=={}===========",file);
 			}
 		}
 	}

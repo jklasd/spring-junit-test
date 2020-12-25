@@ -49,13 +49,19 @@ public class LazyBean {
 			return singletonName.get(beanName);
 		}
 		Object tag = null;
-		if (classBean.isInterface()) {
-			InvocationHandler handler = new LazyImple(classBean,beanName);
-			tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-
-		} else {
-			MethodInterceptor handler = new LazyCglib(classBean,beanName);
-			tag = Enhancer.create(classBean, handler);
+		try {
+			if (classBean.isInterface()) {
+				InvocationHandler handler = new LazyImple(classBean,beanName);
+				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
+				
+			} else {
+				MethodInterceptor handler = new LazyCglib(classBean,beanName);
+				tag = Enhancer.create(classBean, handler);
+			}
+		} catch (Exception e) {
+			System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+//			log.error("代理Bean",e);
+			return TestUtil.getExistBean(classBean, beanName);
 		}
 		if(StringUtils.isNotBlank(beanName)) {
 			singletonName.put(beanName, tag);

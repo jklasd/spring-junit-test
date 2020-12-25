@@ -105,9 +105,6 @@ public class TestUtil implements ApplicationContextAware{
 			Object obj = staticApplicationContext.getBean(classD);
 			return obj;
 		}catch(NullPointerException e) {
-			if(classD.getName().contains("Mapper")) {
-				return LazyBean.buildProxy(classD);
-			}
 			return null;
 		}catch (NoUniqueBeanDefinitionException e) {
 			if(beanName != null) {
