@@ -1,7 +1,7 @@
 package org.springframework.aop.framework;
 
-public class AopContextSuppert extends AopContext{
+public class AopContextSuppert{
 	public static void setProxyObj(Object obj) {
-		setCurrentProxy(obj);
+		AopContext.setCurrentProxy(obj);
 	}
 }
