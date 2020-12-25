@@ -48,7 +48,9 @@ public class TestUtil implements ApplicationContextAware{
 	public static void openTest() {
 		test = true;
 	}
-	
+	public void setApplicationContextLocal(ApplicationContext applicationContext) {
+		staticApplicationContext = applicationContext;
+	}
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		staticApplicationContext = applicationContext;
@@ -161,7 +163,7 @@ public class TestUtil implements ApplicationContextAware{
 		return bf.getResources(locationPattern);
 	}
 	private static BeanFactory bf = new BeanFactory();
-	public static String dubboXml;
+	public static String dubboXml = "classpath*:/dubbo-context.xml";
 	
 	static class BeanFactory implements ApplicationContext{
 		@Override

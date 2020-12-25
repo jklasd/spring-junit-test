@@ -37,8 +37,6 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LazyBean {
 
-	private static String welab;
-
 	public static Map<Class, Object> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
