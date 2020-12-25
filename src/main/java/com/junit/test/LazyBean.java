@@ -14,7 +14,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.TimeoutException;
 
 import javax.annotation.PostConstruct;
 
@@ -24,6 +23,7 @@ import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.proxy.Enhancer;
@@ -42,7 +42,6 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.util.CountDownLatchUtils;
-import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 
 import lombok.extern.slf4j.Slf4j;
@@ -288,6 +287,7 @@ class LazyCglib implements MethodInterceptor {
 	@Override
 	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
 		try {
+			AopContextSuppert.setProxyObj(arg0);
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -334,6 +334,7 @@ class LazyImple implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
+			AopContextSuppert.setProxyObj(proxy);
 			return method.invoke(getTagertObj(), args);
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -473,6 +474,9 @@ class ScanUtil{
 		}
 		Object bean = null;
 		Class tag = findClassByName(beanName);
+		if(tag == null) {
+			tag = findClassByClassName(beanName.substring(0, 1).toUpperCase()+beanName.substring(1));
+		}
 		if (tag != null) {
 			if(tag.isInterface() && !tag.getName().contains(LazyBean.getWelab())) {
 				bean = LazyImple.buildDubboService(tag);
@@ -482,6 +486,16 @@ class ScanUtil{
 			beanMaps.put(beanName, bean);
 		}
 		return bean;
+	}
+	private static Class findClassByClassName(String beanName) {
+		List<Class> list = Lists.newArrayList();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			if(name.replace(".class", "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
+				list.add(nameMap.get(name));
+			}
+		});
+		return list.isEmpty()?null:list.get(0);
 	}
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	private static Class findClassByName(String beanName) {
