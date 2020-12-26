@@ -48,6 +48,11 @@ public class LazyBean {
 		if(singletonName.containsKey(beanName)) {
 			return singletonName.get(beanName);
 		}
+		if(StringUtils.isBlank(beanName)) {
+			if (singleton.containsKey(classBean)) {
+				return singleton.get(classBean);
+			}
+		}
 		Object tag = null;
 		try {
 			if (classBean.isInterface()) {
@@ -61,10 +66,14 @@ public class LazyBean {
 		} catch (Exception e) {
 			System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
 //			log.error("代理Bean",e);
-			return TestUtil.getExistBean(classBean, beanName);
+			tag = TestUtil.getExistBean(classBean, beanName);
 		}
-		if(StringUtils.isNotBlank(beanName)) {
-			singletonName.put(beanName, tag);
+		if(tag!=null) {
+			if(StringUtils.isNotBlank(beanName)) {
+				singletonName.put(beanName, tag);
+			}else {
+				singleton.put(classBean, tag);
+			}
 		}
 		return tag;
 	}
@@ -89,10 +98,15 @@ public class LazyBean {
 			}
 		}
 		Object tag = buildProxy(classBean,null);
-		singleton.put(classBean, tag);
+		if(tag!=null) {
+			singleton.put(classBean, tag);
+		}
 		return tag;
 	}
 	public static void setObj(Field f,Object obj,Object proxyObj) {
+		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
+			
+		}
 		try {
 			if (!f.isAccessible()) {
 				f.setAccessible(true);

@@ -2,6 +2,7 @@ package com.junit.test;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Locale;
 import java.util.Map;
@@ -23,6 +24,8 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Maps;
+
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -38,6 +41,22 @@ public class TestUtil implements ApplicationContextAware{
 	public static String mapperScanPath = "com.mapper";
 	public TestUtil() {
 		log.info("实例化TestUtil");
+	}
+	
+	private static Map<String,Object> lazyBeanObjMap;
+	private static Map<String,Field> lazyBeanFieldMap;
+	private static Map<String,String> lazyBeanNameMap;
+	
+	static void loadLazyAttr(Object obj,Field f,String beanName) {
+		if(lazyBeanObjMap == null) {
+			lazyBeanObjMap = Maps.newHashMap();
+			lazyBeanFieldMap = Maps.newHashMap();
+			lazyBeanNameMap = Maps.newHashMap();
+		}
+		String fKey = obj.getClass().getName()+"_"+f.getName();
+		lazyBeanObjMap.put(fKey,obj);
+		lazyBeanFieldMap.put(fKey,f);
+		lazyBeanNameMap.put(fKey, beanName);
 	}
 	
 	private static ApplicationContext staticApplicationContext;
@@ -64,6 +83,21 @@ public class TestUtil implements ApplicationContextAware{
 			}
 			ScanUtil.loadAllClass();
 			processConfig();
+		}
+		
+		lazyProcessAttr();
+	}
+	private void lazyProcessAttr() {
+		if(lazyBeanObjMap!=null) {
+			lazyBeanObjMap.keySet().forEach(fKey->{
+				Object obj = lazyBeanObjMap.get(fKey);
+				Field attr = lazyBeanFieldMap.get(fKey);
+				try {
+					attr.set(obj, LazyBean.buildProxy(attr.getType(),lazyBeanNameMap.get(fKey)));
+				} catch (IllegalArgumentException | IllegalAccessException e) {
+					e.printStackTrace();
+				}
+			});
 		}
 	}
 	private void processConfig() {
