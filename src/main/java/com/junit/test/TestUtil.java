@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -176,6 +177,10 @@ public class TestUtil implements ApplicationContextAware{
 				return Integer.valueOf(value);
 			}else if(type == Long.class) {
 				return Long.valueOf(value);
+			}else if(type == Double.class) {
+				return Double.valueOf(value);
+			}else if(type == BigDecimal.class) {
+				return new BigDecimal(value);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();

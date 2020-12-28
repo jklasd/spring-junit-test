@@ -1,11 +1,13 @@
 package com.junit.test.mapper;
 
 import java.util.Map;
+import java.util.Properties;
 
 import javax.sql.DataSource;
 
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.apache.ibatis.plugin.Interceptor;
+import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.core.io.Resource;
 
@@ -38,26 +40,36 @@ public class LazyMybatisMapperBean{
 		return null;
 	}
 	
-	
+	private static SqlSession session;
 	@SuppressWarnings("unchecked")
 	private static Object getMapper(Class classBean) throws Exception {
 		if(mapper.containsKey(classBean)) {
 			return mapper.get(classBean);
 		}
-		Object tag = factory.getObject().openSession().getMapper(classBean);
+//		if(((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount()>5) {
+//			log.info("连接数=>{}",((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount());
+//		}
+		if(session == null) {
+			session = factory.getObject().openSession();
+		}
+		Object tag = session.getMapper(classBean);
 		mapper.put(classBean, tag);
 		return tag;
 	}
 
 
 	private static void buildFactory() throws Exception {
-		factory = new SqlSessionFactoryBean();
-		factory.setDataSource(dataSource);
-		Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
-		factory.setMapperLocations(resources);
+		if(factory == null) {
+			factory = new SqlSessionFactoryBean();
+			factory.setDataSource(dataSource);
+			Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
+			factory.setMapperLocations(resources);
 //		factory.setTypeAliasesPackage("");
-		factory.setPlugins(new Interceptor[]{new PageHelper()});
-		factory.afterPropertiesSet();
+			factory.setPlugins(new Interceptor[]{new PageHelper()});
+			factory.afterPropertiesSet();
+		}else {
+			log.info("factory已存在");
+		}
 	}
 
 
@@ -72,12 +84,17 @@ public class LazyMybatisMapperBean{
 	 * @return
 	 */
 	public static void buildDataSource() {
-		PooledDataSource dataSourceTmp = new PooledDataSource();
-		dataSourceTmp.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
-		dataSourceTmp.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
-		dataSourceTmp.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
-		dataSourceTmp.setDriver(TestUtil.getPropertiesValue("jdbc.driver"));
-		dataSource = dataSourceTmp;
+		if(dataSource == null) {
+			PooledDataSource dataSourceTmp = new PooledDataSource();
+			dataSourceTmp.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
+			dataSourceTmp.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
+			dataSourceTmp.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
+			dataSourceTmp.setDriver(TestUtil.getPropertiesValue("jdbc.driver"));
+			dataSourceTmp.setPoolMaximumIdleConnections(1);
+			dataSource = dataSourceTmp;
+		}else {
+			log.info("dataSource已存在");
+		}
 	}
 
 }

@@ -54,19 +54,27 @@ public class LazyBean {
 			}
 		}
 		Object tag = null;
-		try {
-			if (classBean.isInterface()) {
-				InvocationHandler handler = new LazyImple(classBean,beanName);
-				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-				
-			} else {
-				MethodInterceptor handler = new LazyCglib(classBean,beanName);
-				tag = Enhancer.create(classBean, handler);
+		if(classBean.getPackage().getName().contains(LazyMQBean.packageName)) {
+			try {
+				tag = LazyMQBean.buildBean(classBean);
+			} catch (InstantiationException | IllegalAccessException e) {
+				e.printStackTrace();
 			}
-		} catch (Exception e) {
-			tag = TestUtil.getExistBean(classBean, beanName);
-			if(tag == null) {
-				System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+		}else {
+			try {
+				if (classBean.isInterface()) {
+					InvocationHandler handler = new LazyImple(classBean,beanName);
+					tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
+					
+				} else {
+					MethodInterceptor handler = new LazyCglib(classBean,beanName);
+					tag = Enhancer.create(classBean, handler);
+				}
+			} catch (Exception e) {
+				tag = TestUtil.getExistBean(classBean, beanName);
+				if(tag == null) {
+					System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+				}
 			}
 		}
 		if(tag!=null) {
@@ -248,24 +256,15 @@ class LazyCglib implements MethodInterceptor {
 
 	private Object getTagertObj() {
 		if (tagertObj == null) {
-			
-			if(tag.getPackage().getName().contains(LazyMQBean.packageName)) {
+			if(beanName!=null) {
+				tagertObj = ScanUtil.findBean(beanName);
+				LazyBean.processAttr(tagertObj, tagertObj.getClass());
+			}else {
 				try {
-					tagertObj = LazyMQBean.buildBean(tag);
+					tagertObj = tag.newInstance();
+					LazyBean.processAttr(tagertObj, tag);
 				} catch (InstantiationException | IllegalAccessException e) {
 					e.printStackTrace();
-				}
-			}else {
-				if(beanName!=null) {
-					tagertObj = ScanUtil.findBean(beanName);
-					LazyBean.processAttr(tagertObj, tagertObj.getClass());
-				}else {
-					try {
-						tagertObj = tag.newInstance();
-						LazyBean.processAttr(tagertObj, tag);
-					} catch (InstantiationException | IllegalAccessException e) {
-						e.printStackTrace();
-					}
 				}
 			}
 		}
@@ -303,13 +302,7 @@ class LazyImple implements InvocationHandler {
 
 	private Object getTagertObj() {
 		if (tagertObj == null) {
-			if(tag.getPackage().getName().contains(LazyMQBean.packageName)) {
-				try {
-					tagertObj = LazyMQBean.buildBean(tag);
-				} catch (InstantiationException | IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			}else if(LazyDubboBean.isDubbo(tag)) {
+			if(LazyDubboBean.isDubbo(tag)) {
 				tagertObj = LazyDubboBean.buildBean(tag);
 			} else {
 				if(beanName == null) {
