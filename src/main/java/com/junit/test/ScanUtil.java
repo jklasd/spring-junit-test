@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.junit.test.dubbo.LazyDubboBean;
+import com.junit.test.mapper.LazyMybatisMapperBean;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -207,6 +208,9 @@ public class ScanUtil{
 						c.getAnnotation(Service.class)!=null ) {
 					list.add(c);
 				}
+			}else if(interfaceClass.getPackage().getName().contains(TestUtil.mapperScanPath)
+					&& c == interfaceClass) {
+				list.add(c);
 			}
 		});
 		return list;
