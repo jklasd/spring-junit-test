@@ -32,6 +32,7 @@ public abstract class LazyMQBean {
 				return getFactory(rabbitPackage).buildBeanProcess(classBean);
 			}else {
 				//
+				log.warn("{}=>MQ 还未配置",classBean.getPackage().getName());
 			}
 			if (factory != null) {
 				return factory.buildBeanProcess(classBean);
