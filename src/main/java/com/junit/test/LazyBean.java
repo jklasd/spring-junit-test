@@ -64,9 +64,10 @@ public class LazyBean {
 				tag = Enhancer.create(classBean, handler);
 			}
 		} catch (Exception e) {
-			System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
-//			log.error("代理Bean",e);
 			tag = TestUtil.getExistBean(classBean, beanName);
+			if(tag == null) {
+				System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+			}
 		}
 		if(tag!=null) {
 			if(StringUtils.isNotBlank(beanName)) {
@@ -104,8 +105,11 @@ public class LazyBean {
 		return tag;
 	}
 	public static void setObj(Field f,Object obj,Object proxyObj) {
+		setObj(f, obj, proxyObj, null);
+	}
+	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
 		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
-			
+			TestUtil.loadLazyAttr(obj, f, proxyBeanName);
 		}
 		try {
 			if (!f.isAccessible()) {
@@ -188,7 +192,7 @@ public class LazyBean {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
 						if(StringUtils.isNotBlank(c.name())) {
-							setObj(f, obj, buildProxy(f.getType(),c.name()));
+							setObj(f, obj, buildProxy(f.getType(),c.name()),c.name());
 						}else {
 							setObj(f, obj, buildProxy(f.getType()));
 						}
