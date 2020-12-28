@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
@@ -24,6 +25,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -181,14 +183,20 @@ public class TestUtil implements ApplicationContextAware{
 		
 		return null;
 	}
-	private static Class[] staticClass;
+	private static List<Class> staticClass;
 	public static void configStatic(Class... classArg) {
-		staticClass = classArg;
+		if(staticClass == null) {
+			staticClass = Lists.newArrayList();
+		}
+		staticClass.addAll(Lists.newArrayList(classArg));
 	}
 	
-	private static Class[] contextUtil;
+	private static List<Class> contextUtil;
 	public static void configBeanFactory(Class... classArg) {
-		contextUtil = classArg;
+		if(contextUtil == null) {
+			contextUtil = Lists.newArrayList();
+		}
+		contextUtil.addAll(Lists.newArrayList(classArg));
 	}
 	public static Resource[] getResources(String locationPattern) throws IOException {
 		return bf.getResources(locationPattern);
