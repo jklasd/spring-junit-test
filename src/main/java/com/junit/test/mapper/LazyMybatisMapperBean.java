@@ -11,6 +11,7 @@ import org.springframework.core.io.Resource;
 
 import com.github.pagehelper.PageHelper;
 import com.google.common.collect.Maps;
+import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -52,7 +53,7 @@ public class LazyMybatisMapperBean{
 	private static void buildFactory() throws Exception {
 		factory = new SqlSessionFactoryBean();
 		factory.setDataSource(dataSource);
-		Resource[] resources = TestUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
+		Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
 		factory.setMapperLocations(resources);
 //		factory.setTypeAliasesPackage("");
 		factory.setPlugins(new Interceptor[]{new PageHelper()});

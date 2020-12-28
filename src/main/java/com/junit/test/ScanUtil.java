@@ -25,6 +25,13 @@ import lombok.extern.slf4j.Slf4j;
 public class ScanUtil{
 	
 	static Map<String,Class> nameMap = Maps.newHashMap();
+	private static PathMatchingResourcePatternResolver resourceResolver;
+	public static Resource[] getResources(String path) throws IOException {
+		if(resourceResolver == null) {
+			resourceResolver = new PathMatchingResourcePatternResolver(); 
+		}
+		return resourceResolver.getResources(path);
+	}
 	private static void loadClass(File file,String rootPath){
 		File[] files = file.listFiles();
 		for (File f : files) {
@@ -51,8 +58,7 @@ public class ScanUtil{
 	}
 	public static void loadAllClass() {
 		try {
-			Resource[] resources = new PathMatchingResourcePatternResolver()
-					.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
+			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
 			for (Resource r : resources) {
 				URL url = r.getURL();
 				if(!url.getPath().contains(".jar")) {

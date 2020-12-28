@@ -198,9 +198,6 @@ public class TestUtil implements ApplicationContextAware{
 		}
 		contextUtil.addAll(Lists.newArrayList(classArg));
 	}
-	public static Resource[] getResources(String locationPattern) throws IOException {
-		return bf.getResources(locationPattern);
-	}
 	private static BeanFactory bf = new BeanFactory();
 	public static String dubboXml = "classpath*:/dubbo-context.xml";
 	
@@ -398,7 +395,7 @@ public class TestUtil implements ApplicationContextAware{
 
 		@Override
 		public Resource[] getResources(String locationPattern) throws IOException {
-			return staticApplicationContext.getResources(locationPattern);
+			return ScanUtil.getResources(locationPattern);
 		}
 
 		@Override

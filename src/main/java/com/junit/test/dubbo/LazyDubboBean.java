@@ -75,7 +75,7 @@ public class LazyDubboBean {
 		if(StringUtils.isBlank(xml)) {
 			ScanUtil.findBeanByInterface(com.alibaba.dubbo.config.annotation.Service.class);
 		}else {
-			Resource[] resource = TestUtil.getResources(xml);
+			Resource[] resource = ScanUtil.getResources(xml);
 			if(resource != null) {
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				//创建DocumentBuilder对象
