@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -220,6 +221,9 @@ public class LazyBean {
 		for (Method m : ms) {
 			if (m.getAnnotation(PostConstruct.class) != null) {
 				try {
+					if (!m.isAccessible()) {
+						m.setAccessible(true);
+					}
 					m.invoke(obj, null);
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 					e.printStackTrace();
@@ -279,6 +283,7 @@ class LazyImple implements InvocationHandler {
 	private Class tag;
 	private Object tagertObj;
 	private String beanName;
+	private boolean isDbConnect;
 
 	public LazyImple(Class tag) {
 		this.tag = tag;
@@ -292,7 +297,12 @@ class LazyImple implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
 			AopContextSuppert.setProxyObj(proxy);
-			return method.invoke(getTagertObj(), args);
+			Object result = method.invoke(getTagertObj(), args);
+			if(!isDbConnect) {
+				// 处理openSession
+				Transactional transactional = method.getAnnotation(Transactional.class);
+			}
+			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
 			//throw e;
@@ -309,6 +319,7 @@ class LazyImple implements InvocationHandler {
 					if(tag.getPackage().getName().contains(TestUtil.mapperScanPath)) {
 						//延迟处理
 						tagertObj = LazyMybatisMapperBean.buildBean(tag);
+						isDbConnect = true;
 					}else {
 						// 本地bean
 						Object tagImp = ScanUtil.findBeanByInterface(tag);
@@ -326,6 +337,7 @@ class LazyImple implements InvocationHandler {
 					if(tag.getPackage().getName().contains(TestUtil.mapperScanPath)) {
 						//延迟处理
 						tagertObj = LazyMybatisMapperBean.buildBean(tag);
+						isDbConnect = true;
 					}else {
 						// 本地bean
 						Object tagImp = ScanUtil.findBean(beanName);
