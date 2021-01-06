@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -31,6 +32,12 @@ public class ScanUtil{
 	
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
+	/**
+	 * 扫描路径下资源
+	 * @param path
+	 * @return
+	 * @throws IOException
+	 */
 	public static Resource[] getResources(String path) throws IOException {
 		if(resourceResolver == null) {
 			resourceResolver = new PathMatchingResourcePatternResolver(); 
@@ -61,6 +68,9 @@ public class ScanUtil{
 			}
 		}
 	}
+	/**
+	 * 加载所有class，缓存起来
+	 */
 	public static void loadAllClass() {
 		try {
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
@@ -76,6 +86,11 @@ public class ScanUtil{
 		}
 	}
 	public static Map<String,Object> beanMaps = Maps.newHashMap();
+	/**
+	 * 通过BeanName 获取bean
+	 * @param beanName
+	 * @return
+	 */
 	public static Object findBean(String beanName) {
 		if(beanMaps.containsKey(beanName)) {
 			return beanMaps.get(beanName);
@@ -130,6 +145,11 @@ public class ScanUtil{
 		});
 		return list.isEmpty()?null:list.get(0);
 	}
+	/**
+	 * 通过class 查找它的所有继承者或实现者
+	 * @param requiredType
+	 * @return
+	 */
 	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static List findListBean(Class<?> requiredType) {
 		List list = Lists.newArrayList();
@@ -149,6 +169,11 @@ public class ScanUtil{
 		}
 		return list;
 	}
+	/**
+	 * 通过class 获取 bean
+	 * @param requiredType
+	 * @return
+	 */
 	public static Object findBean(Class<?> requiredType) {
 		if(LazyDubboBean.isDubbo(requiredType)) {
 			return LazyDubboBean.buildBean(requiredType);
@@ -219,6 +244,13 @@ public class ScanUtil{
 		});
 		return list;
 	}
+	/**
+	 * 判断 c 是否是interfaceC的实现类
+	 * @param c
+	 * @param interfaceC
+	 * @return
+	 */
+	@SuppressWarnings({ "rawtypes" })
 	public static boolean isImple(Class c,Class interfaceC) {
 		Class[] ics = c.getInterfaces();
 		for(Class c2 : ics) {
@@ -232,22 +264,42 @@ public class ScanUtil{
 		}
 		return false;
 	}
-	
+	/**
+	 * 
+	 * 通过注解查找Bean
+	 * 
+	 * @param annotationType
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
 	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
 		List<Class> list = findClassWithAnnotation(annotationType);
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
-			String beanName = null;
-			if(c.getAnnotation(Component.class)!=null) {
-				beanName = ((Component)c.getAnnotation(Component.class)).value();
-			}else if(	c.getAnnotation(Service.class)!=null ) {
-				beanName = ((Service)c.getAnnotation(Service.class)).value();
-			}else {
-				beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
-			}
-			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
+			String beanName = getBeanName(c);
+			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c,beanName));
 		});
 		return annoClass;
+	}
+	/**
+	 * 获取BeanName
+	 * @param c
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public static String getBeanName(Class c) {
+		String beanName = null;
+		if(c.getAnnotation(Component.class)!=null) {
+			beanName = ((Component)c.getAnnotation(Component.class)).value();
+		}else if(	c.getAnnotation(Service.class)!=null ) {
+			beanName = ((Service)c.getAnnotation(Service.class)).value();
+		}/*else if(	c.getAnnotation(Configuration.class)!=null ) {
+			beanName = ((Configuration)c.getAnnotation(Configuration.class)).value();
+		}*/
+		if(StringUtils.isBlank(beanName)){
+			beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
+		}
+		return beanName;
 	}
 	
 	/**

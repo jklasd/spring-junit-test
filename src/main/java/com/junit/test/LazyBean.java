@@ -114,7 +114,7 @@ public class LazyBean {
 		if (singleton.containsKey(classBean)) {
 			return singleton.get(classBean);
 		}
-		Object tag = buildProxy(classBean,null);
+		Object tag = buildProxy(classBean,ScanUtil.getBeanName(classBean));
 		if(tag!=null) {
 			singleton.put(classBean, tag);
 		}
