@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -53,7 +52,7 @@ public class ScanUtil{
 			} else if (f.getName().endsWith(".class")) {
 				String p = f.getPath();
 				File tmp = new File(rootPath);
-				p = p.replace(tmp.getPath()+"\\", "").replace("\\", ".").replace(".class", "");
+				p = p.replace(tmp.getPath()+"\\", "").replace("/", "").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
 					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
@@ -228,18 +227,21 @@ public class ScanUtil{
 	 * @throws ClassNotFoundException
 	 */
 	private static List<Class> findClassByInterface(Class interfaceClass){
+//		if(interfaceClass.getName().contains("ApplicationService")) {
+//			log.info("断点");
+//		}
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
-			if(isImple(c,interfaceClass)) {
-				if(c.getAnnotation(Component.class)!=null ||
-						c.getAnnotation(Service.class)!=null ) {
-					list.add(c);
+			Class<?> tmpClass = nameMap.get(name);
+			if(isImple(tmpClass,interfaceClass)) {
+				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
+						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
+					list.add(tmpClass);
 				}
 			}else if(interfaceClass.getPackage().getName().contains(TestUtil.mapperScanPath)
-					&& c == interfaceClass) {
-				list.add(c);
+					&& tmpClass == interfaceClass) {
+				list.add(tmpClass);
 			}
 		});
 		return list;
@@ -277,7 +279,7 @@ public class ScanUtil{
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
 			String beanName = getBeanName(c);
-			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c,beanName));
+			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
 		});
 		return annoClass;
 	}
@@ -296,9 +298,9 @@ public class ScanUtil{
 		}/*else if(	c.getAnnotation(Configuration.class)!=null ) {
 			beanName = ((Configuration)c.getAnnotation(Configuration.class)).value();
 		}*/
-		if(StringUtils.isBlank(beanName)){
-			beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
-		}
+//		if(StringUtils.isBlank(beanName)){
+//			beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
+//		}
 		return beanName;
 	}
 	
@@ -341,7 +343,7 @@ public class ScanUtil{
 							list.add(c);
 							return;
 						}
-						log.info(returnType.getName());
+//						log.info(returnType.getName());
 					}
 				}
 			}
