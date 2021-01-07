@@ -52,7 +52,7 @@ public class ScanUtil{
 			} else if (f.getName().endsWith(".class")) {
 				String p = f.getPath();
 				File tmp = new File(rootPath);
-				p = p.replace(tmp.getPath()+"\\", "").replace("/", "").replace("\\", ".").replace(".class", "");
+				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
 					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
