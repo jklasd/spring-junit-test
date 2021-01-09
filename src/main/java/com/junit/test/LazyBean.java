@@ -186,12 +186,12 @@ public class LazyBean {
 						try {
 							Class<?> c = Class.forName(item[0].getTypeName());
 							setObj(f, obj, ScanUtil.findListBean(c));
-							System.out.println("注入成功");
+							log.info("注入集合=>{}",f.getName());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
 					}else {
-						System.out.println("其他特殊情况");
+						log.info("其他特殊情况");
 					}
 				}else {
 					if(TestUtil.getExistBean(f.getType(), f.getName()) != null) {
@@ -213,7 +213,7 @@ public class LazyBean {
 							setObj(f, obj, buildProxy(f.getType()));
 						}
 					} else {
-						log.info("不需要需要注入=>{}", f.getName());
+						log.debug("不需要需要注入=>{}", f.getName());
 					}
 				}
 			}
@@ -307,7 +307,7 @@ class LazyCglib implements MethodInterceptor {
 	 */
 	private Object getTagertObj() {
 		if (tagertObj == null) {
-			if(beanName!=null) {//若存在beanName。则通过beanName查找
+			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
 				tagertObj = ScanUtil.findBean(beanName);
 				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
 			}else {

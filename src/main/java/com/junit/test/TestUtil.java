@@ -159,14 +159,18 @@ public class TestUtil implements ApplicationContextAware{
 		try {
 			if(type == null || type == String.class) {
 				return	value;
-			}else if(type == Integer.class) {
+			}else if(type == Integer.class || type == int.class) {
 				return Integer.valueOf(value);
-			}else if(type == Long.class) {
+			}else if(type == Long.class || type == long.class) {
 				return Long.valueOf(value);
-			}else if(type == Double.class) {
+			}else if(type == Double.class || type == double.class) {
 				return Double.valueOf(value);
 			}else if(type == BigDecimal.class) {
 				return new BigDecimal(value);
+			}else if(type == Boolean.class || type == boolean.class) {
+				return new Boolean(value);
+			}else {
+				log.info("其他类型");
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
