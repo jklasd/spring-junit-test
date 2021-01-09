@@ -3,6 +3,7 @@ package com.junit.test;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigDecimal;
 import java.util.List;
@@ -104,27 +105,12 @@ public class TestUtil implements ApplicationContextAware{
 		}
 	}
 	private void processConfig() {
-		try {
-			if(staticClass != null) {
-				for(Class<?> c : staticClass) {
-					LazyBean.processStatic(c);
-				}
-			}
-		} catch (Exception e) {
-			log.error("加载静态类",e);
-		}
-		ApplicationContext context = bf;
-		try {
-			if(contextUtil != null) {
-				for(Class<?> c : contextUtil) {
-					Object obj = c.newInstance();
-					Method m = c.getDeclaredMethod("setApplicationContext", ApplicationContext.class);
-					m.invoke(obj,context);
-				}
-			}
-		} catch (Exception e) {
-			log.error("加载ApplicationContext",e);
-		}
+		
+		List<Class> list = ScanUtil.findStaticMethodClass();
+		log.info("static class =>{}",list.size());
+		list.stream().filter(classItem -> classItem != getClass()).forEach(classItem->{
+			LazyBean.processStatic(classItem);
+		});
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -188,22 +174,22 @@ public class TestUtil implements ApplicationContextAware{
 		
 		return null;
 	}
-	private static List<Class> staticClass;
-	public static void configStatic(Class... classArg) {
-		if(staticClass == null) {
-			staticClass = Lists.newArrayList();
-		}
-		staticClass.addAll(Lists.newArrayList(classArg));
-	}
+//	private static List<Class> staticClass;
+//	public static void configStatic(Class... classArg) {
+//		if(staticClass == null) {
+//			staticClass = Lists.newArrayList();
+//		}
+//		staticClass.addAll(Lists.newArrayList(classArg));
+//	}
 	
-	private static List<Class> contextUtil;
-	public static void configBeanFactory(Class... classArg) {
-		if(contextUtil == null) {
-			contextUtil = Lists.newArrayList();
-		}
-		contextUtil.addAll(Lists.newArrayList(classArg));
-	}
-	private static BeanFactory bf = new BeanFactory();
+//	private static List<Class> contextUtil;
+//	public static void configBeanFactory(Class... classArg) {
+//		if(contextUtil == null) {
+//			contextUtil = Lists.newArrayList();
+//		}
+//		contextUtil.addAll(Lists.newArrayList(classArg));
+//	}
+	static BeanFactory bf = new BeanFactory();
 	public static String dubboXml = "classpath*:/dubbo-context.xml";
 	
 	static class BeanFactory implements ApplicationContext{

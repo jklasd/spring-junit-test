@@ -31,6 +31,9 @@ public class LazyDubboBean {
 	@SuppressWarnings("rawtypes")
 	private static Map<Class,Node> dubboNode = Maps.newHashMap();
 	static {
+		/**
+		 * 加载dubboClass,两种方式，一种是注解引用。一种是读取dubboContext.xml
+		 */
 		try {
 			readDubboClass();
 		} catch (ParserConfigurationException | SAXException | IOException | ClassNotFoundException e) {

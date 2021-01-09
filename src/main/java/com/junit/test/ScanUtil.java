@@ -3,11 +3,15 @@ package com.junit.test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.net.URL;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -16,8 +20,8 @@ import org.springframework.stereotype.Service;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
-import com.junit.test.mapper.LazyMybatisMapperBean;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -264,5 +268,32 @@ public class ScanUtil{
 			}
 		});
 		return list;
+	}
+	
+	public static List<Class> findStaticMethodClass() {
+		Set<Class> list = Sets.newHashSet();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			Annotation comp = c.getAnnotation(Component.class);
+			Annotation service = c.getAnnotation(Service.class);
+			Annotation configuration = c.getAnnotation(Configuration.class);
+			if(comp != null
+					|| service != null
+					|| configuration != null) {
+				Method[] methods = c.getDeclaredMethods();
+				for(Method m : methods) {
+					if(Modifier.isStatic(m.getModifiers())) {
+						Class returnType = m.getReturnType();
+						if(!returnType.getName().contains("void")) {
+							list.add(c);
+							return;
+						}
+						log.info(returnType.getName());
+					}
+				}
+			}
+		});
+		return Lists.newArrayList(list);
 	}
 }
