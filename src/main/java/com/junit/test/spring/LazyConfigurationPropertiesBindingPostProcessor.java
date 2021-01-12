@@ -11,7 +11,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LazyConfigurationPropertiesBindingPostProcessor {
 
-	public static void process(Object obj, ConfigurationProperties annotation) {
+	public static void processConfigurationProperties(Object obj, ConfigurationProperties annotation) {
 		Object target = obj;
 		PropertiesConfigurationFactory<Object> factory = new PropertiesConfigurationFactory<Object>(
 				target);

@@ -230,7 +230,7 @@ public class LazyBean {
 		
 		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
 		if(proconfig!=null) {
-			LazyConfigurationPropertiesBindingPostProcessor.process(obj,proconfig);
+			LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(obj,proconfig);
 		}
 	}
 
