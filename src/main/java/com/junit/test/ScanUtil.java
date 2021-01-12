@@ -25,7 +25,11 @@ import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class ScanUtil{
 	

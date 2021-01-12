@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -27,6 +28,7 @@ import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.mapper.LazyMybatisMapperBean;
 import com.junit.test.mq.LazyMQBean;
+import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -225,6 +227,11 @@ public class LazyBean {
 
 		Method[] ms = obj.getClass().getDeclaredMethods();
 		postConstruct(obj, ms,superC);
+		
+		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
+		if(proconfig!=null) {
+			LazyConfigurationPropertiesBindingPostProcessor.process(obj,proconfig);
+		}
 	}
 
 	public static Object processStatic(Class c) {
@@ -276,6 +283,7 @@ public class LazyBean {
 	}
 }
 
+@Slf4j
 class LazyCglib implements MethodInterceptor {
 	private Class tag;
 	private String beanName;
@@ -306,6 +314,10 @@ class LazyCglib implements MethodInterceptor {
 	 * @return
 	 */
 	private Object getTagertObj() {
+		if(tag.getName().contains("ApiConfig")) {
+			log.info("断点");
+		}
+		
 		if (tagertObj == null) {
 			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
 				tagertObj = ScanUtil.findBean(beanName);
@@ -318,7 +330,8 @@ class LazyCglib implements MethodInterceptor {
 					tagertObj = tag.newInstance();
 					LazyBean.processAttr(tagertObj, tag);//递归注入代理对象
 				} catch (InstantiationException | IllegalAccessException e) {
-					e.printStackTrace();
+					log.error("构建bean=>{}",tag);
+					log.error("构建bean异常",e);
 				}
 			}
 		}

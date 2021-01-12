@@ -3,7 +3,11 @@ package com.junit.test.mq;
 import org.springframework.amqp.core.AmqpAdmin;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public abstract class LazyMQBean {
 	public final static String packageName = "org.springframework.amqp";

@@ -17,7 +17,11 @@ import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class LazyMybatisMapperBean{
 	private static DataSource dataSource;
