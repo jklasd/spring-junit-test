@@ -3,8 +3,7 @@ package com.junit.test;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
@@ -24,10 +23,11 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertySources;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -108,7 +108,10 @@ public class TestUtil implements ApplicationContextAware{
 		
 		List<Class> list = ScanUtil.findStaticMethodClass();
 		log.info("static class =>{}",list.size());
-		list.stream().filter(classItem -> classItem != getClass()).forEach(classItem->{
+		/**
+		 * 不能是抽象类
+		 */
+		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers())).forEach(classItem->{
 			LazyBean.processStatic(classItem);
 		});
 	}
@@ -441,5 +444,10 @@ public class TestUtil implements ApplicationContextAware{
 			return null;
 		}
 		
+	}
+
+	public static PropertySources getPropertySource() {
+		StandardEnvironment env = (StandardEnvironment) staticApplicationContext.getEnvironment();
+		return env.getPropertySources();
 	}
 }
