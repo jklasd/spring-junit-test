@@ -314,9 +314,9 @@ class LazyCglib implements MethodInterceptor {
 	 * @return
 	 */
 	private Object getTagertObj() {
-		if(tag.getName().contains("ApiConfig")) {
-			log.info("断点");
-		}
+//		if(tag.getName().contains("ApiConfig")) {
+//			log.info("断点");
+//		}
 		
 		if (tagertObj == null) {
 			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
