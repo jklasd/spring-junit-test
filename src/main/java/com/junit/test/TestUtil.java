@@ -10,11 +10,13 @@ import java.util.Locale;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -39,14 +41,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-public class TestUtil implements ApplicationContextAware{
+public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	private static boolean test;
 	public static String mapperPath = "classpath*:/mapper/**/*.xml";
 	public static String mapperScanPath = "com.mapper";
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
-	
+	public static PooledDataSource dataSource;
 	private static Map<String,Object> lazyBeanObjMap;
 	private static Map<String,Field> lazyBeanFieldMap;
 	private static Map<String,String> lazyBeanNameMap;
@@ -64,6 +66,16 @@ public class TestUtil implements ApplicationContextAware{
 	}
 	
 	private static ApplicationContext staticApplicationContext;
+	
+	public static void buildDataSource(String url,String username,String passwd) {
+		if(dataSource == null) {
+			dataSource = new PooledDataSource();
+		}
+		dataSource.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
+		dataSource.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
+		dataSource.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
+		dataSource.setDriver(TestUtil.getPropertiesValue("jdbc.driver",""));
+	}
 	
 	public static boolean isTest() {
 		return test;
@@ -198,6 +210,7 @@ public class TestUtil implements ApplicationContextAware{
 //	}
 	static BeanFactory bf = new BeanFactory();
 	public static String dubboXml = "classpath*:/dubbo-context.xml";
+	public static String mapperJdbcPrefix = "";
 	
 	static class BeanFactory implements ApplicationContext{
 		@Override
@@ -449,5 +462,17 @@ public class TestUtil implements ApplicationContextAware{
 	public static PropertySources getPropertySource() {
 		StandardEnvironment env = (StandardEnvironment) staticApplicationContext.getEnvironment();
 		return env.getPropertySources();
+	}
+
+	@Override
+	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
+		// TODO Auto-generated method stub
+		return bean;
+	}
+
+	@Override
+	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
+		// TODO Auto-generated method stub
+		return bean;
 	}
 }
