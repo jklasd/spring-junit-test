@@ -5,6 +5,7 @@ import java.util.Properties;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSession;
@@ -90,12 +91,23 @@ public class LazyMybatisMapperBean{
 	public static void buildDataSource() {
 		if(dataSource == null) {
 			PooledDataSource dataSourceTmp = new PooledDataSource();
-			dataSourceTmp.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
-			dataSourceTmp.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
-			dataSourceTmp.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
-			dataSourceTmp.setDriver(TestUtil.getPropertiesValue("jdbc.driver"));
-			dataSourceTmp.setPoolMaximumIdleConnections(1);
-			dataSource = dataSourceTmp;
+			if(StringUtils.isBlank(TestUtil.mapperJdbcPrefix)) {
+				TestUtil.mapperJdbcPrefix = "jdbc";
+			}
+			if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"))) {
+				dataSourceTmp.setUrl(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"));
+				dataSourceTmp.setUsername(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".username"));
+				dataSourceTmp.setPassword(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".password"));
+				if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"))) {
+					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"));
+				}else {
+					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driver"));
+				}
+				dataSourceTmp.setPoolMaximumIdleConnections(1);
+				dataSource = dataSourceTmp;
+			}else {
+				dataSource = TestUtil.dataSource;
+			}
 		}else {
 			log.info("dataSource已存在");
 		}
