@@ -1,7 +1,6 @@
 package com.junit.test.mapper;
 
 import java.util.Map;
-import java.util.Properties;
 
 import javax.sql.DataSource;
 
@@ -45,20 +44,19 @@ public class LazyMybatisMapperBean{
 		return null;
 	}
 	
-	private static SqlSession session;
+	private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
+	
 	@SuppressWarnings("unchecked")
 	private static Object getMapper(Class classBean) throws Exception {
-		if(mapper.containsKey(classBean)) {
-			return mapper.get(classBean);
-		}
 //		if(((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount()>5) {
 //			log.info("连接数=>{}",((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount());
 //		}
-		if(session == null) {
-			session = factory.getObject().openSession();
+		if(sessionList.get() != null){
+			return sessionList.get().getMapper(classBean);
+		}else {
+			sessionList.set(factory.getObject().openSession());
 		}
-		Object tag = session.getMapper(classBean);
-		mapper.put(classBean, tag);
+		Object tag = sessionList.get().getMapper(classBean);
 		return tag;
 	}
 
@@ -103,6 +101,7 @@ public class LazyMybatisMapperBean{
 				}else {
 					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driver"));
 				}
+				dataSourceTmp.setPoolMaximumActiveConnections(10);
 				dataSourceTmp.setPoolMaximumIdleConnections(1);
 				dataSource = dataSourceTmp;
 			}else {

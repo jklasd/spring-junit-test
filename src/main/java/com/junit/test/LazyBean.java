@@ -384,8 +384,9 @@ class LazyImple implements InvocationHandler {
 			} else {
 				if(tag.getPackage().getName().contains(TestUtil.mapperScanPath)) {//判断是否是Mybatis mapper
 					//延迟处理
-					tagertObj = LazyMybatisMapperBean.buildBean(tag);
+//					tagertObj = LazyMybatisMapperBean.buildBean(tag);
 					isDbConnect = true;
+					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
 				}else {
 					if(beanName == null) {
 						/**
