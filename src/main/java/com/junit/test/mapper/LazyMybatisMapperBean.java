@@ -1,7 +1,5 @@
 package com.junit.test.mapper;
 
-import java.util.Map;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,7 +10,6 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.core.io.Resource;
 
 import com.github.pagehelper.PageHelper;
-import com.google.common.collect.Maps;
 import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
@@ -27,7 +24,7 @@ public class LazyMybatisMapperBean{
 	private static DataSource dataSource;
 	private static SqlSessionFactoryBean factory;
 	
-	public static Map<Class,Object> mapper = Maps.newHashMap();
+	
 	@SuppressWarnings("unchecked")
 	public static Object buildBean(Class classBean) {
 		try {
@@ -109,6 +106,15 @@ public class LazyMybatisMapperBean{
 			}
 		}else {
 			log.info("dataSource已存在");
+		}
+	}
+
+
+	public static void over() {
+		if(sessionList.get()!=null) {
+			sessionList.get().commit();
+			sessionList.get().close();
+			sessionList.remove();
 		}
 	}
 

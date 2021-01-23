@@ -365,6 +365,7 @@ class LazyImple implements InvocationHandler {
 				// 处理openSession
 				Transactional transactional = method.getAnnotation(Transactional.class);
 			}
+			LazyMybatisMapperBean.over();
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
