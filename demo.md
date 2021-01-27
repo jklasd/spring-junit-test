@@ -1,6 +1,9 @@
 @RunWith(SpringRunner.class)
-@SpringBootTest(classes = { TestUtil.class,RedisAutoConfiguration.class })
-public class SimpleTest extends AbstractJUnit4SpringContextTests {
+
+@SpringBootTest(classes = { TestUtil.class})
+
+public class SimpleTest{
+
 	public SimpleTest() {
 		System.out.println(("================初始化单元用例======================"));
 		LazyBean.processAttr(this, this.getClass());
