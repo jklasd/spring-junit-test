@@ -1,8 +1,5 @@
 package com.junit.test.mapper;
 
-import java.util.Map;
-import java.util.Properties;
-
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +10,6 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.core.io.Resource;
 
 import com.github.pagehelper.PageHelper;
-import com.google.common.collect.Maps;
 import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
@@ -28,7 +24,7 @@ public class LazyMybatisMapperBean{
 	private static DataSource dataSource;
 	private static SqlSessionFactoryBean factory;
 	
-	public static Map<Class,Object> mapper = Maps.newHashMap();
+	
 	@SuppressWarnings("unchecked")
 	public static Object buildBean(Class classBean) {
 		try {
@@ -45,20 +41,19 @@ public class LazyMybatisMapperBean{
 		return null;
 	}
 	
-	private static SqlSession session;
+	private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
+	
 	@SuppressWarnings("unchecked")
 	private static Object getMapper(Class classBean) throws Exception {
-		if(mapper.containsKey(classBean)) {
-			return mapper.get(classBean);
-		}
 //		if(((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount()>5) {
 //			log.info("连接数=>{}",((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount());
 //		}
-		if(session == null) {
-			session = factory.getObject().openSession();
+		if(sessionList.get() != null){
+			return sessionList.get().getMapper(classBean);
+		}else {
+			sessionList.set(factory.getObject().openSession());
 		}
-		Object tag = session.getMapper(classBean);
-		mapper.put(classBean, tag);
+		Object tag = sessionList.get().getMapper(classBean);
 		return tag;
 	}
 
@@ -103,6 +98,7 @@ public class LazyMybatisMapperBean{
 				}else {
 					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driver"));
 				}
+				dataSourceTmp.setPoolMaximumActiveConnections(10);
 				dataSourceTmp.setPoolMaximumIdleConnections(1);
 				dataSource = dataSourceTmp;
 			}else {
@@ -110,6 +106,15 @@ public class LazyMybatisMapperBean{
 			}
 		}else {
 			log.info("dataSource已存在");
+		}
+	}
+
+
+	public static void over() {
+		if(sessionList.get()!=null) {
+			sessionList.get().commit();
+			sessionList.get().close();
+			sessionList.remove();
 		}
 	}
 
