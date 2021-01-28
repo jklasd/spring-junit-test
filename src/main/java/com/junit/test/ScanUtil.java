@@ -84,7 +84,13 @@ public class ScanUtil{
 				if(!url.getPath().contains(".jar")) {
 					File f = r.getFile();
 					loadClass(f,url.getFile());
-				}
+				}/*else {
+					try {
+						File f = r.getFile();
+					} catch (Exception e) {
+						log.error("不能加载class文件=>{}",url.getPath());
+					}
+				}*/
 			}
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
@@ -329,7 +335,24 @@ public class ScanUtil{
 		});
 		return list;
 	}
-	
+	public static Boolean isBean(Class beanC) {
+		Boolean[] address = new Boolean[] {false};
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			if(beanC == c) {
+				Annotation comp = c.getAnnotation(Component.class);
+				Annotation service = c.getAnnotation(Service.class);
+				Annotation configuration = c.getAnnotation(Configuration.class);
+				if(comp != null
+						|| service != null
+						|| configuration != null) {
+					address[0] = true;
+				}
+			}
+		});
+		return address[0];
+	}
 	public static List<Class> findStaticMethodClass() {
 		Set<Class> list = Sets.newHashSet();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))

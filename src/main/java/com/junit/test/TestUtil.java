@@ -43,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
+@SuppressWarnings("rawtypes")
 public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	private static boolean test;
 	public static String mapperPath = "classpath*:/mapper/**/*.xml";
@@ -133,10 +134,40 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		});
 	}
 	
-	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class<?> classD) {
+		if(classD == ApplicationContext.class) {
+			return bf;
+		}
 		Object obj = staticApplicationContext.getBean(classD);
 		return obj;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static Object buildBean( Class c) {
+		Object obj = null;
+		try {
+			obj = bf.getBean(c);
+			if(obj!=null) {
+				return obj;
+			}
+		} catch (Exception e) {
+			log.error("不存在");
+		}
+		obj = staticApplicationContext.getAutowireCapableBeanFactory().createBean(c);
+		return obj; 
+	}
+	
+	public static void registerBean(Object bean) {
+		DefaultListableBeanFactory bf = (DefaultListableBeanFactory) staticApplicationContext.getAutowireCapableBeanFactory();
+		Object obj = null;
+		try {
+			obj = bf.getBean(bean.getClass());
+		} catch (Exception e) {
+			log.error("不存在");
+		}
+		if(obj==null) {
+			bf.registerSingleton(bean.getClass().getPackage().getName()+"."+bean.getClass().getSimpleName(), bean);
+		}
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -473,4 +504,5 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		// TODO Auto-generated method stub
 		return bean;
 	}
+
 }

@@ -1,4 +1,4 @@
-package com.junit.test.mapper;
+package com.junit.test.db;
 
 import javax.sql.DataSource;
 

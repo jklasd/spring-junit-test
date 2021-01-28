@@ -33,7 +33,7 @@ public class JavaBeanUtil {
 				//如果存在参数
 				if(m.getParameterCount()>0) {
 					Class[] paramTypes = m.getParameterTypes();
-					log.warn("存在参数，需要处理");
+					log.warn("存在二级Bean，需要处理");//
 				}
 				Object tagObj = m.invoke(obj);
 				cacheBean.put(key, tagObj);

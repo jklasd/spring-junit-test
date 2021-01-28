@@ -25,8 +25,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
+import com.junit.test.db.LazyMongoBean;
+import com.junit.test.db.LazyMybatisMapperBean;
 import com.junit.test.dubbo.LazyDubboBean;
-import com.junit.test.mapper.LazyMybatisMapperBean;
 import com.junit.test.mq.LazyMQBean;
 import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
@@ -93,14 +94,18 @@ public class LazyBean {
 				/**
 				 * 查询是否有构建bean的configration
 				 */
-				tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
-				if(tag == null) {
-					/**
-					 * 当无法构建代理对象时，从spring 容器里取。
-					 */
-					tag = TestUtil.getExistBean(classBean, beanName);
+				if(LazyMongoBean.isMongo(classBean)) {
+					tag = LazyMongoBean.buildBean(classBean,beanName);
+				}else {
+					tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
 					if(tag == null) {
-						System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+						/**
+						 * 当无法构建代理对象时，从spring 容器里取。
+						 */
+						tag = TestUtil.getExistBean(classBean, beanName);
+						if(tag == null) {
+							System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+						}
 					}
 				}
 			}
@@ -203,7 +208,7 @@ public class LazyBean {
 						log.info("其他特殊情况");
 					}
 				}else {
-					if(TestUtil.getExistBean(f.getType(), f.getName()) != null) {
+					if(ScanUtil.isBean(f.getType()) && TestUtil.getExistBean(f.getType(), f.getName())!=null) {
 						setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 					}else {
 						setObj(f, obj, buildProxy(f.getType()));
