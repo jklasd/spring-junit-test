@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -22,6 +23,7 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
+import com.junit.test.spring.JavaBeanUtil;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -353,5 +355,39 @@ public class ScanUtil{
 			}
 		});
 		return Lists.newArrayList(list);
+	}
+	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName) {
+		Object[] address = new Object[2];
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			Annotation comp = c.getAnnotation(Component.class);
+			Annotation service = c.getAnnotation(Service.class);
+			Annotation configuration = c.getAnnotation(Configuration.class);
+			if(comp != null
+					|| service != null
+					|| configuration != null) {
+				Method[] methods = c.getDeclaredMethods();
+				for(Method m : methods) {
+					Bean beanA = m.getAnnotation(Bean.class);
+					if(beanA != null) {
+						if(m.getReturnType() == classBean) {
+							address[0]=c;
+							address[1]=m;
+						}
+					}
+				}
+			}
+		});
+		return address;
+	}
+	@SuppressWarnings("rawtypes")
+	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
+		Object[] address = findCreateBeanFactoryClass(classBean, beanName);
+		if(address[0] ==null || address[1]==null) {
+			return null;
+		}
+		Object tagObj = JavaBeanUtil.buildBean((Class)address[0],(Method)address[1],classBean,beanName);
+		return tagObj;
 	}
 }

@@ -14,6 +14,7 @@ import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
+import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanPostProcessor;
@@ -30,6 +31,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -120,10 +122,13 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		
 		List<Class> list = ScanUtil.findStaticMethodClass();
 		log.info("static class =>{}",list.size());
+//		String key = "redis.node1.port";
+//		log.info("{}=>{}",key,getPropertiesValue(key));
 		/**
 		 * 不能是抽象类
 		 */
 		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers())).forEach(classItem->{
+			log.info("static class =>{}",classItem);
 			LazyBean.processStatic(classItem);
 		});
 	}
@@ -151,6 +156,9 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 			}
 			return null;
 		}catch (NoSuchBeanDefinitionException e) {
+			return null;
+		}catch(UnsatisfiedDependencyException e) {
+			log.error("UnsatisfiedDependencyException=>{},{}获取异常",classD,beanName);
 			return null;
 		}
 	}
@@ -193,21 +201,11 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		
 		return null;
 	}
-//	private static List<Class> staticClass;
-//	public static void configStatic(Class... classArg) {
-//		if(staticClass == null) {
-//			staticClass = Lists.newArrayList();
-//		}
-//		staticClass.addAll(Lists.newArrayList(classArg));
-//	}
 	
-//	private static List<Class> contextUtil;
-//	public static void configBeanFactory(Class... classArg) {
-//		if(contextUtil == null) {
-//			contextUtil = Lists.newArrayList();
-//		}
-//		contextUtil.addAll(Lists.newArrayList(classArg));
-//	}
+	static List<String> xmlList;
+	public static void loadXml(String... xmls) {
+		xmlList = Lists.newArrayList(xmls);
+	}
 	static BeanFactory bf = new BeanFactory();
 	public static String dubboXml = "classpath*:/dubbo-context.xml";
 	public static String mapperJdbcPrefix = "";

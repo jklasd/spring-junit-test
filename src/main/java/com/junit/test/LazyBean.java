@@ -89,12 +89,19 @@ public class LazyBean {
 					tag = Enhancer.create(classBean, handler);
 				}
 			} catch (Exception e) {
+				
 				/**
-				 * 当无法构建代理对象时，从spring 容器里取。
+				 * 查询是否有构建bean的configration
 				 */
-				tag = TestUtil.getExistBean(classBean, beanName);
+				tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
 				if(tag == null) {
-					System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+					/**
+					 * 当无法构建代理对象时，从spring 容器里取。
+					 */
+					tag = TestUtil.getExistBean(classBean, beanName);
+					if(tag == null) {
+						System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+					}
 				}
 			}
 		}
@@ -235,9 +242,14 @@ public class LazyBean {
 	}
 
 	public static Object processStatic(Class c) {
-		Object obj = buildProxy(c);
-		processAttr(obj, c);
-		return obj;
+		try {
+			Object obj = buildProxy(c);
+			processAttr(obj, c);
+			return obj;
+		} catch (Exception e) {
+			log.error("处理静态工具类异常",e);
+			return null;
+		}
 	}
 	/**
 	 * 对目标对象方法进行处理
