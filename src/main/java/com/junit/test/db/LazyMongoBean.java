@@ -44,7 +44,7 @@ public class LazyMongoBean {
 			Object mdacObj = TestUtil.buildBean(mdac);
 			scope.add(mdacObj);
 			
-			buildBean(classBean);
+			buildBeanForScope(classBean);
 			return cacheBean.get(classBean);
 		} catch (ClassNotFoundException | IllegalArgumentException | IllegalAccessException | InvocationTargetException e) {
 			e.printStackTrace();
@@ -52,7 +52,7 @@ public class LazyMongoBean {
 		return null;
 	}
 	private static Set<Object> scope = Sets.newHashSet();
-	public static Object buildBean(Class c) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException{
+	private static Object buildBeanForScope(Class c) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException{
 		if(cacheBean.containsKey(c)) {
 			return cacheBean.get(c);
 		}
@@ -66,7 +66,7 @@ public class LazyMongoBean {
 					Parameter[] ps = m.getParameters();
 					Object[] args = new Object[ps.length];
 					for(int i=0;i<ps.length;i++) {
-						args[i] = buildBean(ps[i].getType());
+						args[i] = buildBeanForScope(ps[i].getType());
 					}
 					cacheBean.put(c,m.invoke(obj, args));
 					return cacheBean.get(c);

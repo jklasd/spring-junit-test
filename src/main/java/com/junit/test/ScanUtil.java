@@ -49,6 +49,9 @@ public class ScanUtil{
 		}
 		return resourceResolver.getResources(path);
 	}
+	public static boolean exists(Class record) {
+		return nameMap.values().contains(record);
+	}
 	private static void loadClass(File file,String rootPath){
 		File[] files = file.listFiles();
 		for (File f : files) {
@@ -406,11 +409,11 @@ public class ScanUtil{
 	}
 	@SuppressWarnings("rawtypes")
 	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		Object[] address = findCreateBeanFactoryClass(classBean, beanName);
-		if(address[0] ==null || address[1]==null) {
+		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName);
+		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			return null;
 		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)address[0],(Method)address[1],classBean,beanName);
+		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName);
 		return tagObj;
 	}
 }

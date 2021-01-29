@@ -6,6 +6,7 @@ import java.util.Map;
 
 import com.google.common.collect.Maps;
 import com.junit.test.LazyBean;
+import com.junit.test.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -30,10 +31,17 @@ public class JavaBeanUtil {
 		Object obj = factory.get(c);
 		if(obj!=null) {
 			try {
+				Class[] paramTypes = m.getParameterTypes();
 				//如果存在参数
-				if(m.getParameterCount()>0) {
-					Class[] paramTypes = m.getParameterTypes();
+				Object[] args = new Object[paramTypes.length];
+				if(args.length>0) {
 					log.warn("存在二级Bean，需要处理");//
+				}
+				for(int i=0;i<paramTypes.length;i++) {
+					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(paramTypes[i], null);
+					if(ojb_meth[0]!=null && ojb_meth[1] != null) {
+						args[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], paramTypes[i], null);
+					}
 				}
 				Object tagObj = m.invoke(obj);
 				cacheBean.put(key, tagObj);

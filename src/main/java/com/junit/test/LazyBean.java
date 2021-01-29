@@ -1,5 +1,6 @@
 package com.junit.test;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
@@ -40,7 +41,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyBean {
-
 	public static Map<Class, Object> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
@@ -84,13 +84,34 @@ public class LazyBean {
 				if (classBean.isInterface()) {
 					InvocationHandler handler = new LazyImple(classBean,beanName);
 					tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-					
 				} else {
-					MethodInterceptor handler = new LazyCglib(classBean,beanName);
-					tag = Enhancer.create(classBean, handler);
+					Constructor[] structors = classBean.getConstructors();
+					/**
+					 * 查看是否存在无参构造函数
+					 */
+					for(Constructor c : structors) {
+						if(c.getParameterCount() == 0 ) {
+							MethodInterceptor handler = new LazyCglib(classBean,beanName);
+							tag = Enhancer.create(classBean, handler);
+							break;
+						}
+					}
+					if(tag == null) {
+						log.warn("不存在无参构造函数");
+						LazyCglib handler = new LazyCglib(classBean,beanName,true);
+//						if(LazyMongoBean.isMongo(classBean)) {
+//							tag = LazyMongoBean.buildBean(classBean,beanName);
+//						}else {
+//							tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
+//						}
+						Enhancer enhancer = new Enhancer();
+						enhancer.setSuperclass(classBean);
+						enhancer.setCallback(handler);
+						tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
+					}
 				}
 			} catch (Exception e) {
-				
+				log.error("构建代理类异常=>{}",e.getMessage());
 				/**
 				 * 查询是否有构建bean的configration
 				 */
@@ -176,6 +197,7 @@ public class LazyBean {
 	 * @param obj 目标对象
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
+	@SuppressWarnings("unchecked")
 	public static void processAttr(Object obj, Class objClassOrSuper) {
 //		if(objClassOrSuper.getName().contains("MultiServiceConfiguration")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
@@ -252,7 +274,7 @@ public class LazyBean {
 			processAttr(obj, c);
 			return obj;
 		} catch (Exception e) {
-			log.error("处理静态工具类异常",e);
+			log.error("处理静态工具类异常=>{}",c);
 			return null;
 		}
 	}
@@ -300,142 +322,3 @@ public class LazyBean {
 	}
 }
 
-@Slf4j
-class LazyCglib implements MethodInterceptor {
-	private Class tag;
-	private String beanName;
-
-	public LazyCglib(Class tag) {
-		this.tag = tag;
-	}
-	public LazyCglib(Class tag,String beanName) {
-		this.tag = tag;
-		this.beanName = beanName;
-	}
-
-	@Override
-	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
-		try {
-			AopContextSuppert.setProxyObj(arg0);
-			return arg1.invoke(getTagertObj(), arg2);
-		} catch (Exception e) {
-			e.printStackTrace();
-			throw e;
-		}
-	}
-
-	private Object tagertObj;
-	/**
-	 * CGLIB
-	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
-	 * @return
-	 */
-	private Object getTagertObj() {
-//		if(tag.getName().contains("ApiConfig")) {
-//			log.info("断点");
-//		}
-		
-		if (tagertObj == null) {
-			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
-				tagertObj = ScanUtil.findBean(beanName);
-				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
-			}else {
-				/**
-				 * 待优化
-				 */
-				try {//直接反射构建目标对象
-					tagertObj = tag.newInstance();
-					LazyBean.processAttr(tagertObj, tag);//递归注入代理对象
-				} catch (InstantiationException | IllegalAccessException e) {
-					log.error("构建bean=>{}",tag);
-					log.error("构建bean异常",e);
-				}
-			}
-		}
-		return tagertObj;
-	}
-
-}
-
-@Slf4j
-class LazyImple implements InvocationHandler {
-
-	private Class tag;
-	private Object tagertObj;
-	private String beanName;
-	private boolean isDbConnect;
-
-	public LazyImple(Class tag) {
-		this.tag = tag;
-	}
-	public LazyImple(Class tag,String beanName) {
-		this.tag = tag;
-		this.beanName = beanName;
-	}
-
-	@Override
-	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-		try {
-			AopContextSuppert.setProxyObj(proxy);
-			Object result = method.invoke(getTagertObj(), args);
-			if(!isDbConnect) {
-				// 处理openSession
-				Transactional transactional = method.getAnnotation(Transactional.class);
-			}
-			LazyMybatisMapperBean.over();
-			return result;
-		} catch (Exception e) {
-			e.printStackTrace();
-			//throw e;
-		}
-		return null;
-	}
-	/**
-	 * 接口类型
-	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
-	 * @return
-	 */
-	private Object getTagertObj() {
-		if (tagertObj == null) {
-			if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
-				tagertObj = LazyDubboBean.buildBean(tag);
-			} else {
-				if(tag.getPackage().getName().contains(TestUtil.mapperScanPath)) {//判断是否是Mybatis mapper
-					//延迟处理
-//					tagertObj = LazyMybatisMapperBean.buildBean(tag);
-					isDbConnect = true;
-					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
-				}else {
-					if(beanName == null) {
-						/**
-						 * 若是本地接口实现类的bean，则进行bean查找。
-						 */
-						Object tagImp = ScanUtil.findBeanByInterface(tag);
-						if(tagImp == null) {
-							log.info("未找到本地Bean=>{}",tag);
-						}else {
-							/**
-							 * 实现类是本地Bean
-							 */
-							tagertObj = tagImp;
-							LazyBean.processAttr(tagImp, tagImp.getClass());
-						}
-					}else {
-						// 本地bean
-						Object tagImp = ScanUtil.findBean(beanName);
-						if(tagImp == null) {
-							log.info("未找到本地Bean=>{}",tag);
-						}else {
-							/**
-							 * 实现类是本地Bean
-							 */
-							tagertObj = tagImp;
-							LazyBean.processAttr(tagImp, tagImp.getClass());
-						}
-					}
-				}
-			}
-		}
-		return tagertObj;
-	}
-}
