@@ -11,6 +11,7 @@ import com.junit.test.ScanUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
+@SuppressWarnings("rawtypes")
 public class JavaBeanUtil {
 	private static Map<Class,Object> factory = Maps.newHashMap();
 	private static Map<String,Object> cacheBean = Maps.newHashMap();
@@ -27,7 +28,6 @@ public class JavaBeanUtil {
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
-		//configration
 		Object obj = factory.get(c);
 		if(obj!=null) {
 			try {

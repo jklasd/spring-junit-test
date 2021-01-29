@@ -31,8 +31,8 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -89,6 +89,9 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	public void setApplicationContextLocal(ApplicationContext applicationContext) {
 		staticApplicationContext = applicationContext;
 	}
+//	public static void loadXml(String...strings) {
+//		XmlBeanUtil.loadXml(strings);
+//	}
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		staticApplicationContext = applicationContext;
@@ -233,10 +236,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		return null;
 	}
 	
-	static List<String> xmlList;
-	public static void loadXml(String... xmls) {
-		xmlList = Lists.newArrayList(xmls);
-	}
 	static BeanFactory bf = new BeanFactory();
 	public static String dubboXml = "classpath*:/dubbo-context.xml";
 	public static String mapperJdbcPrefix = "";
