@@ -65,7 +65,13 @@ public class LazyMybatisMapperBean{
 			Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
 			factory.setMapperLocations(resources);
 //		factory.setTypeAliasesPackage("");
-			factory.setPlugins(new Interceptor[]{new PageHelper()});
+			PageHelper tmp = new PageHelper();
+			if(tmp instanceof Interceptor) {
+				factory.setPlugins(new Interceptor[]{tmp});
+			}else {
+				Class interceptor = Class.forName("com.github.pagehelper.PageInterceptor");
+				factory.setPlugins(new Interceptor[]{(Interceptor) interceptor.newInstance()});
+			}
 			factory.afterPropertiesSet();
 		}else {
 			log.info("factory已存在");

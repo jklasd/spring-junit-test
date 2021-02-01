@@ -40,7 +40,8 @@ class LazyImple implements InvocationHandler {
 			LazyMybatisMapperBean.over();
 			return result;
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("代理类执行异常=>{}",tag);
+			log.error("代理类执行异常",e);
 			//throw e;
 		}
 		return null;

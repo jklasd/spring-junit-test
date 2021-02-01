@@ -199,7 +199,7 @@ public class LazyBean {
 	 */
 	@SuppressWarnings("unchecked")
 	public static void processAttr(Object obj, Class objClassOrSuper) {
-//		if(objClassOrSuper.getName().contains("MultiServiceConfiguration")) {
+//		if(objClassOrSuper.getName().contains("ProductRuleConfiguration")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
 		if(!TestUtil.isTest()) {
@@ -239,7 +239,7 @@ public class LazyBean {
 			} else {
 				Value v = f.getAnnotation(Value.class);
 				if (v != null) {
-					setObj(f, obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
+					setObj(f, obj, TestUtil.value(obj,v.value().replace("${", "").replace("}", ""), f.getType()));
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
@@ -303,7 +303,8 @@ public class LazyBean {
 					}
 					m.invoke(obj, null);
 				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					e.printStackTrace();
+					log.error("初始化方法执行异常{}#{}",obj,m);
+					log.error("初始化方法执行异常",e);
 				}
 			}else if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
 					&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {

@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
@@ -228,6 +229,9 @@ public class ScanUtil{
 	 * @throws ClassNotFoundException
 	 */
 	public static Object findBeanByInterface(Class interfaceClass) {
+		if(interfaceClass == ApplicationContext.class) {
+			return TestUtil.getExistBean(interfaceClass, null);
+		}
 		List<Class> tags = findClassByInterface(interfaceClass);
 		if (!tags.isEmpty()) {
 			return LazyBean.buildProxy(tags.get(0));
@@ -415,5 +419,9 @@ public class ScanUtil{
 		}
 		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName);
 		return tagObj;
+	}
+	public static Resource getRecource(String location) throws IOException {
+		Resource[] rs = getResources(location);
+		return rs.length>0?rs[0]:null;
 	}
 }

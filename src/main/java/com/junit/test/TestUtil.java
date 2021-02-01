@@ -8,10 +8,12 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
@@ -19,6 +21,7 @@ import org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostP
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.logging.logback.LogbackUtil;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEvent;
@@ -26,13 +29,14 @@ import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.Environment;
+import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.support.StandardServletEnvironment;
 
 import com.google.common.collect.Maps;
-import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +47,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 @Component
-@SuppressWarnings("rawtypes")
 public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	private static boolean test;
 	public static String mapperPath = "classpath*:/mapper/**/*.xml";
@@ -86,12 +89,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	public static void openTest() {
 		test = true;
 	}
-	public void setApplicationContextLocal(ApplicationContext applicationContext) {
-		staticApplicationContext = applicationContext;
-	}
-//	public static void loadXml(String...strings) {
-//		XmlBeanUtil.loadXml(strings);
-//	}
 	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		staticApplicationContext = applicationContext;
@@ -194,6 +191,9 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		}catch(UnsatisfiedDependencyException e) {
 			log.error("UnsatisfiedDependencyException=>{},{}获取异常",classD,beanName);
 			return null;
+		}catch (BeanCreationException e) {
+			log.error("BeanCreationException=>{},{}获取异常",classD,beanName);
+			return null;
 		}
 	}
 	public static String getPropertiesValue(String key,String defaultStr) {
@@ -211,26 +211,29 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	public static String getPropertiesValue(String key) {
 		return getPropertiesValue(key,null);
 	}
-	public static Object value(String key,Class type) {
+	public static Object value(Object obj, String key,Class type) {
 		String value = getPropertiesValue(key);
 		try {
-			if(type == null || type == String.class) {
-				return	value;
-			}else if(type == Integer.class || type == int.class) {
-				return Integer.valueOf(value);
-			}else if(type == Long.class || type == long.class) {
-				return Long.valueOf(value);
-			}else if(type == Double.class || type == double.class) {
-				return Double.valueOf(value);
-			}else if(type == BigDecimal.class) {
-				return new BigDecimal(value);
-			}else if(type == Boolean.class || type == boolean.class) {
-				return new Boolean(value);
-			}else {
-				log.info("其他类型");
+			if(StringUtils.isNotBlank(value)) {
+				if(type == null || type == String.class) {
+					return	value;
+				}else if(type == Integer.class || type == int.class) {
+					return Integer.valueOf(value);
+				}else if(type == Long.class || type == long.class) {
+					return Long.valueOf(value);
+				}else if(type == Double.class || type == double.class) {
+					return Double.valueOf(value);
+				}else if(type == BigDecimal.class) {
+					return new BigDecimal(value);
+				}else if(type == Boolean.class || type == boolean.class) {
+					return new Boolean(value);
+				}else {
+					log.info("其他类型");
+				}
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
+			System.out.println(obj.getClass().getName()+"转换类型异常"+key+"==>"+type);
+			log.error("转换类型异常",e);
 		}
 		
 		return null;
@@ -241,8 +244,25 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 	public static String mapperJdbcPrefix = "";
 	
 	static class BeanFactory implements ApplicationContext{
+		
+		private Properties properties;
+		
 		@Override
 		public Environment getEnvironment() {
+			if(staticApplicationContext == this) {
+				StandardServletEnvironment env = new StandardServletEnvironment();
+				try {
+					Resource[] resources = ScanUtil.getResources("application.properties");
+					properties = new Properties();
+					if(resources.length>0) {
+						properties.load(resources[0].getInputStream());
+						env.getPropertySources().addFirst(new PropertiesPropertySource("local", properties));
+					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return env;
+			}
 			return staticApplicationContext.getEnvironment();
 		}
 
@@ -264,7 +284,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 			return null;
 		}
 
-		@Override
 		public String[] getBeanNamesForType(ResolvableType type) {
 			// TODO Auto-generated method stub
 			return null;
@@ -295,7 +314,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 			return null;
 		}
 
-		@Override
 		public String[] getBeanNamesForAnnotation(Class<? extends Annotation> annotationType) {
 			// TODO Auto-generated method stub
 			return null;
@@ -315,6 +333,9 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 
 		@Override
 		public Object getBean(String name) throws BeansException {
+			if(this == staticApplicationContext) {
+				return ScanUtil.findBean(name);
+			}
 			if(staticApplicationContext.containsBean(name)) {
 				return staticApplicationContext.getBean(name);
 			}else {
@@ -330,6 +351,9 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		@Override
 		public <T> T getBean(Class<T> requiredType) throws BeansException {
 			try {
+				if(this == staticApplicationContext) {
+					return (T)ScanUtil.findBean(requiredType);
+				}
 				Object bean = staticApplicationContext.getBean(requiredType);
 				return (T) bean;
 			} catch (NoSuchBeanDefinitionException e) {
@@ -339,10 +363,12 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 
 		@Override
 		public Object getBean(String name, Object... args) throws BeansException {
+			if(this == staticApplicationContext) {
+				return null;
+			}
 			return staticApplicationContext.getBean(name, args);
 		}
 
-		@Override
 		public <T> T getBean(Class<T> requiredType, Object... args) throws BeansException {
 			// TODO Auto-generated method stub
 			return null;
@@ -366,7 +392,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 			return false;
 		}
 
-		@Override
 		public boolean isTypeMatch(String name, ResolvableType typeToMatch) throws NoSuchBeanDefinitionException {
 			// TODO Auto-generated method stub
 			return false;
@@ -440,6 +465,12 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		@Override
 		public Resource getResource(String location) {
 			// TODO Auto-generated method stub
+			try {
+				return ScanUtil.getRecource(location);
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 			return null;
 		}
 
@@ -484,7 +515,11 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 			// TODO Auto-generated method stub
 			return null;
 		}
-		
+
+		public Properties getProperties() {
+			return properties;
+		}
+
 	}
 
 	public static PropertySources getPropertySource() {
@@ -504,4 +539,12 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		return bean;
 	}
 
+	public static void start(Object obj) {
+		new TestUtil().setApplicationContext(bf);
+		Resource logback = bf.getResource("logback.xml");
+		if(logback != null) {
+			LogbackUtil.init((StandardServletEnvironment) bf.getEnvironment());
+			log.info("加载完毕");
+		}
+	}
 }
