@@ -1,0 +1,173 @@
+package com.junit.test;
+
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.Set;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContextSuppert;
+import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.cglib.proxy.MethodProxy;
+
+import com.google.common.collect.Sets;
+import com.junit.test.db.LazyMongoBean;
+
+import lombok.extern.slf4j.Slf4j;
+
+ 
+@Slf4j
+@SuppressWarnings("rawtypes")
+public class LazyCglib implements MethodInterceptor {
+	private Class tag;
+	private String beanName;
+	private boolean hasParamConstructor;
+	private Constructor constructor;
+
+	public LazyCglib( Class tag) {
+		this(tag,false);
+	}
+	public LazyCglib(Class tag,String beanName) {
+		this(tag, beanName, false);
+	}
+	public LazyCglib(Class tag,String beanName,Boolean hasParamConstructor) {
+		this.tag = tag;
+		this.beanName = beanName;
+		setConstuctor(hasParamConstructor);
+	}
+	public LazyCglib(Class tag,Boolean hasParamConstructor) {
+		this.tag = tag;
+		setConstuctor(hasParamConstructor);
+	}
+
+	private Set<Class> noPackage = Sets.newHashSet();
+	private void setConstuctor(Boolean hasParamConstructor) {
+		if(noPackage.isEmpty()) {
+			noPackage.add(int.class);
+			noPackage.add(double.class);
+			noPackage.add(long.class);
+			noPackage.add(float.class);
+			noPackage.add(byte.class);
+			noPackage.add(char.class);
+			noPackage.add(boolean.class);
+			noPackage.add(short.class);
+		}
+		if(hasParamConstructor) {
+//			if(tag.getPackage().getName().contains("jedis")) {
+//				log.info("断点");
+//			}
+			this.hasParamConstructor = hasParamConstructor;
+			Constructor[] cs = tag.getConstructors();
+			int count = 10;
+			next:for(Constructor c : cs) {
+				Class tagC = c.getDeclaringClass();
+				if(c.getParameterCount()<count) {
+					Class[] types = c.getParameterTypes();
+					for(Class t:types) {
+						if(!noPackage.contains(t) && t.getPackage().getName().startsWith("java.util")) {
+							continue next;
+						}
+					}
+					this.constructor = c;
+					count = c.getParameterCount();
+				}
+			}
+		}
+	}
+	@Override
+	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
+		try {
+			AopContextSuppert.setProxyObj(arg0);
+			return arg1.invoke(getTagertObj(), arg2);
+		} catch (Exception e) {
+			e.printStackTrace();
+			throw e;
+		}
+	}
+
+	public Object[] getArguments() {
+		Object[] objes = new Object[constructor.getParameters().length];
+		for(int i=0;i<objes.length;i++) {
+			Class c = getArgumentTypes()[i];
+			if(c == String.class) {
+				objes[i] = "";
+			}else if(c == Integer.class || c == int.class){
+				objes[i] = 0;
+			}else if(c == Double.class || c == double.class){
+				objes[i] = (double)0;
+			}else if(c == Byte.class || c == byte.class){
+				objes[i] = (byte)0;
+			}else if(c == Long.class || c == long.class){
+				objes[i] = 0l;
+			}else if(c == Boolean.class || c == boolean.class){
+				objes[i] = false;
+			}else if(c == Float.class || c == float.class){
+				objes[i] = 0.0;
+			}else if(c == Short.class || c == short.class ){
+				objes[i] = 0;
+			}else if(c == char.class){
+				objes[i] = '0';
+			}
+			else {
+				objes[i] = LazyBean.buildProxy(getArgumentTypes()[i]);
+			}
+		}
+		return objes;
+	}
+	public Class[] getArgumentTypes() {
+		return constructor.getParameterTypes();
+	}
+	private Object tagertObj;
+	/**
+	 * CGLIB
+	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
+	 * @return
+	 */
+	private Object getTagertObj() {
+//		if(tag.getPackage().getName().contains("jedis")) {
+//			log.info("断点");
+//		}
+		
+		if(tagertObj==null && !ScanUtil.exists(tag)) {
+			tagertObj = ScanUtil.findCreateBeanFromFactory(tag,beanName);
+			
+			if(tagertObj == null && LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
+				tagertObj = LazyMongoBean.buildBean(tag,beanName);
+			}
+		}
+		if (tagertObj == null) {
+			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
+				tagertObj = ScanUtil.findBean(beanName);
+				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
+			}else {
+				if(hasParamConstructor) {
+					try {
+						tagertObj = constructor.newInstance(getArguments());
+					} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+							| InvocationTargetException e) {
+						log.error("带参构造对象异常",e);
+					}
+				}else {
+					/**
+					 * 待优化
+					 */
+					try {//直接反射构建目标对象
+						tagertObj = tag.newInstance();
+						LazyBean.processAttr(tagertObj, tag);//递归注入代理对象
+					} catch (InstantiationException | IllegalAccessException e) {
+						log.error("构建bean=>{}",tag);
+						log.error("构建bean异常",e);
+					}
+				}
+			}
+		}
+		return tagertObj;
+	}
+	public boolean isNoConstructor() {
+		return hasParamConstructor;
+	}
+	public void setNoConstructor(boolean noConstructor) {
+		this.hasParamConstructor = noConstructor;
+	}
+
+}

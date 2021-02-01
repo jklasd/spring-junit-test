@@ -1,10 +1,8 @@
-package com.junit.test.mapper;
-
-import java.util.Map;
-import java.util.Properties;
+package com.junit.test.db;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSession;
@@ -12,18 +10,21 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.core.io.Resource;
 
 import com.github.pagehelper.PageHelper;
-import com.google.common.collect.Maps;
 import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class LazyMybatisMapperBean{
 	private static DataSource dataSource;
 	private static SqlSessionFactoryBean factory;
 	
-	public static Map<Class,Object> mapper = Maps.newHashMap();
+	
 	@SuppressWarnings("unchecked")
 	public static Object buildBean(Class classBean) {
 		try {
@@ -40,20 +41,19 @@ public class LazyMybatisMapperBean{
 		return null;
 	}
 	
-	private static SqlSession session;
+	private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
+	
 	@SuppressWarnings("unchecked")
 	private static Object getMapper(Class classBean) throws Exception {
-		if(mapper.containsKey(classBean)) {
-			return mapper.get(classBean);
-		}
 //		if(((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount()>5) {
 //			log.info("连接数=>{}",((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount());
 //		}
-		if(session == null) {
-			session = factory.getObject().openSession();
+		if(sessionList.get() != null){
+			return sessionList.get().getMapper(classBean);
+		}else {
+			sessionList.set(factory.getObject().openSession());
 		}
-		Object tag = session.getMapper(classBean);
-		mapper.put(classBean, tag);
+		Object tag = sessionList.get().getMapper(classBean);
 		return tag;
 	}
 
@@ -65,7 +65,13 @@ public class LazyMybatisMapperBean{
 			Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
 			factory.setMapperLocations(resources);
 //		factory.setTypeAliasesPackage("");
-			factory.setPlugins(new Interceptor[]{new PageHelper()});
+			PageHelper tmp = new PageHelper();
+			if(tmp instanceof Interceptor) {
+				factory.setPlugins(new Interceptor[]{tmp});
+			}else {
+				Class interceptor = Class.forName("com.github.pagehelper.PageInterceptor");
+				factory.setPlugins(new Interceptor[]{(Interceptor) interceptor.newInstance()});
+			}
 			factory.afterPropertiesSet();
 		}else {
 			log.info("factory已存在");
@@ -86,14 +92,35 @@ public class LazyMybatisMapperBean{
 	public static void buildDataSource() {
 		if(dataSource == null) {
 			PooledDataSource dataSourceTmp = new PooledDataSource();
-			dataSourceTmp.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
-			dataSourceTmp.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
-			dataSourceTmp.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
-			dataSourceTmp.setDriver(TestUtil.getPropertiesValue("jdbc.driver"));
-			dataSourceTmp.setPoolMaximumIdleConnections(1);
-			dataSource = dataSourceTmp;
+			if(StringUtils.isBlank(TestUtil.mapperJdbcPrefix)) {
+				TestUtil.mapperJdbcPrefix = "jdbc";
+			}
+			if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"))) {
+				dataSourceTmp.setUrl(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"));
+				dataSourceTmp.setUsername(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".username"));
+				dataSourceTmp.setPassword(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".password"));
+				if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"))) {
+					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"));
+				}else {
+					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driver"));
+				}
+				dataSourceTmp.setPoolMaximumActiveConnections(10);
+				dataSourceTmp.setPoolMaximumIdleConnections(1);
+				dataSource = dataSourceTmp;
+			}else {
+				dataSource = TestUtil.dataSource;
+			}
 		}else {
 			log.info("dataSource已存在");
+		}
+	}
+
+
+	public static void over() {
+		if(sessionList.get()!=null) {
+			sessionList.get().commit();
+			sessionList.get().close();
+			sessionList.remove();
 		}
 	}
 

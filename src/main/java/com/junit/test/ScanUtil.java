@@ -11,6 +11,8 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 
+import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -22,10 +24,15 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
+import com.junit.test.spring.JavaBeanUtil;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class ScanUtil{
 	
@@ -42,6 +49,9 @@ public class ScanUtil{
 			resourceResolver = new PathMatchingResourcePatternResolver(); 
 		}
 		return resourceResolver.getResources(path);
+	}
+	public static boolean exists(Class record) {
+		return nameMap.values().contains(record);
 	}
 	private static void loadClass(File file,String rootPath){
 		File[] files = file.listFiles();
@@ -78,7 +88,13 @@ public class ScanUtil{
 				if(!url.getPath().contains(".jar")) {
 					File f = r.getFile();
 					loadClass(f,url.getFile());
-				}
+				}/*else {
+					try {
+						File f = r.getFile();
+					} catch (Exception e) {
+						log.error("不能加载class文件=>{}",url.getPath());
+					}
+				}*/
 			}
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
@@ -213,6 +229,9 @@ public class ScanUtil{
 	 * @throws ClassNotFoundException
 	 */
 	public static Object findBeanByInterface(Class interfaceClass) {
+		if(interfaceClass == ApplicationContext.class) {
+			return TestUtil.getExistBean(interfaceClass, null);
+		}
 		List<Class> tags = findClassByInterface(interfaceClass);
 		if (!tags.isEmpty()) {
 			return LazyBean.buildProxy(tags.get(0));
@@ -323,7 +342,24 @@ public class ScanUtil{
 		});
 		return list;
 	}
-	
+	public static Boolean isBean(Class beanC) {
+		Boolean[] address = new Boolean[] {false};
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			if(beanC == c) {
+				Annotation comp = c.getAnnotation(Component.class);
+				Annotation service = c.getAnnotation(Service.class);
+				Annotation configuration = c.getAnnotation(Configuration.class);
+				if(comp != null
+						|| service != null
+						|| configuration != null) {
+					address[0] = true;
+				}
+			}
+		});
+		return address[0];
+	}
 	public static List<Class> findStaticMethodClass() {
 		Set<Class> list = Sets.newHashSet();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
@@ -349,5 +385,43 @@ public class ScanUtil{
 			}
 		});
 		return Lists.newArrayList(list);
+	}
+	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName) {
+		Object[] address = new Object[2];
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> c = nameMap.get(name);
+			Annotation comp = c.getAnnotation(Component.class);
+			Annotation service = c.getAnnotation(Service.class);
+			Annotation configuration = c.getAnnotation(Configuration.class);
+			if(comp != null
+					|| service != null
+					|| configuration != null) {
+				Method[] methods = c.getDeclaredMethods();
+				for(Method m : methods) {
+					Bean beanA = m.getAnnotation(Bean.class);
+					if(beanA != null) {
+						if(m.getReturnType() == classBean) {
+							address[0]=c;
+							address[1]=m;
+						}
+					}
+				}
+			}
+		});
+		return address;
+	}
+	@SuppressWarnings("rawtypes")
+	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
+		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName);
+		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+			return null;
+		}
+		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName);
+		return tagObj;
+	}
+	public static Resource getRecource(String location) throws IOException {
+		Resource[] rs = getResources(location);
+		return rs.length>0?rs[0]:null;
 	}
 }

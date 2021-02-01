@@ -23,7 +23,11 @@ import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
-
+/**
+ * 
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class LazyDubboBean {
 	@SuppressWarnings("rawtypes")
@@ -79,7 +83,7 @@ public class LazyDubboBean {
 			ScanUtil.findBeanByInterface(com.alibaba.dubbo.config.annotation.Service.class);
 		}else {
 			Resource[] resource = ScanUtil.getResources(xml);
-			if(resource != null) {
+			if(resource != null && resource.length>0) {
 				DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
 				//创建DocumentBuilder对象
 				DocumentBuilder db = dbf.newDocumentBuilder();
