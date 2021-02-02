@@ -14,6 +14,7 @@ import java.util.Set;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.OverridingClassLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -34,10 +35,11 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class ScanUtil{
+public class ScanUtil {
 	
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
+	private static OverridingClassLoader springClassLoader = new OverridingClassLoader(ScanUtil.class.getClassLoader());
 	/**
 	 * 扫描路径下资源
 	 * @param path
@@ -82,20 +84,24 @@ public class ScanUtil{
 	 */
 	public static void loadAllClass() {
 		try {
+			log.info("=============开始加载class=============");
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
+			log.info("=============加载class={}============",resources.length);
 			for (Resource r : resources) {
 				URL url = r.getURL();
 				if(!url.getPath().contains(".jar")) {
 					File f = r.getFile();
+					log.info("=======加载{}内的====class=========",f);
 					loadClass(f,url.getFile());
-				}/*else {
+				}else {
 					try {
 						File f = r.getFile();
 					} catch (Exception e) {
 						log.error("不能加载class文件=>{}",url.getPath());
 					}
-				}*/
+				}
 			}
+			log.info("=============加载class结束=============");
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
 		}

@@ -52,7 +52,7 @@ public class LazyDubboBean {
 		if(dubboData.containsKey(dubboClass)) {
 			return dubboData.get(dubboClass);
 		}
-		
+		log.info("构建DubboBean=>{}",dubboClass);
 		ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
 		referenceConfig.setInterface(dubboClass);
 		NamedNodeMap nodeAttr = dubboNode.get(dubboClass).getAttributes();
