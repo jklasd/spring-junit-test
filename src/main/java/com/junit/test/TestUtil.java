@@ -24,6 +24,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.junit.test.spring.TestApplicationContext;
 
@@ -35,30 +36,17 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-@Component
-public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
-	private static boolean test;
+public class TestUtil{
+	public static List<String> scanClassPath = Lists.newArrayList();
+	public static void loadScanPath(String... scanPath) {
+		scanClassPath.addAll(Lists.newArrayList(scanPath));
+	}
 	public static String mapperPath = "classpath*:/mapper/**/*.xml";
 	public static String mapperScanPath = "com.mapper";
 	public TestUtil() {
 		log.info("实例化TestUtil");
 	}
 	public static PooledDataSource dataSource;
-	private static Map<String,Object> lazyBeanObjMap;
-	private static Map<String,Field> lazyBeanFieldMap;
-	private static Map<String,String> lazyBeanNameMap;
-	
-	static void loadLazyAttr(Object obj,Field f,String beanName) {
-		if(lazyBeanObjMap == null) {
-			lazyBeanObjMap = Maps.newHashMap();
-			lazyBeanFieldMap = Maps.newHashMap();
-			lazyBeanNameMap = Maps.newHashMap();
-		}
-		String fKey = obj.getClass().getName()+"_"+f.getName();
-		lazyBeanObjMap.put(fKey,obj);
-		lazyBeanFieldMap.put(fKey,f);
-		lazyBeanNameMap.put(fKey, beanName);
-	}
 	
 	private static ApplicationContext applicationContext;
 	
@@ -72,28 +60,8 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		dataSource.setDriver(TestUtil.getPropertiesValue("jdbc.driver",""));
 	}
 	
-	public static boolean isTest() {
-		return test;
-	}
-	public static void openTest() {
-		test = true;
-	}
-	@Override
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = new TestApplicationContext(applicationContext);
-	}
-	private void lazyProcessAttr() {
-		if(lazyBeanObjMap!=null) {
-			lazyBeanObjMap.keySet().forEach(fKey->{
-				Object obj = lazyBeanObjMap.get(fKey);
-				Field attr = lazyBeanFieldMap.get(fKey);
-				try {
-					attr.set(obj, LazyBean.buildProxy(attr.getType(),lazyBeanNameMap.get(fKey)));
-				} catch (IllegalArgumentException | IllegalAccessException e) {
-					e.printStackTrace();
-				}
-			});
-		}
 	}
 	private void processConfig() {
 		
@@ -223,18 +191,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		return env.getPropertySources();
 	}
 
-	@Override
-	public Object postProcessBeforeInitialization(Object bean, String beanName) throws BeansException {
-		// TODO Auto-generated method stub
-		return bean;
-	}
-
-	@Override
-	public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-		// TODO Auto-generated method stub
-		return bean;
-	}
-
 	public static void startTestForNoContainer(Object obj) {
 		LazyBean.processAttr(obj, obj.getClass());
 		TestUtil launch = new TestUtil();
@@ -246,8 +202,6 @@ public class TestUtil implements ApplicationContextAware,BeanPostProcessor{
 		}
 		ScanUtil.loadAllClass();
 		launch.processConfig();
-		launch.lazyProcessAttr();
-		
 	}
 
 	public static ApplicationContext getStaticApplicationContext() {

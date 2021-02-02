@@ -169,7 +169,7 @@ public class LazyBean {
 	 */
 	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
 		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
-			TestUtil.loadLazyAttr(obj, f, proxyBeanName);
+//			TestUtil.loadLazyAttr(obj, f, proxyBeanName);
 		}
 		try {
 			if (!f.isAccessible()) {
@@ -177,7 +177,7 @@ public class LazyBean {
 			}
 			f.set(obj, proxyObj);
 		} catch (Exception e) {
-			e.printStackTrace();
+			log.error("注入对象异常",e);
 		}
 	}
 	/**
@@ -202,10 +202,6 @@ public class LazyBean {
 //		if(objClassOrSuper.getName().contains("ProductRuleConfiguration")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
-		if(!TestUtil.isTest()) {
-			TestUtil.openTest();
-		}
-		
 		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {
 			return;
 		}

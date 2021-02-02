@@ -5,11 +5,18 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.net.JarURLConnection;
 import java.net.URL;
+import java.net.URLConnection;
+import java.util.Collections;
+import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -36,7 +43,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class ScanUtil {
-	
+	private static String CLASS_SUFFIX = ".class";
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
 	private static OverridingClassLoader springClassLoader = new OverridingClassLoader(ScanUtil.class.getClassLoader());
@@ -61,7 +68,7 @@ public class ScanUtil {
 			if (f.isDirectory()) {
 				// 递归
 				loadClass(f,rootPath);
-			} else if (f.getName().endsWith(".class")) {
+			} else if (f.getName().endsWith(CLASS_SUFFIX)) {
 				String p = f.getPath();
 				File tmp = new File(rootPath);
 				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(".class", "");
@@ -81,26 +88,56 @@ public class ScanUtil {
 	}
 	/**
 	 * 加载所有class，缓存起来
+	 * 类似加载 AbstractEmbeddedServletContainerFactory
 	 */
+	@SuppressWarnings("resource")
 	public static void loadAllClass() {
 		try {
 			log.info("=============开始加载class=============");
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
 			log.info("=============加载class={}============",resources.length);
+			Set<String> classNames = Sets.newHashSet();
 			for (Resource r : resources) {
 				URL url = r.getURL();
-				if(!url.getPath().contains(".jar")) {
+				if("file".equals(url.getProtocol())) {
 					File f = r.getFile();
-					log.info("=======加载{}内的====class=========",f);
+//					log.info("=======加载{}内的====class=========",f);
 					loadClass(f,url.getFile());
-				}else {
+				}else if("jar".equals(url.getProtocol())){
+					if(url.getPath().contains("jre/lib")) {
+						continue;
+					}
+					log.info("=======加载{}内的====class=========",url.getPath());
 					try {
-						File f = r.getFile();
+						URLConnection connection = url.openConnection();
+						if (connection instanceof JarURLConnection) {
+							JarFile jFile = ((JarURLConnection) connection).getJarFile();
+							Enumeration<JarEntry> jarEntrys = jFile.entries();
+							while (jarEntrys.hasMoreElements()) {
+								String name = jarEntrys.nextElement().getName();
+								classNames.add(name);
+							}
+						}
 					} catch (Exception e) {
 						log.error("不能加载class文件=>{}",url.getPath());
 					}
 				}
 			}
+			CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.scanClassPath.stream().anyMatch(scp->cn.contains(scp))).collect(Collectors.toList()))
+			.runAndWait(name->{
+				if(name.endsWith(CLASS_SUFFIX)) {
+					name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
+					// 查看是否class
+					try {
+						Class<?> c = Class.forName(name, false, springClassLoader);
+						nameMap.put(name,c);
+					} catch (ClassNotFoundException | NoClassDefFoundError e) {
+//						log.error("未找到类{}=>{}",name,e.getMessage());
+					}catch(Error e) {
+						log.error("未找到类{}=>{}",name,e.getMessage());
+					}
+				}
+			});
 			log.info("=============加载class结束=============");
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
@@ -135,7 +172,7 @@ public class ScanUtil {
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			if(name.replace(".class", "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
+			if(name.replace(CLASS_SUFFIX, "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
 				list.add(nameMap.get(name));
 			}
 		});
@@ -147,7 +184,7 @@ public class ScanUtil {
 		
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			if (beanName.toLowerCase().equals(name.replace(".class", ""))) {
+			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
 				list.add(nameMap.get(name));
 			} else {
 				Class c = nameMap.get(name);
