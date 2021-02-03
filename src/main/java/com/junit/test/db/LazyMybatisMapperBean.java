@@ -18,6 +18,7 @@ import com.google.common.collect.Lists;
 import com.junit.test.LazyBean;
 import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
+import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -72,7 +73,7 @@ public class LazyMybatisMapperBean{
 	private static void processXmlForFactory() {
 		factory = new SqlSessionFactoryBean();
 		try {
-			Map<String, Object> prop = TestUtil.loadXmlNodeProp(factoryNode.getChildNodes());
+			Map<String, Object> prop = XmlBeanUtil.loadXmlNodeProp(factoryNode.getChildNodes());
 			Resource[] resources = ScanUtil.getResources(prop.get("mapperLocations").toString());
 			factory.setMapperLocations(resources);
 			factory.setDataSource(buildDataSource(prop.get("dataSource").toString()));
@@ -87,7 +88,7 @@ public class LazyMybatisMapperBean{
 							if(n.getNodeName().equals("#text")) {
 								continue;
 							}
-							String pluginClass = TestUtil.loadXmlNodeAttr(n.getAttributes()).get("class");
+							String pluginClass = XmlBeanUtil.loadXmlNodeAttr(n.getAttributes()).get("class");
 							Class<?> tmp = Class.forName(pluginClass);
 							listPlugins.add((Interceptor) tmp.newInstance());
 						}
@@ -119,12 +120,12 @@ public class LazyMybatisMapperBean{
 
 
 	private static void processXmlForDataSource(String id) {
-		Node dataSourceNode = TestUtil.getBeanById(cacheDocument, id);
-		Map<String,String> dataSourceAttr = TestUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
+		Node dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
+		Map<String,String> dataSourceAttr = XmlBeanUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
 		try {
 			Class<?> dataSourceC = Class.forName(dataSourceAttr.get("class"));
 			Object obj = dataSourceC.newInstance();
-			Map<String, Object> dataSourceProp = TestUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
+			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
 			dataSourceProp.keySet().forEach(field ->{
 				try {
 					log.debug("{}=>{}",field,dataSourceProp.get(field.toString()));
@@ -161,7 +162,7 @@ public class LazyMybatisMapperBean{
 		NamedNodeMap attrs = item.getAttributes();
 		String className = attrs.getNamedItem("class").getNodeValue();
 		if(className.contains("MapperScannerConfigurer")) {
-			Map<String, Object> prop = TestUtil.loadXmlNodeProp(item.getChildNodes());
+			Map<String, Object> prop = XmlBeanUtil.loadXmlNodeProp(item.getChildNodes());
 			if(prop.containsKey("basePackage")) {
 				mybatisScanPath = prop.get("basePackage").toString();
 			}

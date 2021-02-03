@@ -303,7 +303,7 @@ public class LazyBean {
 				try {
 					if(m!=null) {
 						try {
-							m.invoke(obj,TestUtil.getStaticApplicationContext());
+							m.invoke(obj,TestUtil.getApplicationContext());
 						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 							log.error("不能注入applicationContext",e);
 						}

@@ -12,6 +12,7 @@ import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.google.common.collect.Maps;
 import com.junit.test.TestUtil;
+import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -57,7 +58,7 @@ public class LazyDubboBean {
 				Node attr = nodeMap.getNamedItem("interface");
 				String className = attr.getNodeValue();
 				try {
-					dubboAttr.put(Class.forName(className), TestUtil.loadXmlNodeAttr(node.getAttributes()));
+					dubboAttr.put(Class.forName(className), XmlBeanUtil.loadXmlNodeAttr(node.getAttributes()));
 				} catch (Exception e) {
 					log.error("",e);
 				}
@@ -65,7 +66,7 @@ public class LazyDubboBean {
 	}
 	private static void processRegister(NodeList elementsByTagName) {
 		if(registryConfig == null) {
-			Map<String,String> attr = TestUtil.loadXmlNodeAttr(elementsByTagName.item(0).getAttributes());
+			Map<String,String> attr = XmlBeanUtil.loadXmlNodeAttr(elementsByTagName.item(0).getAttributes());
 			String protocol="";
 			if(!attr.containsKey("protocol") || attr.get("protocol").equals("zookeeper")) {
 				protocol  = "zookeeper://";

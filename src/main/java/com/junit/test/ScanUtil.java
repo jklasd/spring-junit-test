@@ -34,6 +34,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.spring.JavaBeanUtil;
+import com.junit.test.spring.XmlBeanUtil;
 import com.junit.util.CountDownLatchUtils;
 
 import lombok.extern.slf4j.Slf4j;
@@ -132,7 +133,7 @@ public class ScanUtil {
 				 */
 				ImportResource resource = startClass.getAnnotation(ImportResource.class);
 				if(resource != null) {
-					TestUtil.loadXmlPath(resource.value());
+					XmlBeanUtil.loadXmlPath(resource.value());
 				}
 			});
 			CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.isScanClassPath(cn)).collect(Collectors.toList()))
@@ -156,6 +157,28 @@ public class ScanUtil {
 		}
 	}
 	public static Map<String,Object> beanMaps = Maps.newHashMap();
+	/**
+	 * 
+	 * @param beanName
+	 * @param type
+	 * @return
+	 */
+	public static Object findBean(String beanName,Class<?> type) {
+		if(type.isInterface()) {
+			List<Class> classList = findClassImplInterface(type);
+			for(Class c : classList) {
+				Service ann = (Service) c.getAnnotation(Service.class);
+				Component cAnn = (Component)c.getAnnotation(Component.class);
+				if(ann!=null && ann.value().equals(beanName)) {
+					
+				}
+			}
+		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
+		}else {
+			return  findBean(beanName);
+		}
+		return null;
+	}
 	/**
 	 * 通过BeanName 获取bean
 	 * @param beanName
@@ -224,7 +247,7 @@ public class ScanUtil {
 	public static List findListBean(Class<?> requiredType) {
 		List list = Lists.newArrayList();
 		if(requiredType.isInterface()) {
-			List<Class> tags = findClassByInterface(requiredType);
+			List<Class> tags = findClassImplInterface(requiredType);
 			if (!tags.isEmpty()) {
 				tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
 			}
@@ -250,7 +273,7 @@ public class ScanUtil {
 		}
 		
 		if(requiredType.isInterface()) {
-			List<Class> tag = findClassByInterface(requiredType);
+			List<Class> tag = findClassImplInterface(requiredType);
 			if (!tag.isEmpty()) {
 				return LazyBean.buildProxy(tag.get(0));
 			}
@@ -287,20 +310,21 @@ public class ScanUtil {
 		if(interfaceClass == ApplicationContext.class) {
 			return TestUtil.getExistBean(interfaceClass, null);
 		}
-		List<Class> tags = findClassByInterface(interfaceClass);
+		List<Class> tags = findClassImplInterface(interfaceClass);
 		if (!tags.isEmpty()) {
 			return LazyBean.buildProxy(tags.get(0));
 		}
 		return null;
 	}
 	/**
-	 * 扫描类 for class
+	 * 扫描实现了interfaceClass 的类
 	 * @param file
 	 * @param interfaceClass
 	 * @return
 	 * @throws ClassNotFoundException
 	 */
-	private static List<Class> findClassByInterface(Class interfaceClass){
+	@SuppressWarnings("rawtypes")
+	private static List<Class> findClassImplInterface(Class interfaceClass){
 //		if(interfaceClass.getName().contains("ApplicationService")) {
 //			log.info("断点");
 //		}
@@ -313,8 +337,6 @@ public class ScanUtil {
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
 					list.add(tmpClass);
 				}
-			}else if(tmpClass == interfaceClass) {
-				list.add(tmpClass);
 			}
 		});
 		return list;

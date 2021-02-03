@@ -6,9 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
@@ -31,9 +28,8 @@ import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.junit.test.db.LazyMybatisMapperBean;
-import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.spring.TestApplicationContext;
+import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -50,16 +46,14 @@ public class TestUtil{
 			scanClassPath.add(path);
 		}
 	}
-	public static List<String> xmlPathList = Lists.newArrayList();
-	public static void loadXmlPath(String... xmlPath) {
-		for(String path : xmlPath) {
-			xmlPathList.add(path);
-		}
-	}
 	private TestUtil() {
 		log.info("--实例化TestUtil--");
 	}
 	private static ApplicationContext applicationContext;
+	
+	public static ApplicationContext getApplicationContext() {
+		return applicationContext;
+	}
 	
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = new TestApplicationContext(applicationContext);
@@ -76,54 +70,15 @@ public class TestUtil{
 			LazyBean.processStatic(classItem);
 		});
 		
-		xmlPathList.forEach(xml->readNode(xml));
+		XmlBeanUtil.process();
 	}
-
-	private void readNode(String xml) {
-		Resource file = applicationContext.getResource(xml);
-		if(file!=null) {
-			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-			try {
-				//创建DocumentBuilder对象
-				DocumentBuilder db = dbf.newDocumentBuilder();
-				//通过DocumentBuilder对象的parser方法加载books.xml文件到当前项目下
-				Document document = db.parse(file.getFile());
-				NodeList nodeList = document.getElementsByTagName("import");
-				for(int i = 0 ;i< nodeList.getLength();i++) {
-					NamedNodeMap nodeMap = nodeList.item(i).getAttributes();
-					Node attr = nodeMap.getNamedItem("resource");
-					readNode(attr.getNodeValue());
-				}
-				NodeList beansList = document.getElementsByTagName("beans");
-				if(beansList.getLength()>0) {
-					NamedNodeMap nodeMap = beansList.item(0).getAttributes();
-					Node attr = nodeMap.getNamedItem("xmlns:dubbo");
-					if(attr!=null) {
-						LazyDubboBean.processDubbo(document);
-					}else {
-						NodeList beanList = document.getElementsByTagName("bean");
-						for(int i = 0 ;i< beanList.getLength();i++) {
-							NamedNodeMap beanAttr = beanList.item(i).getAttributes();
-							Node attr_ = beanAttr.getNamedItem("class");
-							String className = attr_.getNodeValue();
-							if(className.contains("org.mybatis")) {
-								LazyMybatisMapperBean.process(beanList.item(i),document);
-							}else {
-								
-							}
-						}
-					}
-				}
-			} catch (Exception e) {
-			}
-		}
-	}
+	
 	
 	public static Object getExistBean(Class<?> classD) {
 		if(classD == ApplicationContext.class) {
-			return getStaticApplicationContext();
+			return getApplicationContext();
 		}
-		Object obj = getStaticApplicationContext().getBean(classD);
+		Object obj = getApplicationContext().getBean(classD);
 		return obj;
 	}
 	
@@ -131,19 +86,19 @@ public class TestUtil{
 	public static Object buildBean( Class c) {
 		Object obj = null;
 		try {
-			obj = getStaticApplicationContext().getBean(c);
+			obj = getApplicationContext().getBean(c);
 			if(obj!=null) {
 				return obj;
 			}
 		} catch (Exception e) {
 			log.error("不存在");
 		}
-		obj = getStaticApplicationContext().getAutowireCapableBeanFactory().createBean(c);
+		obj = getApplicationContext().getAutowireCapableBeanFactory().createBean(c);
 		return obj; 
 	}
 	
 	public static void registerBean(Object bean) {
-		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getStaticApplicationContext().getAutowireCapableBeanFactory();
+		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext().getAutowireCapableBeanFactory();
 		Object obj = null;
 		try {
 			obj = dlbf.getBean(bean.getClass());
@@ -159,15 +114,15 @@ public class TestUtil{
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
 			if(classD == ApplicationContext.class) {
-				return getStaticApplicationContext();
+				return getApplicationContext();
 			}
-			Object obj = getStaticApplicationContext().getBean(classD);
+			Object obj = getApplicationContext().getBean(classD);
 			return obj;
 		}catch(NullPointerException e) {
 			return null;
 		}catch (NoUniqueBeanDefinitionException e) {
 			if(beanName != null) {
-				Object obj = getStaticApplicationContext().getBean(beanName);
+				Object obj = getApplicationContext().getBean(beanName);
 				return obj;
 			}
 			return null;
@@ -183,9 +138,9 @@ public class TestUtil{
 	}
 	public static String getPropertiesValue(String key,String defaultStr) {
 		key = key.replace("${", "").replace("}", "");
-		if(getStaticApplicationContext()!=null) {
+		if(getApplicationContext()!=null) {
 			String[] keys = key.split(":");
-			String value = getStaticApplicationContext().getEnvironment().getProperty(keys[0]);
+			String value = getApplicationContext().getEnvironment().getProperty(keys[0]);
 			if(value!=null) {
 				return value;
 			}else {
@@ -231,7 +186,7 @@ public class TestUtil{
 	}
 	
 	public static PropertySources getPropertySource() {
-		StandardEnvironment env = (StandardEnvironment) getStaticApplicationContext().getEnvironment();
+		StandardEnvironment env = (StandardEnvironment) getApplicationContext().getEnvironment();
 		return env.getPropertySources();
 	}
 
@@ -241,73 +196,13 @@ public class TestUtil{
 		launch.setApplicationContext(null);
 		Resource logback = applicationContext.getResource("logback.xml");
 		if(logback != null) {
-			LogbackUtil.init((StandardServletEnvironment) getStaticApplicationContext().getEnvironment());
+			LogbackUtil.init((StandardServletEnvironment) getApplicationContext().getEnvironment());
 			log.info("加载环境配置完毕");
 		}
 		ScanUtil.loadAllClass();
 		launch.processConfig();
 	}
 
-	public static ApplicationContext getStaticApplicationContext() {
-		return applicationContext;
-	}
-
-	public void setStaticApplicationContext(ApplicationContext staticApplicationContext) {
-		this.applicationContext = staticApplicationContext;
-	}
-	
-	public static Map<String,String> loadXmlNodeAttr(NamedNodeMap nodeMap){
-		Map<String,String> map = Maps.newHashMap();
-		if(nodeMap==null) {
-			return map;
-		}
-		for(int i=0;i<nodeMap.getLength();i++) {
-			map.put(nodeMap.item(i).getNodeName(), nodeMap.item(i).getNodeValue());
-		}
-		return map;
-	}
-	public static Map<String,Object> loadXmlNodeProp(NodeList list){
-		Map<String,Object> map = Maps.newHashMap();
-		one:for(int i=0;i<list.getLength();i++) {
-			Map<String,String> prop = loadXmlNodeAttr(list.item(i).getAttributes());
-			if(prop.containsKey("name")) {
-				if(StringUtils.isNotBlank(prop.get("value"))) {
-					map.put(prop.get("name"),prop.get("value"));
-				}else if(StringUtils.isNotBlank(prop.get("ref"))){
-					map.put(prop.get("name"),prop.get("ref"));
-				}else if(StringUtils.isNotBlank(list.item(i).getNodeValue())){
-					map.put(prop.get("name"),list.item(i).getNodeValue());
-				}else if(list.item(i).hasChildNodes()) {
-					NodeList nC = list.item(i).getChildNodes();
-					List<Node> ll = Lists.newArrayList();
-					for(int j=0;j<nC.getLength();j++) { // 读取一层关系
-						Node tmpN = nC.item(j);
-						String nN = tmpN.getNodeName();
-						if(!nN.equals("#text")) {
-							if(nN.equals("array")) {
-								map.put(prop.get("name"), tmpN);
-								continue one;
-							}else {
-								ll.add(tmpN);
-							}
-						}
-					}
-					map.put(prop.get("name"), ll);
-				}
-			}
-		}
-		return map;
-	}
-	public static Node getBeanById(Document document,String id){
-		NodeList list = document.getElementsByTagName("bean");
-		for(int i=0;i<list.getLength();i++) {
-			Map<String,String> attr = loadXmlNodeAttr(list.item(i).getAttributes());
-			if(Objects.equal(id, attr.get("id"))) {
-				return list.item(i);
-			}
-		}
-		return null;
-	}
 	public static Boolean isScanClassPath(String cn) {
 		String tmpName = cn.replace("/", ".");
 		return scanClassPath.stream().allMatch(p -> tmpName.contains(p));
