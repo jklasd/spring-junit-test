@@ -1,13 +1,29 @@
-@RunWith(SpringRunner.class)
+# 使用demo
 
-@SpringBootTest(classes = { TestUtil.class})
-
+```java
 public class SimpleTest{
 
 	public SimpleTest() {
 		System.out.println(("================初始化单元用例======================"));
-		LazyBean.processAttr(this, this.getClass());
-		TestUtil.mapperScanPath = "com.xx.xx.mapper";
-		TestUtil.dubboXml = "classpath*:/dubbo-context.xml";
+		TestUtil.startTestForNoContainer(this);
 	}
 }
+```
+
+```java
+public class Demo extends SimpleTest {
+
+    @Autowired
+    private IXXX demo;
+    @Resource
+    private IXXX2 demo2;
+    
+    @Test
+    public void test(){
+    	//执行业务
+    	demo.testProcess();
+    }
+}
+```
+
+测试用例继承SimpleTest类，然后执行@Test方法。
