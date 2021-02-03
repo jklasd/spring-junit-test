@@ -58,7 +58,7 @@ class LazyImple implements InvocationHandler {
 			}else if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,null);
 			} else {
-				if(tag.getPackage().getName().contains(TestUtil.mapperScanPath)) {//判断是否是Mybatis mapper
+				if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
 					//延迟处理
 //					tagertObj = LazyMybatisMapperBean.buildBean(tag);
 					isDbConnect = true;

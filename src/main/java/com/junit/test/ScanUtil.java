@@ -8,7 +8,6 @@ import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Collections;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
@@ -18,9 +17,11 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.OverridingClassLoader;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
@@ -82,7 +83,7 @@ public class ScanUtil {
 					log.error("加载类异常",e);
 				}
 			}else {
-//				log.info("=============其他文件=={}===========",file);
+				log.debug("=============其他文件=={}===========",file);
 			}
 		}
 	}
@@ -93,21 +94,21 @@ public class ScanUtil {
 	@SuppressWarnings("resource")
 	public static void loadAllClass() {
 		try {
-			log.info("=============开始加载class=============");
+			log.debug("=============开始加载class=============");
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
-			log.info("=============加载class={}============",resources.length);
+			log.debug("=============加载class={}============",resources.length);
 			Set<String> classNames = Sets.newHashSet();
 			for (Resource r : resources) {
 				URL url = r.getURL();
 				if("file".equals(url.getProtocol())) {
 					File f = r.getFile();
-//					log.info("=======加载{}内的====class=========",f);
+					log.debug("=======加载{}内的====class=========",f);
 					loadClass(f,url.getFile());
 				}else if("jar".equals(url.getProtocol())){
 					if(url.getPath().contains("jre/lib")) {
 						continue;
 					}
-					log.info("=======加载{}内的====class=========",url.getPath());
+					log.debug("=======加载{}内的====class=========",url.getPath());
 					try {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
@@ -123,7 +124,18 @@ public class ScanUtil {
 					}
 				}
 			}
-			CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.scanClassPath.stream().anyMatch(scp->cn.contains(scp))).collect(Collectors.toList()))
+			List<Class<?>> springBoot = findClassWithAnnotation(SpringBootApplication.class);
+			springBoot.forEach(startClass ->{
+				TestUtil.loadScanPath(startClass.getPackage().getName());
+				/**
+				 * 查看导入资源
+				 */
+				ImportResource resource = startClass.getAnnotation(ImportResource.class);
+				if(resource != null) {
+					TestUtil.loadXmlPath(resource.value());
+				}
+			});
+			CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.isScanClassPath(cn)).collect(Collectors.toList()))
 			.runAndWait(name->{
 				if(name.endsWith(CLASS_SUFFIX)) {
 					name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
@@ -132,7 +144,7 @@ public class ScanUtil {
 						Class<?> c = Class.forName(name, false, springClassLoader);
 						nameMap.put(name,c);
 					} catch (ClassNotFoundException | NoClassDefFoundError e) {
-//						log.error("未找到类{}=>{}",name,e.getMessage());
+						log.error("加载{}=>未找到类{}",name,e.getMessage());
 					}catch(Error e) {
 						log.error("未找到类{}=>{}",name,e.getMessage());
 					}
@@ -301,8 +313,7 @@ public class ScanUtil {
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
 					list.add(tmpClass);
 				}
-			}else if(interfaceClass.getPackage().getName().contains(TestUtil.mapperScanPath)
-					&& tmpClass == interfaceClass) {
+			}else if(tmpClass == interfaceClass) {
 				list.add(tmpClass);
 			}
 		});
@@ -335,12 +346,11 @@ public class ScanUtil {
 	 * @param annotationType
 	 * @return
 	 */
-	@SuppressWarnings("rawtypes")
 	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
-		List<Class> list = findClassWithAnnotation(annotationType);
+		List<Class<?>> list = findClassWithAnnotation(annotationType);
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
-			String beanName = getBeanName(c);
+//			String beanName = getBeanName(c);
 			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
 		});
 		return annoClass;
@@ -373,8 +383,8 @@ public class ScanUtil {
 	 * @return
 	 * @throws ClassNotFoundException
 	 */
-	private static List<Class> findClassWithAnnotation(Class<? extends Annotation> annotationType){
-		List<Class> list = Lists.newArrayList();
+	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
+		List<Class<?>> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> c = nameMap.get(name);
@@ -403,8 +413,8 @@ public class ScanUtil {
 		});
 		return address[0];
 	}
-	public static List<Class> findStaticMethodClass() {
-		Set<Class> list = Sets.newHashSet();
+	public static List<Class<?>> findStaticMethodClass() {
+		Set<Class<?>> list = Sets.newHashSet();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> c = nameMap.get(name);
@@ -417,12 +427,12 @@ public class ScanUtil {
 				Method[] methods = c.getDeclaredMethods();
 				for(Method m : methods) {
 					if(Modifier.isStatic(m.getModifiers())) {
-						Class returnType = m.getReturnType();
+						Class<?> returnType = m.getReturnType();
 						if(!returnType.getName().contains("void")) {
 							list.add(c);
 							return;
 						}
-//						log.info(returnType.getName());
+						log.debug(returnType.getName());
 					}
 				}
 			}
@@ -466,5 +476,8 @@ public class ScanUtil {
 	public static Resource getRecource(String location) throws IOException {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
+	}
+	public static Class getClassByName(String className) {
+		return nameMap.get(className);
 	}
 }

@@ -15,20 +15,16 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
-import org.springframework.cglib.proxy.MethodProxy;
-import org.springframework.transaction.annotation.Transactional;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.db.LazyMongoBean;
-import com.junit.test.db.LazyMybatisMapperBean;
-import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.mq.LazyMQBean;
 import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
@@ -235,7 +231,7 @@ public class LazyBean {
 			} else {
 				Value v = f.getAnnotation(Value.class);
 				if (v != null) {
-					setObj(f, obj, TestUtil.value(obj,v.value().replace("${", "").replace("}", ""), f.getType()));
+					setObj(f, obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
@@ -316,6 +312,46 @@ public class LazyBean {
 				}
 			}
 		}
+	}
+	@SuppressWarnings("unchecked")
+	public static boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
+			Object fv = value;
+			String mName = "set"+field.substring(0, 1).toUpperCase()+field.substring(1);
+			Method[] methods = superClass.getDeclaredMethods();
+			for(Method m : methods) {
+				if(Objects.equal(m.getName(), mName)) {
+					if(value instanceof String) {
+						fv = TestUtil.value(value.toString(), m.getParameterTypes()[0]);	
+					}
+					try {
+						m.invoke(obj, fv);
+					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+						e.printStackTrace();
+					}
+					return true;
+				}
+			}
+			Field[] fields = superClass.getDeclaredFields();
+			boolean found = false;
+				for(Field f : fields){
+					if(Objects.equal(f.getName(), field)) {
+						if(value instanceof String) {
+							fv = TestUtil.value(value.toString(), f.getType());	
+						}
+						try {
+							setObj(f, obj, fv);
+						} catch (IllegalArgumentException e) {
+							log.error("",e);
+							return false;
+						}
+						return true;
+					}
+				}
+			Class<?> superC = superClass.getSuperclass();
+			if (!found && superC != null ) {
+				return setAttr(field,obj,superC,value);
+			}
+		return false;
 	}
 }
 

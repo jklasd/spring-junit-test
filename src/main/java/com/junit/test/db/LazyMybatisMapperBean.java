@@ -1,15 +1,21 @@
 package com.junit.test.db;
 
+import java.util.List;
+import java.util.Map;
+
 import javax.sql.DataSource;
 
-import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSession;
 import org.mybatis.spring.SqlSessionFactoryBean;
 import org.springframework.core.io.Resource;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
-import com.github.pagehelper.PageHelper;
+import com.google.common.collect.Lists;
+import com.junit.test.LazyBean;
 import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 
@@ -25,14 +31,10 @@ public class LazyMybatisMapperBean{
 	private static SqlSessionFactoryBean factory;
 	
 	
-	@SuppressWarnings("unchecked")
-	public static Object buildBean(Class classBean) {
+	public synchronized static Object buildBean(Class<?> classBean) {
 		try {
-			if(dataSource == null) {
-				buildDataSource();
-			}
-			if(factory == null) {
-				buildFactory();
+			if(factory == null){
+				buildMybatisFactory();
 			}
 			return getMapper(classBean);
 		} catch (Exception e) {
@@ -43,11 +45,7 @@ public class LazyMybatisMapperBean{
 	
 	private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
 	
-	@SuppressWarnings("unchecked")
-	private static Object getMapper(Class classBean) throws Exception {
-//		if(((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount()>5) {
-//			log.info("连接数=>{}",((PooledDataSource)dataSource).getPoolState().getActiveConnectionCount());
-//		}
+	private static Object getMapper(Class<?> classBean) throws Exception {
 		if(sessionList.get() != null){
 			return sessionList.get().getMapper(classBean);
 		}else {
@@ -57,61 +55,87 @@ public class LazyMybatisMapperBean{
 		return tag;
 	}
 
-
-	private static void buildFactory() throws Exception {
+	private static Node factoryNode;
+	private static void buildMybatisFactory(){
 		if(factory == null) {
-			factory = new SqlSessionFactoryBean();
-			factory.setDataSource(dataSource);
-			Resource[] resources = ScanUtil.getResources(TestUtil.getPropertiesValue("mybatis.mapper.path",TestUtil.mapperPath));
-			factory.setMapperLocations(resources);
-//		factory.setTypeAliasesPackage("");
-			PageHelper tmp = new PageHelper();
-			if(tmp instanceof Interceptor) {
-				factory.setPlugins(new Interceptor[]{tmp});
+			if(factoryNode!=null) {
+				processXmlForFactory();
 			}else {
-				Class interceptor = Class.forName("com.github.pagehelper.PageInterceptor");
-				factory.setPlugins(new Interceptor[]{(Interceptor) interceptor.newInstance()});
+				log.warn("*******************还未开发注解方式构建 mybatis Factory*******************");
 			}
-			factory.afterPropertiesSet();
 		}else {
-			log.info("factory已存在");
+			log.debug("factory已存在");
 		}
 	}
 
 
-	/**
-	 * <bean id="dataSource" class="com.alibaba.druid.pool.DruidDataSource" init-method="init" destroy-method="close">
-		<property name="url" value="${jdbc.url}" />
-		<property name="username" value="${jdbc.username}" />
-		<property name="password" value="${jdbc.password}" />
-		<property name="maxWait" value="30000" />
-		<property name="validationQuery" value="SELECT 'x'" />
-		</bean>
-	 * @return
-	 */
-	public static void buildDataSource() {
-		if(dataSource == null) {
-			PooledDataSource dataSourceTmp = new PooledDataSource();
-			if(StringUtils.isBlank(TestUtil.mapperJdbcPrefix)) {
-				TestUtil.mapperJdbcPrefix = "jdbc";
-			}
-			if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"))) {
-				dataSourceTmp.setUrl(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".url"));
-				dataSourceTmp.setUsername(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".username"));
-				dataSourceTmp.setPassword(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".password"));
-				if(StringUtils.isNotBlank(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"))) {
-					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driverClassName"));
-				}else {
-					dataSourceTmp.setDriver(TestUtil.getPropertiesValue(TestUtil.mapperJdbcPrefix+".driver"));
+	private static void processXmlForFactory() {
+		factory = new SqlSessionFactoryBean();
+		try {
+			Map<String, Object> prop = TestUtil.loadXmlNodeProp(factoryNode.getChildNodes());
+			Resource[] resources = ScanUtil.getResources(prop.get("mapperLocations").toString());
+			factory.setMapperLocations(resources);
+			factory.setDataSource(buildDataSource(prop.get("dataSource").toString()));
+			if(prop.containsKey("plugins")) {
+				List<Interceptor> listPlugins = Lists.newArrayList();
+				if(prop.get("plugins") instanceof Node) {
+					Node plugins = (Node) prop.get("plugins");
+					if(plugins.getNodeName().equals("array")) {
+						NodeList beans = plugins.getChildNodes();
+						for(int i=0;i<beans.getLength();i++) {
+							Node n = beans.item(i);
+							if(n.getNodeName().equals("#text")) {
+								continue;
+							}
+							String pluginClass = TestUtil.loadXmlNodeAttr(n.getAttributes()).get("class");
+							Class<?> tmp = Class.forName(pluginClass);
+							listPlugins.add((Interceptor) tmp.newInstance());
+						}
+					}
+				}else if(prop.get("plugins") instanceof List) {
+					
 				}
-				dataSourceTmp.setPoolMaximumActiveConnections(10);
-				dataSourceTmp.setPoolMaximumIdleConnections(1);
-				dataSource = dataSourceTmp;
-			}else {
-				dataSource = TestUtil.dataSource;
+				Interceptor[] is = listPlugins.toArray(new Interceptor[0]);
+				factory.setPlugins(is);
 			}
-		}else {
-			log.info("dataSource已存在");
+			factory.afterPropertiesSet();
+		} catch (Exception e) {
+			log.error("buildMybatisFactory",e);
+		}
+	}
+
+
+	public static DataSource buildDataSource(String id) {
+		if(dataSource == null) {
+			if(cacheDocument != null) {
+				processXmlForDataSource(id);
+			}else {
+				//查询注解方式
+				log.warn("*******************还未开发注解方式构建 mybatis dataSource*******************");
+			}
+		}
+		return dataSource;
+	}
+
+
+	private static void processXmlForDataSource(String id) {
+		Node dataSourceNode = TestUtil.getBeanById(cacheDocument, id);
+		Map<String,String> dataSourceAttr = TestUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
+		try {
+			Class<?> dataSourceC = Class.forName(dataSourceAttr.get("class"));
+			Object obj = dataSourceC.newInstance();
+			Map<String, Object> dataSourceProp = TestUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
+			dataSourceProp.keySet().forEach(field ->{
+				try {
+					log.debug("{}=>{}",field,dataSourceProp.get(field.toString()));
+					LazyBean.setAttr(field,obj, dataSourceC, dataSourceProp.get(field.toString()));
+				} catch (SecurityException e) {
+					log.error("buildDataSource",e);
+				}
+			});
+			dataSource = (DataSource) obj;
+		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
+			log.error("buildDataSource",e);
 		}
 	}
 
@@ -121,6 +145,29 @@ public class LazyMybatisMapperBean{
 			sessionList.get().commit();
 			sessionList.get().close();
 			sessionList.remove();
+		}
+	}
+
+
+	private static String mybatisScanPath;
+	public static boolean isMybatisBean(Class c) {
+		return mybatisScanPath!=null && c.getPackage().getName().contains(mybatisScanPath);
+	}
+	private static Document cacheDocument;
+	public synchronized static void process(Node item, Document document) {
+		if(cacheDocument==null) {
+			cacheDocument = document;
+		}
+		NamedNodeMap attrs = item.getAttributes();
+		String className = attrs.getNamedItem("class").getNodeValue();
+		if(className.contains("MapperScannerConfigurer")) {
+			Map<String, Object> prop = TestUtil.loadXmlNodeProp(item.getChildNodes());
+			if(prop.containsKey("basePackage")) {
+				mybatisScanPath = prop.get("basePackage").toString();
+			}
+		}else if(className.contains("SqlSessionFactoryBean")) {
+			//先不处理
+			factoryNode = item;
 		}
 	}
 

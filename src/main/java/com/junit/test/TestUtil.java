@@ -1,31 +1,38 @@
 package com.junit.test;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang3.StringUtils;
-import org.apache.ibatis.datasource.pooled.PooledDataSource;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
-import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.logging.logback.LogbackUtil;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
-import org.springframework.stereotype.Component;
 import org.springframework.web.context.support.StandardServletEnvironment;
+import org.w3c.dom.Document;
+import org.w3c.dom.NamedNodeMap;
+import org.w3c.dom.Node;
+import org.w3c.dom.NodeList;
 
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+import com.junit.test.db.LazyMybatisMapperBean;
+import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.spring.TestApplicationContext;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,45 +44,79 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TestUtil{
-	public static List<String> scanClassPath = Lists.newArrayList();
+	private static Set<String> scanClassPath = Sets.newHashSet();
 	public static void loadScanPath(String... scanPath) {
-		scanClassPath.addAll(Lists.newArrayList(scanPath));
-	}
-	public static String mapperPath = "classpath*:/mapper/**/*.xml";
-	public static String mapperScanPath = "com.mapper";
-	public TestUtil() {
-		log.info("实例化TestUtil");
-	}
-	public static PooledDataSource dataSource;
-	
-	private static ApplicationContext applicationContext;
-	
-	public static void buildDataSource(String url,String username,String passwd) {
-		if(dataSource == null) {
-			dataSource = new PooledDataSource();
+		for(String path : scanPath) {
+			scanClassPath.add(path);
 		}
-		dataSource.setUrl(TestUtil.getPropertiesValue("jdbc.url"));
-		dataSource.setUsername(TestUtil.getPropertiesValue("jdbc.username"));
-		dataSource.setPassword(TestUtil.getPropertiesValue("jdbc.password"));
-		dataSource.setDriver(TestUtil.getPropertiesValue("jdbc.driver",""));
 	}
+	public static List<String> xmlPathList = Lists.newArrayList();
+	public static void loadXmlPath(String... xmlPath) {
+		for(String path : xmlPath) {
+			xmlPathList.add(path);
+		}
+	}
+	private TestUtil() {
+		log.info("--实例化TestUtil--");
+	}
+	private static ApplicationContext applicationContext;
 	
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = new TestApplicationContext(applicationContext);
 	}
 	private void processConfig() {
 		
-		List<Class> list = ScanUtil.findStaticMethodClass();
-		log.info("static class =>{}",list.size());
-//		String key = "redis.node1.port";
-//		log.info("{}=>{}",key,getPropertiesValue(key));
+		List<Class<?>> list = ScanUtil.findStaticMethodClass();
+		log.debug("static class =>{}",list.size());
 		/**
 		 * 不能是抽象类
 		 */
 		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers())).forEach(classItem->{
-			log.info("static class =>{}",classItem);
+			log.debug("static class =>{}",classItem);
 			LazyBean.processStatic(classItem);
 		});
+		
+		xmlPathList.forEach(xml->readNode(xml));
+	}
+
+	private void readNode(String xml) {
+		Resource file = applicationContext.getResource(xml);
+		if(file!=null) {
+			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+			try {
+				//创建DocumentBuilder对象
+				DocumentBuilder db = dbf.newDocumentBuilder();
+				//通过DocumentBuilder对象的parser方法加载books.xml文件到当前项目下
+				Document document = db.parse(file.getFile());
+				NodeList nodeList = document.getElementsByTagName("import");
+				for(int i = 0 ;i< nodeList.getLength();i++) {
+					NamedNodeMap nodeMap = nodeList.item(i).getAttributes();
+					Node attr = nodeMap.getNamedItem("resource");
+					readNode(attr.getNodeValue());
+				}
+				NodeList beansList = document.getElementsByTagName("beans");
+				if(beansList.getLength()>0) {
+					NamedNodeMap nodeMap = beansList.item(0).getAttributes();
+					Node attr = nodeMap.getNamedItem("xmlns:dubbo");
+					if(attr!=null) {
+						LazyDubboBean.processDubbo(document);
+					}else {
+						NodeList beanList = document.getElementsByTagName("bean");
+						for(int i = 0 ;i< beanList.getLength();i++) {
+							NamedNodeMap beanAttr = beanList.item(i).getAttributes();
+							Node attr_ = beanAttr.getNamedItem("class");
+							String className = attr_.getNodeValue();
+							if(className.contains("org.mybatis")) {
+								LazyMybatisMapperBean.process(beanList.item(i),document);
+							}else {
+								
+							}
+						}
+					}
+				}
+			} catch (Exception e) {
+			}
+		}
 	}
 	
 	public static Object getExistBean(Class<?> classD) {
@@ -141,21 +182,22 @@ public class TestUtil{
 		}
 	}
 	public static String getPropertiesValue(String key,String defaultStr) {
+		key = key.replace("${", "").replace("}", "");
 		if(getStaticApplicationContext()!=null) {
 			String[] keys = key.split(":");
 			String value = getStaticApplicationContext().getEnvironment().getProperty(keys[0]);
-			if(StringUtils.isNotBlank(value)) {
+			if(value!=null) {
 				return value;
 			}else {
-				return keys.length>1?keys[1]:defaultStr;
+				return keys.length>1?keys[1]:(defaultStr == null?key:defaultStr);
 			}
 		}
-		return "";
+		return key;
 	}
 	public static String getPropertiesValue(String key) {
 		return getPropertiesValue(key,null);
 	}
-	public static Object value(Object obj, String key,Class type) {
+	public static Object value(String key,Class<?> type) {
 		String value = getPropertiesValue(key);
 		try {
 			if(StringUtils.isNotBlank(value)) {
@@ -176,15 +218,12 @@ public class TestUtil{
 				}
 			}
 		} catch (Exception e) {
-			System.out.println(obj.getClass().getName()+"转换类型异常"+key+"==>"+type);
-			log.error("转换类型异常",e);
+			log.warn("转换类型异常{}==>{}",key,type);
+			throw e;
 		}
 		
-		return null;
+		return value;
 	}
-	
-	public static String dubboXml = "classpath*:/dubbo-context.xml";
-	public static String mapperJdbcPrefix = "";
 	
 	public static PropertySources getPropertySource() {
 		StandardEnvironment env = (StandardEnvironment) getStaticApplicationContext().getEnvironment();
@@ -198,7 +237,7 @@ public class TestUtil{
 		Resource logback = applicationContext.getResource("logback.xml");
 		if(logback != null) {
 			LogbackUtil.init((StandardServletEnvironment) getStaticApplicationContext().getEnvironment());
-			log.info("加载完毕");
+			log.info("加载环境配置完毕");
 		}
 		ScanUtil.loadAllClass();
 		launch.processConfig();
@@ -210,5 +249,62 @@ public class TestUtil{
 
 	public void setStaticApplicationContext(ApplicationContext staticApplicationContext) {
 		this.applicationContext = staticApplicationContext;
+	}
+	
+	public static Map<String,String> loadXmlNodeAttr(NamedNodeMap nodeMap){
+		Map<String,String> map = Maps.newHashMap();
+		if(nodeMap==null) {
+			return map;
+		}
+		for(int i=0;i<nodeMap.getLength();i++) {
+			map.put(nodeMap.item(i).getNodeName(), nodeMap.item(i).getNodeValue());
+		}
+		return map;
+	}
+	public static Map<String,Object> loadXmlNodeProp(NodeList list){
+		Map<String,Object> map = Maps.newHashMap();
+		one:for(int i=0;i<list.getLength();i++) {
+			Map<String,String> prop = loadXmlNodeAttr(list.item(i).getAttributes());
+			if(prop.containsKey("name")) {
+				if(StringUtils.isNotBlank(prop.get("value"))) {
+					map.put(prop.get("name"),prop.get("value"));
+				}else if(StringUtils.isNotBlank(prop.get("ref"))){
+					map.put(prop.get("name"),prop.get("ref"));
+				}else if(StringUtils.isNotBlank(list.item(i).getNodeValue())){
+					map.put(prop.get("name"),list.item(i).getNodeValue());
+				}else if(list.item(i).hasChildNodes()) {
+					NodeList nC = list.item(i).getChildNodes();
+					List<Node> ll = Lists.newArrayList();
+					for(int j=0;j<nC.getLength();j++) { // 读取一层关系
+						Node tmpN = nC.item(j);
+						String nN = tmpN.getNodeName();
+						if(!nN.equals("#text")) {
+							if(nN.equals("array")) {
+								map.put(prop.get("name"), tmpN);
+								continue one;
+							}else {
+								ll.add(tmpN);
+							}
+						}
+					}
+					map.put(prop.get("name"), ll);
+				}
+			}
+		}
+		return map;
+	}
+	public static Node getBeanById(Document document,String id){
+		NodeList list = document.getElementsByTagName("bean");
+		for(int i=0;i<list.getLength();i++) {
+			Map<String,String> attr = loadXmlNodeAttr(list.item(i).getAttributes());
+			if(Objects.equal(id, attr.get("id"))) {
+				return list.item(i);
+			}
+		}
+		return null;
+	}
+	public static Boolean isScanClassPath(String cn) {
+		String tmpName = cn.replace("/", ".");
+		return scanClassPath.stream().allMatch(p -> tmpName.contains(p));
 	}
 }

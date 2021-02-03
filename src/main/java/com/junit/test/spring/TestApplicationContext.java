@@ -29,20 +29,24 @@ public class TestApplicationContext implements ApplicationContext{
 	}
 	
 	private Properties properties;
-	
+	private StandardServletEnvironment env;
 	@Override
 	public Environment getEnvironment() {
 		if(parentContext == null || parentContext == this) {
-			StandardServletEnvironment env = new StandardServletEnvironment();
-			try {
-				Resource[] resources = ScanUtil.getResources("application.properties");
-				properties = new Properties();
-				if(resources.length>0) {
-					properties.load(resources[0].getInputStream());
-					env.getPropertySources().addFirst(new PropertiesPropertySource("local", properties));
+			if(env == null) {
+				env = new StandardServletEnvironment();
+				if(properties == null) {
+					try {
+						Resource[] resources = ScanUtil.getResources("application.properties");
+						properties = new Properties();
+						if(resources.length>0) {
+							properties.load(resources[0].getInputStream());
+						}
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
-			} catch (IOException e) {
-				e.printStackTrace();
+				env.getPropertySources().addFirst(new PropertiesPropertySource("local", properties));
 			}
 			return env;
 		}
