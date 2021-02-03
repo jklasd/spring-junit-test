@@ -33,7 +33,7 @@ public class LazyDubboBean {
 		if(dubboData.containsKey(dubboClass)) {
 			return dubboData.get(dubboClass);
 		}
-		log.info("构建DubboBean=>{}",dubboClass);
+		log.info("构建Dubbo 代理服务=>{}",dubboClass);
 		ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
 		referenceConfig.setInterface(dubboClass);
 		if(dubboAttr.get(dubboClass).containsKey("group")) {

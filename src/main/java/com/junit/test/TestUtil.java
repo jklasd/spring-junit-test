@@ -198,6 +198,9 @@ public class TestUtil{
 		return getPropertiesValue(key,null);
 	}
 	public static Object value(String key,Class<?> type) {
+//		if(key.contains("finalPV.userId")) {
+//			log.debug("断点");
+//		}
 		String value = getPropertiesValue(key);
 		try {
 			if(StringUtils.isNotBlank(value)) {
@@ -216,6 +219,8 @@ public class TestUtil{
 				}else {
 					log.info("其他类型");
 				}
+			}else if(type != String.class) {
+				return null;
 			}
 		} catch (Exception e) {
 			log.warn("转换类型异常{}==>{}",key,type);
