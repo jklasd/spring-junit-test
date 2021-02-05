@@ -15,6 +15,9 @@ public class LazyConfigurationPropertiesBindingPostProcessor {
 		processConfigurationProperties(obj,obj.getClass().getAnnotation(ConfigurationProperties.class));
 	}
 	public static void processConfigurationProperties(Object obj, ConfigurationProperties annotation) {
+		if(annotation == null) {
+			return;
+		}
 		Object target = obj;
 		PropertiesConfigurationFactory<Object> factory = new PropertiesConfigurationFactory<Object>(
 				target);
@@ -24,13 +27,11 @@ public class LazyConfigurationPropertiesBindingPostProcessor {
 		// comma-separated arrays of convertibles can be bound automatically
 //		factory.setConversionService(this.conversionService == null
 //				? getDefaultConversionService() : this.conversionService);
-		if (annotation != null) {
-			factory.setIgnoreInvalidFields(annotation.ignoreInvalidFields());
-			factory.setIgnoreUnknownFields(annotation.ignoreUnknownFields());
-			factory.setIgnoreNestedProperties(annotation.ignoreNestedProperties());
-			if (StringUtils.hasLength(annotation.prefix())) {
-				factory.setTargetName(annotation.prefix());
-			}
+		factory.setIgnoreInvalidFields(annotation.ignoreInvalidFields());
+		factory.setIgnoreUnknownFields(annotation.ignoreUnknownFields());
+		factory.setIgnoreNestedProperties(annotation.ignoreNestedProperties());
+		if (StringUtils.hasLength(annotation.prefix())) {
+			factory.setTargetName(annotation.prefix());
 		}
 		try {
 			factory.bindPropertiesToTarget();

@@ -3,7 +3,6 @@ package com.junit.test;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,6 +11,7 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.logging.logback.LogbackUtil;
 import org.springframework.context.ApplicationContext;
@@ -19,14 +19,7 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
-import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 
-import com.google.common.base.Objects;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.spring.TestApplicationContext;
 import com.junit.test.spring.XmlBeanUtil;
@@ -59,6 +52,7 @@ public class TestUtil{
 		this.applicationContext = new TestApplicationContext(applicationContext);
 	}
 	private void processConfig() {
+		XmlBeanUtil.process();
 		
 		List<Class<?>> list = ScanUtil.findStaticMethodClass();
 		log.debug("static class =>{}",list.size());
@@ -69,8 +63,6 @@ public class TestUtil{
 			log.debug("static class =>{}",classItem);
 			LazyBean.processStatic(classItem);
 		});
-		
-		XmlBeanUtil.process();
 	}
 	
 	
@@ -110,6 +102,12 @@ public class TestUtil{
 		}
 	}
 	
+	/**
+	 * 获取存在Service,Complent的相关对象
+	 * @param classD
+	 * @param beanName
+	 * @return
+	 */
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
@@ -204,7 +202,6 @@ public class TestUtil{
 	}
 
 	public static Boolean isScanClassPath(String cn) {
-		String tmpName = cn.replace("/", ".");
-		return scanClassPath.stream().allMatch(p -> tmpName.contains(p));
+		return scanClassPath.stream().allMatch(p -> cn.contains(p));
 	}
 }

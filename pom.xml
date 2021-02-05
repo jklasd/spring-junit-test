@@ -6,6 +6,18 @@
   <version>1.1.5-RELEASE</version>
   <packaging>jar</packaging>
   <url>http://maven.apache.org</url>
+  <distributionManagement>
+		<repository>
+			<id>releases-repo</id>
+			<name>Internal Releases</name>
+			<url>http://${nexus.proxy.location}/nexus/content/repositories/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>snapshot-repo</id>
+			<name>Development Snapshot</name>
+			<url>http://${nexus.proxy.location}/nexus/content/repositories/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
   <properties>
     <maven.compiler.source>1.8</maven.compiler.source>
     <maven.compiler.target>1.8</maven.compiler.target>

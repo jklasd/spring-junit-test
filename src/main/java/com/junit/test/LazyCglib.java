@@ -1,17 +1,22 @@
 package com.junit.test;
 
+import java.awt.List;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.Collections;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.AopContextSuppert;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.junit.test.db.LazyMongoBean;
+import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -62,12 +67,12 @@ public class LazyCglib implements MethodInterceptor {
 			next:for(Constructor c : cs) {
 				Class tagC = c.getDeclaringClass();
 				if(c.getParameterCount()<count) {
-					Class[] types = c.getParameterTypes();
-					for(Class t:types) {
-						if(!noPackage.contains(t) && t.getPackage().getName().startsWith("java.util")) {
-							continue next;
-						}
-					}
+//					Class[] types = c.getParameterTypes();
+//					for(Class t:types) {
+//						if(!noPackage.contains(t) && t.getPackage().getName().startsWith("java.util")) {
+//							continue next;
+//						}
+//					}
 					this.constructor = c;
 					count = c.getParameterCount();
 				}
@@ -81,7 +86,7 @@ public class LazyCglib implements MethodInterceptor {
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
 			e.printStackTrace();
-			throw e;
+			throw e.getCause();
 		}
 	}
 
@@ -107,6 +112,10 @@ public class LazyCglib implements MethodInterceptor {
 				objes[i] = 0;
 			}else if(c == char.class){
 				objes[i] = '0';
+			}else if(c.getName().contains("java.util.List")) {
+				objes[i] = Lists.newArrayList();
+			}else if(c.getName().contains("java.util.Set")) {
+				objes[i] = Sets.newHashSet();
 			}
 			else {
 				objes[i] = LazyBean.buildProxy(getArgumentTypes()[i]);
@@ -140,6 +149,7 @@ public class LazyCglib implements MethodInterceptor {
 				tagertObj = ScanUtil.findBean(beanName);
 				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
 			}else {
+				ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
 				if(hasParamConstructor) {
 					try {
 						tagertObj = constructor.newInstance(getArguments());
@@ -158,6 +168,9 @@ public class LazyCglib implements MethodInterceptor {
 						log.error("构建bean=>{}",tag);
 						log.error("构建bean异常",e);
 					}
+				}
+				if(propConfig!=null && tagertObj!=null) {
+					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
 				}
 			}
 		}

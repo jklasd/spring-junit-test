@@ -32,6 +32,16 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 		cdlu.timeOut = timeOut;
 		return cdlu;
 	}
+	private BiConsumer<? super T,? super Exception> exception;
+	private BiConsumer<? super T,? super Error> error;
+	public CountDownLatchUtils<T> setError(BiConsumer<? super T,? super Error> error) {
+		this.error = error;
+		return this;
+	}
+	public CountDownLatchUtils<T> setException(BiConsumer<? super T,? super Exception> exception) {
+		this.exception = exception;
+		return this;
+	}
 	/**
 	 * item
 	 * @param action
@@ -43,6 +53,18 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 			ThreadPoolUtils.commonRun(()->{
 				try {
 					action.accept(tmp);
+				}catch(Exception e) {
+					if(exception!=null) {
+						exception.accept(tmp,e);
+					}else {
+						throw e;
+					}
+				}catch(Error err) {
+					if(error!=null) {
+						error.accept(tmp,err);
+					}else {
+						throw err;
+					}
 				} finally {
 					obj.countDown();
 				}

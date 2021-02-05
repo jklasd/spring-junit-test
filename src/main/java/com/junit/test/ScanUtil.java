@@ -17,8 +17,8 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
@@ -43,8 +43,10 @@ import lombok.extern.slf4j.Slf4j;
  * @author jubin.zhang
  *
  */
+@SuppressWarnings("rawtypes")
 @Slf4j
 public class ScanUtil {
+	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
@@ -88,6 +90,34 @@ public class ScanUtil {
 			}
 		}
 	}
+	private static Set<String> classNames = Sets.newHashSet();
+	public static Map<String,Map<String,Class>> pathForClass = Maps.newHashMap();
+	
+	public static Map<String, Class> findClassMap(String scanPath) {
+		if(pathForClass.containsKey(scanPath)) {
+			return pathForClass.get(scanPath);
+		}
+		Map<String,Class> nameMapTmp = Maps.newHashMap();
+		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->cn.contains(scanPath)).collect(Collectors.toList()))
+		.runAndWait(name->{
+			if(name.endsWith(CLASS_SUFFIX)) {
+				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
+				// 查看是否class
+				try {
+					Class<?> c = Class.forName(name);
+					nameMapTmp.put(name,c);
+				} catch (ClassNotFoundException | NoClassDefFoundError e) {
+//					log.error("加载{}=>未找到类{}",name,e.getMessage());
+				}catch(Error e) {
+					log.error("未找到类{}=>{}",name,e.getMessage());
+				}
+			}
+		});
+		pathForClass.put(scanPath, nameMapTmp);
+		return nameMapTmp;
+	}
+	
+	private static boolean init = false;
 	/**
 	 * 加载所有class，缓存起来
 	 * 类似加载 AbstractEmbeddedServletContainerFactory
@@ -95,10 +125,13 @@ public class ScanUtil {
 	@SuppressWarnings("resource")
 	public static void loadAllClass() {
 		try {
+			if(init) {
+				return;
+			}
+			init = true;
 			log.debug("=============开始加载class=============");
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
 			log.debug("=============加载class={}============",resources.length);
-			Set<String> classNames = Sets.newHashSet();
 			for (Resource r : resources) {
 				URL url = r.getURL();
 				if("file".equals(url.getProtocol())) {
@@ -117,7 +150,7 @@ public class ScanUtil {
 							Enumeration<JarEntry> jarEntrys = jFile.entries();
 							while (jarEntrys.hasMoreElements()) {
 								String name = jarEntrys.nextElement().getName();
-								classNames.add(name);
+								classNames.add(name.replace("/", ".").replace("\\", "."));
 							}
 						}
 					} catch (Exception e) {
@@ -175,7 +208,16 @@ public class ScanUtil {
 			}
 		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
 		}else {
-			return  findBean(beanName);
+			Object obj = findBean(beanName); 
+			try {
+				if(type.getConstructors().length>0) {
+					return  obj == null?type.newInstance():obj;
+				}else {
+					throw new NoSuchBeanDefinitionException("没有获取到构造器");
+				}
+			} catch (InstantiationException | IllegalAccessException e) {
+				log.error("不能构建bean=>{}=>{}",beanName,type);
+			}
 		}
 		return null;
 	}
@@ -307,14 +349,43 @@ public class ScanUtil {
 	 * @throws ClassNotFoundException
 	 */
 	public static Object findBeanByInterface(Class interfaceClass) {
-		if(interfaceClass == ApplicationContext.class) {
-			return TestUtil.getExistBean(interfaceClass, null);
+		if(interfaceClass.getPackage().getName().startsWith("org.springframework.beans")) {
+			Object obj = TestUtil.getExistBean(interfaceClass, null);
+			if(obj == null) {
+				List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework.beans"),null);
+				if(!cL.isEmpty()) {
+					Class c = cL.get(0);
+				}
+			}
+			return obj;
 		}
 		List<Class> tags = findClassImplInterface(interfaceClass);
 		if (!tags.isEmpty()) {
 			return LazyBean.buildProxy(tags.get(0));
 		}
 		return null;
+	}
+	private static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
+		Map<String,Class> tmp = Maps.newHashMap();
+		if(classMap!=null) {
+			tmp.putAll(classMap);
+		}
+		tmp.putAll(nameMap);
+		List<Class> list = Lists.newArrayList();
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+		.runAndWait(name ->{
+			if(ClassName!=null && name.equals(ClassName)) {
+				return;
+			}
+			Class<?> tmpClass = tmp.get(name);
+			if(isImple(tmpClass,interfaceClass)) {
+				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
+						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
+					list.add(tmpClass);
+				}
+			}
+		});
+		return list;
 	}
 	/**
 	 * 扫描实现了interfaceClass 的类
@@ -325,21 +396,7 @@ public class ScanUtil {
 	 */
 	@SuppressWarnings("rawtypes")
 	private static List<Class> findClassImplInterface(Class interfaceClass){
-//		if(interfaceClass.getName().contains("ApplicationService")) {
-//			log.info("断点");
-//		}
-		List<Class> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.runAndWait(name ->{
-			Class<?> tmpClass = nameMap.get(name);
-			if(isImple(tmpClass,interfaceClass)) {
-				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
-						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
-				}
-			}
-		});
-		return list;
+		return findClassImplInterface(interfaceClass, null,null);
 	}
 	/**
 	 * 判断 c 是否是interfaceC的实现类
@@ -358,6 +415,14 @@ public class ScanUtil {
 		Class sc = c.getSuperclass();
 		if(sc!=null) {
 			return isImple(sc, interfaceC);
+		}
+		return false;
+	}
+	public static boolean isExtends(Class c,Class abstractC) {
+		if(c.getSuperclass() == abstractC) {
+			return true;
+		}else if(c.getSuperclass() != null){
+			return isExtends(c.getSuperclass(), abstractC);
 		}
 		return false;
 	}
@@ -406,10 +471,14 @@ public class ScanUtil {
 	 * @throws ClassNotFoundException
 	 */
 	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
+		return findClassWithAnnotation(annotationType, nameMap);
+	}
+	
+	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class> nameMapTmp){
 		List<Class<?>> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMapTmp.keySet()))
 		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
+			Class<?> c = nameMapTmp.get(name);
 			Annotation type = c.getDeclaredAnnotation(annotationType);
 			if(type != null) {
 				list.add(c);
@@ -462,23 +531,33 @@ public class ScanUtil {
 		return Lists.newArrayList(list);
 	}
 	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName) {
+		return findCreateBeanFactoryClass(classBean, beanName, nameMap);
+	}
+	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName,Map<String,Class> nameMapTmp) {
+		Map<String,Class> finalNameMap = Maps.newHashMap();
+		finalNameMap.putAll(nameMap);
+		if(nameMapTmp != null) {
+			finalNameMap.putAll(nameMapTmp);
+		}
 		Object[] address = new Object[2];
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
-			Annotation comp = c.getAnnotation(Component.class);
-			Annotation service = c.getAnnotation(Service.class);
-			Annotation configuration = c.getAnnotation(Configuration.class);
-			if(comp != null
-					|| service != null
-					|| configuration != null) {
-				Method[] methods = c.getDeclaredMethods();
-				for(Method m : methods) {
-					Bean beanA = m.getAnnotation(Bean.class);
-					if(beanA != null) {
-						if(m.getReturnType() == classBean) {
-							address[0]=c;
-							address[1]=m;
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()))
+		.setException((name,e)->{
+//			log.info("TypeNotPresentExceptionProxy=>"+name);
+		}).setError((name,e)->{
+			log.info("TypeNotPresentExceptionProxy=>"+name);
+		}).runAndWait(name ->{
+			Class<?> c = finalNameMap.get(name);
+			if(Modifier.isPublic(c.getModifiers()) && !c.isInterface()) {
+				Annotation configuration = c.getAnnotation(Configuration.class);
+				if(configuration != null) {
+					Method[] methods = c.getDeclaredMethods();
+					for(Method m : methods) {
+						Bean beanA = m.getAnnotation(Bean.class);
+						if(beanA != null) {
+							if(classBean.isInterface()?ScanUtil.isImple(m.getReturnType(), classBean):(ScanUtil.isExtends(m.getReturnType(), classBean) || m.getReturnType() == classBean)) {
+								address[0]=c;
+								address[1]=m;
+							}
 						}
 					}
 				}
@@ -488,11 +567,14 @@ public class ScanUtil {
 	}
 	@SuppressWarnings("rawtypes")
 	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName);
+		return findCreateBeanFromFactory(classBean, beanName, nameMap);
+	}
+	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
+		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
 		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			return null;
 		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName);
+		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName,tmpBeanMap);
 		return tagObj;
 	}
 	public static Resource getRecource(String location) throws IOException {

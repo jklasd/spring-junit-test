@@ -9,6 +9,7 @@ import java.util.Properties;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.MessageSourceResolvable;
@@ -132,15 +133,23 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
-		return null;
+		if(parentContext == null || parentContext == this) {
+			return (T)ScanUtil.findBean(name, requiredType);
+		}
+		try {
+			Object bean = parentContext.getBean(name,requiredType);
+			return (T) bean;
+		} catch (NoSuchBeanDefinitionException e) {
+			return (T)ScanUtil.findBean(name, requiredType);
+		}
 	}
 
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
+		if(parentContext == null || parentContext == this) {
+			return (T)ScanUtil.findBean(requiredType);
+		}
 		try {
-			if(parentContext == null || parentContext == this) {
-				return (T)ScanUtil.findBean(requiredType);
-			}
 			Object bean = parentContext.getBean(requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
@@ -291,14 +300,12 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public ApplicationContext getParent() {
-		// TODO Auto-generated method stub
-		return null;
+		return parentContext;
 	}
 
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException {
-		// TODO Auto-generated method stub
-		return null;
+		return new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
 	}
 
 	public Properties getProperties() {

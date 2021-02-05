@@ -27,7 +27,11 @@ class LazyImple implements InvocationHandler {
 		this.tag = tag;
 		this.beanName = beanName;
 	}
-
+	private Class classGeneric;
+	public LazyImple(Class classBean, String beanName2, Class classGeneric) {
+		this(classBean,beanName2);
+		this.classGeneric = classGeneric;
+	}
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
@@ -39,12 +43,14 @@ class LazyImple implements InvocationHandler {
 			}
 			LazyMybatisMapperBean.over();
 			return result;
-		} catch (Exception e) {
-			log.error("代理类执行异常=>{}",tag);
-			log.error("代理类执行异常",e);
-			//throw e;
+		}catch (Exception e) {
+			Throwable tmp = e;
+			if(e.getCause()!=null) {
+				tmp = e.getCause();
+			}
+			log.error("代理类执行异常=>{},->{}",tag,tmp.getMessage());
+			throw tmp;
 		}
-		return null;
 	}
 	/**
 	 * 接口类型

@@ -3,14 +3,15 @@ package com.junit.test.dubbo;
 import java.util.Map;
 
 import org.w3c.dom.Document;
-import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
+import com.alibaba.dubbo.config.ServiceConfig;
 import com.google.common.collect.Maps;
+import com.junit.test.LazyBean;
 import com.junit.test.TestUtil;
 import com.junit.test.spring.XmlBeanUtil;
 
@@ -25,9 +26,10 @@ public class LazyDubboBean {
 	@SuppressWarnings("rawtypes")
 	private static Map<Class,Object> dubboData = Maps.newHashMap();
 	@SuppressWarnings("rawtypes")
-	private static Map<Class,Map<String,String>> dubboAttr = Maps.newHashMap();
+	private static Map<Class,Map<String,String>> dubboRefferCache = Maps.newHashMap();
+	private static Map<Class,Map<String,String>> dubboServiceCache = Maps.newHashMap();
 	public static boolean isDubbo(Class<?> classBean) {
-		return dubboAttr.containsKey(classBean);
+		return dubboRefferCache.containsKey(classBean);
 	}
 	private static RegistryConfig registryConfig;
 	public static Object buildBean(Class<?> dubboClass) {
@@ -37,8 +39,8 @@ public class LazyDubboBean {
 		log.info("构建Dubbo 代理服务=>{}",dubboClass);
 		ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
 		referenceConfig.setInterface(dubboClass);
-		if(dubboAttr.get(dubboClass).containsKey("group")) {
-			referenceConfig.setGroup(TestUtil.getPropertiesValue(dubboAttr.get(dubboClass).get("group")));
+		if(dubboRefferCache.get(dubboClass).containsKey("group")) {
+			referenceConfig.setGroup(TestUtil.getPropertiesValue(dubboRefferCache.get(dubboClass).get("group")));
 		}
 		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
 		referenceConfig.setApplication(applicationConfig);
@@ -50,15 +52,46 @@ public class LazyDubboBean {
 	public static void processDubbo(Document document) {
 		processRegister(document.getElementsByTagName("dubbo:registry"));
 		cacheReference(document.getElementsByTagName("dubbo:reference"));
+		cacheService(document.getElementsByTagName("dubbo:service"));
+		//dubbo:protocol 待处理
+	}
+	
+	public static void registerDubboService(Class<?> dubboServiceClass) {
+		if(dubboServiceCache.containsKey(dubboServiceClass)) {
+			log.info("注册dubboService=>{}",dubboServiceClass);
+			ServiceConfig<Object>  serviceConfig = new ServiceConfig<>();
+			serviceConfig.setApplication(new ApplicationConfig("dubbo-examples-service"));
+			serviceConfig.setInterface(dubboServiceClass);
+			if(dubboServiceCache.get(dubboServiceClass).containsKey("group")) {
+				serviceConfig.setGroup(TestUtil.getPropertiesValue(dubboServiceCache.get(dubboServiceClass).get("group")));
+			}
+			if(dubboServiceCache.get(dubboServiceClass).containsKey("timeout")) {
+				serviceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(dubboServiceCache.get(dubboServiceClass).get("timeout"))));
+			}
+			serviceConfig.setRef(LazyBean.buildProxy(dubboServiceClass));
+			serviceConfig.setRegistry(registryConfig);
+			serviceConfig.export();
+		}
+	}
+	private static void cacheService(NodeList serviceList) {
+		for(int i = 0 ;i< serviceList.getLength();i++) {
+			Node node = serviceList.item(i);
+			Map<String,String> attr = XmlBeanUtil.loadXmlNodeAttr(node.getAttributes());
+			String className = attr.get("interface");
+			try {
+				dubboServiceCache.put(Class.forName(className),attr);
+			} catch (ClassNotFoundException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 	private static void cacheReference(NodeList list) {
 			for(int i = 0 ;i< list.getLength();i++) {
 				Node node = list.item(i);
-				NamedNodeMap nodeMap = node.getAttributes();
-				Node attr = nodeMap.getNamedItem("interface");
-				String className = attr.getNodeValue();
+				Map<String,String> attr = XmlBeanUtil.loadXmlNodeAttr(node.getAttributes());
+				String className = attr.get("interface");
 				try {
-					dubboAttr.put(Class.forName(className), XmlBeanUtil.loadXmlNodeAttr(node.getAttributes()));
+					dubboRefferCache.put(Class.forName(className), attr);
 				} catch (Exception e) {
 					log.error("",e);
 				}
