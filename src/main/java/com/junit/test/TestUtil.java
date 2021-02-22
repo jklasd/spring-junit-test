@@ -14,7 +14,6 @@ import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.boot.logging.logback.LogbackUtil;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySources;
@@ -25,6 +24,7 @@ import org.springframework.web.context.support.StandardServletEnvironment;
 import com.google.common.collect.Sets;
 import com.junit.test.spring.TestApplicationContext;
 import com.junit.test.spring.XmlBeanUtil;
+import com.junit.util.LogbackUtil;
 
 import lombok.extern.slf4j.Slf4j;
 

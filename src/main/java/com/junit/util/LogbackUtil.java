@@ -1,4 +1,4 @@
-package org.springframework.boot.logging.logback;
+package com.junit.util;
 
 import java.nio.charset.Charset;
 import java.util.List;
