@@ -1,6 +1,7 @@
 package com.junit.test;
 
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -15,6 +16,7 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.logging.logback.LogbackUtil;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
@@ -113,6 +115,8 @@ public class TestUtil{
 		try {
 			if(classD == ApplicationContext.class) {
 				return getApplicationContext();
+			}else if(classD == Environment.class) {
+				return getApplicationContext().getEnvironment();
 			}
 			Object obj = getApplicationContext().getBean(classD);
 			return obj;
@@ -204,4 +208,9 @@ public class TestUtil{
 	public static Boolean isScanClassPath(String cn) {
 		return scanClassPath.stream().allMatch(p -> cn.contains(p));
 	}
+//	public static void getExistBean(Class interfaceClass, Type[] classGeneric) {
+//		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext().getAutowireCapableBeanFactory();
+//		DependencyDescriptor dd = new DependencyDescriptor(null, false);
+//		dlbf.resolveDependency(dd, interfaceClass.getName());
+//	}
 }

@@ -2,6 +2,7 @@ package com.junit.test;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
+import java.lang.reflect.Type;
 
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +28,8 @@ class LazyImple implements InvocationHandler {
 		this.tag = tag;
 		this.beanName = beanName;
 	}
-	private Class classGeneric;
-	public LazyImple(Class classBean, String beanName2, Class classGeneric) {
+	private Type[] classGeneric;
+	public LazyImple(Class classBean, String beanName2, Type[] classGeneric) {
 		this(classBean,beanName2);
 		this.classGeneric = classGeneric;
 	}
@@ -70,11 +71,14 @@ class LazyImple implements InvocationHandler {
 					isDbConnect = true;
 					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
 				}else {
+//					if(tag.getName().contains("Environment")) {
+//						log.info("断点");
+//					}
 					if(beanName == null) {
 						/**
 						 * 若是本地接口实现类的bean，则进行bean查找。
 						 */
-						Object tagImp = ScanUtil.findBeanByInterface(tag);
+						Object tagImp = ScanUtil.findBeanByInterface(tag,classGeneric);
 						if(tagImp == null) {
 							log.info("未找到本地Bean=>{}",tag);
 						}else {

@@ -16,6 +16,7 @@ import org.w3c.dom.NodeList;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 import com.junit.test.db.LazyMybatisMapperBean;
 import com.junit.test.dubbo.LazyDubboBean;
@@ -64,8 +65,15 @@ public class XmlBeanUtil {
 								
 							}
 						}
+						
+						NodeList contextList = document.getElementsByTagName("context:component-scan");
+						if(contextList.getLength()>0) {
+							Map<String, String> contextAttr = loadXmlNodeAttr(beansList.item(0).getAttributes());//base-package
+							TestUtil.loadScanPath(contextAttr.get("base-package"));
+						}
 					}
 				}
+				
 			} catch (Exception e) {
 			}
 		}

@@ -3,8 +3,8 @@ package com.junit.test.db;
 import java.util.Map;
 
 import com.google.common.collect.Maps;
+import com.junit.test.AssemblyUtil;
 import com.junit.test.ScanUtil;
-import com.junit.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,8 +22,17 @@ public class LazyMongoBean {
 		if(cacheBean.containsKey(classBean)) {
 			return cacheBean.get(classBean);
 		}
-		Object obj = ScanUtil.findCreateBeanFromFactory(classBean, beanName, ScanUtil.findClassMap(ScanUtil.BOOT_AUTO_CONFIG));
-		
+		AssemblyUtil asse = new AssemblyUtil();
+		asse.setTagClass(classBean);
+		asse.setBeanName(beanName);
+		asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.BOOT_AUTO_CONFIG));
+		Object obj = ScanUtil.findCreateBeanFromFactory(asse);
+		log.info("obj=>{}",obj!=null);
+		/**
+		 * DefaultListableBeanFactory
+		 * org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration
+		 * org.springframework.boot.autoconfigure.data.mongo.MongoDataAutoConfiguration
+		 */
 		return obj;
 	}
 }

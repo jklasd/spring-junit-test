@@ -24,7 +24,6 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.junit.test.db.LazyMongoBean;
 import com.junit.test.mq.LazyMQBean;
 import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
@@ -44,97 +43,13 @@ public class LazyBean {
 	 * @param classBean
 	 * @return
 	 */
-	public static Object buildProxyForGeneric(Class classBean,String beanName,Class classGeneric) {
-		/**
-		 * 取缓存值
-		 */
-		if(singletonName.containsKey(beanName)) {
-			return singletonName.get(beanName);
+	public static Object buildProxyForGeneric(Class classBean,Type[] classGeneric) {
+		Object tagObject = null;
+		if (classBean.isInterface()) {
+			InvocationHandler handler = new LazyImple(classBean,null,classGeneric);
+			tagObject = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
 		}
-		if(StringUtils.isBlank(beanName)) {
-			if (singleton.containsKey(classBean)) {
-				return singleton.get(classBean);
-			}
-		}
-		/**
-		 * 开始构建对象
-		 */
-		
-		Object tag = null;
-		/**
-		 * 判断是否是MQ类型,是MQ类型，则构建MQ对象
-		 */
-		if(classBean.getPackage().getName().contains(LazyMQBean.packageName)) {
-			try {
-				tag = LazyMQBean.buildBean(classBean);
-			} catch (InstantiationException | IllegalAccessException e) {
-				e.printStackTrace();
-			}
-		}else {
-			/**
-			 * 构建其他类型的代理对象
-			 * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
-			 * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
-			 */
-			try {
-				if (classBean.isInterface()) {
-					InvocationHandler handler = new LazyImple(classBean,beanName,classGeneric);
-					tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-				} else {
-					Constructor[] structors = classBean.getConstructors();
-					/**
-					 * 查看是否存在无参构造函数
-					 */
-					for(Constructor c : structors) {
-						if(c.getParameterCount() == 0 ) {
-							MethodInterceptor handler = new LazyCglib(classBean,beanName);
-							tag = Enhancer.create(classBean, handler);
-							break;
-						}
-					}
-					if(tag == null && structors.length>0) {
-						log.warn("不存在无参构造函数");
-						LazyCglib handler = new LazyCglib(classBean,beanName,true);
-//						if(LazyMongoBean.isMongo(classBean)) {
-//							tag = LazyMongoBean.buildBean(classBean,beanName);
-//						}else {
-//							tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
-//						}
-						Enhancer enhancer = new Enhancer();
-						enhancer.setSuperclass(classBean);
-						enhancer.setCallback(handler);
-						tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
-					}
-				}
-			} catch (Exception e) {
-				log.error("构建代理类异常=>",e);
-				/**
-				 * 查询是否有构建bean的configration
-				 */
-				if(LazyMongoBean.isMongo(classBean)) {
-					tag = LazyMongoBean.buildBean(classBean,beanName);
-				}else {
-					tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
-					if(tag == null) {
-						/**
-						 * 当无法构建代理对象时，从spring 容器里取。
-						 */
-						tag = TestUtil.getExistBean(classBean, beanName);
-						if(tag == null) {
-							System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
-						}
-					}
-				}
-			}
-		}
-		if(tag!=null) {
-			if(StringUtils.isNotBlank(beanName)) {
-				singletonName.put(beanName, tag);
-			}else {
-				singleton.put(classBean, tag);
-			}
-		}
-		return tag;
+		return tagObject;
 	}
 	/**
 	 * 构建代理对象
@@ -204,24 +119,28 @@ public class LazyBean {
 					}
 				}
 			} catch (Exception e) {
-				log.error("构建代理类异常=>",e);
+				if(e.getCause()!=null) {
+					log.error("构建代理类异常=>{}",e.getCause().getMessage());
+				}else {
+					log.error("构建代理类异常=>{}",e.getMessage());
+				}
 				/**
 				 * 查询是否有构建bean的configration
 				 */
-				if(LazyMongoBean.isMongo(classBean)) {
-					tag = LazyMongoBean.buildBean(classBean,beanName);
-				}else {
-					tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
-					if(tag == null) {
-						/**
-						 * 当无法构建代理对象时，从spring 容器里取。
-						 */
-						tag = TestUtil.getExistBean(classBean, beanName);
-						if(tag == null) {
-							System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
-						}
-					}
-				}
+//				if(LazyMongoBean.isMongo(classBean)) {
+//					tag = LazyMongoBean.buildBean(classBean,beanName);
+//				}else {
+//					tag = ScanUtil.findCreateBeanFromFactory(classBean,beanName);
+//					if(tag == null) {
+//						/**
+//						 * 当无法构建代理对象时，从spring 容器里取。
+//						 */
+//						tag = TestUtil.getExistBean(classBean, beanName);
+//						if(tag == null) {
+//							System.out.println("[ERROR]代理Bean=>"+classBean+"=>"+beanName);
+//						}
+//					}
+//				}
 			}
 		}
 		if(tag!=null) {

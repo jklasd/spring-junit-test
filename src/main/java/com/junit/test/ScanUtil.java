@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,6 +19,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -34,6 +36,7 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.junit.test.dubbo.LazyDubboBean;
 import com.junit.test.spring.JavaBeanUtil;
+import com.junit.test.spring.ObjectProviderImpl;
 import com.junit.test.spring.XmlBeanUtil;
 import com.junit.util.CountDownLatchUtils;
 
@@ -349,10 +352,10 @@ public class ScanUtil {
 	 * @throws ClassNotFoundException
 	 */
 	public static Object findBeanByInterface(Class interfaceClass) {
-		if(interfaceClass.getPackage().getName().startsWith("org.springframework.beans")) {
+		if(interfaceClass.getPackage().getName().startsWith("org.springframework")) {
 			Object obj = TestUtil.getExistBean(interfaceClass, null);
 			if(obj == null) {
-				List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework.beans"),null);
+				List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework"),null);
 				if(!cL.isEmpty()) {
 					Class c = cL.get(0);
 				}
@@ -530,14 +533,12 @@ public class ScanUtil {
 		});
 		return Lists.newArrayList(list);
 	}
-	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName) {
-		return findCreateBeanFactoryClass(classBean, beanName, nameMap);
-	}
-	public static Object[] findCreateBeanFactoryClass(Class classBean, String beanName,Map<String,Class> nameMapTmp) {
+	
+	public static Object[] findCreateBeanFactoryClass(final AssemblyUtil assemblyData) {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
 		finalNameMap.putAll(nameMap);
-		if(nameMapTmp != null) {
-			finalNameMap.putAll(nameMapTmp);
+		if(assemblyData.getNameMapTmp() != null) {
+			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
 		Object[] address = new Object[2];
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()))
@@ -554,7 +555,12 @@ public class ScanUtil {
 					for(Method m : methods) {
 						Bean beanA = m.getAnnotation(Bean.class);
 						if(beanA != null) {
-							if(classBean.isInterface()?ScanUtil.isImple(m.getReturnType(), classBean):(ScanUtil.isExtends(m.getReturnType(), classBean) || m.getReturnType() == classBean)) {
+//							if(c.getName().contains("RedisAuto")) {
+//								log.info("断点");
+//							}
+							Class tagC = assemblyData.getTagClass();
+							if(tagC.isInterface()?ScanUtil.isImple(m.getReturnType(), tagC):
+								(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
 								address[0]=c;
 								address[1]=m;
 							}
@@ -567,21 +573,49 @@ public class ScanUtil {
 	}
 	@SuppressWarnings("rawtypes")
 	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		return findCreateBeanFromFactory(classBean, beanName, nameMap);
+		AssemblyUtil asse = new AssemblyUtil();
+		asse.setTagClass(classBean);
+		asse.setBeanName(beanName);
+		return findCreateBeanFromFactory(asse);
 	}
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
-		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
+	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
+		Object[] ojb_meth = findCreateBeanFactoryClass(assemblyData);
 		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			return null;
 		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName,tmpBeanMap);
+		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
 		return tagObj;
 	}
+//	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
+//		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
+//		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+//			return null;
+//		}
+//		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName,tmpBeanMap);
+//		return tagObj;
+//	}
 	public static Resource getRecource(String location) throws IOException {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
 	}
 	public static Class getClassByName(String className) {
 		return nameMap.get(className);
+	}
+	public static Object findBeanByInterface(Class interfaceClass, Type[] classGeneric) {
+		if(classGeneric == null) {
+			return findBeanByInterface(interfaceClass);
+		}
+		if(interfaceClass.getPackage().getName().startsWith("org.springframework.beans")) {
+			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework.beans"),null);
+			if(!cL.isEmpty()) {
+				Class c = cL.get(0);
+			}else {
+				if(interfaceClass == ObjectProvider.class) {
+					return new ObjectProviderImpl(classGeneric[0]);
+				}
+//				TestUtil.getExistBean(interfaceClass,classGeneric);
+			}
+		}
+		return null;
 	}
 }
