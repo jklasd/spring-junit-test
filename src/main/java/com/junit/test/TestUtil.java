@@ -198,7 +198,7 @@ public class TestUtil{
 		launch.setApplicationContext(null);
 		Resource logback = applicationContext.getResource("logback.xml");
 		if(logback != null) {
-			LogbackUtil.init((StandardServletEnvironment) getApplicationContext().getEnvironment());
+			LogbackUtil.init(logback,(StandardServletEnvironment) getApplicationContext().getEnvironment());
 			log.info("加载环境配置完毕");
 		}
 		ScanUtil.loadAllClass();

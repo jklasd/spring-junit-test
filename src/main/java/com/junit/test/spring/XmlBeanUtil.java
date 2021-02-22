@@ -16,7 +16,6 @@ import org.w3c.dom.NodeList;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.junit.test.ScanUtil;
 import com.junit.test.TestUtil;
 import com.junit.test.db.LazyMybatisMapperBean;
 import com.junit.test.dubbo.LazyDubboBean;
@@ -131,5 +130,20 @@ public class XmlBeanUtil {
 			map.put(nodeMap.item(i).getNodeName(), nodeMap.item(i).getNodeValue());
 		}
 		return map;
+	}
+	
+	public static List<Node> findNodeByTag(Node node,String tagName) {
+		List<Node> list = Lists.newArrayList();
+		NodeList nodeList = node.getChildNodes();
+		for(int i=0; i<nodeList.getLength(); i++) {
+			if(nodeList.item(i).getNodeName().equals(tagName)) {
+				list.add(nodeList.item(i));
+			}else {
+				if(nodeList.item(i).hasChildNodes()) {
+					list.addAll(findNodeByTag(nodeList.item(i), tagName));
+				}
+			}
+		}
+		return list;
 	}
 }
