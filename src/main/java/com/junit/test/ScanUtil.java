@@ -618,4 +618,14 @@ public class ScanUtil {
 		}
 		return null;
 	}
+	public static Resource getRecourceAnyOne(String... paths) throws IOException {
+		// TODO Auto-generated method stub
+		for(String path: paths) {
+			Resource r = getRecource(path);
+			if(r!=null && r.exists()) {
+				return r;
+			}
+		}
+		return null;
+	}
 }

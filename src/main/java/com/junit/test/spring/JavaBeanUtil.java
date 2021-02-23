@@ -5,7 +5,11 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
+
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.beans.factory.annotation.Configurable;
 
 import com.google.common.collect.Maps;
 import com.junit.test.AssemblyUtil;
@@ -123,6 +127,24 @@ public class JavaBeanUtil {
 			}
 		}
 		return cacheBean.get(key);
+	}
+	/**
+	 * 扫描java代码相关配置
+	 */
+	public static void process() {
+		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configurable.class);
+		configurableList.forEach(configura ->{
+//			configura.getAnnotation(MapperScan.class);
+			/**
+			 * 处理dubbo服务
+			 */
+			/**
+			 * 处理数据库
+			 */
+			/**
+			 * 处理Redis
+			 */
+		});
 	}
 
 }
