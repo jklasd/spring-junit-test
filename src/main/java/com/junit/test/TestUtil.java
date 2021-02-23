@@ -113,7 +113,8 @@ public class TestUtil{
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
-			if(classD == ApplicationContext.class) {
+			if(classD == ApplicationContext.class
+					|| ScanUtil.isExtends(ApplicationContext.class, classD)) {
 				return getApplicationContext();
 			}else if(classD == Environment.class) {
 				return getApplicationContext().getEnvironment();
