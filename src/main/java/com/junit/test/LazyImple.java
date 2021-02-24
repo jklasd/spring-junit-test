@@ -13,8 +13,8 @@ import com.junit.test.dubbo.LazyDubboBean;
 
 import lombok.extern.slf4j.Slf4j;
 
-public @Slf4j
-class LazyImple implements InvocationHandler {
+@Slf4j
+public class LazyImple implements InvocationHandler {
 
 	private Class tag;
 	private Object tagertObj;
@@ -67,8 +67,6 @@ class LazyImple implements InvocationHandler {
 				tagertObj = LazyMongoBean.buildBean(tag,null);
 			} else {
 				if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
-					//延迟处理
-//					tagertObj = LazyMybatisMapperBean.buildBean(tag);
 					isDbConnect = true;
 					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
 				}else {

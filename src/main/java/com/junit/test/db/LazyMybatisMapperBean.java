@@ -71,7 +71,6 @@ public class LazyMybatisMapperBean{
 				processXmlForFactory();
 			}else {
 				processAnnaForFactory();
-				log.warn("*******************还未开发注解方式构建 mybatis Factory*******************");
 			}
 		}else {
 			log.debug("factory已存在");
@@ -80,10 +79,11 @@ public class LazyMybatisMapperBean{
 
 
 	private static void processAnnaForFactory() {
-//		JavaBeanUtil.buildBean(null, null, null)
-		AssemblyUtil param = new AssemblyUtil();
-		param.setTagClass(SqlSessionFactory.class);
-		factory = (SqlSessionFactory) ScanUtil.findCreateBeanFromFactory(param);
+		if(factory == null) {
+			AssemblyUtil param = new AssemblyUtil();
+			param.setTagClass(SqlSessionFactory.class);
+			factory = (SqlSessionFactory) ScanUtil.findCreateBeanFromFactory(param);
+		}
 	}
 
 
@@ -131,7 +131,6 @@ public class LazyMybatisMapperBean{
 			}else {
 				//查询注解方式
 				processAnnaForDataSource();
-//				log.warn("*******************还未开发注解方式构建 mybatis dataSource*******************");
 			}
 		}
 		return dataSource;

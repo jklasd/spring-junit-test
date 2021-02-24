@@ -12,6 +12,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.autoconfigure.domain.EntityScanPackagesConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
 import org.springframework.context.MessageSourceResolvable;
@@ -160,6 +161,9 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
+			if(requiredType.getName().contains("EntityScanPackages")) {
+				return (T) EntityScanPackagesConstructor.getBean();
+			}
 			return (T)ScanUtil.findBean(name, requiredType);
 		}
 		try {
