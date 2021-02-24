@@ -425,10 +425,19 @@ public class ScanUtil {
 		return false;
 	}
 	public static boolean isExtends(Class c,Class abstractC) {
-		if(c.getSuperclass() == abstractC) {
-			return true;
-		}else if(c.getSuperclass() != null){
-			return isExtends(c.getSuperclass(), abstractC);
+		if(c.isInterface()) {
+			Class[] interfaces = c.getInterfaces();
+			for(Class item : interfaces) {
+				if(item == abstractC || isExtends(item, abstractC)) {
+					return true;
+				}
+			}
+		}else {
+			if(c.getSuperclass() == abstractC) {
+				return true;
+			}else if(c.getSuperclass() != null){
+				return isExtends(c.getSuperclass(), abstractC);
+			}
 		}
 		return false;
 	}
@@ -562,7 +571,11 @@ public class ScanUtil {
 //								log.info("断点");
 //							}
 							Class tagC = assemblyData.getTagClass();
-							if(tagC.isInterface()?ScanUtil.isImple(m.getReturnType(), tagC):
+							if(tagC.isInterface()?
+									(m.getReturnType().isInterface()?
+											(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
+											:ScanUtil.isImple(m.getReturnType(), tagC)
+									):
 								(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
 								address[0]=c;
 								address[1]=m;
@@ -617,6 +630,16 @@ public class ScanUtil {
 					return new ObjectProviderImpl(classGeneric[0]);
 				}
 //				TestUtil.getExistBean(interfaceClass,classGeneric);
+			}
+		}
+		return null;
+	}
+	public static Resource getRecourceAnyOne(String... paths) throws IOException {
+		// TODO Auto-generated method stub
+		for(String path: paths) {
+			Resource r = getRecource(path);
+			if(r!=null && r.exists()) {
+				return r;
 			}
 		}
 		return null;

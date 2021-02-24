@@ -50,7 +50,8 @@ class LazyImple implements InvocationHandler {
 				tmp = e.getCause();
 			}
 			log.error("代理类执行异常=>{},->{}",tag,tmp.getMessage());
-			throw tmp;
+			log.error("代理类执行异常",tmp);
+			throw new Exception("代理类执行异常");
 		}
 	}
 	/**
@@ -80,7 +81,10 @@ class LazyImple implements InvocationHandler {
 						 */
 						Object tagImp = ScanUtil.findBeanByInterface(tag,classGeneric);
 						if(tagImp == null) {
-							log.info("未找到本地Bean=>{}",tag);
+							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
+							if(tagImp == null) {
+								log.info("未找到本地Bean=>{}",tag);
+							}
 						}else {
 							/**
 							 * 实现类是本地Bean
@@ -92,7 +96,10 @@ class LazyImple implements InvocationHandler {
 						// 本地bean
 						Object tagImp = ScanUtil.findBean(beanName);
 						if(tagImp == null) {
-							log.info("未找到本地Bean=>{}",tag);
+							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
+							if(tagImp == null) {
+								log.info("未找到本地Bean=>{}",tag);
+							}
 						}else {
 							/**
 							 * 实现类是本地Bean

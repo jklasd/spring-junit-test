@@ -6,9 +6,11 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
@@ -37,11 +39,35 @@ public class TestApplicationContext implements ApplicationContext{
 			if(env == null) {
 				env = new StandardServletEnvironment();
 				if(properties == null) {
+					properties = new Properties();
 					try {
-						Resource[] resources = ScanUtil.getResources("application.properties");
-						properties = new Properties();
-						if(resources.length>0) {
-							properties.load(resources[0].getInputStream());
+						Resource propRes = ScanUtil.getRecourceAnyOne("application.properties","config/application.properties");
+						if(propRes!=null && propRes.exists()) {
+							properties.load(propRes.getInputStream());
+							String active = null;
+							if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
+								Resource activePropRes = ScanUtil.getRecourceAnyOne("application-"+active+".properties","config/application-"+active+".properties");
+								if(activePropRes!=null && activePropRes.exists()) {
+									properties.load(activePropRes.getInputStream());
+								}
+							}
+						}else {
+							YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
+//							Object yml = Class.forName("Ymal").newInstance();
+							Resource ymlRes = ScanUtil.getRecourceAnyOne("application.yml","config/application.yml");
+							if(ymlRes!=null && ymlRes.exists()) {
+								ymlToProp.setResources(ymlRes);
+								properties.putAll(ymlToProp.getObject());
+								String active = null;
+								if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
+									Resource activeYmlRes = ScanUtil.getRecourceAnyOne("application-"+active+".yml","config/application-"+active+".yml");
+									if(activeYmlRes!=null && activeYmlRes.exists()) {
+										ymlToProp.setResources(activeYmlRes);
+										properties.putAll(ymlToProp.getObject());
+									}
+								}
+								
+							}
 						}
 					} catch (IOException e) {
 						e.printStackTrace();

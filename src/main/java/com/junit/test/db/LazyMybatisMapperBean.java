@@ -7,7 +7,9 @@ import javax.sql.DataSource;
 
 import org.apache.ibatis.plugin.Interceptor;
 import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.SqlSessionFactory;
 import org.mybatis.spring.SqlSessionFactoryBean;
+import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
 import org.w3c.dom.NamedNodeMap;
@@ -15,9 +17,9 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.google.common.collect.Lists;
+import com.junit.test.AssemblyUtil;
 import com.junit.test.LazyBean;
 import com.junit.test.ScanUtil;
-import com.junit.test.TestUtil;
 import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LazyMybatisMapperBean{
 	private static DataSource dataSource;
-	private static SqlSessionFactoryBean factory;
+	private static SqlSessionFactory factory;
 	
 	
 	public synchronized static Object buildBean(Class<?> classBean) {
@@ -46,13 +48,19 @@ public class LazyMybatisMapperBean{
 	
 	private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
 	
+	private static SqlSessionTemplate sqlSessionTemplate;
+	
 	private static Object getMapper(Class<?> classBean) throws Exception {
-		if(sessionList.get() != null){
-			return sessionList.get().getMapper(classBean);
-		}else {
-			sessionList.set(factory.getObject().openSession());
+		if(sqlSessionTemplate==null) {
+			sqlSessionTemplate = new SqlSessionTemplate(factory);
 		}
-		Object tag = sessionList.get().getMapper(classBean);
+//		if(sessionList.get() != null){
+//			return sessionList.get().getMapper(classBean);
+//		}else {
+//			sessionList.set(factory.openSession());
+//		}
+//		Object tag = sessionList.get().getMapper(classBean);
+		Object tag = sqlSessionTemplate.getMapper(classBean);
 		return tag;
 	}
 
@@ -62,6 +70,7 @@ public class LazyMybatisMapperBean{
 			if(factoryNode!=null) {
 				processXmlForFactory();
 			}else {
+				processAnnaForFactory();
 				log.warn("*******************还未开发注解方式构建 mybatis Factory*******************");
 			}
 		}else {
@@ -70,13 +79,21 @@ public class LazyMybatisMapperBean{
 	}
 
 
+	private static void processAnnaForFactory() {
+//		JavaBeanUtil.buildBean(null, null, null)
+		AssemblyUtil param = new AssemblyUtil();
+		param.setTagClass(SqlSessionFactory.class);
+		factory = (SqlSessionFactory) ScanUtil.findCreateBeanFromFactory(param);
+	}
+
+
 	private static void processXmlForFactory() {
-		factory = new SqlSessionFactoryBean();
+		SqlSessionFactoryBean factoryTmp = new SqlSessionFactoryBean();
 		try {
 			Map<String, Object> prop = XmlBeanUtil.loadXmlNodeProp(factoryNode.getChildNodes());
 			Resource[] resources = ScanUtil.getResources(prop.get("mapperLocations").toString());
-			factory.setMapperLocations(resources);
-			factory.setDataSource(buildDataSource(prop.get("dataSource").toString()));
+			factoryTmp.setMapperLocations(resources);
+			factoryTmp.setDataSource(buildDataSource(prop.get("dataSource").toString()));
 			if(prop.containsKey("plugins")) {
 				List<Interceptor> listPlugins = Lists.newArrayList();
 				if(prop.get("plugins") instanceof Node) {
@@ -97,9 +114,10 @@ public class LazyMybatisMapperBean{
 					
 				}
 				Interceptor[] is = listPlugins.toArray(new Interceptor[0]);
-				factory.setPlugins(is);
+				factoryTmp.setPlugins(is);
 			}
-			factory.afterPropertiesSet();
+			factoryTmp.afterPropertiesSet();
+			factory = factoryTmp.getObject();
 		} catch (Exception e) {
 			log.error("buildMybatisFactory",e);
 		}
@@ -112,7 +130,8 @@ public class LazyMybatisMapperBean{
 				processXmlForDataSource(id);
 			}else {
 				//查询注解方式
-				log.warn("*******************还未开发注解方式构建 mybatis dataSource*******************");
+				processAnnaForDataSource();
+//				log.warn("*******************还未开发注解方式构建 mybatis dataSource*******************");
 			}
 		}
 		return dataSource;
@@ -150,9 +169,10 @@ public class LazyMybatisMapperBean{
 	}
 
 
-	private static String mybatisScanPath;
+	private static List<String> mybatisScanPathList = Lists.newArrayList();
 	public static boolean isMybatisBean(Class c) {
-		return mybatisScanPath!=null && c.getPackage().getName().contains(mybatisScanPath);
+		return !mybatisScanPathList.isEmpty() 
+				&& mybatisScanPathList.stream().anyMatch(mybatisScanPath->c.getPackage().getName().contains(mybatisScanPath));
 	}
 	private static Document cacheDocument;
 	public synchronized static void process(Node item, Document document) {
@@ -164,7 +184,7 @@ public class LazyMybatisMapperBean{
 		if(className.contains("MapperScannerConfigurer")) {
 			Map<String, Object> prop = XmlBeanUtil.loadXmlNodeProp(item.getChildNodes());
 			if(prop.containsKey("basePackage")) {
-				mybatisScanPath = prop.get("basePackage").toString();
+				mybatisScanPathList.add(prop.get("basePackage").toString());
 			}
 		}else if(className.contains("SqlSessionFactoryBean")) {
 			//先不处理
@@ -172,4 +192,13 @@ public class LazyMybatisMapperBean{
 		}
 	}
 
+
+	public synchronized static void processConfig(Class<?> configura, String[] packagePath) {
+		// TODO Auto-generated method stub
+		mybatisScanPathList.addAll(Lists.newArrayList(packagePath));
+	}
+
+	private static void processAnnaForDataSource() {
+		
+	}
 }

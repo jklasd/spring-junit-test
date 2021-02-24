@@ -1,7 +1,6 @@
 package com.junit.test;
 
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Set;
@@ -12,7 +11,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
-import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.Environment;
@@ -22,6 +20,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
 import com.google.common.collect.Sets;
+import com.junit.test.spring.JavaBeanUtil;
 import com.junit.test.spring.TestApplicationContext;
 import com.junit.test.spring.XmlBeanUtil;
 import com.junit.util.LogbackUtil;
@@ -55,6 +54,7 @@ public class TestUtil{
 	}
 	private void processConfig() {
 		XmlBeanUtil.process();
+		JavaBeanUtil.process();
 		
 		List<Class<?>> list = ScanUtil.findStaticMethodClass();
 		log.debug("static class =>{}",list.size());
@@ -113,7 +113,8 @@ public class TestUtil{
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
 		try {
-			if(classD == ApplicationContext.class) {
+			if(classD == ApplicationContext.class
+					|| ScanUtil.isExtends(ApplicationContext.class, classD)) {
 				return getApplicationContext();
 			}else if(classD == Environment.class) {
 				return getApplicationContext().getEnvironment();
@@ -197,7 +198,7 @@ public class TestUtil{
 		TestUtil launch = new TestUtil();
 		launch.setApplicationContext(null);
 		Resource logback = applicationContext.getResource("logback.xml");
-		if(logback != null) {
+		if(logback!=null && logback.exists()) {
 			LogbackUtil.init(logback,(StandardServletEnvironment) getApplicationContext().getEnvironment());
 			log.info("加载环境配置完毕");
 		}

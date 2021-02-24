@@ -16,6 +16,7 @@ import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
@@ -227,6 +228,7 @@ public class LazyBean {
 		for(Field f : fields){
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
+				String bName = f.getAnnotation(Qualifier.class)!=null?f.getAnnotation(Qualifier.class).value():null;
 				if(f.getType() == List.class) {
 					ParameterizedType t = (ParameterizedType) f.getGenericType();
 					Type[] item = t.getActualTypeArguments();
@@ -246,7 +248,7 @@ public class LazyBean {
 					if(ScanUtil.isBean(f.getType()) && TestUtil.getExistBean(f.getType(), f.getName())!=null) {
 						setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 					}else {
-						setObj(f, obj, buildProxy(f.getType()));
+						setObj(f, obj, buildProxy(f.getType(),bName));
 					}
 				}
 			} else {

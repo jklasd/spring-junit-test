@@ -5,12 +5,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
+
+import org.mybatis.spring.annotation.MapperScan;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Configuration;
 
 import com.google.common.collect.Maps;
 import com.junit.test.AssemblyUtil;
 import com.junit.test.LazyBean;
 import com.junit.test.ScanUtil;
+import com.junit.test.db.LazyMybatisMapperBean;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -117,12 +123,36 @@ public class JavaBeanUtil {
 					}
 				}
 				Object tagObj = method.invoke(obj,args);
+				ConfigurationProperties prop = null;
+				if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
+//					String prefix = prop.value()!=""?prop.value():prop.prefix();
+					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
+				}
 				cacheBean.put(key, tagObj);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				e.printStackTrace();
 			}
 		}
 		return cacheBean.get(key);
+	}
+	/**
+	 * 扫描java代码相关配置
+	 */
+	public static void process() {
+		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
+		/**
+		 * 处理数据库
+		 */
+		configurableList.stream().filter(configura ->configura.getAnnotation(MapperScan.class)!=null).forEach(configura ->{
+			MapperScan scan = configura.getAnnotation(MapperScan.class);
+			String[] packagePath = scan.basePackages();
+			if(packagePath.length>0) {
+				LazyMybatisMapperBean.processConfig(configura,packagePath);
+			}
+		});
+		/**
+		 * 处理dubbo服务
+		 */
 	}
 
 }
