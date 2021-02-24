@@ -70,7 +70,7 @@ public class LazyImple implements InvocationHandler {
 					isDbConnect = true;
 					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
 				}else {
-//					if(tag.getName().contains("Environment")) {
+//					if(tag.getName().contains("DataSource")) {
 //						log.info("断点");
 //					}
 					if(beanName == null) {
@@ -82,6 +82,8 @@ public class LazyImple implements InvocationHandler {
 							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {
 								log.info("未找到本地Bean=>{}",tag);
+							}else {
+								tagertObj = tagImp;
 							}
 						}else {
 							/**
@@ -97,6 +99,8 @@ public class LazyImple implements InvocationHandler {
 							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {
 								log.info("未找到本地Bean=>{}",tag);
+							}else {
+								tagertObj = tagImp;
 							}
 						}else {
 							/**
