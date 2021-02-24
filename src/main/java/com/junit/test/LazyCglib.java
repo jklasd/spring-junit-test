@@ -12,6 +12,7 @@ import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
+import org.springframework.stereotype.Component;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -158,6 +159,8 @@ public class LazyCglib implements MethodInterceptor {
 						log.error("带参构造对象异常",e);
 					}
 				}else {
+					if(!LazyBean.existBean(tag))
+						throw new RuntimeException(tag.getName()+"不存在");
 					/**
 					 * 待优化
 					 */

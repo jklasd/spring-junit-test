@@ -19,6 +19,7 @@ import com.google.common.collect.Maps;
 import com.junit.test.TestUtil;
 import com.junit.test.db.LazyMybatisMapperBean;
 import com.junit.test.dubbo.LazyDubboBean;
+import com.junit.test.mq.LazyRabbitMQBean;
 
 public class XmlBeanUtil {
 	public static List<String> xmlPathList = Lists.newArrayList();
@@ -67,8 +68,14 @@ public class XmlBeanUtil {
 						
 						NodeList contextList = document.getElementsByTagName("context:component-scan");
 						if(contextList.getLength()>0) {
-							Map<String, String> contextAttr = loadXmlNodeAttr(beansList.item(0).getAttributes());//base-package
+							Map<String, String> contextAttr = loadXmlNodeAttr(contextList.item(0).getAttributes());//base-package
 							TestUtil.loadScanPath(contextAttr.get("base-package"));
+						}
+						
+						NodeList rabbitNodeList = document.getElementsByTagName("rabbit:connection-factory");
+						if(rabbitNodeList.getLength()>0) {
+							Map<String, String> contextAttr = loadXmlNodeAttr(rabbitNodeList.item(0).getAttributes());
+							LazyRabbitMQBean.loadConfig(contextAttr);
 						}
 					}
 				}

@@ -20,6 +20,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Controller;
+import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
@@ -368,6 +373,13 @@ public class LazyBean {
 				return setAttr(field,obj,superC,value);
 			}
 		return false;
+	}
+	
+	public static boolean existBean(Class beanClass) {
+		return (beanClass.getAnnotation(Component.class)!=null || beanClass.getAnnotation(Service.class)!=null)
+				|| beanClass.getAnnotation(Controller.class)!=null || beanClass.getAnnotation(RestController.class)!=null
+						|| beanClass.getAnnotation(Configuration.class)!=null
+						|| beanClass.getAnnotation(ConfigurationProperties.class) != null;
 	}
 }
 

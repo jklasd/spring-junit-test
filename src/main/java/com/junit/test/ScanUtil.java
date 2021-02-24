@@ -209,6 +209,7 @@ public class ScanUtil {
 					
 				}
 			}
+			log.warn("ScanUtil # findBean=>Interface[{}]",type);
 		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
 		}else {
 			Object obj = findBean(beanName); 
@@ -267,17 +268,19 @@ public class ScanUtil {
 			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
 				list.add(nameMap.get(name));
 			} else {
-				Class c = nameMap.get(name);
-				Service ann = (Service) c.getAnnotation(Service.class);
-				Component cAnn = (Component)c.getAnnotation(Component.class);
-				if (ann != null) {
-					if (Objects.equals(ann.value(), beanName)) {
-						list.add(c);
-					}
+				Class tagClass = nameMap.get(name);
+				Service sAnn = (Service) tagClass.getAnnotation(Service.class);
+				Component cAnn = (Component)tagClass.getAnnotation(Component.class);
+				
+				String annValue = null;
+				if (sAnn != null) {
+					annValue = sAnn.value();
 				}else if(cAnn != null) {
-					if (Objects.equals(cAnn.value(), beanName)) {
-						list.add(c);
-					}
+					annValue = cAnn.value();
+				}
+				
+				if (Objects.equals(annValue, beanName)) {
+					list.add(tagClass);
 				}
 			}
 		});
