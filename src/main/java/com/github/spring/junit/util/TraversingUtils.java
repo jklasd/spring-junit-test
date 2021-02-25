@@ -1,4 +1,4 @@
-package com.github.junit.util;
+package com.github.spring.junit.util;
 
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;

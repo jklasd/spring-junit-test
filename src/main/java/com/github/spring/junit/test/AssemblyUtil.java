@@ -1,4 +1,4 @@
-package com.github.junit.test;
+package com.github.spring.junit.test;
 
 import java.lang.reflect.Type;
 import java.util.Map;

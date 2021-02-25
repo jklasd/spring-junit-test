@@ -1,4 +1,4 @@
-package com.github.junit.test.mq;
+package com.github.spring.junit.test.mq;
 
 import org.springframework.amqp.core.AmqpAdmin;
 

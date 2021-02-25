@@ -1,4 +1,4 @@
-package com.github.junit.test.dubbo;
+package com.github.spring.junit.test.dubbo;
 
 import java.util.Map;
 
@@ -10,9 +10,9 @@ import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.config.ServiceConfig;
-import com.github.junit.test.LazyBean;
-import com.github.junit.test.TestUtil;
-import com.github.junit.test.spring.XmlBeanUtil;
+import com.github.spring.junit.test.LazyBean;
+import com.github.spring.junit.test.TestUtil;
+import com.github.spring.junit.test.spring.XmlBeanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;

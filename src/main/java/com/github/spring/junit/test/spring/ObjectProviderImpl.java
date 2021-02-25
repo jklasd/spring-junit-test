@@ -1,4 +1,4 @@
-package com.github.junit.test.spring;
+package com.github.spring.junit.test.spring;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;

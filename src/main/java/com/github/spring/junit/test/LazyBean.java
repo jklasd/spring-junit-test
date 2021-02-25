@@ -1,4 +1,4 @@
-package com.github.junit.test;
+package com.github.spring.junit.test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,8 +27,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.junit.test.mq.LazyMQBean;
-import com.github.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.spring.junit.test.mq.LazyMQBean;
+import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

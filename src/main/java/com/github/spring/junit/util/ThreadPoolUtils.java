@@ -1,4 +1,4 @@
-package com.github.junit.util;
+package com.github.spring.junit.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;

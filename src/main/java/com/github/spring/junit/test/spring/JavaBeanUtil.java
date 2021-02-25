@@ -1,4 +1,4 @@
-package com.github.junit.test.spring;
+package com.github.spring.junit.test.spring;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -12,10 +12,10 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
-import com.github.junit.test.AssemblyUtil;
-import com.github.junit.test.LazyBean;
-import com.github.junit.test.ScanUtil;
-import com.github.junit.test.db.LazyMybatisMapperBean;
+import com.github.spring.junit.test.AssemblyUtil;
+import com.github.spring.junit.test.LazyBean;
+import com.github.spring.junit.test.ScanUtil;
+import com.github.spring.junit.test.db.LazyMybatisMapperBean;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;

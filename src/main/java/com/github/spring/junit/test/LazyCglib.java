@@ -1,4 +1,4 @@
-package com.github.junit.test;
+package com.github.spring.junit.test;
 
 import java.awt.List;
 import java.lang.reflect.Constructor;
@@ -14,8 +14,8 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.stereotype.Component;
 
-import com.github.junit.test.db.LazyMongoBean;
-import com.github.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.spring.junit.test.db.LazyMongoBean;
+import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
