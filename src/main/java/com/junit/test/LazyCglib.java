@@ -80,7 +80,7 @@ public class LazyCglib implements MethodInterceptor {
 			AopContextSuppert.setProxyObj(arg0);
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
-			log.error("LazyCglib#intercept=>{}#{}",tag.getName(),arg1.getName());
+			log.error("LazyCglib#intercept ERROR=>{}#{}",tag.getName(),arg1.getName());
 			Throwable tmp = e;
 			if(e.getCause()!=null) {
 				tmp = e.getCause();
