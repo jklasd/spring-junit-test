@@ -8,7 +8,6 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.logging.LoggingInitializationContext;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 import org.w3c.dom.Document;
@@ -23,7 +22,6 @@ import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
-import ch.qos.logback.core.util.OptionHelper;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j

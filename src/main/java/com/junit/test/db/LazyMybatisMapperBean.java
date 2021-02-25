@@ -51,7 +51,7 @@ public class LazyMybatisMapperBean{
 	private static SqlSessionTemplate sqlSessionTemplate;
 	
 	private static Object getMapper(Class<?> classBean) throws Exception {
-		if(sqlSessionTemplate==null) {
+		if(sqlSessionTemplate==null) {//配置session控制器
 			sqlSessionTemplate = new SqlSessionTemplate(factory);
 		}
 //		if(sessionList.get() != null){
