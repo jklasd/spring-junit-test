@@ -1,4 +1,4 @@
-package com.junit.test.dubbo;
+package com.github.spring.junit.test.dubbo;
 
 import java.util.Map;
 
@@ -10,10 +10,10 @@ import com.alibaba.dubbo.config.ApplicationConfig;
 import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.config.ServiceConfig;
+import com.github.spring.junit.test.LazyBean;
+import com.github.spring.junit.test.TestUtil;
+import com.github.spring.junit.test.spring.XmlBeanUtil;
 import com.google.common.collect.Maps;
-import com.junit.test.LazyBean;
-import com.junit.test.TestUtil;
-import com.junit.test.spring.XmlBeanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -81,7 +81,7 @@ public class LazyDubboBean {
 			try {
 				dubboServiceCache.put(Class.forName(className),attr);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				log.error("LazyDubboBean#cacheService=>{}",e.getMessage());
 			}
 		}
 	}

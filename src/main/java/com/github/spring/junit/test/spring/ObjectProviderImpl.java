@@ -1,4 +1,4 @@
-package com.junit.test.spring;
+package com.github.spring.junit.test.spring;
 
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
@@ -8,6 +8,9 @@ import java.lang.reflect.Type;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 	private Type type;
 	public ObjectProviderImpl(Type type) {
@@ -37,7 +40,7 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 					}
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
+				log.error("ObjectProvider#getIfAvailable",e);
 			}
 		}
 		return null;

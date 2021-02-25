@@ -1,4 +1,4 @@
-package com.junit.test;
+package com.github.spring.junit.test;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -7,9 +7,9 @@ import java.lang.reflect.Type;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.junit.test.db.LazyMongoBean;
-import com.junit.test.db.LazyMybatisMapperBean;
-import com.junit.test.dubbo.LazyDubboBean;
+import com.github.spring.junit.test.db.LazyMongoBean;
+import com.github.spring.junit.test.db.LazyMybatisMapperBean;
+import com.github.spring.junit.test.dubbo.LazyDubboBean;
 
 import lombok.extern.slf4j.Slf4j;
 

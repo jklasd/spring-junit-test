@@ -1,4 +1,4 @@
-package com.junit.test.spring;
+package com.github.spring.junit.test.spring;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -12,11 +12,11 @@ import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
+import com.github.spring.junit.test.AssemblyUtil;
+import com.github.spring.junit.test.LazyBean;
+import com.github.spring.junit.test.ScanUtil;
+import com.github.spring.junit.test.db.LazyMybatisMapperBean;
 import com.google.common.collect.Maps;
-import com.junit.test.AssemblyUtil;
-import com.junit.test.LazyBean;
-import com.junit.test.ScanUtil;
-import com.junit.test.db.LazyMybatisMapperBean;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -105,10 +105,10 @@ public class JavaBeanUtil {
 					tmp.setBeanName(null);
 					tmp.setNameMapTmp(assemblyData.getNameMapTmp());
 					
-					log.info("AssemblyUtil 2=>{}",tmp.getTagClass());
-					if(tmp.getTagClass().getName().contains("MongoClient")) {
-						log.info("断点");
-					}
+//					log.info("AssemblyUtil 2=>{}",tmp.getTagClass());
+//					if(tmp.getTagClass().getName().contains("MongoClient")) {
+//						log.info("断点");
+//					}
 					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
 					log.info("ojb_meth=>{}",ojb_meth);
 					
@@ -130,7 +130,8 @@ public class JavaBeanUtil {
 				}
 				cacheBean.put(key, tagObj);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				log.error("JavaBeanUtil#buildBean",e);
 			}
 		}
 		return cacheBean.get(key);

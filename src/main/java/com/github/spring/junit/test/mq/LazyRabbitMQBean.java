@@ -1,4 +1,4 @@
-package com.junit.test.mq;
+package com.github.spring.junit.test.mq;
 
 import java.util.Map;
 
@@ -8,7 +8,7 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import com.junit.test.TestUtil;
+import com.github.spring.junit.test.TestUtil;
 import com.rabbitmq.client.ConnectionFactory;
 /**
  * 构建rabbit应用

@@ -1,4 +1,4 @@
-package com.junit.test;
+package com.github.spring.junit.test;
 
 import java.awt.List;
 import java.lang.reflect.Constructor;
@@ -14,10 +14,10 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.stereotype.Component;
 
+import com.github.spring.junit.test.db.LazyMongoBean;
+import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.junit.test.db.LazyMongoBean;
-import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -68,12 +68,6 @@ public class LazyCglib implements MethodInterceptor {
 			next:for(Constructor c : cs) {
 				Class tagC = c.getDeclaringClass();
 				if(c.getParameterCount()<count) {
-//					Class[] types = c.getParameterTypes();
-//					for(Class t:types) {
-//						if(!noPackage.contains(t) && t.getPackage().getName().startsWith("java.util")) {
-//							continue next;
-//						}
-//					}
 					this.constructor = c;
 					count = c.getParameterCount();
 				}
@@ -86,8 +80,12 @@ public class LazyCglib implements MethodInterceptor {
 			AopContextSuppert.setProxyObj(arg0);
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
-			e.printStackTrace();
-			throw e.getCause();
+			log.error("LazyCglib#intercept ERROR=>{}#{}",tag.getName(),arg1.getName());
+			Throwable tmp = e;
+			if(e.getCause()!=null) {
+				tmp = e.getCause();
+			}
+			throw tmp;
 		}
 	}
 
