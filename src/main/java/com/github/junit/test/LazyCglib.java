@@ -1,4 +1,4 @@
-package com.junit.test;
+package com.github.junit.test;
 
 import java.awt.List;
 import java.lang.reflect.Constructor;
@@ -14,10 +14,10 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 import org.springframework.stereotype.Component;
 
+import com.github.junit.test.db.LazyMongoBean;
+import com.github.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.junit.test.db.LazyMongoBean;
-import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 

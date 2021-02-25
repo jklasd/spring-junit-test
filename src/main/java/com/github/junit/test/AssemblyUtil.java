@@ -1,4 +1,4 @@
-package com.junit.test;
+package com.github.junit.test;
 
 import java.lang.reflect.Type;
 import java.util.Map;

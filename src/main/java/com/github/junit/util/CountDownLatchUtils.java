@@ -1,4 +1,4 @@
-package com.junit.util;
+package com.github.junit.util;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;

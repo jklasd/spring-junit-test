@@ -132,5 +132,22 @@
 			</plugin>
 		</plugins>
 		</pluginManagement>
+		
+		<resources>
+	      <resource>
+	        <directory>${project.basedir}</directory>
+	        <targetPath>META-INF</targetPath>
+	        <includes>
+	          <include>LICENSE</include>
+	          <include>DEMO</include>
+	        </includes>
+	      </resource>
+	      <resource>
+	        <directory>${project.build.sourceDirectory}</directory>
+	        <excludes>
+	          <exclude>**/*.java</exclude>
+	        </excludes>
+	      </resource>
+	    </resources>
 	</build>
 </project>

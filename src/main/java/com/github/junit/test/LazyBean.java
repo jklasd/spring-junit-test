@@ -1,4 +1,4 @@
-package com.junit.test;
+package com.github.junit.test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -27,11 +27,11 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.github.junit.test.mq.LazyMQBean;
+import com.github.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import com.junit.test.mq.LazyMQBean;
-import com.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 
 import lombok.extern.slf4j.Slf4j;
 

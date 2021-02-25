@@ -1,4 +1,4 @@
-package com.junit.util;
+package com.github.junit.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;

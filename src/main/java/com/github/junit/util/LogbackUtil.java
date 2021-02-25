@@ -1,4 +1,4 @@
-package com.junit.util;
+package com.github.junit.util;
 
 import java.nio.charset.Charset;
 import java.util.List;
@@ -15,7 +15,7 @@ import org.w3c.dom.Document;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.junit.test.spring.XmlBeanUtil;
+import com.github.junit.test.spring.XmlBeanUtil;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
