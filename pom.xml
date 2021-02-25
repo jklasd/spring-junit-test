@@ -146,8 +146,8 @@
 	        <directory>${project.basedir}</directory>
 	        <targetPath>META-INF</targetPath>
 	        <includes>
-	          <include>LICENSE</include>
-	          <include>DEMO</include>
+	          <include>LICENSE.txt</include>
+	          <include>DEMO.md</include>
 	        </includes>
 	      </resource>
 	      <resource>
