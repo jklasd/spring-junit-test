@@ -81,7 +81,7 @@ public class LazyDubboBean {
 			try {
 				dubboServiceCache.put(Class.forName(className),attr);
 			} catch (ClassNotFoundException e) {
-				e.printStackTrace();
+				log.error("LazyDubboBean#cacheService=>{}",e.getMessage());
 			}
 		}
 	}

@@ -105,10 +105,10 @@ public class JavaBeanUtil {
 					tmp.setBeanName(null);
 					tmp.setNameMapTmp(assemblyData.getNameMapTmp());
 					
-					log.info("AssemblyUtil 2=>{}",tmp.getTagClass());
-					if(tmp.getTagClass().getName().contains("MongoClient")) {
-						log.info("断点");
-					}
+//					log.info("AssemblyUtil 2=>{}",tmp.getTagClass());
+//					if(tmp.getTagClass().getName().contains("MongoClient")) {
+//						log.info("断点");
+//					}
 					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
 					log.info("ojb_meth=>{}",ojb_meth);
 					
@@ -130,7 +130,8 @@ public class JavaBeanUtil {
 				}
 				cacheBean.put(key, tagObj);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				e.printStackTrace();
+//				e.printStackTrace();
+				log.error("JavaBeanUtil#buildBean",e);
 			}
 		}
 		return cacheBean.get(key);
