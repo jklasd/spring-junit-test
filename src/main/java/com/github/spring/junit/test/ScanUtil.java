@@ -172,26 +172,34 @@ public class ScanUtil {
 					XmlBeanUtil.loadXmlPath(resource.value());
 				}
 			});
-			CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.isScanClassPath(cn)).collect(Collectors.toList()))
-			.runAndWait(name->{
-				if(name.endsWith(CLASS_SUFFIX)) {
-					name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
-					// 查看是否class
-					try {
-						Class<?> c = Class.forName(name, false, springClassLoader);
-						nameMap.put(name,c);
-					} catch (ClassNotFoundException | NoClassDefFoundError e) {
-						log.error("加载{}=>未找到类{}",name,e.getMessage());
-					}catch(Error e) {
-						log.error("未找到类{}=>{}",name,e.getMessage());
-					}
-				}
-			});
+			loadContextPathClass();
 			log.info("=============加载class结束=============");
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
 		}
 	}
+	
+	public static void loadContextPathClass() {
+		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.isScanClassPath(cn)).collect(Collectors.toList()))
+		.runAndWait(name->{
+			if(name.endsWith(CLASS_SUFFIX) && !nameMap.containsKey(name)) {
+				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
+				// 查看是否class
+//				if(name.contains("RedisAutoConfiguration")) {
+//					log.info("断点");
+//				}
+				try {
+					Class<?> c = Class.forName(name, false, springClassLoader);
+					nameMap.put(name,c);
+				} catch (ClassNotFoundException | NoClassDefFoundError e) {
+					log.error("加载{}=>未找到类{}",name,e.getMessage());
+				}catch(Error e) {
+					log.error("未找到类{}=>{}",name,e.getMessage());
+				}
+			}
+		});
+	}
+	
 	public static Map<String,Object> beanMaps = Maps.newHashMap();
 	/**
 	 * 
@@ -567,9 +575,9 @@ public class ScanUtil {
 					for(Method m : methods) {
 						Bean beanA = m.getAnnotation(Bean.class);
 						if(beanA != null) {
-//							if(c.getName().contains("RedisAuto")) {
-//								log.info("断点");
-//							}
+							if(name.contains("RedisAuto")) {
+								log.info("断点");
+							}
 							Class tagC = assemblyData.getTagClass();
 							if(tagC.isInterface()?
 									(m.getReturnType().isInterface()?

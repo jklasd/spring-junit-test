@@ -13,6 +13,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.github.spring.junit.test.ScanUtil;
 import com.github.spring.junit.test.TestUtil;
 import com.github.spring.junit.test.db.LazyMybatisMapperBean;
 import com.github.spring.junit.test.dubbo.LazyDubboBean;
@@ -70,6 +71,7 @@ public class XmlBeanUtil {
 						if(contextList.getLength()>0) {
 							Map<String, String> contextAttr = loadXmlNodeAttr(contextList.item(0).getAttributes());//base-package
 							TestUtil.loadScanPath(contextAttr.get("base-package"));
+							ScanUtil.loadContextPathClass();
 						}
 						
 						NodeList rabbitNodeList = document.getElementsByTagName("rabbit:connection-factory");

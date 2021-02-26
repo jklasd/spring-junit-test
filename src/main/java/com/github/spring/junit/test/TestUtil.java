@@ -207,7 +207,11 @@ public class TestUtil{
 	}
 
 	public static Boolean isScanClassPath(String cn) {
-		return scanClassPath.stream().allMatch(p -> cn.contains(p));
+//		if(cn.contains("RedisAutoConfiguration")) {
+//		boolean  judgment = scanClassPath.stream().anyMatch(p -> cn.contains(p));
+//			log.info("断点");
+//		}
+		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
 	}
 //	public static void getExistBean(Class interfaceClass, Type[] classGeneric) {
 //		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext().getAutowireCapableBeanFactory();
