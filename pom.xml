@@ -1,24 +1,25 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <name>spring-junit-test</name>
-  <groupId>com.github.spring.junit</groupId>
-  <artifactId>spring-junit-test</artifactId>
-  <version>1.1.5-RELEASE</version>
-  <packaging>jar</packaging>
-  <url>http://maven.apache.org</url>
-  
-  <licenses>
-        <license>
-            <name>The MIT License (MIT)</name>
-            <url>https://github.com/jklasd/spring-juint-test/blob/master/LICENSE</url>
-        </license>
-    </licenses>
-  
-  <properties>
-    <maven.compiler.source>1.8</maven.compiler.source>
-    <maven.compiler.target>1.8</maven.compiler.target>
-  </properties>
-  <dependencies>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<name>spring-junit-test</name>
+	<groupId>com.github.spring.junit</groupId>
+	<artifactId>spring-junit-test</artifactId>
+	<version>1.1.6-RELEASE</version>
+	<packaging>jar</packaging>
+	<url>http://maven.apache.org</url>
+	<licenses>
+		<license>
+			<name>The MIT License (MIT)</name>
+			<url>https://github.com/jklasd/spring-juint-test/blob/master/LICENSE</url>
+		</license>
+	</licenses>
+
+	<properties>
+		<maven.compiler.source>1.8</maven.compiler.source>
+		<maven.compiler.target>1.8</maven.compiler.target>
+	</properties>
+	<dependencies>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -31,8 +32,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
-		    <artifactId>guava</artifactId>
-		    <version>16.0</version>
+			<artifactId>guava</artifactId>
+			<version>16.0</version>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -42,120 +43,120 @@
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot</artifactId>
-		    <version>1.5.4.RELEASE</version>
-		    <scope>compile</scope>
+			<artifactId>spring-boot</artifactId>
+			<version>1.5.4.RELEASE</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-		    <artifactId>spring-boot-autoconfigure</artifactId>
-		    <version>1.5.4.RELEASE</version>
-		    <scope>compile</scope>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<version>1.5.4.RELEASE</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.amqp</groupId>
-		    <artifactId>spring-rabbit</artifactId>
-		    <version>1.6.1.RELEASE</version>
-		    <exclusions>
-		    	<exclusion>
+			<artifactId>spring-rabbit</artifactId>
+			<version>1.6.1.RELEASE</version>
+			<exclusions>
+				<exclusion>
 					<groupId>org.apache.httpcomponents</groupId>
 					<artifactId>httpclient</artifactId>
-		    	</exclusion>
-		    </exclusions>
-		    <scope>compile</scope>
+				</exclusion>
+			</exclusions>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mybatis</groupId>
-		    <artifactId>mybatis</artifactId>
-		    <version>3.4.5</version>
-		    <scope>compile</scope>
+			<artifactId>mybatis</artifactId>
+			<version>3.4.5</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.mybatis</groupId>
-		    <artifactId>mybatis-spring</artifactId>
-		    <version>1.3.1</version>
-		    <scope>compile</scope>
+			<artifactId>mybatis-spring</artifactId>
+			<version>1.3.1</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
-		    <groupId>com.alibaba</groupId>
-		    <artifactId>dubbo</artifactId>
-		    <version>2.6.9</version>
-		    <exclusions>
-		    	<exclusion>
+			<groupId>com.alibaba</groupId>
+			<artifactId>dubbo</artifactId>
+			<version>2.6.9</version>
+			<exclusions>
+				<exclusion>
 					<groupId>org.apache.httpcomponents</groupId>
 					<artifactId>httpclient</artifactId>
-		    	</exclusion>
-		    	<exclusion>
+				</exclusion>
+				<exclusion>
 					<groupId>org.apache.httpcomponents</groupId>
 					<artifactId>httpcore</artifactId>
-		    	</exclusion>
+				</exclusion>
 				<exclusion>
 					<groupId>javax.servlet</groupId>
-    				<artifactId>javax.servlet-api</artifactId>
+					<artifactId>javax.servlet-api</artifactId>
 				</exclusion>
 				<exclusion>
 					<groupId>org.springframework</groupId>
-  					<artifactId>spring-beans</artifactId>
+					<artifactId>spring-beans</artifactId>
 				</exclusion>
-		    </exclusions>
-		    <scope>compile</scope>
+			</exclusions>
+			<scope>compile</scope>
 		</dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.3.2</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>log4j</groupId>
-  			<artifactId>log4j</artifactId>
-  			<version>1.2.17</version>
-  			<scope>compile</scope>
+			<artifactId>log4j</artifactId>
+			<version>1.2.17</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.slf4j</groupId>
-		    <artifactId>slf4j-api</artifactId>
-		    <version>1.7.25</version>
-		    <scope>compile</scope>
+			<artifactId>slf4j-api</artifactId>
+			<version>1.7.25</version>
+			<scope>compile</scope>
 		</dependency>
 	</dependencies>
-	
+
 	<build>
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<pluginManagement>
-		<plugins>
-			<plugin>
-				<artifactId>maven-source-plugin</artifactId>
-				<version>2.1.2</version>
-			</plugin>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-compiler-plugin</artifactId>
-				<version>2.3.2</version>
-				<configuration>
-					<source>1.8</source>
-					<target>1.8</target>
-					<encoding>UTF-8</encoding>
-				</configuration>
-			</plugin>
-		</plugins>
+			<plugins>
+				<plugin>
+					<artifactId>maven-source-plugin</artifactId>
+					<version>2.1.2</version>
+				</plugin>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-compiler-plugin</artifactId>
+					<version>2.3.2</version>
+					<configuration>
+						<source>1.8</source>
+						<target>1.8</target>
+						<encoding>UTF-8</encoding>
+					</configuration>
+				</plugin>
+			</plugins>
 		</pluginManagement>
-		
+
 		<resources>
-	      <resource>
-	        <directory>${project.basedir}</directory>
-	        <targetPath>META-INF</targetPath>
-	        <includes>
-	          <include>LICENSE</include>
-	          <include>DEMO.md</include>
-	        </includes>
-	      </resource>
-	      <resource>
-	        <directory>${project.build.sourceDirectory}</directory>
-	        <excludes>
-	          <exclude>**/*.java</exclude>
-	        </excludes>
-	      </resource>
-	    </resources>
+			<resource>
+				<directory>${project.basedir}</directory>
+				<targetPath>META-INF</targetPath>
+				<includes>
+					<include>LICENSE</include>
+					<include>DEMO.md</include>
+				</includes>
+			</resource>
+			<resource>
+				<directory>${project.build.sourceDirectory}</directory>
+				<excludes>
+					<exclude>**/*.java</exclude>
+				</excludes>
+			</resource>
+		</resources>
 	</build>
 </project>
