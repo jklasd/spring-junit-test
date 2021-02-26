@@ -3,6 +3,7 @@ package com.github.spring.junit.test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -53,7 +54,7 @@ public class ScanUtil {
 	private static String CLASS_SUFFIX = ".class";
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
-	private static OverridingClassLoader springClassLoader = new OverridingClassLoader(ScanUtil.class.getClassLoader());
+//	private static OverridingClassLoader springClassLoader = new OverridingClassLoader(ScanUtil.class.getClassLoader());
 	/**
 	 * 扫描路径下资源
 	 * @param path
@@ -107,10 +108,12 @@ public class ScanUtil {
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = Class.forName(name);
+					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-//					log.error("加载{}=>未找到类{}",name,e.getMessage());
+					if(TestUtil.isScanClassPath(name)) {
+						log.error("加载{}=>未找到类{}",name,e.getMessage());
+					}
 				}catch(Error e) {
 					log.error("未找到类{}=>{}",name,e.getMessage());
 				}
@@ -189,7 +192,7 @@ public class ScanUtil {
 //					log.info("断点");
 //				}
 				try {
-					Class<?> c = Class.forName(name, false, springClassLoader);
+					Class<?> c = ScanUtil.class.getClassLoader().loadClass(name);
 					nameMap.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("加载{}=>未找到类{}",name,e.getMessage());
@@ -502,9 +505,14 @@ public class ScanUtil {
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMapTmp.keySet()))
 		.runAndWait(name ->{
 			Class<?> c = nameMapTmp.get(name);
-			Annotation type = c.getDeclaredAnnotation(annotationType);
-			if(type != null) {
-				list.add(c);
+			try {
+				Annotation type = c.getDeclaredAnnotation(annotationType);
+				if(type != null) {
+					list.add(c);
+				}
+			} catch (Exception e) {
+				log.error("#findClassWithAnnotation ERROR");
+				throw e;
 			}
 		});
 		return list;
@@ -549,6 +557,8 @@ public class ScanUtil {
 						log.debug(returnType.getName());
 					}
 				}
+			}else if(configuration == null) {
+				
 			}
 		});
 		return Lists.newArrayList(list);
@@ -567,17 +577,26 @@ public class ScanUtil {
 		}).setError((name,e)->{
 			log.info("TypeNotPresentExceptionProxy=>"+name);
 		}).runAndWait(name ->{
+//			if(name.contains("RedisAuto")) {
+//				log.info("断点");
+//			}
 			Class<?> c = finalNameMap.get(name);
 			if(Modifier.isPublic(c.getModifiers()) && !c.isInterface()) {
-				Annotation configuration = c.getAnnotation(Configuration.class);
+				Configuration configuration = c.getDeclaredAnnotation(Configuration.class);
+				if(configuration == null) {
+					Annotation[] annos = c.getAnnotations();
+					if(annos.length>0) {
+						Class<? extends Annotation> tmp = annos[0].annotationType();
+						if(tmp.getComponentType() == Configuration.class) {
+							
+						}
+					}
+				}
 				if(configuration != null) {
 					Method[] methods = c.getDeclaredMethods();
 					for(Method m : methods) {
 						Bean beanA = m.getAnnotation(Bean.class);
 						if(beanA != null) {
-							if(name.contains("RedisAuto")) {
-								log.info("断点");
-							}
 							Class tagC = assemblyData.getTagClass();
 							if(tagC.isInterface()?
 									(m.getReturnType().isInterface()?
