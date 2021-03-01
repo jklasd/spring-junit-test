@@ -3,6 +3,7 @@ package com.github.spring.junit.test.spring;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -74,8 +75,20 @@ public class JavaBeanUtil {
 					}
 					
 					factory.put(configClass, minC.newInstance(param));
-					LazyBean.processAttr(factory.get(configClass), configClass);
+				}else {
+					cons = configClass.getDeclaredConstructors();
+					if(!Modifier.isPublic(configClass.getModifiers())) {
+						log.info("处理非公共类");
+						cons[0].setAccessible(true);
+					}
+					if(cons.length>0) {
+						factory.put(configClass, cons[0].newInstance());
+					}
 				}
+				if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
+					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
+				}
+				LazyBean.processAttr(factory.get(configClass), configClass);
 			}
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			if(e.getCause()!=null) {
@@ -114,6 +127,9 @@ public class JavaBeanUtil {
 					
 					if(ojb_meth[0]!=null && ojb_meth[1] != null) {
 						args[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
+						if(args[i] == null) {
+							log.warn("arg 为空，警告");
+						}
 					}else {
 						if(tmp.getClassGeneric()!=null) {
 							args[i] = LazyBean.buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
@@ -130,7 +146,6 @@ public class JavaBeanUtil {
 				}
 				cacheBean.put(key, tagObj);
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-//				e.printStackTrace();
 				log.error("JavaBeanUtil#buildBean",e);
 			}
 		}

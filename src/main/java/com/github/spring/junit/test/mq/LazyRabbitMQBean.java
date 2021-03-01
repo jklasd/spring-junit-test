@@ -8,6 +8,8 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
+import com.github.spring.junit.test.AssemblyUtil;
+import com.github.spring.junit.test.ScanUtil;
 import com.github.spring.junit.test.TestUtil;
 import com.rabbitmq.client.ConnectionFactory;
 /**
@@ -18,35 +20,49 @@ import com.rabbitmq.client.ConnectionFactory;
 public class LazyRabbitMQBean extends LazyMQBean{
 	@Override
 	public Object buildBeanProcess(Class classBean) throws InstantiationException, IllegalAccessException {
-		if(classBean == AmqpAdmin.class) {
-			if(admin == null) {
+		
+		if(factory != null) {
+			if(classBean == AmqpAdmin.class) {
+				if(admin == null) {
+					if(template == null) {
+						buildRabbitTemplate();
+					}
+					admin = new RabbitAdmin(template.getConnectionFactory());
+				}
+				return admin;
+			}else if(classBean == RabbitMessagingTemplate.class) {
+				RabbitMessagingTemplate objM = (RabbitMessagingTemplate) classBean.newInstance();
 				if(template == null) {
 					buildRabbitTemplate();
 				}
-				admin = new RabbitAdmin(template.getConnectionFactory());
+				objM.setRabbitTemplate(template);
+				return objM;
+			}else if(classBean == RabbitTemplate.class) {
+				if(template == null) {
+					buildRabbitTemplate();
+				}
+				return template;
 			}
-			return admin;
-		}else if(classBean == RabbitMessagingTemplate.class) {
-			RabbitMessagingTemplate objM = (RabbitMessagingTemplate) classBean.newInstance();
-			if(template == null) {
-				buildRabbitTemplate();
+		}else {
+			AssemblyUtil assemblyData = new AssemblyUtil();
+			assemblyData.setTagClass(classBean);
+			Object obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+			if(obj == null) {
+				assemblyData.setNameMapTmp(ScanUtil.findClassMap("org.springframework.boot.autoconfigure.amqp"));
+				obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+				return obj;
 			}
-			objM.setRabbitTemplate(template);
-			return objM;
-		}else if(classBean == RabbitTemplate.class) {
-			if(template == null) {
-				buildRabbitTemplate();
-			}
-			return template;
 		}
 		return null;
 	}
 	private RabbitTemplate template = null;
 	private static ConnectionFactory factory;
 	private void buildRabbitTemplate() throws InstantiationException, IllegalAccessException {
-		this.template = RabbitTemplate.class.newInstance();
+		if(factory != null) {
+			this.template = RabbitTemplate.class.newInstance();
 //		Connection connection = factory.newConnection();
-		template.setConnectionFactory(new CachingConnectionFactory(factory));
+			template.setConnectionFactory(new CachingConnectionFactory(factory));
+		}
 	}
 	
 	public static void loadConfig(Map<String, String> contextAttr) {

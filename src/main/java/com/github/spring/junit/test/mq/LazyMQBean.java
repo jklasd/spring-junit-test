@@ -30,21 +30,29 @@ public abstract class LazyMQBean {
 	}
 	
 	@SuppressWarnings("rawtypes")
-	public static Object buildBean(Class classBean) throws InstantiationException, IllegalAccessException {
-		if(classBean.getPackage().getName().contains(packageName)) {
-			if(classBean.getPackage().getName().contains(rabbitPackage)) {
-				return getFactory(rabbitPackage).buildBeanProcess(classBean);
-			}else {
-				//
-				log.warn("{}=>MQ 还未配置",classBean.getPackage().getName());
+	public static Object buildBean(Class classBean){
+		try {
+			if(classBean.getPackage().getName().contains(packageName)) {
+				if(classBean.getPackage().getName().contains(rabbitPackage)) {
+					return getFactory(rabbitPackage).buildBeanProcess(classBean);
+				}else {
+					//
+					log.warn("{}=>MQ 还未配置",classBean.getPackage().getName());
+				}
+				if (factory != null) {
+					return factory.buildBeanProcess(classBean);
+				}
 			}
-			if (factory != null) {
-				return factory.buildBeanProcess(classBean);
-			}
+		} catch (Exception e) {
+			log.error("LazyRabbitMQBean#buildBean=>{}",e.getMessage());
 		}
 		log.warn("构建{}失败",classBean);
 		return null;
 	}
 	@SuppressWarnings("rawtypes")
 	public abstract Object buildBeanProcess(Class classBean) throws InstantiationException, IllegalAccessException;
+
+	public static boolean isBean(Class tag) {
+		return tag.getName().contains(packageName);
+	}
 }

@@ -22,10 +22,12 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.core.OverridingClassLoader;
+import org.springframework.core.annotation.AnnotatedElementUtils;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -563,7 +565,7 @@ public class ScanUtil {
 		});
 		return Lists.newArrayList(list);
 	}
-	
+	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	public static Object[] findCreateBeanFactoryClass(final AssemblyUtil assemblyData) {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
 		finalNameMap.putAll(nameMap);
@@ -571,45 +573,40 @@ public class ScanUtil {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
 		Object[] address = new Object[2];
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()))
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
+				.collect(Collectors.toList()))
 		.setException((name,e)->{
-//			log.info("TypeNotPresentExceptionProxy=>"+name);
+			log.info("TypeNotPresentExceptionProxy Exception=>"+name);
+			notFoundSet.add(name);
 		}).setError((name,e)->{
-			log.info("TypeNotPresentExceptionProxy=>"+name);
+			log.info("TypeNotPresentExceptionProxy Error=>"+name);
+			notFoundSet.add(name);
 		}).runAndWait(name ->{
-//			if(name.contains("RedisAuto")) {
+//			if(name.contains("RabbitTemplateConfiguration")) {
 //				log.info("断点");
 //			}
 			Class<?> c = finalNameMap.get(name);
-			if(Modifier.isPublic(c.getModifiers()) && !c.isInterface()) {
-				Configuration configuration = c.getDeclaredAnnotation(Configuration.class);
-				if(configuration == null) {
-					Annotation[] annos = c.getAnnotations();
-					if(annos.length>0) {
-						Class<? extends Annotation> tmp = annos[0].annotationType();
-						if(tmp.getComponentType() == Configuration.class) {
-							
-						}
-					}
-				}
-				if(configuration != null) {
-					Method[] methods = c.getDeclaredMethods();
-					for(Method m : methods) {
-						Bean beanA = m.getAnnotation(Bean.class);
-						if(beanA != null) {
-							Class tagC = assemblyData.getTagClass();
-							if(tagC.isInterface()?
-									(m.getReturnType().isInterface()?
-											(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
-											:ScanUtil.isImple(m.getReturnType(), tagC)
-									):
-								(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-								address[0]=c;
-								address[1]=m;
+			if(/*Modifier.isPublic(c.getModifiers()) && */!c.isInterface()) {
+					Configuration configuration = c.getDeclaredAnnotation(Configuration.class);
+					if(configuration != null) {
+						Method[] methods = c.getDeclaredMethods();
+						for(Method m : methods) {
+							Bean beanA = m.getAnnotation(Bean.class);
+							if(beanA != null) {
+								Class tagC = assemblyData.getTagClass();
+								if(tagC.isInterface()?
+										(m.getReturnType().isInterface()?
+												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
+												:ScanUtil.isImple(m.getReturnType(), tagC)
+												):
+													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
+									address[0]=c;
+									address[1]=m;
+									break;
+								}
 							}
 						}
 					}
-				}
 			}
 		});
 		return address;
@@ -619,6 +616,13 @@ public class ScanUtil {
 		AssemblyUtil asse = new AssemblyUtil();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
+		if(classBean.getName().startsWith("org.springframework")) {
+			Object tmpObj = findCreateBeanFromFactory(asse);
+			if(tmpObj!=null) {
+				return tmpObj;
+			}
+			asse.setNameMapTmp(findClassMap("org.springframework"));
+		}
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
@@ -648,8 +652,8 @@ public class ScanUtil {
 		if(classGeneric == null) {
 			return findBeanByInterface(interfaceClass);
 		}
-		if(interfaceClass.getPackage().getName().startsWith("org.springframework.beans")) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework.beans"),null);
+		if(interfaceClass.getName().startsWith("org.springframework")) {
+			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework"),null);
 			if(!cL.isEmpty()) {
 				Class c = cL.get(0);
 			}else {

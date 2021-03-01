@@ -1,10 +1,9 @@
 package com.github.spring.junit.test;
 
-import java.awt.List;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.Collections;
+import java.lang.reflect.Modifier;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
@@ -12,9 +11,9 @@ import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
-import org.springframework.stereotype.Component;
 
 import com.github.spring.junit.test.db.LazyMongoBean;
+import com.github.spring.junit.test.mq.LazyMQBean;
 import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -77,6 +76,12 @@ public class LazyCglib implements MethodInterceptor {
 	@Override
 	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
 		try {
+			if(!arg1.isAccessible()) {
+				if(!Modifier.isPublic(arg1.getModifiers())) {
+					log.warn("非公共方法，代理执行会出现异常");
+					return null;
+				}
+			}
 			AopContextSuppert.setProxyObj(arg0);
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
@@ -135,12 +140,14 @@ public class LazyCglib implements MethodInterceptor {
 //		if(tag.getPackage().getName().contains("jedis")) {
 //			log.info("断点");
 //		}
-		
 		if(tagertObj==null && !ScanUtil.exists(tag)) {
-			tagertObj = ScanUtil.findCreateBeanFromFactory(tag,beanName);
-			
-			if(tagertObj == null && LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
+			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,beanName);
+			}else if(LazyMQBean.isBean(tag)) {
+				tagertObj = LazyMQBean.buildBean(tag);
+			}
+			if(tagertObj==null) {
+				tagertObj = ScanUtil.findCreateBeanFromFactory(tag,beanName);
 			}
 		}
 		if (tagertObj == null) {
