@@ -109,7 +109,7 @@ public class LazyDubboBean {
 			registryConfig.setPassword(TestUtil.getPropertiesValue(attr.get("password")));
 			registryConfig.setClient(TestUtil.getPropertiesValue(attr.get("client")));
 			registryConfig.setSubscribe(true);
-			registryConfig.setRegister(false);
+			registryConfig.setRegister(true);
 		}
 	}
 }
