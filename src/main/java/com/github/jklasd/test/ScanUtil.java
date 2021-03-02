@@ -1,4 +1,4 @@
-package com.github.spring.junit.test;
+package com.github.jklasd.test;
 
 import java.io.File;
 import java.io.IOException;
@@ -30,11 +30,11 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import com.github.spring.junit.test.dubbo.LazyDubboBean;
-import com.github.spring.junit.test.spring.JavaBeanUtil;
-import com.github.spring.junit.test.spring.ObjectProviderImpl;
-import com.github.spring.junit.test.spring.XmlBeanUtil;
-import com.github.spring.junit.util.CountDownLatchUtils;
+import com.github.jklasd.test.dubbo.LazyDubboBean;
+import com.github.jklasd.test.spring.JavaBeanUtil;
+import com.github.jklasd.test.spring.ObjectProviderImpl;
+import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.util.CountDownLatchUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

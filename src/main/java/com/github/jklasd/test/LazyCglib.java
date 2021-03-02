@@ -1,4 +1,4 @@
-package com.github.spring.junit.test;
+package com.github.jklasd.test;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -12,9 +12,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
-import com.github.spring.junit.test.db.LazyMongoBean;
-import com.github.spring.junit.test.mq.LazyMQBean;
-import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.db.LazyMongoBean;
+import com.github.jklasd.test.mq.LazyMQBean;
+import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 

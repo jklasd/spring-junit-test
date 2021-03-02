@@ -1,10 +1,10 @@
-package com.github.spring.junit.test.spring;
+package com.github.jklasd.test.spring;
 
 import org.springframework.boot.bind.PropertiesConfigurationFactory;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.util.StringUtils;
 
-import com.github.spring.junit.test.TestUtil;
+import com.github.jklasd.test.TestUtil;
 
 import lombok.extern.slf4j.Slf4j;
 

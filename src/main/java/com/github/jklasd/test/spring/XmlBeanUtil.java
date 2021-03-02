@@ -1,4 +1,4 @@
-package com.github.spring.junit.test.spring;
+package com.github.jklasd.test.spring;
 
 import java.util.List;
 import java.util.Map;
@@ -13,11 +13,11 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.github.spring.junit.test.ScanUtil;
-import com.github.spring.junit.test.TestUtil;
-import com.github.spring.junit.test.db.LazyMybatisMapperBean;
-import com.github.spring.junit.test.dubbo.LazyDubboBean;
-import com.github.spring.junit.test.mq.LazyRabbitMQBean;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.dubbo.LazyDubboBean;
+import com.github.jklasd.test.mq.LazyRabbitMQBean;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
