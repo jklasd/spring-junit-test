@@ -3,7 +3,6 @@ package com.github.spring.junit.test;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Type;
@@ -22,12 +21,9 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.core.annotation.AnnotatedElementUtils;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -111,6 +107,7 @@ public class ScanUtil {
 				// 查看是否class
 				try {
 					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
+					
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.isScanClassPath(name)) {
@@ -576,10 +573,10 @@ public class ScanUtil {
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
-			log.info("TypeNotPresentExceptionProxy Exception=>"+name);
+//			log.info("TypeNotPresentExceptionProxy Exception=>"+name);
 			notFoundSet.add(name);
 		}).setError((name,e)->{
-			log.info("TypeNotPresentExceptionProxy Error=>"+name);
+//			log.info("TypeNotPresentExceptionProxy Error=>"+name);
 			notFoundSet.add(name);
 		}).runAndWait(name ->{
 //			if(name.contains("RabbitTemplateConfiguration")) {
