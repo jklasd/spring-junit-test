@@ -14,7 +14,13 @@
 			<url>https://github.com/jklasd/spring-juint-test/blob/master/LICENSE</url>
 		</license>
 	</licenses>
-
+	<developers>
+		<developer>
+			<name>jubin.zhang</name>
+			<email>jub5@sina.com</email>
+			<url>https://github.com/jklasd/spring-juint-test</url>
+		</developer>
+	</developers>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
 		<maven.compiler.target>1.8</maven.compiler.target>
