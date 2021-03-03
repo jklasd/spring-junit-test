@@ -85,7 +85,7 @@ public class LazyCglib implements MethodInterceptor {
 			AopContextSuppert.setProxyObj(arg0);
 			return arg1.invoke(getTagertObj(), arg2);
 		} catch (Exception e) {
-			log.error("LazyCglib#intercept ERROR=>{}#{}",tag.getName(),arg1.getName());
+			log.error("LazyCglib#intercept ERROR=>{}#{}==>{}",tag.getName(),arg1.getName(),e.getMessage());
 			Throwable tmp = e;
 			if(e.getCause()!=null) {
 				tmp = e.getCause();
@@ -137,7 +137,7 @@ public class LazyCglib implements MethodInterceptor {
 	 * @return
 	 */
 	private Object getTagertObj() {
-//		if(tag.getPackage().getName().contains("jedis")) {
+//		if(tag.getName().contains("SpektraMsgPush")) {
 //			log.info("断点");
 //		}
 		if(tagertObj==null && !ScanUtil.exists(tag)) {

@@ -1,5 +1,6 @@
 package com.github.spring.junit.test;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
@@ -27,7 +28,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.spring.junit.test.mq.LazyMQBean;
 import com.github.spring.junit.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
@@ -345,10 +345,20 @@ public class LazyBean {
 	}
 	
 	public static boolean existBean(Class beanClass) {
-		return (beanClass.getAnnotation(Component.class)!=null || beanClass.getAnnotation(Service.class)!=null)
-				|| beanClass.getAnnotation(Controller.class)!=null || beanClass.getAnnotation(RestController.class)!=null
-						|| beanClass.getAnnotation(Configuration.class)!=null
-						|| beanClass.getAnnotation(ConfigurationProperties.class) != null;
+		Annotation[] anns = beanClass.getDeclaredAnnotations();
+		for(Annotation ann : anns) {
+			Class<?> type = ann.annotationType();
+			if ((type == Component.class || type.getAnnotation(Component.class)!=null)
+					|| (type == Service.class || type.getAnnotation(Service.class)!=null)
+					|| (type == Configuration.class || type.getAnnotation(Configuration.class)!=null)
+					|| (type == ConfigurationProperties.class || type.getAnnotation(ConfigurationProperties.class)!=null)
+					|| (type == RestController.class || type.getAnnotation(RestController.class)!=null)
+					|| (type == Controller.class || type.getAnnotation(Controller.class)!=null)
+					) {
+				return true;
+			}
+		}
+		return false;
 	}
 }
 
