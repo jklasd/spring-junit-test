@@ -8,6 +8,23 @@
 	<version>1.1.6-RELEASE</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
+	<repositories>
+		<repository>
+	        <id>sonatype-snapshots</id>
+	        <snapshots>
+	        	<enabled>false</enabled>
+	        </snapshots>
+	        <url>https://s01.oss.sonatype.org/content/repositories/snapshots/</url>
+	    </repository>
+	    <repository>
+	        <id>sonatype-releases</id>
+	        <releases>
+	        	<enabled>true</enabled>
+	        </releases>
+	        <url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+	    </repository>
+	</repositories>
+	
 	<licenses>
 		<license>
 			<name>The MIT License (MIT)</name>
