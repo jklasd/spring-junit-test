@@ -137,9 +137,9 @@ public class LazyCglib implements MethodInterceptor {
 	 * @return
 	 */
 	private Object getTagertObj() {
-//		if(tag.getName().contains("KreddoKeysConfig")) {
-//			log.info("断点");
-//		}
+		if(tag.getName().contains("MongoProperties")) {
+			log.info("断点");
+		}
 		if(tagertObj==null && !ScanUtil.exists(tag)) {
 			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,beanName);
@@ -156,6 +156,12 @@ public class LazyCglib implements MethodInterceptor {
 				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
 			}else {
 				ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
+				if(!LazyBean.existBean(tag)) {
+					if(propConfig==null 	|| !ScanUtil.findCreateBeanForConfigurationProperties(tag)) {
+						throw new RuntimeException(tag.getName()+" Bean 不存在");
+					}
+				}
+				
 				if(hasParamConstructor) {
 					try {
 						tagertObj = constructor.newInstance(getArguments());
@@ -164,8 +170,6 @@ public class LazyCglib implements MethodInterceptor {
 						log.error("带参构造对象异常",e);
 					}
 				}else {
-					if(!LazyBean.existBean(tag))
-						throw new RuntimeException(tag.getName()+"不存在");
 					/**
 					 * 待优化
 					 */

@@ -21,6 +21,7 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
@@ -48,6 +49,7 @@ import lombok.extern.slf4j.Slf4j;
 @SuppressWarnings("rawtypes")
 @Slf4j
 public class ScanUtil {
+	public static final String SPRING_PACKAGE = "org.springframework";
 	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
 	static Map<String,Class> nameMap = Maps.newHashMap();
@@ -503,18 +505,18 @@ public class ScanUtil {
 	
 	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class> nameMapTmp){
 		List<Class<?>> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMapTmp.keySet()))
+		CountDownLatchUtils.buildCountDownLatch(nameMapTmp.keySet().stream().filter(name->!notFoundSet.contains(name)).collect(Collectors.toList()))
+		.setException((name,e)->notFoundSet.add(name))
 		.runAndWait(name ->{
 			Class<?> c = nameMapTmp.get(name);
-			try {
+//			try {
 				Annotation type = c.getDeclaredAnnotation(annotationType);
 				if(type != null) {
 					list.add(c);
 				}
-			} catch (Exception e) {
-				log.error("#findClassWithAnnotation ERROR");
-				throw e;
-			}
+//			} catch (Exception e) {
+//				log.error("#findClassWithAnnotation ERROR",e);
+//			}
 		});
 		return list;
 	}
@@ -615,12 +617,12 @@ public class ScanUtil {
 		AssemblyUtil asse = new AssemblyUtil();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
-		if(classBean.getName().startsWith("org.springframework")) {
+		if(classBean.getName().startsWith(SPRING_PACKAGE)) {
 			Object tmpObj = findCreateBeanFromFactory(asse);
 			if(tmpObj!=null) {
 				return tmpObj;
 			}
-			asse.setNameMapTmp(findClassMap("org.springframework"));
+			asse.setNameMapTmp(findClassMap(SPRING_PACKAGE));
 		}
 		return findCreateBeanFromFactory(asse);
 	}
@@ -651,8 +653,8 @@ public class ScanUtil {
 		if(classGeneric == null) {
 			return findBeanByInterface(interfaceClass);
 		}
-		if(interfaceClass.getName().startsWith("org.springframework")) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework"),null);
+		if(interfaceClass.getName().startsWith(SPRING_PACKAGE)) {
+			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap(SPRING_PACKAGE),null);
 			if(!cL.isEmpty()) {
 				Class c = cL.get(0);
 			}else {
@@ -673,5 +675,44 @@ public class ScanUtil {
 			}
 		}
 		return null;
+	}
+	private static Set<Class> existsProp = Sets.newHashSet();
+	public static boolean findCreateBeanForConfigurationProperties(Class tag) {
+		if(existsProp.contains(tag))
+			return true;
+		
+		if(tag.getName().contains(SPRING_PACKAGE)) {
+			List<Class<?>> list = findClassWithAnnotation(EnableConfigurationProperties.class);
+			if(!list.isEmpty()) {
+				readPropAnno(tag, list);
+			}
+			if(!existsProp.contains(tag)) {
+				if(tag.getName().contains(BOOT_AUTO_CONFIG)) {
+					list = findClassWithAnnotation(EnableConfigurationProperties.class,findClassMap(BOOT_AUTO_CONFIG));
+					if(!list.isEmpty()) {
+						readPropAnno(tag, list);
+					}
+				}
+				if(!existsProp.contains(tag)) {
+					list = findClassWithAnnotation(EnableConfigurationProperties.class,findClassMap(SPRING_PACKAGE));
+					if(!list.isEmpty()) {
+						readPropAnno(tag, list);
+					}
+				}
+			}
+		}
+		return existsProp.contains(tag);
+	}
+	private static boolean readPropAnno(Class tag, List<Class<?>> list) {
+		for(Class enablePropC : list) {
+			EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
+			for(Class c : ecp.value()) {
+				if(c == tag) {
+					existsProp.add(tag);
+					return true;
+				}
+			}
+		}
+		return false;
 	}
 }

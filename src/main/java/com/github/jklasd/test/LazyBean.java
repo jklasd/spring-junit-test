@@ -351,7 +351,6 @@ public class LazyBean {
 			if ((type == Component.class || type.getAnnotation(Component.class)!=null)
 					|| (type == Service.class || type.getAnnotation(Service.class)!=null)
 					|| (type == Configuration.class || type.getAnnotation(Configuration.class)!=null)
-					|| (type == ConfigurationProperties.class || type.getAnnotation(ConfigurationProperties.class)!=null)
 					|| (type == RestController.class || type.getAnnotation(RestController.class)!=null)
 					|| (type == Controller.class || type.getAnnotation(Controller.class)!=null)
 					) {
