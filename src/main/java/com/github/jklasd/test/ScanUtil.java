@@ -329,7 +329,9 @@ public class ScanUtil {
 		if(LazyDubboBean.isDubbo(requiredType)) {
 			return LazyDubboBean.buildBean(requiredType);
 		}
-		
+		if(requiredType.getName().startsWith("org.springframework")) {
+			return LazyBean.buildProxy(requiredType);
+		}
 		if(requiredType.isInterface()) {
 			List<Class> tag = findClassImplInterface(requiredType);
 			if (!tag.isEmpty()) {
