@@ -1,4 +1,4 @@
-package com.github.spring.junit.util;
+package com.github.jklasd.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;

@@ -1,4 +1,4 @@
-package com.github.spring.junit.test.db;
+package com.github.jklasd.test.db;
 
 import java.util.List;
 import java.util.Map;
@@ -16,10 +16,10 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
-import com.github.spring.junit.test.AssemblyUtil;
-import com.github.spring.junit.test.LazyBean;
-import com.github.spring.junit.test.ScanUtil;
-import com.github.spring.junit.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.LazyBean;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.spring.XmlBeanUtil;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;

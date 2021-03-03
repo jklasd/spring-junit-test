@@ -1,4 +1,4 @@
-package com.github.spring.junit.test.mq;
+package com.github.jklasd.test.mq;
 
 import java.util.Map;
 
@@ -8,9 +8,9 @@ import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
-import com.github.spring.junit.test.AssemblyUtil;
-import com.github.spring.junit.test.ScanUtil;
-import com.github.spring.junit.test.TestUtil;
+import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
 import com.rabbitmq.client.ConnectionFactory;
 /**
  * 构建rabbit应用

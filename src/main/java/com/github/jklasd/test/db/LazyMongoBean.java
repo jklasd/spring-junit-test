@@ -1,9 +1,9 @@
-package com.github.spring.junit.test.db;
+package com.github.jklasd.test.db;
 
 import java.util.Map;
 
-import com.github.spring.junit.test.AssemblyUtil;
-import com.github.spring.junit.test.ScanUtil;
+import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.ScanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;

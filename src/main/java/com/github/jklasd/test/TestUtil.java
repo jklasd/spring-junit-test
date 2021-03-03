@@ -1,4 +1,4 @@
-package com.github.spring.junit.test;
+package com.github.jklasd.test;
 
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
@@ -19,10 +19,10 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
-import com.github.spring.junit.test.spring.JavaBeanUtil;
-import com.github.spring.junit.test.spring.TestApplicationContext;
-import com.github.spring.junit.test.spring.XmlBeanUtil;
-import com.github.spring.junit.util.LogbackUtil;
+import com.github.jklasd.test.spring.JavaBeanUtil;
+import com.github.jklasd.test.spring.TestApplicationContext;
+import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.util.LogbackUtil;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;

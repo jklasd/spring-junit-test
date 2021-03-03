@@ -1,4 +1,4 @@
-package com.github.spring.junit.test.spring;
+package com.github.jklasd.test.spring;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -23,7 +23,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
-import com.github.spring.junit.test.ScanUtil;
+import com.github.jklasd.test.ScanUtil;
 
 public class TestApplicationContext implements ApplicationContext{
 
