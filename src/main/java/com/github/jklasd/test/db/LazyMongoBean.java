@@ -27,7 +27,7 @@ public class LazyMongoBean {
 		asse.setBeanName(beanName);
 		asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.BOOT_AUTO_CONFIG));
 		Object obj = ScanUtil.findCreateBeanFromFactory(asse);
-		log.info("obj=>{}",obj!=null);
+//		log.info("obj=>{}",obj!=null);
 		/**
 		 * DefaultListableBeanFactory
 		 * org.springframework.boot.autoconfigure.mongo.MongoAutoConfiguration

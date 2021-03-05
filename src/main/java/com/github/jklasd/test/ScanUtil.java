@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,22 +17,19 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
+import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
-import com.github.jklasd.test.spring.ObjectProviderImpl;
 import com.github.jklasd.test.spring.XmlBeanUtil;
 import com.github.jklasd.util.CountDownLatchUtils;
 import com.google.common.collect.Lists;
@@ -90,13 +86,12 @@ public class ScanUtil {
 					log.error("加载类异常",e);
 				}
 			}else {
-				log.debug("=============其他文件=={}===========",file);
+//				log.debug("=============其他文件=={}===========",file);
 			}
 		}
 	}
 	private static Set<String> classNames = Sets.newHashSet();
 	public static Map<String,Map<String,Class>> pathForClass = Maps.newHashMap();
-	
 	public static Map<String, Class> findClassMap(String scanPath) {
 		if(pathForClass.containsKey(scanPath)) {
 			return pathForClass.get(scanPath);
@@ -109,7 +104,6 @@ public class ScanUtil {
 				// 查看是否class
 				try {
 					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
-					
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.isScanClassPath(name)) {
@@ -136,20 +130,20 @@ public class ScanUtil {
 				return;
 			}
 			init = true;
-			log.debug("=============开始加载class=============");
+//			log.debug("=============开始加载class=============");
 			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
-			log.debug("=============加载class={}============",resources.length);
+//			log.debug("=============加载class={}============",resources.length);
 			for (Resource r : resources) {
 				URL url = r.getURL();
 				if("file".equals(url.getProtocol())) {
 					File f = r.getFile();
-					log.debug("=======加载{}内的====class=========",f);
+//					log.debug("=======加载{}内的====class=========",f);
 					loadClass(f,url.getFile());
 				}else if("jar".equals(url.getProtocol())){
 					if(url.getPath().contains("jre/lib")) {
 						continue;
 					}
-					log.debug("=======加载{}内的====class=========",url.getPath());
+//					log.debug("=======加载{}内的====class=========",url.getPath());
 					try {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
@@ -416,8 +410,9 @@ public class ScanUtil {
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
-//			log.info("TypeNotPresentExceptionProxy Exception=>"+name);
 			notFoundSet.add(name);
+//			log.info(e.getMessage());
+//			log.error("getDeclaredAnnotation ",e);
 		}).setError((name,e)->{
 //			log.info("TypeNotPresentExceptionProxy Error=>"+name);
 			notFoundSet.add(name);

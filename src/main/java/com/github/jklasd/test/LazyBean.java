@@ -113,7 +113,7 @@ public class LazyBean {
 					}
 				}
 				if(tag == null && structors.length>0) {
-					log.warn("不存在无参构造函数");
+//					log.warn("不存在无参构造函数");
 					LazyCglib handler = new LazyCglib(classBean,beanName,true);
 					Enhancer enhancer = new Enhancer();
 					enhancer.setSuperclass(classBean);

@@ -33,7 +33,7 @@ public class JavaBeanUtil {
 		}
 		try {
 			if(!factory.containsKey(configClass)) {
-				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
+//				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
 				Constructor[] cons = configClass.getConstructors();
 				if(cons.length>0) {
 					int min = 10;
@@ -59,9 +59,9 @@ public class JavaBeanUtil {
 						tmp.setNameMapTmp(assemblyData.getNameMapTmp());
 //						if(paramTypes[i] instanceof ParameterizedType) {
 //						}
-						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
+//						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
 						Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-						log.debug("ojb_meth=>{}",ojb_meth);
+//						log.debug("ojb_meth=>{}",ojb_meth);
 						
 						if(ojb_meth[0]!=null && ojb_meth[1] != null) {
 							param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
@@ -103,9 +103,9 @@ public class JavaBeanUtil {
 				Type[] paramTypes = method.getGenericParameterTypes();
 				//如果存在参数
 				Object[] args = new Object[paramTypes.length];
-				if(args.length>0) {
-					log.warn("存在二级Bean，需要处理");//
-				}
+//				if(args.length>0) {
+//					log.warn("存在二级Bean，需要处理");//
+//				}
 				for(int i=0;i<paramTypes.length;i++) {
 					AssemblyUtil tmp = new AssemblyUtil();
 					if(paramTypes[i] instanceof ParameterizedType) {
@@ -123,7 +123,7 @@ public class JavaBeanUtil {
 //						log.info("断点");
 //					}
 					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-					log.info("ojb_meth=>{}",ojb_meth);
+//					log.info("ojb_meth=>{}",ojb_meth);
 					
 					if(ojb_meth[0]!=null && ojb_meth[1] != null) {
 						args[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
