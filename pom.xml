@@ -8,7 +8,11 @@
 	<version>1.1.6-RELEASE</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
-
+	<scm>
+		<url>https://github.com/jklasd/spring-junit-test</url>
+		<connection>https://github.com/jklasd/spring-junit-test.git</connection>
+		<developerConnection>https://github.com/jklasd/spring-junit-test.git</developerConnection>
+	</scm>
 	<distributionManagement>
 		<snapshotRepository>
 			<id>sonatype-snapshot</id>
@@ -23,14 +27,14 @@
 	<licenses>
 		<license>
 			<name>The MIT License (MIT)</name>
-			<url>https://github.com/jklasd/spring-juint-test/blob/master/LICENSE</url>
+			<url>https://github.com/jklasd/spring-junit-test/blob/master/LICENSE</url>
 		</license>
 	</licenses>
 	<developers>
 		<developer>
 			<name>jubin.zhang</name>
 			<email>jub5@sina.com</email>
-			<url>https://github.com/jklasd/spring-juint-test</url>
+			<url>https://github.com/jklasd/spring-junit-test</url>
 		</developer>
 	</developers>
 	<properties>
