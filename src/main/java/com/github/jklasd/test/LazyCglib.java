@@ -152,7 +152,7 @@ public class LazyCglib implements MethodInterceptor {
 		}
 		if (tagertObj == null) {
 			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
-				tagertObj = ScanUtil.findBean(beanName);
+				tagertObj = LazyBean.findBean(beanName);
 				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
 			}else {
 				ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);

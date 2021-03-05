@@ -60,6 +60,9 @@ public class LazyImple implements InvocationHandler {
 	 * @return
 	 */
 	private Object getTagertObj() {
+//		if(tag.getName().contains("BackstageConfigService")) {
+//			log.info("断点");
+//		}
 		if (tagertObj == null) {
 			if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
 				tagertObj = LazyDubboBean.buildBean(tag);
@@ -70,14 +73,11 @@ public class LazyImple implements InvocationHandler {
 					isDbConnect = true;
 					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
 				}else {
-//					if(tag.getName().contains("DataSource")) {
-//						log.info("断点");
-//					}
 					if(beanName == null) {
 						/**
 						 * 若是本地接口实现类的bean，则进行bean查找。
 						 */
-						Object tagImp = ScanUtil.findBeanByInterface(tag,classGeneric);
+						Object tagImp = LazyBean.findBeanByInterface(tag,classGeneric);
 						if(tagImp == null) {
 							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {
@@ -94,7 +94,7 @@ public class LazyImple implements InvocationHandler {
 						}
 					}else {
 						// 本地bean
-						Object tagImp = ScanUtil.findBean(beanName);
+						Object tagImp = LazyBean.findBean(beanName);
 						if(tagImp == null) {
 							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {

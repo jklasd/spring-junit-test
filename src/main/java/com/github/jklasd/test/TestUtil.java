@@ -52,6 +52,11 @@ public class TestUtil{
 	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 		this.applicationContext = new TestApplicationContext(applicationContext);
 	}
+	/**
+	 * 处理配置
+	 * 如：XML配置，java代码 Bean配置
+	 * 静态工具类bean处理
+	 */
 	private void processConfig() {
 		XmlBeanUtil.process();
 		JavaBeanUtil.process();
@@ -106,9 +111,9 @@ public class TestUtil{
 	
 	/**
 	 * 获取存在Service,Complent的相关对象
-	 * @param classD
-	 * @param beanName
-	 * @return
+	 * @param classD bean 类型
+	 * @param beanName 名称
+	 * @return 返回容器中已存在的Bean 
 	 */
 	@SuppressWarnings("unchecked")
 	public static Object getExistBean(Class classD,String beanName) {
@@ -192,7 +197,10 @@ public class TestUtil{
 		StandardEnvironment env = (StandardEnvironment) getApplicationContext().getEnvironment();
 		return env.getPropertySources();
 	}
-
+	/**
+	 * 启动方法
+	 * @param obj 执行目标对象
+	 */
 	public static void startTestForNoContainer(Object obj) {
 		LazyBean.processAttr(obj, obj.getClass());
 		TestUtil launch = new TestUtil();

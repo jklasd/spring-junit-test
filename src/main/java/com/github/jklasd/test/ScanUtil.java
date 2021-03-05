@@ -54,12 +54,12 @@ public class ScanUtil {
 	private static String CLASS_SUFFIX = ".class";
 	static Map<String,Class> nameMap = Maps.newHashMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
-//	private static OverridingClassLoader springClassLoader = new OverridingClassLoader(ScanUtil.class.getClassLoader());
+	
 	/**
 	 * 扫描路径下资源
-	 * @param path
-	 * @return
-	 * @throws IOException
+	 * @param path classpath:下的文件路径
+	 * @return 返回存在的资源路径数组
+	 * @throws IOException 读取文件异常
 	 */
 	public static Resource[] getResources(String path) throws IOException {
 		if(resourceResolver == null) {
@@ -204,64 +204,7 @@ public class ScanUtil {
 		});
 	}
 	
-	public static Map<String,Object> beanMaps = Maps.newHashMap();
-	/**
-	 * 
-	 * @param beanName
-	 * @param type
-	 * @return
-	 */
-	public static Object findBean(String beanName,Class<?> type) {
-		if(type.isInterface()) {
-			List<Class> classList = findClassImplInterface(type);
-			for(Class c : classList) {
-				Service ann = (Service) c.getAnnotation(Service.class);
-				Component cAnn = (Component)c.getAnnotation(Component.class);
-				if(ann!=null && ann.value().equals(beanName)) {
-					
-				}
-			}
-			log.warn("ScanUtil # findBean=>Interface[{}]",type);
-		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
-		}else {
-			Object obj = findBean(beanName); 
-			try {
-				if(type.getConstructors().length>0) {
-					return  obj == null?type.newInstance():obj;
-				}else {
-					throw new NoSuchBeanDefinitionException("没有获取到构造器");
-				}
-			} catch (InstantiationException | IllegalAccessException e) {
-				log.error("不能构建bean=>{}=>{}",beanName,type);
-			}
-		}
-		return null;
-	}
-	/**
-	 * 通过BeanName 获取bean
-	 * @param beanName
-	 * @return
-	 */
-	public static Object findBean(String beanName) {
-		if(beanMaps.containsKey(beanName)) {
-			return beanMaps.get(beanName);
-		}
-		Object bean = null;
-		Class tag = findClassByName(beanName);
-		if(tag == null) {
-			tag = findClassByClassName(beanName.substring(0, 1).toUpperCase()+beanName.substring(1));
-		}
-		if (tag != null) {
-			if(LazyDubboBean.isDubbo(tag)) {
-				return LazyDubboBean.buildBean(tag);
-			}else {
-				bean = LazyBean.buildProxy(tag);
-			}
-			beanMaps.put(beanName, bean);
-		}
-		return bean;
-	}
-	private static Class findClassByClassName(String beanName) {
+	public static Class findClassByClassName(String beanName) {
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
@@ -271,8 +214,7 @@ public class ScanUtil {
 		});
 		return list.isEmpty()?null:list.get(0);
 	}
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	private static Class findClassByName(String beanName) {
+	public static Class findClassByName(String beanName) {
 		List<Class> list = Lists.newArrayList();
 		
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
@@ -298,94 +240,43 @@ public class ScanUtil {
 		});
 		return list.isEmpty()?null:list.get(0);
 	}
-	/**
-	 * 通过class 查找它的所有继承者或实现者
-	 * @param requiredType
-	 * @return
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static List findListBean(Class<?> requiredType) {
-		List list = Lists.newArrayList();
-		if(requiredType.isInterface()) {
-			List<Class> tags = findClassImplInterface(requiredType);
-			if (!tags.isEmpty()) {
-				tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
-			}
-		}else {
-			/**
-			 * @TODO 存在要查继承类问题
-			 */
-			Class<?> tag = findClass(requiredType);
-			if (tag != null) {
-				list.add(LazyBean.buildProxy(tag));
-			}
-		}
-		return list;
+	
+	
+	public static Boolean isInScanPath(Class<?> requiredType) {
+		return nameMap.containsKey(requiredType.getName());
 	}
 	/**
-	 * 通过class 获取 bean
-	 * @param requiredType
-	 * @return
+	 * 扫描继承abstractClass 的类
+	 * @param abstractClass 接口
+	 * @return 返回继承abstractClass 的类
 	 */
-	public static Object findBean(Class<?> requiredType) {
-		if(LazyDubboBean.isDubbo(requiredType)) {
-			return LazyDubboBean.buildBean(requiredType);
-		}
-		if(requiredType.getName().startsWith("org.springframework")) {
-			return LazyBean.buildProxy(requiredType);
-		}
-		if(requiredType.isInterface()) {
-			List<Class> tag = findClassImplInterface(requiredType);
-			if (!tag.isEmpty()) {
-				return LazyBean.buildProxy(tag.get(0));
-			}
-		}else {
-			Class tag = findClass(requiredType);
-			if (tag != null) {
-				return LazyBean.buildProxy(tag);
-			}
-		}
-		return null;
+	@SuppressWarnings("rawtypes")
+	public static List<Class> findClassExtendAbstract(Class abstractClass){
+		return findClassExtendAbstract(abstractClass, null,null);
 	}
-	private static Class findClass(Class<?> requiredType) {
+	public static List<Class> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
+		Map<String,Class> tmp = Maps.newHashMap();
+		if(classMap!=null) {
+			tmp.putAll(classMap);
+		}
+		tmp.putAll(nameMap);
 		List<Class> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
-			if(c == requiredType) {
-				if(c.getAnnotation(Component.class)!=null ||
-						c.getAnnotation(Service.class)!=null ) {
-					list.add(c);
+			if(ClassName!=null && name.equals(ClassName)) {
+				return;
+			}
+			Class<?> tmpClass = tmp.get(name);
+			if(isExtends(tmpClass,abstractClass)) {
+				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
+						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
+					list.add(tmpClass);
 				}
 			}
 		});
-		return list.isEmpty()?null:list.get(0);
+		return list;
 	}
-	/**
-	 * 扫描类 for bean
-	 * @param file
-	 * @param beanName
-	 * @return
-	 * @throws ClassNotFoundException
-	 */
-	public static Object findBeanByInterface(Class interfaceClass) {
-		if(interfaceClass.getPackage().getName().startsWith("org.springframework")) {
-			Object obj = TestUtil.getExistBean(interfaceClass, null);
-			if(obj == null) {
-				List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap("org.springframework"),null);
-				if(!cL.isEmpty()) {
-					Class c = cL.get(0);
-				}
-			}
-			return obj;
-		}
-		List<Class> tags = findClassImplInterface(interfaceClass);
-		if (!tags.isEmpty()) {
-			return LazyBean.buildProxy(tags.get(0));
-		}
-		return null;
-	}
-	private static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
+	public static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
@@ -409,95 +300,61 @@ public class ScanUtil {
 	}
 	/**
 	 * 扫描实现了interfaceClass 的类
-	 * @param file
-	 * @param interfaceClass
-	 * @return
-	 * @throws ClassNotFoundException
+	 * @param interfaceClass 接口
+	 * @return 返回实现 interfaceClass 的类
 	 */
 	@SuppressWarnings("rawtypes")
-	private static List<Class> findClassImplInterface(Class interfaceClass){
+	public static List<Class> findClassImplInterface(Class interfaceClass){
 		return findClassImplInterface(interfaceClass, null,null);
 	}
 	/**
 	 * 判断 c 是否是interfaceC的实现类
-	 * @param c
-	 * @param interfaceC
-	 * @return
+	 * @param implClass 实现类型
+	 * @param interfaceClass 接口类型
+	 * @return  true/ false
 	 */
 	@SuppressWarnings({ "rawtypes" })
-	public static boolean isImple(Class c,Class interfaceC) {
-		Class[] ics = c.getInterfaces();
+	public static boolean isImple(Class implClass,Class interfaceClass) {
+		Class[] ics = implClass.getInterfaces();
 		for(Class c2 : ics) {
-			if(c2 == interfaceC) {
+			if(c2 == interfaceClass) {
 				return true;
 			}
 		}
-		Class sc = c.getSuperclass();
+		Class sc = implClass.getSuperclass();
 		if(sc!=null) {
-			return isImple(sc, interfaceC);
+			return isImple(sc, interfaceClass);
 		}
 		return false;
 	}
-	public static boolean isExtends(Class c,Class abstractC) {
-		if(c.isInterface()) {
-			Class[] interfaces = c.getInterfaces();
+	/**
+	 * 判断 subClass 是否继承 abstractClass
+	 * @param subClass 子类
+	 * @param abstractClass 父类
+	 * @return true/false
+	 */
+	public static boolean isExtends(Class subClass,Class abstractClass) {
+		if(subClass.isInterface()) {
+			Class[] interfaces = subClass.getInterfaces();
 			for(Class item : interfaces) {
-				if(item == abstractC || isExtends(item, abstractC)) {
+				if(item == abstractClass || isExtends(item, abstractClass)) {
 					return true;
 				}
 			}
 		}else {
-			if(c.getSuperclass() == abstractC) {
+			if(subClass.getSuperclass() == abstractClass) {
 				return true;
-			}else if(c.getSuperclass() != null){
-				return isExtends(c.getSuperclass(), abstractC);
+			}else if(subClass.getSuperclass() != null){
+				return isExtends(subClass.getSuperclass(), abstractClass);
 			}
 		}
 		return false;
 	}
-	/**
-	 * 
-	 * 通过注解查找Bean
-	 * 
-	 * @param annotationType
-	 * @return
-	 */
-	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
-		List<Class<?>> list = findClassWithAnnotation(annotationType);
-		Map<String, Object> annoClass = Maps.newHashMap();
-		list.stream().forEach(c ->{
-//			String beanName = getBeanName(c);
-			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
-		});
-		return annoClass;
-	}
-	/**
-	 * 获取BeanName
-	 * @param c
-	 * @return
-	 */
-	@SuppressWarnings({ "unchecked", "rawtypes" })
-	public static String getBeanName(Class c) {
-		String beanName = null;
-		if(c.getAnnotation(Component.class)!=null) {
-			beanName = ((Component)c.getAnnotation(Component.class)).value();
-		}else if(	c.getAnnotation(Service.class)!=null ) {
-			beanName = ((Service)c.getAnnotation(Service.class)).value();
-		}/*else if(	c.getAnnotation(Configuration.class)!=null ) {
-			beanName = ((Configuration)c.getAnnotation(Configuration.class)).value();
-		}*/
-//		if(StringUtils.isBlank(beanName)){
-//			beanName = c.getSimpleName().substring(0, 1).toLowerCase()+c.getSimpleName().substring(1);
-//		}
-		return beanName;
-	}
 	
 	/**
 	 * 扫描类 for class
-	 * @param file
-	 * @param interfaceClass
-	 * @return
-	 * @throws ClassNotFoundException
+	 * @param annotationType 注解类型
+	 * @return 存在 annotationType 注解的类
 	 */
 	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
 		return findClassWithAnnotation(annotationType, nameMap);
@@ -519,24 +376,6 @@ public class ScanUtil {
 //			}
 		});
 		return list;
-	}
-	public static Boolean isBean(Class beanC) {
-		Boolean[] address = new Boolean[] {false};
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
-			if(beanC == c) {
-				Annotation comp = c.getAnnotation(Component.class);
-				Annotation service = c.getAnnotation(Service.class);
-				Annotation configuration = c.getAnnotation(Configuration.class);
-				if(comp != null
-						|| service != null
-						|| configuration != null) {
-					address[0] = true;
-				}
-			}
-		});
-		return address[0];
 	}
 	public static List<Class<?>> findStaticMethodClass() {
 		Set<Class<?>> list = Sets.newHashSet();
@@ -649,23 +488,7 @@ public class ScanUtil {
 	public static Class getClassByName(String className) {
 		return nameMap.get(className);
 	}
-	public static Object findBeanByInterface(Class interfaceClass, Type[] classGeneric) {
-		if(classGeneric == null) {
-			return findBeanByInterface(interfaceClass);
-		}
-		if(interfaceClass.getName().startsWith(SPRING_PACKAGE)) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,findClassMap(SPRING_PACKAGE),null);
-			if(!cL.isEmpty()) {
-				Class c = cL.get(0);
-			}else {
-				if(interfaceClass == ObjectProvider.class) {
-					return new ObjectProviderImpl(classGeneric[0]);
-				}
-//				TestUtil.getExistBean(interfaceClass,classGeneric);
-			}
-		}
-		return null;
-	}
+	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
 		// TODO Auto-generated method stub
 		for(String path: paths) {

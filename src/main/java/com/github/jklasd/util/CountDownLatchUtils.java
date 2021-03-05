@@ -13,7 +13,7 @@ import lombok.extern.slf4j.Slf4j;
  * 多线程控制器
  * @author jubin.zhang
  *
- * @param <T>
+ * @param <T> 遍历对象类型
  */
 @Slf4j
 public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
@@ -44,8 +44,8 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	}
 	/**
 	 * item
-	 * @param action
-	 * @return
+	 * @param action 处理方法体，方法体中可以获取遍历对象
+	 * @return true 表示线程执行完成，false表示执行超时
 	 */
 	public boolean runAndWait(Consumer<? super T> action) {
 		boolean await = false;
@@ -84,7 +84,7 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	}
 	/**
 	 * item ,countDownLatch ,index
-	 * @param action
+	 * @param  action 处理方法体，方法体中可以获取遍历对象
 	 */
 	public void runAndWait(TraversingFunction<? super T,? super CountDownLatch,Integer> action) {
 		AtomicInteger index = new AtomicInteger();
@@ -110,7 +110,7 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	}
 	/**
 	 * item ,index
-	 * @param action
+	 * @param  action 处理方法体，方法体中可以获取遍历对象
 	 */
 	public void runAndWaitForIndex(BiConsumer<? super T,Integer> action) {
 		AtomicInteger index = new AtomicInteger();
@@ -136,7 +136,7 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	}
 	/**
 	 * item , countDownLatch
-	 * @param action
+	 * @param  action 处理方法体，方法体中可以获取遍历对象
 	 */
 	public void runAndWait(BiConsumer<? super T, ? super CountDownLatch> action) {
 		for(T tmp : list) {

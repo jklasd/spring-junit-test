@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
@@ -16,20 +17,27 @@ import java.util.Set;
 import javax.annotation.PostConstruct;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.MethodInterceptor;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.spring.ObjectProviderImpl;
 import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -45,9 +53,11 @@ public class LazyBean {
 	public static Map<Class, Object> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
-	 * 构建代理对象
-	 * @param classBean
-	 * @return
+	 * 
+	 * 构建代理对象 classBean 
+	 * @param classBean 代理类型
+	 * @param classGeneric 代理类的泛型类型
+	 * @return 代理对象
 	 */
 	public static Object buildProxyForGeneric(Class classBean,Type[] classGeneric) {
 		Object tagObject = null;
@@ -58,9 +68,11 @@ public class LazyBean {
 		return tagObject;
 	}
 	/**
+	 * 
 	 * 构建代理对象
-	 * @param classBean
-	 * @return
+	 * @param classBean 需要代理的类型
+	 * @param beanName 对象Name
+	 * @return 代理对象
 	 */
 	public static Object buildProxy(Class classBean,String beanName) {
 		/**
@@ -127,8 +139,8 @@ public class LazyBean {
 	}
 	/**
 	 * 构建代理对象
-	 * @param classBean
-	 * @return
+	 * @param classBean 需要代理的类型
+	 * @return 返回ProxyObject
 	 */
 	public static Object buildProxy(Class classBean) {
 		if (singleton.containsKey(classBean)) {
@@ -203,7 +215,7 @@ public class LazyBean {
 						//处理一个集合注入
 						try {
 							Class<?> c = Class.forName(item[0].getTypeName());
-							setObj(f, obj, ScanUtil.findListBean(c));
+							setObj(f, obj, findListBean(c));
 							log.info("注入集合=>{}",f.getName());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
@@ -212,7 +224,7 @@ public class LazyBean {
 						log.info("其他特殊情况");
 					}
 				}else {
-					if(ScanUtil.isBean(f.getType()) && TestUtil.getExistBean(f.getType(), f.getName())!=null) {
+					if(LazyBean.existBean(f.getType()) && TestUtil.getExistBean(f.getType(), f.getName())!=null) {
 						setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
 					}else {
 						setObj(f, obj, buildProxy(f.getType(),bName));
@@ -358,6 +370,186 @@ public class LazyBean {
 			}
 		}
 		return false;
+	}
+	/**
+	 * 
+	 * @param beanClass 目标类
+	 * @param tagAnn 获取Annotation 
+	 * @return 返回存在的 Annotation
+	 */
+	public static Annotation findByAnnotation(Class beanClass,Class<? extends Annotation> tagAnn) {
+		Annotation[] anns = beanClass.getDeclaredAnnotations();
+		for(Annotation ann : anns) {
+			Class<?> type = ann.annotationType();
+			if ((type == tagAnn || type.getAnnotation(tagAnn)!=null)) {
+				return ann;
+			}
+		}
+		return null;
+	}
+	
+	public static Map<String,Object> beanMaps = Maps.newHashMap();
+	/**
+	 * 通过BeanName 获取bean
+	 * @param beanName beanName
+	 * @return 返回bean
+	 */
+	public static Object findBean(String beanName) {
+		if(beanMaps.containsKey(beanName)) {
+			return beanMaps.get(beanName);
+		}
+		Object bean = null;
+		Class tag = ScanUtil.findClassByName(beanName);
+		if(tag == null) {
+			tag = ScanUtil.findClassByClassName(beanName.substring(0, 1).toUpperCase()+beanName.substring(1));
+		}
+		if (tag != null) {
+			if(LazyDubboBean.isDubbo(tag)) {
+				return LazyDubboBean.buildBean(tag);
+			}else {
+				bean = LazyBean.buildProxy(tag);
+			}
+			beanMaps.put(beanName, bean);
+		}
+		return bean;
+	}
+	
+	/**
+	 * 
+	 * @param beanName bean名称
+	 * @param type bean类型
+	 * @return 返回bean对象
+	 */
+	public static Object findBean(String beanName,Class<?> type) {
+		if(type.isInterface()) {
+			List<Class> classList = ScanUtil.findClassImplInterface(type);
+			for(Class c : classList) {
+				Service ann = (Service) findByAnnotation(c,Service.class);
+				Component cAnn = (Component) findByAnnotation(c,Component.class);
+				if ((ann != null && ann.value().equals(beanName)) | (cAnn != null && cAnn.value().equals(beanName))) {
+					return buildProxy(c, beanName);
+				}
+			}
+			log.warn("ScanUtil # findBean=>Interface[{}]",type);
+		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
+		}else {
+			Object obj = findBean(beanName); 
+			try {
+				if(type.getConstructors().length>0) {
+					return  obj == null?type.newInstance():obj;
+				}else {
+					throw new NoSuchBeanDefinitionException("没有获取到构造器");
+				}
+			} catch (InstantiationException | IllegalAccessException e) {
+				log.error("不能构建bean=>{}=>{}",beanName,type);
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 
+	 * 通过注解查找Bean
+	 * 
+	 * @param annotationType Annotation类型
+	 * @return 返回存在annotationType 的对象
+	 */
+	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
+		List<Class<?>> list = ScanUtil.findClassWithAnnotation(annotationType);
+		Map<String, Object> annoClass = Maps.newHashMap();
+		list.stream().forEach(c ->{
+//			String beanName = getBeanName(c);
+			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
+		});
+		return annoClass;
+	}
+	
+	public static Object findBeanByInterface(Class interfaceClass, Type[] classGeneric) {
+		if(classGeneric == null) {
+			return findBeanByInterface(interfaceClass);
+		}
+		if(interfaceClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
+			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			if(!cL.isEmpty()) {
+				Class c = cL.get(0);
+			}else {
+				if(interfaceClass == ObjectProvider.class) {
+					return new ObjectProviderImpl(classGeneric[0]);
+				}
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 扫描类 for bean
+	 * @param interfaceClass  接口
+	 * @return 返回实现接口的对象
+	 */
+	public static Object findBeanByInterface(Class interfaceClass) {
+		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
+				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
+			return TestUtil.getApplicationContext();
+		}
+		if(interfaceClass == Environment.class
+				|| ScanUtil.isExtends(Environment.class,interfaceClass)
+				|| ScanUtil.isExtends(interfaceClass, Environment.class)) {
+			return TestUtil.getApplicationContext().getEnvironment();
+		}
+		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
+			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			if(!cL.isEmpty()) {
+				return LazyBean.buildProxy(cL.get(0));
+			}
+		}
+		List<Class> tags = ScanUtil.findClassImplInterface(interfaceClass);
+		if (!tags.isEmpty()) {
+			return LazyBean.buildProxy(tags.get(0));
+		}
+		return null;
+	}
+	
+	/**
+	 * 通过class 获取 bean
+	 * @param requiredType bean类型
+	 * @return 返回bean
+	 */
+	public static Object findBean(Class<?> requiredType) {
+		if(LazyDubboBean.isDubbo(requiredType)) {
+			return LazyDubboBean.buildBean(requiredType);
+		}
+		if(requiredType.getName().startsWith("org.springframework")) {
+			return LazyBean.buildProxy(requiredType);
+		}
+		if(requiredType.isInterface()) {
+			List<Class> tag = ScanUtil.findClassImplInterface(requiredType);
+			if (!tag.isEmpty()) {
+				return LazyBean.buildProxy(tag.get(0));
+			}
+		}else if(ScanUtil.isInScanPath(requiredType)){
+			return LazyBean.buildProxy(requiredType);
+		}
+		return null;
+	}
+	
+	/**
+	 * 通过class 查找它的所有继承者或实现者
+	 * @param requiredType 接口或者抽象类
+	 * @return 放回List对象
+	 */
+	@SuppressWarnings("unchecked")
+	public static List findListBean(Class<?> requiredType) {
+		List list = Lists.newArrayList();
+		List<Class> tags = null;
+		if(requiredType.isInterface()) {
+			tags = ScanUtil.findClassImplInterface(requiredType);
+		}else {
+			tags = ScanUtil.findClassExtendAbstract(requiredType);
+		}
+		if (!tags.isEmpty()) {
+			tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
+		}
+		return list;
 	}
 }
 

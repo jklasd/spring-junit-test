@@ -23,6 +23,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
+import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 
 public class TestApplicationContext implements ApplicationContext{
@@ -137,7 +138,7 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 			throws BeansException {
-		return ScanUtil.findBeanWithAnnotation(annotationType);
+		return LazyBean.findBeanWithAnnotation(annotationType);
 	}
 
 	@Override
@@ -149,12 +150,12 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public Object getBean(String name) throws BeansException {
 		if(parentContext == null || parentContext == this) {
-			return ScanUtil.findBean(name);
+			return LazyBean.findBean(name);
 		}
 		if(parentContext.containsBean(name)) {
 			return parentContext.getBean(name);
 		}else {
-			return ScanUtil.findBean(name);
+			return LazyBean.findBean(name);
 		}
 	}
 
@@ -164,26 +165,26 @@ public class TestApplicationContext implements ApplicationContext{
 			if(requiredType.getName().contains("EntityScanPackages")) {
 				return (T) EntityScanPackagesConstructor.getBean();
 			}
-			return (T)ScanUtil.findBean(name, requiredType);
+			return (T)LazyBean.findBean(name, requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(name,requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)ScanUtil.findBean(name, requiredType);
+			return (T)LazyBean.findBean(name, requiredType);
 		}
 	}
 
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
-			return (T)ScanUtil.findBean(requiredType);
+			return (T)LazyBean.findBean(requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)ScanUtil.findBean(requiredType);
+			return (T)LazyBean.findBean(requiredType);
 		}
 	}
 
