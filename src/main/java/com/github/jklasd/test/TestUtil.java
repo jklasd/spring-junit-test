@@ -30,7 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 /**
  * @author jubin.zhang
  *	2020-11-19
- *
+ * 工具入口类
  */
 @Slf4j
 public class TestUtil{
