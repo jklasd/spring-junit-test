@@ -108,6 +108,20 @@ public class XmlBeanUtil {
 							if(nN.equals("array")) {
 								map.put(prop.get("name"), tmpN);
 								continue one;
+							}else if(nN.equals("map")){
+//								ll.add(tmpN);
+								Map<String,String> tmpMap = Maps.newHashMap();
+								NodeList mNL = tmpN.getChildNodes();
+								for(int m=0;m<mNL.getLength();m++) {
+									Node tmpmN = mNL.item(m);
+									String mN = tmpmN.getNodeName();
+									if(!mN.equals("#text")) {
+										Map<String,String> mprop = loadXmlNodeAttr(tmpmN.getAttributes());
+										tmpMap.put(mprop.get("key"), mprop.get("value-ref"));
+									}
+								}
+								map.put(prop.get("name"), tmpMap);
+								continue one;
 							}else {
 								ll.add(tmpN);
 							}

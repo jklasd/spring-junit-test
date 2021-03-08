@@ -137,9 +137,9 @@ public class LazyCglib implements MethodInterceptor {
 	 * @return
 	 */
 	private Object getTagertObj() {
-		if(tag.getName().contains("MongoProperties")) {
-			log.info("断点");
-		}
+//		if(tag.getName().contains("MongoProperties")) {
+//			log.info("断点");
+//		}
 		if(tagertObj==null && !ScanUtil.exists(tag)) {
 			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,beanName);

@@ -1,5 +1,6 @@
 package com.github.jklasd.test.db;
 
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
@@ -21,6 +22,7 @@ import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.spring.XmlBeanUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -136,6 +138,30 @@ public class LazyMybatisMapperBean{
 		return dataSource;
 	}
 
+	private static Object processXmlCreateDS(String id) {
+		Node dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
+		Map<String, String> dataSourceAttr = XmlBeanUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
+		try {
+			Class<?> dataSourceC = Class.forName(dataSourceAttr.get("class"));
+			Object obj = dataSourceC.newInstance();
+			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
+			dataSourceProp.keySet().forEach(field -> {
+				try {
+					log.debug("{}=>{}", field, dataSourceProp.get(field.toString()));
+					LazyBean.setAttr(field, obj, dataSourceC, dataSourceProp.get(field.toString()));
+				} catch (SecurityException e) {
+					log.error("buildDataSource", e);
+				}
+			});
+//			if(dataSourceAttr.containsKey("init-method")) {
+//				Method init = dataSourceC.getDeclaredMethod(dataSourceAttr.get("init-method"));
+//				init.invoke(obj);
+//			}
+			return obj;
+		} catch (Exception e) {
+			return null;
+		}
+	}
 
 	private static void processXmlForDataSource(String id) {
 		Node dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
@@ -152,6 +178,25 @@ public class LazyMybatisMapperBean{
 					log.error("buildDataSource",e);
 				}
 			});
+			try {
+				Class AbstractRoutingDataSource = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
+				if(ScanUtil.isExtends(dataSourceC, AbstractRoutingDataSource)) {
+					Map<String,Object> dataSource = Maps.newHashMap();
+					Map<String,String> targetDataSources = (Map<String, String>) dataSourceProp.get("targetDataSources");
+					targetDataSources.keySet().forEach(key ->{
+						DataSource ds = (DataSource) processXmlCreateDS(targetDataSources.get(key));
+						dataSource.put(key, ds);
+					});
+					LazyBean.setAttr("targetDataSources",obj, dataSourceC, dataSource);
+					Method afterPropertiesSet = AbstractRoutingDataSource.getDeclaredMethod("afterPropertiesSet");
+					afterPropertiesSet.invoke(obj);
+				}
+			} catch (Exception e) {
+			}
+//			if(dataSourceAttr.containsKey("init-method")) {
+//				Method init = dataSourceC.getDeclaredMethod(dataSourceAttr.get("init-method"));
+//				init.invoke(obj);
+//			}
 			dataSource = (DataSource) obj;
 		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
 			log.error("buildDataSource",e);
