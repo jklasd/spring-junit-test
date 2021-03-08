@@ -17,6 +17,7 @@ import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +34,7 @@ public class JavaBeanUtil {
 		}
 		try {
 			if(!factory.containsKey(configClass)) {
-				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
+//				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
 				Constructor[] cons = configClass.getConstructors();
 				if(cons.length>0) {
 					int min = 10;
@@ -59,9 +60,9 @@ public class JavaBeanUtil {
 						tmp.setNameMapTmp(assemblyData.getNameMapTmp());
 //						if(paramTypes[i] instanceof ParameterizedType) {
 //						}
-						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
+//						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
 						Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-						log.debug("ojb_meth=>{}",ojb_meth);
+//						log.debug("ojb_meth=>{}",ojb_meth);
 						
 						if(ojb_meth[0]!=null && ojb_meth[1] != null) {
 							param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
@@ -103,9 +104,9 @@ public class JavaBeanUtil {
 				Type[] paramTypes = method.getGenericParameterTypes();
 				//如果存在参数
 				Object[] args = new Object[paramTypes.length];
-				if(args.length>0) {
-					log.warn("存在二级Bean，需要处理");//
-				}
+//				if(args.length>0) {
+//					log.warn("存在二级Bean，需要处理");//
+//				}
 				for(int i=0;i<paramTypes.length;i++) {
 					AssemblyUtil tmp = new AssemblyUtil();
 					if(paramTypes[i] instanceof ParameterizedType) {
@@ -123,7 +124,7 @@ public class JavaBeanUtil {
 //						log.info("断点");
 //					}
 					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-					log.info("ojb_meth=>{}",ojb_meth);
+//					log.info("ojb_meth=>{}",ojb_meth);
 					
 					if(ojb_meth[0]!=null && ojb_meth[1] != null) {
 						args[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
@@ -155,10 +156,10 @@ public class JavaBeanUtil {
 	 * 扫描java代码相关配置
 	 */
 	public static void process() {
-		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
 		/**
 		 * 处理数据库
 		 */
+		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
 		configurableList.stream().filter(configura ->configura.getAnnotation(MapperScan.class)!=null).forEach(configura ->{
 			MapperScan scan = configura.getAnnotation(MapperScan.class);
 			String[] packagePath = scan.basePackages();
@@ -167,8 +168,15 @@ public class JavaBeanUtil {
 			}
 		});
 		/**
-		 * 处理dubbo服务
+		 * 处理dubbo服务类
 		 */
+		Class dubboServiceAnn = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
+		if(dubboServiceAnn!=null) {//加载到com.alibaba.dubbo.config.annotation.Service
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(dubboServiceAnn);
+			dubboServiceList.stream().forEach(dubboServiceClass ->{
+				LazyDubboBean.putAnnService(dubboServiceClass);
+			});
+		}
 	}
 
 }

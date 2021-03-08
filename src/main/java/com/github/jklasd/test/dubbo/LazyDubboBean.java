@@ -112,4 +112,7 @@ public class LazyDubboBean {
 			registryConfig.setRegister(true);
 		}
 	}
+	public static void putAnnService(Class<?> dubboServiceClass) {
+		dubboServiceCache.put(dubboServiceClass,Maps.newHashMap());
+	}
 }

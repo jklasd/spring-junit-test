@@ -52,6 +52,7 @@ public class LazyRabbitMQBean extends LazyMQBean{
 				obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
 				return obj;
 			}
+			return obj;
 		}
 		return null;
 	}
