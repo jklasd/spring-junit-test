@@ -7,6 +7,7 @@ import java.lang.reflect.Modifier;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
@@ -82,8 +83,14 @@ public class LazyCglib implements MethodInterceptor {
 					return null;
 				}
 			}
-			AopContextSuppert.setProxyObj(arg0);
-			return arg1.invoke(getTagertObj(), arg2);
+			Object oldObj = AopContext.currentProxy();
+			Object newObj = getTagertObj();
+			if(newObj != null) {
+				AopContextSuppert.setProxyObj(newObj);
+			}
+			Object result = arg1.invoke(newObj, arg2);
+			AopContextSuppert.setProxyObj(oldObj);
+			return result;
 		} catch (Exception e) {
 			log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}",tag.getName(),arg1.getName(),e.getMessage());
 			Throwable tmp = e;
@@ -140,6 +147,9 @@ public class LazyCglib implements MethodInterceptor {
 //		if(tag.getName().contains("MongoProperties")) {
 //			log.info("断点");
 //		}
+		if(tagertObj != null) {
+			return tagertObj;
+		}
 		if(tagertObj==null && !ScanUtil.exists(tag)) {
 			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,beanName);
@@ -147,7 +157,7 @@ public class LazyCglib implements MethodInterceptor {
 				tagertObj = LazyMQBean.buildBean(tag);
 			}
 			if(tagertObj==null) {
-				tagertObj = ScanUtil.findCreateBeanFromFactory(tag,beanName);
+				tagertObj = LazyBean.findCreateBeanFromFactory(tag,beanName);
 			}
 		}
 		if (tagertObj == null) {

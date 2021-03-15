@@ -446,28 +446,6 @@ public class ScanUtil {
 		});
 		return address;
 	}
-	@SuppressWarnings("rawtypes")
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		AssemblyUtil asse = new AssemblyUtil();
-		asse.setTagClass(classBean);
-		asse.setBeanName(beanName);
-		if(classBean.getName().startsWith(SPRING_PACKAGE)) {
-			Object tmpObj = findCreateBeanFromFactory(asse);
-			if(tmpObj!=null) {
-				return tmpObj;
-			}
-			asse.setNameMapTmp(findClassMap(SPRING_PACKAGE));
-		}
-		return findCreateBeanFromFactory(asse);
-	}
-	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
-		Object[] ojb_meth = findCreateBeanFactoryClass(assemblyData);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-			return null;
-		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
-		return tagObj;
-	}
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
 //		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
 //		if(ojb_meth[0] ==null || ojb_meth[1]==null) {

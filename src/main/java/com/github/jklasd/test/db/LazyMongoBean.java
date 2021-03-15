@@ -3,6 +3,7 @@ package com.github.jklasd.test.db;
 import java.util.Map;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.google.common.collect.Maps;
 
@@ -26,7 +27,7 @@ public class LazyMongoBean {
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
 		asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.BOOT_AUTO_CONFIG));
-		Object obj = ScanUtil.findCreateBeanFromFactory(asse);
+		Object obj = LazyBean.findCreateBeanFromFactory(asse);
 		log.info("obj=>{}",obj!=null);
 		/**
 		 * DefaultListableBeanFactory

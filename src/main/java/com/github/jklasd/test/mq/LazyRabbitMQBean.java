@@ -9,6 +9,7 @@ import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.rabbitmq.client.ConnectionFactory;
@@ -46,10 +47,10 @@ public class LazyRabbitMQBean extends LazyMQBean{
 		}else {
 			AssemblyUtil assemblyData = new AssemblyUtil();
 			assemblyData.setTagClass(classBean);
-			Object obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+			Object obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 			if(obj == null) {
 				assemblyData.setNameMapTmp(ScanUtil.findClassMap("org.springframework.boot.autoconfigure.amqp"));
-				obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+				obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 				return obj;
 			}
 			return obj;

@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,8 +37,13 @@ public class LazyImple implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
-			AopContextSuppert.setProxyObj(proxy);
-			Object result = method.invoke(getTagertObj(), args);
+			Object oldObj = AopContext.currentProxy();
+			Object newObj = getTagertObj();
+			if(newObj != null) {
+				AopContextSuppert.setProxyObj(newObj);
+			}
+			Object result = method.invoke(newObj, args);
+			AopContextSuppert.setProxyObj(oldObj);
 			if(!isDbConnect) {
 				// 处理openSession
 				Transactional transactional = method.getAnnotation(Transactional.class);
@@ -63,6 +69,10 @@ public class LazyImple implements InvocationHandler {
 //		if(tag.getName().contains("BackstageConfigService")) {
 //			log.info("断点");
 //		}
+		if(tagertObj != null) {
+			return tagertObj;
+		}
+		
 		if (tagertObj == null) {
 			if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
 				tagertObj = LazyDubboBean.buildBean(tag);
@@ -79,7 +89,7 @@ public class LazyImple implements InvocationHandler {
 						 */
 						Object tagImp = LazyBean.findBeanByInterface(tag,classGeneric);
 						if(tagImp == null) {
-							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
+							tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {
 								log.info("未找到本地Bean=>{}",tag);
 							}else {
@@ -96,7 +106,7 @@ public class LazyImple implements InvocationHandler {
 						// 本地bean
 						Object tagImp = LazyBean.findBean(beanName);
 						if(tagImp == null) {
-							tagImp = ScanUtil.findCreateBeanFromFactory(tag, beanName);
+							tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
 							if(tagImp == null) {
 								log.info("未找到本地Bean=>{}",tag);
 							}else {

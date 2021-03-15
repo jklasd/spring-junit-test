@@ -6,6 +6,7 @@ import java.util.List;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -203,6 +204,7 @@ public class TestUtil{
 	 */
 	public static void startTestForNoContainer(Object obj) {
 		LazyBean.processAttr(obj, obj.getClass());
+		AopContextSuppert.setProxyObj(obj);
 		TestUtil launch = new TestUtil();
 		launch.setApplicationContext(null);
 		Resource logback = applicationContext.getResource("logback.xml");

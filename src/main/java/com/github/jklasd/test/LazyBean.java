@@ -34,6 +34,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.jklasd.test.dubbo.LazyDubboBean;
+import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.ObjectProviderImpl;
 import com.google.common.base.Objects;
@@ -515,6 +516,9 @@ public class LazyBean {
 	 * @return 返回bean
 	 */
 	public static Object findBean(Class<?> requiredType) {
+		if(singleton.containsKey(requiredType)) {
+			return singleton.get(requiredType);
+		}
 		if(LazyDubboBean.isDubbo(requiredType)) {
 			return LazyDubboBean.buildBean(requiredType);
 		}
@@ -528,8 +532,38 @@ public class LazyBean {
 			}
 		}else if(ScanUtil.isInScanPath(requiredType)){
 			return LazyBean.buildProxy(requiredType);
+		}else {
+			AssemblyUtil assemblyData = new AssemblyUtil();
+			assemblyData.setTagClass(requiredType);
+			Object obj = findCreateBeanFromFactory(assemblyData);
+			if(obj != null) {
+				singleton.put(requiredType, obj);
+			}
+			return obj;
 		}
 		return null;
+	}
+	
+	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
+		AssemblyUtil asse = new AssemblyUtil();
+		asse.setTagClass(classBean);
+		asse.setBeanName(beanName);
+		if(classBean.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
+			Object tmpObj = findCreateBeanFromFactory(asse);
+			if(tmpObj!=null) {
+				return tmpObj;
+			}
+			asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE));
+		}
+		return findCreateBeanFromFactory(asse);
+	}
+	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
+		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
+		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+			return null;
+		}
+		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
+		return tagObj;
 	}
 	
 	/**

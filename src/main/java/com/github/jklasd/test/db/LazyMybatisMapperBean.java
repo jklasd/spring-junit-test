@@ -84,7 +84,7 @@ public class LazyMybatisMapperBean{
 		if(factory == null) {
 			AssemblyUtil param = new AssemblyUtil();
 			param.setTagClass(SqlSessionFactory.class);
-			factory = (SqlSessionFactory) ScanUtil.findCreateBeanFromFactory(param);
+			factory = (SqlSessionFactory) LazyBean.findCreateBeanFromFactory(param);
 		}
 	}
 

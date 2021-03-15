@@ -334,9 +334,14 @@ public class TestApplicationContext implements ApplicationContext{
 		return parentContext;
 	}
 
+	private DefaultListableBeanFactory beanFactory;
+	
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException {
-		return new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		if(beanFactory == null) {
+			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		}
+		return beanFactory;
 	}
 
 	public Properties getProperties() {

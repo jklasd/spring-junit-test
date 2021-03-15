@@ -42,6 +42,11 @@ public class LazyDubboBean {
 		if(dubboRefferCache.get(dubboClass).containsKey("group")) {
 			referenceConfig.setGroup(TestUtil.getPropertiesValue(dubboRefferCache.get(dubboClass).get("group")));
 		}
+		if(dubboRefferCache.get(dubboClass).containsKey("timeout")) {
+			referenceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(dubboRefferCache.get(dubboClass).get("timeout"),dubboRefferCache.get(dubboClass).get("timeout"))));
+		}else {
+			referenceConfig.setTimeout(10*1000);
+		}
 		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
 		referenceConfig.setApplication(applicationConfig);
 		referenceConfig.setRegistry(registryConfig);
