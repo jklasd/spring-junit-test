@@ -83,7 +83,11 @@ public class LazyCglib implements MethodInterceptor {
 					return null;
 				}
 			}
-			Object oldObj = AopContext.currentProxy();
+			Object oldObj = null;
+			try {
+				oldObj = AopContext.currentProxy();
+			} catch (IllegalStateException e) {
+			}
 			Object newObj = getTagertObj();
 			if(newObj != null) {
 				AopContextSuppert.setProxyObj(newObj);
@@ -150,7 +154,7 @@ public class LazyCglib implements MethodInterceptor {
 		if(tagertObj != null) {
 			return tagertObj;
 		}
-		if(tagertObj==null && !ScanUtil.exists(tag)) {
+		if(!ScanUtil.exists(tag)) {
 			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 				tagertObj = LazyMongoBean.buildBean(tag,beanName);
 			}else if(LazyMQBean.isBean(tag)) {

@@ -516,32 +516,33 @@ public class LazyBean {
 	 * @return 返回bean
 	 */
 	public static Object findBean(Class<?> requiredType) {
-		if(singleton.containsKey(requiredType)) {
-			return singleton.get(requiredType);
-		}
-		if(LazyDubboBean.isDubbo(requiredType)) {
-			return LazyDubboBean.buildBean(requiredType);
-		}
-		if(requiredType.getName().startsWith("org.springframework")) {
-			return LazyBean.buildProxy(requiredType);
-		}
-		if(requiredType.isInterface()) {
-			List<Class> tag = ScanUtil.findClassImplInterface(requiredType);
-			if (!tag.isEmpty()) {
-				return LazyBean.buildProxy(tag.get(0));
-			}
-		}else if(ScanUtil.isInScanPath(requiredType)){
-			return LazyBean.buildProxy(requiredType);
-		}else {
-			AssemblyUtil assemblyData = new AssemblyUtil();
-			assemblyData.setTagClass(requiredType);
-			Object obj = findCreateBeanFromFactory(assemblyData);
-			if(obj != null) {
-				singleton.put(requiredType, obj);
-			}
-			return obj;
-		}
-		return null;
+//		if(singleton.containsKey(requiredType)) {
+//			return singleton.get(requiredType);
+//		}
+//		if(LazyDubboBean.isDubbo(requiredType)) {
+//			return LazyDubboBean.buildBean(requiredType);
+//		}
+//		if(requiredType.getName().startsWith("org.springframework")) {
+//			return LazyBean.buildProxy(requiredType);
+//		}
+//		if(requiredType.isInterface()) {
+//			List<Class> tag = ScanUtil.findClassImplInterface(requiredType);
+//			if (!tag.isEmpty()) {
+//				return LazyBean.buildProxy(tag.get(0));
+//			}
+//		}else if(ScanUtil.isInScanPath(requiredType)){
+//			return LazyBean.buildProxy(requiredType);
+//		}else {
+//			AssemblyUtil assemblyData = new AssemblyUtil();
+//			assemblyData.setTagClass(requiredType);
+//			Object obj = findCreateBeanFromFactory(assemblyData);
+//			if(obj != null) {
+//				singleton.put(requiredType, obj);
+//			}
+//			return obj;
+//		}
+//		return null;
+		return LazyBean.buildProxy(requiredType);
 	}
 	
 	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {

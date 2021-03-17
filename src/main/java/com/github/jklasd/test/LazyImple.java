@@ -37,7 +37,11 @@ public class LazyImple implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 		try {
-			Object oldObj = AopContext.currentProxy();
+			Object oldObj = null;
+			try {
+				oldObj = AopContext.currentProxy();
+			} catch (IllegalStateException e) {
+			}
 			Object newObj = getTagertObj();
 			if(newObj != null) {
 				AopContextSuppert.setProxyObj(newObj);
@@ -73,52 +77,50 @@ public class LazyImple implements InvocationHandler {
 			return tagertObj;
 		}
 		
-		if (tagertObj == null) {
-			if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
-				tagertObj = LazyDubboBean.buildBean(tag);
-			}else if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
-				tagertObj = LazyMongoBean.buildBean(tag,null);
-			} else {
-				if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
-					isDbConnect = true;
-					return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
-				}else {
-					if(beanName == null) {
-						/**
-						 * 若是本地接口实现类的bean，则进行bean查找。
-						 */
-						Object tagImp = LazyBean.findBeanByInterface(tag,classGeneric);
+		if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
+			tagertObj = LazyDubboBean.buildBean(tag);
+		}else if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
+			tagertObj = LazyMongoBean.buildBean(tag,null);
+		} else {
+			if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
+				isDbConnect = true;
+				return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
+			}else {
+				if(beanName == null) {
+					/**
+					 * 若是本地接口实现类的bean，则进行bean查找。
+					 */
+					Object tagImp = LazyBean.findBeanByInterface(tag,classGeneric);
+					if(tagImp == null) {
+						tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
 						if(tagImp == null) {
-							tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
-							if(tagImp == null) {
-								log.info("未找到本地Bean=>{}",tag);
-							}else {
-								tagertObj = tagImp;
-							}
+							log.info("未找到本地Bean=>{}",tag);
 						}else {
-							/**
-							 * 实现类是本地Bean
-							 */
 							tagertObj = tagImp;
-							LazyBean.processAttr(tagImp, tagImp.getClass());
 						}
 					}else {
-						// 本地bean
-						Object tagImp = LazyBean.findBean(beanName);
+						/**
+						 * 实现类是本地Bean
+						 */
+						tagertObj = tagImp;
+						LazyBean.processAttr(tagImp, tagImp.getClass());
+					}
+				}else {
+					// 本地bean
+					Object tagImp = LazyBean.findBean(beanName);
+					if(tagImp == null) {
+						tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
 						if(tagImp == null) {
-							tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
-							if(tagImp == null) {
-								log.info("未找到本地Bean=>{}",tag);
-							}else {
-								tagertObj = tagImp;
-							}
+							log.info("未找到本地Bean=>{}",tag);
 						}else {
-							/**
-							 * 实现类是本地Bean
-							 */
 							tagertObj = tagImp;
-							LazyBean.processAttr(tagImp, tagImp.getClass());
 						}
+					}else {
+						/**
+						 * 实现类是本地Bean
+						 */
+						tagertObj = tagImp;
+						LazyBean.processAttr(tagImp, tagImp.getClass());
 					}
 				}
 			}
