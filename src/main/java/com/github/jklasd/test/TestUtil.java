@@ -204,7 +204,7 @@ public class TestUtil{
 	 */
 	public static void startTestForNoContainer(Object obj) {
 		LazyBean.processAttr(obj, obj.getClass());
-		AopContextSuppert.setProxyObj(obj);
+//		AopContextSuppert.setProxyObj(obj);
 		TestUtil launch = new TestUtil();
 		launch.setApplicationContext(null);
 		Resource logback = applicationContext.getResource("logback.xml");
