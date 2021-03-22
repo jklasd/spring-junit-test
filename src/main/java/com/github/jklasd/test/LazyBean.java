@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -33,7 +34,6 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.ObjectProviderImpl;
@@ -51,7 +51,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyBean {
-	public static Map<Class, Object> singleton = Maps.newHashMap();
+	public static Map<Class, List<Object>> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
 	 * 
@@ -75,68 +75,8 @@ public class LazyBean {
 	 * @param beanName 对象Name
 	 * @return 代理对象
 	 */
-	public static Object buildProxy(Class classBean,String beanName) {
-		/**
-		 * 取缓存值
-		 */
-		if(singletonName.containsKey(beanName)) {
-			return singletonName.get(beanName);
-		}
-		if(StringUtils.isBlank(beanName)) {
-			if (singleton.containsKey(classBean)) {
-				return singleton.get(classBean);
-			}
-		}
-		/**
-		 * 开始构建对象
-		 */
-		
-		Object tag = null;
-		/**
-		 * 构建其他类型的代理对象
-		 * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
-		 * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
-		 */
-		try {
-			if (classBean.isInterface()) {
-				InvocationHandler handler = new LazyImple(classBean,beanName);
-				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
-			} else {
-				Constructor[] structors = classBean.getConstructors();
-				/**
-				 * 查看是否存在无参构造函数
-				 */
-				for(Constructor c : structors) {
-					if(c.getParameterCount() == 0 ) {
-						MethodInterceptor handler = new LazyCglib(classBean,beanName);
-						tag = Enhancer.create(classBean, handler);
-						break;
-					}
-				}
-				if(tag == null && structors.length>0) {
-					log.warn("不存在无参构造函数");
-					LazyCglib handler = new LazyCglib(classBean,beanName,true);
-					Enhancer enhancer = new Enhancer();
-					enhancer.setSuperclass(classBean);
-					enhancer.setCallback(handler);
-					tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
-				}
-			}
-		} catch (Exception e) {
-			if(e.getCause()!=null) {
-				log.error("构建代理类异常=>{}",e.getCause().getMessage());
-			}else {
-				log.error("构建代理类异常=>{}",e.getMessage());
-			}
-		}
-		if(tag!=null) {
-			if(StringUtils.isNotBlank(beanName)) {
-				singletonName.put(beanName, tag);
-			}else {
-				singleton.put(classBean, tag);
-			}
-		}
-		return tag;
+	public static Object buildProxy(Class beanClass,String beanName) {
+		return buildProxy(beanClass, beanName, null);
 	}
 	/**
 	 * 构建代理对象
@@ -145,13 +85,21 @@ public class LazyBean {
 	 */
 	public static Object buildProxy(Class classBean) {
 		if (singleton.containsKey(classBean)) {
-			return singleton.get(classBean);
+			return singleton.get(classBean).get(0);
 		}
-		Object tag = buildProxy(classBean,null);
-		if(tag!=null) {
-			singleton.put(classBean, tag);
-		}
+		Object tag = buildProxy(classBean,getBeanName(classBean));
 		return tag;
+	}
+	private synchronized static String getBeanName(Class classBean) {
+		Component comp = (Component) classBean.getAnnotation(Component.class);
+		if(comp!=null && StringUtils.isNotBlank(comp.value())) {
+			return comp.value();
+		}
+		Service service = (Service) classBean.getAnnotation(Service.class);
+		if(service!=null && StringUtils.isNotBlank(service.value())) {
+			return comp.value();
+		}
+		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
 	public static void setObj(Field f,Object obj,Object proxyObj) {
 		setObj(f, obj, proxyObj, null);
@@ -266,7 +214,9 @@ public class LazyBean {
 	public static Object processStatic(Class c) {
 		try {
 			Object obj = buildProxy(c);
-			processAttr(obj, c);
+			if(obj!=null) {
+				processAttr(obj, c);
+			}
 			return obj;
 		} catch (Exception e) {
 			log.error("处理静态工具类异常=>{}",c);
@@ -382,7 +332,7 @@ public class LazyBean {
 		Annotation[] anns = beanClass.getDeclaredAnnotations();
 		for(Annotation ann : anns) {
 			Class<?> type = ann.annotationType();
-			if ((type == tagAnn || type.getAnnotation(tagAnn)!=null)) {
+			if ((type == tagAnn)) {
 				return ann;
 			}
 		}
@@ -396,23 +346,19 @@ public class LazyBean {
 	 * @return 返回bean
 	 */
 	public static Object findBean(String beanName) {
-		if(beanMaps.containsKey(beanName)) {
-			return beanMaps.get(beanName);
+		if(singletonName.containsKey(beanName)) {
+			return singletonName.get(beanName);
 		}
-		Object bean = null;
-		Class tag = ScanUtil.findClassByName(beanName);
-		if(tag == null) {
-			tag = ScanUtil.findClassByClassName(beanName.substring(0, 1).toUpperCase()+beanName.substring(1));
-		}
-		if (tag != null) {
-			if(LazyDubboBean.isDubbo(tag)) {
-				return LazyDubboBean.buildBean(tag);
+		if(beanName.equals("DEFAULT_DATASOURCE")) {
+			if(!singletonName.containsKey("dataSource")) {
+				if(singleton.get(DataSource.class) != null) {
+					return singleton.get(DataSource.class).get(0);
+				}
 			}else {
-				bean = LazyBean.buildProxy(tag);
+				return singletonName.get("dataSource");
 			}
-			beanMaps.put(beanName, bean);
 		}
-		return bean;
+		return null;
 	}
 	
 	/**
@@ -516,32 +462,6 @@ public class LazyBean {
 	 * @return 返回bean
 	 */
 	public static Object findBean(Class<?> requiredType) {
-//		if(singleton.containsKey(requiredType)) {
-//			return singleton.get(requiredType);
-//		}
-//		if(LazyDubboBean.isDubbo(requiredType)) {
-//			return LazyDubboBean.buildBean(requiredType);
-//		}
-//		if(requiredType.getName().startsWith("org.springframework")) {
-//			return LazyBean.buildProxy(requiredType);
-//		}
-//		if(requiredType.isInterface()) {
-//			List<Class> tag = ScanUtil.findClassImplInterface(requiredType);
-//			if (!tag.isEmpty()) {
-//				return LazyBean.buildProxy(tag.get(0));
-//			}
-//		}else if(ScanUtil.isInScanPath(requiredType)){
-//			return LazyBean.buildProxy(requiredType);
-//		}else {
-//			AssemblyUtil assemblyData = new AssemblyUtil();
-//			assemblyData.setTagClass(requiredType);
-//			Object obj = findCreateBeanFromFactory(assemblyData);
-//			if(obj != null) {
-//				singleton.put(requiredType, obj);
-//			}
-//			return obj;
-//		}
-//		return null;
 		return LazyBean.buildProxy(requiredType);
 	}
 	
@@ -585,6 +505,146 @@ public class LazyBean {
 			tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
 		}
 		return list;
+	}
+	@SuppressWarnings("rawtypes")
+	public synchronized static Object buildProxy(Class beanClass, String beanName, Map<String, Object> attr) {
+		/**
+		 * 取缓存值
+		 */
+		if(singletonName.containsKey(beanName)) {
+			return singletonName.get(beanName);
+		}
+		if(StringUtils.isBlank(beanName)) {
+			if (singleton.containsKey(beanClass)) {
+				return singleton.get(beanClass).get(0);
+			}
+		}
+		if(beanClass == ApplicationContext.class
+				|| ScanUtil.isExtends(beanClass, ApplicationContext.class)
+				|| ScanUtil.isImple(beanClass, ApplicationContext.class)) {
+			return TestUtil.getApplicationContext();
+		}
+		Object tag = createBean(beanClass, beanName, attr);
+		if(tag!=null) {
+			if(StringUtils.isNotBlank(beanName)) {
+				singletonName.put(beanName, tag);
+				if(singleton.containsKey(beanClass)) {
+					singleton.get(beanClass).add(tag);
+				}else {
+					singleton.put(beanClass,Lists.newArrayList(tag));
+				}
+			}
+		}
+		return tag;
+	}
+	private static Object createBean(Class beanClass, String beanName, Map<String, Object> attr) {
+		/**
+		 * 开始构建对象
+		 */
+		
+		Object tag = null;
+		/**
+		 * 构建其他类型的代理对象
+		 * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
+		 * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
+		 */
+		try {
+			if (beanClass.isInterface()) {
+				InvocationHandler handler = new LazyImple(beanClass,beanName,attr);
+				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
+			} else {
+				Constructor[] structors = beanClass.getConstructors();
+				/**
+				 * 查看是否存在无参构造函数
+				 */
+				for(Constructor c : structors) {
+					if(c.getParameterCount() == 0 ) {
+						LazyCglib handler = new LazyCglib(beanClass,beanName,attr);
+						if(!handler.isHasFinal()) {
+							tag = Enhancer.create(beanClass, handler);
+						}else {
+							tag = handler.getTagertObj();
+						}
+						break;
+					}
+				}
+				if(tag == null && structors.length>0) {
+					log.warn("不存在无参构造函数");
+					LazyCglib handler = new LazyCglib(beanClass,beanName,true,attr);
+					if(!handler.isHasFinal()) {
+						Enhancer enhancer = new Enhancer();
+						enhancer.setSuperclass(beanClass);
+						enhancer.setCallback(handler);
+						tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
+					}else {
+						tag = handler.getTagertObj();
+					}
+				}
+				if(tag == null) {
+					log.error("不存在公开无参构造函数");
+				}
+			}
+		} catch (Exception e) {
+			if(e.getCause()!=null) {
+				log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanName,e.getCause().getMessage());
+			}else {
+				log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanName,e.getMessage());
+			}
+		}
+		return tag;
+	}
+	/**
+	 * 
+	 * @param beanName
+	 * @param tag
+	 * @return
+	 */
+	public static Object createBeanForProxy(String beanName, Class<?> type) {
+		Class<?> tagClass = null;
+		if(type.isInterface()) {
+			List<Class> classList = ScanUtil.findClassImplInterface(type);
+			for(Class<?> c : classList) {
+				Service ann = (Service) findByAnnotation(c,Service.class);
+				Component cAnn = (Component) findByAnnotation(c,Component.class);
+				if ((ann != null && ann.value().equals(beanName)) || (cAnn != null && cAnn.value().equals(beanName))) {
+					tagClass = c;
+					break;
+				}
+			}
+			if(tagClass == null) {
+				for(Class<?> c : classList) {
+					if (existBean(c)) {
+						tagClass = c;
+						Service ann = (Service) findByAnnotation(c,Service.class);
+						if ((ann != null)) {
+							beanName = ann.value();
+						}else {
+							Component cAnn = (Component) findByAnnotation(c,Component.class);
+							if (cAnn != null) {
+								beanName = cAnn.value();
+							}
+						}
+						break;
+					}
+				}
+			}
+			log.warn("ScanUtil # findBean=>Interface[{}]",type);
+		}
+		Object obj = null;
+		if(tagClass == null) {
+			if(type.isInterface()) {
+				obj = findBeanByInterface(type);
+			}
+			if(obj == null) {
+				obj = TestUtil.getApplicationContext().getBean(type);
+			}
+		}else {
+			obj = createBean(tagClass, beanName, null);
+		}
+		if(obj != null) {
+			singletonName.put(beanName, obj);
+		}
+		return obj;
 	}
 }
 

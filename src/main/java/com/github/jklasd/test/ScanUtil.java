@@ -202,7 +202,7 @@ public class ScanUtil {
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			if(name.replace(CLASS_SUFFIX, "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
+			if(name.replace(CLASS_SUFFIX, "").endsWith("."+beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
 				list.add(nameMap.get(name));
 			}
 		});
@@ -407,6 +407,7 @@ public class ScanUtil {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
 		Object[] address = new Object[2];
+		Object[] tmp = new Object[2];
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
@@ -429,14 +430,30 @@ public class ScanUtil {
 							Bean beanA = m.getAnnotation(Bean.class);
 							if(beanA != null) {
 								Class tagC = assemblyData.getTagClass();
+								if(beanA.value().length>0 || beanA.name().length>0) {
+									for(String beanName : beanA.value()) {
+										if(Objects.equals(beanName, assemblyData.getBeanName())) {
+											address[0]=c;
+											address[1]=m;
+											break;
+										}
+									}
+									for(String beanName : beanA.name()) {
+										if(Objects.equals(beanName, assemblyData.getBeanName())) {
+											address[0]=c;
+											address[1]=m;
+											break;
+										}
+									}
+								}
 								if(tagC.isInterface()?
 										(m.getReturnType().isInterface()?
 												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
 												:ScanUtil.isImple(m.getReturnType(), tagC)
 												):
 													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-									address[0]=c;
-									address[1]=m;
+									tmp[0] = c;
+									tmp[1] = m;
 									break;
 								}
 							}
@@ -444,6 +461,9 @@ public class ScanUtil {
 					}
 			}
 		});
+		if(address[0] ==null || address[1]==null) {
+			return tmp;
+		}
 		return address;
 	}
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {

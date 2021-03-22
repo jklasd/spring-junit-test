@@ -3,6 +3,7 @@ package com.github.jklasd.test;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
@@ -30,9 +31,14 @@ public class LazyImple implements InvocationHandler {
 		this.beanName = beanName;
 	}
 	private Type[] classGeneric;
+	private Map<String, Object> attr;
 	public LazyImple(Class classBean, String beanName2, Type[] classGeneric) {
 		this(classBean,beanName2);
 		this.classGeneric = classGeneric;
+	}
+	public LazyImple(Class beanClass, String beanName2, Map<String, Object> attr) {
+		this(beanClass,beanName2);
+		this.attr = attr;
 	}
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -70,11 +76,22 @@ public class LazyImple implements InvocationHandler {
 	 * @return
 	 */
 	private Object getTagertObj() {
-//		if(tag.getName().contains("BackstageConfigService")) {
-//			log.info("断点");
-//		}
+		if(tag.getName().contains("AttachmentDao")) {
+			log.info("断点");
+		}
 		if(tagertObj != null) {
-			return tagertObj;
+			if(tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
+				log.warn("循环处理代理Bean问题");
+				String objName = tagertObj.getClass().getSimpleName();
+				String className = tag.getSimpleName();
+				if(objName.substring(0, objName.indexOf("$")).equals(className)) {
+					tagertObj = null;
+				}else {
+					return tagertObj;
+				}
+			}else {
+				return tagertObj;
+			}
 		}
 		
 		if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
@@ -107,20 +124,15 @@ public class LazyImple implements InvocationHandler {
 					}
 				}else {
 					// 本地bean
-					Object tagImp = LazyBean.findBean(beanName);
+					Object tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
 					if(tagImp == null) {
-						tagImp = LazyBean.findCreateBeanFromFactory(tag, beanName);
-						if(tagImp == null) {
+						tagertObj = LazyBean.createBeanForProxy(beanName, tag);
+						if(tagertObj == null) {
 							log.info("未找到本地Bean=>{}",tag);
-						}else {
-							tagertObj = tagImp;
 						}
 					}else {
-						/**
-						 * 实现类是本地Bean
-						 */
-						tagertObj = tagImp;
 						LazyBean.processAttr(tagImp, tagImp.getClass());
+						tagertObj = tagImp;
 					}
 				}
 			}

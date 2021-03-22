@@ -4,9 +4,9 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -16,9 +16,11 @@ import org.springframework.cglib.proxy.MethodProxy;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.mq.LazyMQBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.spring.XmlBeanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
  
@@ -45,7 +47,17 @@ public class LazyCglib implements MethodInterceptor {
 		this.tag = tag;
 		setConstuctor(hasParamConstructor);
 	}
+	private Map<String, Object> attr;
+	public LazyCglib(Class beanClass, String beanName, Map<String, Object> attr) {
+		this(beanClass, beanName, false,attr);
+	}
 
+	public LazyCglib(Class beanClass, String beanName2, boolean hasParamConstructor, Map<String, Object> attr) {
+		this.tag = beanClass;
+		this.beanName = beanName2;
+		this.attr = attr;
+		setConstuctor(hasParamConstructor);
+	}
 	private Set<Class> noPackage = Sets.newHashSet();
 	private void setConstuctor(Boolean hasParamConstructor) {
 		if(noPackage.isEmpty()) {
@@ -59,27 +71,46 @@ public class LazyCglib implements MethodInterceptor {
 			noPackage.add(short.class);
 		}
 		if(hasParamConstructor) {
-//			if(tag.getPackage().getName().contains("jedis")) {
-//				log.info("断点");
-//			}
 			this.hasParamConstructor = hasParamConstructor;
 			Constructor[] cs = tag.getConstructors();
 			int count = 10;
-			next:for(Constructor c : cs) {
+			for(Constructor c : cs) {
 				Class tagC = c.getDeclaringClass();
 				if(c.getParameterCount()<count) {
 					this.constructor = c;
 					count = c.getParameterCount();
 				}
 			}
+			if(cs.length <1) {
+				cs = tag.getDeclaredConstructors();
+				for(Constructor c : cs) {
+					Class tagC = c.getDeclaringClass();
+					if(c.getParameterCount()<count) {
+						this.constructor = c;
+						constructor.setAccessible(true);
+						count = c.getParameterCount();
+					}
+				}
+			}
+		}
+		
+		Method[] ms = tag.getDeclaredMethods();
+		for(Method m : ms) {
+			if(Modifier.isFinal(m.getModifiers())
+					&& Modifier.isPublic(m.getModifiers())) {
+				this.hasFinal = true;
+				break;
+			}
 		}
 	}
+	@Getter
+	private boolean hasFinal;
 	@Override
 	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
 		try {
 			if(!arg1.isAccessible()) {
 				if(!Modifier.isPublic(arg1.getModifiers())) {
-					log.warn("非公共方法，代理执行会出现异常");
+					log.warn("非公共方法，代理执行会出现异常 class:{},method:{}",tag,arg1);
 					return null;
 				}
 			}
@@ -147,12 +178,20 @@ public class LazyCglib implements MethodInterceptor {
 	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
 	 * @return
 	 */
-	private Object getTagertObj() {
-//		if(tag.getName().contains("MongoProperties")) {
+	@SuppressWarnings("unchecked")
+	protected Object getTagertObj() {
+//		if(tag.getName().contains("DruidDataSource")) {
 //			log.info("断点");
 //		}
 		if(tagertObj != null) {
-			return tagertObj;
+			if(tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
+				log.warn("循环处理代理Bean问题=>{}",tag);
+				if(tagertObj.getClass().getSimpleName().contains(tag.getSimpleName())) {
+					tagertObj = null;
+				}
+			}else {
+				return tagertObj;
+			}
 		}
 		if(!ScanUtil.exists(tag)) {
 			if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
@@ -165,14 +204,19 @@ public class LazyCglib implements MethodInterceptor {
 			}
 		}
 		if (tagertObj == null) {
-			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
-				tagertObj = LazyBean.findBean(beanName);
-				LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
-			}else {
-				ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
+			ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
+//			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
+//				tagertObj = LazyBean.findBean(beanName);
+//				if(tagertObj != null) {
+//					LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
+//				}
+//			}
+			if(tagertObj == null){
 				if(!LazyBean.existBean(tag)) {
-					if(propConfig==null 	|| !ScanUtil.findCreateBeanForConfigurationProperties(tag)) {
-						throw new RuntimeException(tag.getName()+" Bean 不存在");
+					if(!XmlBeanUtil.containClass(tag)) {
+						if(propConfig==null 	|| !ScanUtil.findCreateBeanForConfigurationProperties(tag)) {
+							throw new RuntimeException(tag.getName()+" Bean 不存在");
+						}
 					}
 				}
 				
@@ -195,10 +239,19 @@ public class LazyCglib implements MethodInterceptor {
 						log.error("构建bean异常",e);
 					}
 				}
-				if(propConfig!=null && tagertObj!=null) {
-					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
-				}
 			}
+			if(propConfig!=null && tagertObj!=null) {
+				LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
+			}
+		}
+		if(attr != null && tagertObj != null) {
+			attr.forEach((k,v)->{
+				Object value = v;
+				if(v.toString().contains("ref:")) {
+					value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
+				}
+				LazyBean.setAttr(k, tagertObj, tag, value);
+			});
 		}
 		return tagertObj;
 	}

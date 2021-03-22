@@ -13,6 +13,7 @@ import org.mybatis.spring.SqlSessionFactoryBean;
 import org.mybatis.spring.SqlSessionTemplate;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -66,7 +67,7 @@ public class LazyMybatisMapperBean{
 		return tag;
 	}
 
-	private static Node factoryNode;
+	private static Element factoryNode;
 	private static void buildMybatisFactory(){
 		if(factory == null) {
 			if(factoryNode!=null) {
@@ -107,7 +108,8 @@ public class LazyMybatisMapperBean{
 							if(n.getNodeName().equals("#text")) {
 								continue;
 							}
-							String pluginClass = XmlBeanUtil.loadXmlNodeAttr(n.getAttributes()).get("class");
+							Element nE = (Element) n;
+							String pluginClass = nE.getAttribute("class");
 							Class<?> tmp = Class.forName(pluginClass);
 							listPlugins.add((Interceptor) tmp.newInstance());
 						}
@@ -129,7 +131,12 @@ public class LazyMybatisMapperBean{
 	public static DataSource buildDataSource(String id) {
 		if(dataSource == null) {
 			if(cacheDocument != null) {
-				processXmlForDataSource(id);
+				Object obj = LazyBean.buildProxy(DataSource.class);
+				if(obj != null) {
+					dataSource = (DataSource) obj;
+				}else {
+					processXmlForDataSource(id);
+				}
 			}else {
 				//查询注解方式
 				processAnnaForDataSource();
@@ -139,10 +146,9 @@ public class LazyMybatisMapperBean{
 	}
 
 	private static Object processXmlCreateDS(String id) {
-		Node dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
-		Map<String, String> dataSourceAttr = XmlBeanUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
+		Element dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
 		try {
-			Class<?> dataSourceC = Class.forName(dataSourceAttr.get("class"));
+			Class<?> dataSourceC = Class.forName(dataSourceNode.getAttribute("class"));
 			Object obj = dataSourceC.newInstance();
 			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
 			dataSourceProp.keySet().forEach(field -> {
@@ -164,12 +170,11 @@ public class LazyMybatisMapperBean{
 	}
 
 	private static void processXmlForDataSource(String id) {
-		Node dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
-		Map<String,String> dataSourceAttr = XmlBeanUtil.loadXmlNodeAttr(dataSourceNode.getAttributes());
+		Element dataSourceAttr = XmlBeanUtil.getBeanById(cacheDocument, id);
 		try {
-			Class<?> dataSourceC = Class.forName(dataSourceAttr.get("class"));
+			Class<?> dataSourceC = Class.forName(dataSourceAttr.getAttribute("class"));
 			Object obj = dataSourceC.newInstance();
-			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
+			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceAttr.getChildNodes());
 			dataSourceProp.keySet().forEach(field ->{
 				try {
 					log.debug("{}=>{}",field,dataSourceProp.get(field.toString()));
@@ -219,7 +224,7 @@ public class LazyMybatisMapperBean{
 				&& mybatisScanPathList.stream().anyMatch(mybatisScanPath->c.getPackage().getName().contains(mybatisScanPath));
 	}
 	private static Document cacheDocument;
-	public synchronized static void process(Node item, Document document) {
+	public synchronized static void process(Element item, Document document) {
 		if(cacheDocument==null) {
 			cacheDocument = document;
 		}
