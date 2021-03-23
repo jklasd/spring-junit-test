@@ -1,14 +1,14 @@
 package com.github.jklasd.test.mq;
 
-import java.util.Map;
-
 import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.w3c.dom.Element;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.rabbitmq.client.ConnectionFactory;
@@ -46,12 +46,13 @@ public class LazyRabbitMQBean extends LazyMQBean{
 		}else {
 			AssemblyUtil assemblyData = new AssemblyUtil();
 			assemblyData.setTagClass(classBean);
-			Object obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+			Object obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 			if(obj == null) {
 				assemblyData.setNameMapTmp(ScanUtil.findClassMap("org.springframework.boot.autoconfigure.amqp"));
-				obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+				obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 				return obj;
 			}
+			return obj;
 		}
 		return null;
 	}
@@ -65,20 +66,20 @@ public class LazyRabbitMQBean extends LazyMQBean{
 		}
 	}
 	
-	public static void loadConfig(Map<String, String> contextAttr) {
+	public static void loadConfig(Element contextAttr) {
 		if(factory == null) {
 			// 定义一个连接工厂
 			factory = new ConnectionFactory();
 			// 设置服务端地址（域名地址/ip）
-			factory.setHost(TestUtil.getPropertiesValue(contextAttr.get("host")));
+			factory.setHost(TestUtil.getPropertiesValue(contextAttr.getAttribute("host")));
 			// 设置服务器端口号
-			factory.setPort(Integer.valueOf(TestUtil.getPropertiesValue(contextAttr.get("port"),"5672")));
+			factory.setPort(Integer.valueOf(TestUtil.getPropertiesValue(contextAttr.getAttribute("port"),"5672")));
 			// 设置虚拟主机(相当于数据库中的库)
 			factory.setVirtualHost("/");
 			// 设置用户名
-			factory.setUsername(TestUtil.getPropertiesValue(contextAttr.get("username")));
+			factory.setUsername(TestUtil.getPropertiesValue(contextAttr.getAttribute("username")));
 			// 设置密码
-			factory.setPassword(TestUtil.getPropertiesValue(contextAttr.get("password")));
+			factory.setPassword(TestUtil.getPropertiesValue(contextAttr.getAttribute("password")));
 		}
 	}
 }

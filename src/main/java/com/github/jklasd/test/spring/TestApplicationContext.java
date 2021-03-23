@@ -5,28 +5,35 @@ import java.lang.annotation.Annotation;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackagesConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.env.Environment;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 
-public class TestApplicationContext implements ApplicationContext{
+public class TestApplicationContext implements ConfigurableApplicationContext{
 
 	private ApplicationContext parentContext;
 	public TestApplicationContext(ApplicationContext context) {
@@ -36,7 +43,7 @@ public class TestApplicationContext implements ApplicationContext{
 	private Properties properties;
 	private StandardServletEnvironment env;
 	@Override
-	public Environment getEnvironment() {
+	public ConfigurableEnvironment getEnvironment() {
 		if(parentContext == null || parentContext == this) {
 			if(env == null) {
 				env = new StandardServletEnvironment();
@@ -79,7 +86,7 @@ public class TestApplicationContext implements ApplicationContext{
 			}
 			return env;
 		}
-		return parentContext.getEnvironment();
+		return (ConfigurableEnvironment) parentContext.getEnvironment();
 	}
 
 	@Override
@@ -150,6 +157,12 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public Object getBean(String name) throws BeansException {
 		if(parentContext == null || parentContext == this) {
+			if(beanDefinitionMap.containsKey(name)) {
+				return beanDefinitionMap.get(name);
+			}
+			if(getAutowireCapableBeanFactory().containsBean(name)) {
+				return getAutowireCapableBeanFactory().getBean(name);
+			}
 			return LazyBean.findBean(name);
 		}
 		if(parentContext.containsBean(name)) {
@@ -178,6 +191,12 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
+			if(beanForClassMap.containsKey(requiredType)) {
+				return (T) beanForClassMap.get(requiredType);
+			}
+			if(getAutowireCapableBeanFactory().getBean(requiredType) != null) {
+				return getAutowireCapableBeanFactory().getBean(requiredType);
+			}
 			return (T)LazyBean.findBean(requiredType);
 		}
 		try {
@@ -301,7 +320,6 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public ClassLoader getClassLoader() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -319,7 +337,6 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public String getDisplayName() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -334,13 +351,114 @@ public class TestApplicationContext implements ApplicationContext{
 		return parentContext;
 	}
 
+	private DefaultListableBeanFactory beanFactory;
+	
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException {
-		return new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		return getBeanFactory();
 	}
 
 	public Properties getProperties() {
 		return properties;
+	}
+
+	@Override
+	public void start() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isRunning() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setId(String id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setParent(ApplicationContext parent) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setEnvironment(ConfigurableEnvironment environment) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addBeanFactoryPostProcessor(BeanFactoryPostProcessor postProcessor) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addApplicationListener(ApplicationListener<?> listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addProtocolResolver(ProtocolResolver resolver) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void refresh() throws BeansException, IllegalStateException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void registerShutdownHook() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isActive() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ConfigurableListableBeanFactory getBeanFactory() throws IllegalStateException {
+		if(beanFactory == null) {
+			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		}
+		return beanFactory;
+	}
+	
+	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>(256);
+	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>(256);
+	public void registBean(String beanName, Object newBean ,Class beanClass) {
+		if(newBean!=null) {
+			if(StringUtils.isNotBlank(beanName)) {
+				beanDefinitionMap.put(beanName, newBean);
+			}
+			if(!beanForClassMap.containsKey(beanClass)) {
+				beanForClassMap.put(beanClass, newBean);
+			}
+		}
 	}
 
 }

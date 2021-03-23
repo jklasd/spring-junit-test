@@ -1,5 +1,6 @@
 package com.github.jklasd.test;
 
+import java.awt.datatransfer.FlavorEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -26,6 +27,7 @@ import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
+import org.springframework.core.type.classreading.AnnotationMetadataReadingVisitor;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
@@ -202,7 +204,7 @@ public class ScanUtil {
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			if(name.replace(CLASS_SUFFIX, "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
+			if(name.replace(CLASS_SUFFIX, "").endsWith("."+beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
 				list.add(nameMap.get(name));
 			}
 		});
@@ -407,6 +409,7 @@ public class ScanUtil {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
 		Object[] address = new Object[2];
+		Object[] tmp = new Object[2];
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
@@ -429,14 +432,30 @@ public class ScanUtil {
 							Bean beanA = m.getAnnotation(Bean.class);
 							if(beanA != null) {
 								Class tagC = assemblyData.getTagClass();
+								if(beanA.value().length>0 || beanA.name().length>0) {
+									for(String beanName : beanA.value()) {
+										if(Objects.equals(beanName, assemblyData.getBeanName())) {
+											address[0]=c;
+											address[1]=m;
+											break;
+										}
+									}
+									for(String beanName : beanA.name()) {
+										if(Objects.equals(beanName, assemblyData.getBeanName())) {
+											address[0]=c;
+											address[1]=m;
+											break;
+										}
+									}
+								}
 								if(tagC.isInterface()?
 										(m.getReturnType().isInterface()?
 												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
 												:ScanUtil.isImple(m.getReturnType(), tagC)
 												):
 													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-									address[0]=c;
-									address[1]=m;
+									tmp[0] = c;
+									tmp[1] = m;
 									break;
 								}
 							}
@@ -444,29 +463,10 @@ public class ScanUtil {
 					}
 			}
 		});
+		if(address[0] ==null || address[1]==null) {
+			return tmp;
+		}
 		return address;
-	}
-	@SuppressWarnings("rawtypes")
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		AssemblyUtil asse = new AssemblyUtil();
-		asse.setTagClass(classBean);
-		asse.setBeanName(beanName);
-		if(classBean.getName().startsWith(SPRING_PACKAGE)) {
-			Object tmpObj = findCreateBeanFromFactory(asse);
-			if(tmpObj!=null) {
-				return tmpObj;
-			}
-			asse.setNameMapTmp(findClassMap(SPRING_PACKAGE));
-		}
-		return findCreateBeanFromFactory(asse);
-	}
-	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
-		Object[] ojb_meth = findCreateBeanFactoryClass(assemblyData);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-			return null;
-		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
-		return tagObj;
 	}
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
 //		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
@@ -532,5 +532,23 @@ public class ScanUtil {
 			}
 		}
 		return false;
+	}
+	public static Class loadClass(String className) {
+		try {
+			Class classObj = Class.forName(className, false, JavaBeanUtil.class.getClassLoader());
+			return classObj;
+		} catch (ClassNotFoundException e) {
+			log.error("#loadClass",e.getMessage());
+		}
+		return null;
+	}
+	
+	public static  boolean isBasicClass(Class cal){
+		return cal == Integer.class || cal == int.class
+				|| cal == Boolean.class || cal == boolean.class
+				|| cal == Short.class || cal == short.class
+				|| cal == Double.class || cal == double.class
+				|| cal == Long.class || cal == long.class
+				|| cal == Float.class || cal == float.class;
 	}
 }

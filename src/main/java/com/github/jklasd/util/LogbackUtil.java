@@ -1,5 +1,6 @@
 package com.github.jklasd.util;
 
+import java.io.IOException;
 import java.nio.charset.Charset;
 import java.util.List;
 import java.util.Map;
@@ -11,17 +12,21 @@ import org.slf4j.LoggerFactory;
 import org.springframework.core.io.Resource;
 import org.springframework.web.context.support.StandardServletEnvironment;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.spring.XmlBeanUtil;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.encoder.PatternLayoutEncoder;
+import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
+import ch.qos.logback.core.joran.spi.JoranException;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -41,9 +46,9 @@ public class LogbackUtil {
 			NodeList nodeList = document.getElementsByTagName("appender");
 			
 			for(int i=0;i<nodeList.getLength();i++) {
-				Map<String,String> attr = XmlBeanUtil.loadXmlNodeAttr(nodeList.item(i).getAttributes());
-				if(attr.get("class").contains("Console")) {
-					root.detachAppender(attr.get("name"));
+				Element attr = (Element) nodeList.item(i);
+				if(attr.getAttribute("class").contains("Console")) {
+					root.detachAppender(attr.getAttribute("name"));
 					
 					List<Node> patterList = XmlBeanUtil.findNodeByTag(nodeList.item(i), "pattern");
 					String logPattern = patterList.get(0).getTextContent();
@@ -53,25 +58,25 @@ public class LogbackUtil {
 						boolean find = false;
 						NodeList propList = document.getElementsByTagName("Property");
 						for(int j=0; j<propList.getLength(); j++) {
-							Map<String,String> prop = XmlBeanUtil.loadXmlNodeAttr(propList.item(j).getAttributes());
-							if(prop.get("name").equals(logPattern)) {
-								logPattern = prop.get("value");
+							Element prop = (Element) propList.item(j);
+							if(prop.getAttribute("name").equals(logPattern)) {
+								logPattern = prop.getAttribute("value");
 								find = true;
 							}
 						}
 						if(!find) {
 							NodeList spropList = document.getElementsByTagName("springProperty");
 							for(int j=0; j<spropList.getLength(); j++) {
-								Map<String,String> prop = XmlBeanUtil.loadXmlNodeAttr(spropList.item(j).getAttributes());
-								if(prop.get("name").equals(logPattern)) {
-									logPattern = evn.getProperty(prop.get("source"));
+								Element prop = (Element) spropList.item(j);
+								if(prop.getAttribute("name").equals(logPattern)) {
+									logPattern = evn.getProperty(prop.getAttribute("source"));
 									find = true;
 								}
 							}
 						}
 					}
 					ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
-					appender.setName(attr.get("name"));
+					appender.setName(attr.getAttribute("name"));
 //					String logPattern = this.patterns.getProperty("console", CONSOLE_LOG_PATTERN);
 //					encoder.setPattern(OptionHelper.substVars(logPattern, config.getContext()));
 //					encoder.setCharset(UTF8);
@@ -103,6 +108,37 @@ public class LogbackUtil {
 		
 //		LogbackConfigurator lcg = new LogbackConfigurator(lc);
 //		new DefaultLogbackConfiguration(new LoggingInitializationContext(evn), null).apply(lcg);
+	}
+	public static void resetLog() {
+//		JoranConfigurator jc = new JoranConfigurator();
+		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+		context.reset();
+//		context.setName("com.github.jklasd");
+		Logger root = context.getLogger("ROOT");
+		root.detachAppender("CONSOLE");
+		ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
+		appender.setName("CONSOLE");
+//		String logPattern = this.patterns.getProperty("console", CONSOLE_LOG_PATTERN);
+//		encoder.setPattern(OptionHelper.substVars(logPattern, config.getContext()));
+//		encoder.setCharset(UTF8);
+//		config.start(encoder);
+//		appender.setEncoder(encoder);
+//		config.appender("CONSOLE", appender);
+		PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+		encoder.setPattern("[%-5level][%contextName]%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread][%X{req.requestURI}] [%X{traceId}] %logger - %msg%n");
+		encoder.setCharset(Charset.forName("UTF-8"));
+		encoder.setContext(context);
+		
+		appender.setEncoder(encoder);
+		appender.setContext(context);
+		root.setLevel(Level.INFO);
+		root.addAppender(appender);
+		
+		root.setLevel(Level.INFO);
+		root.addAppender(appender);
+		
+		appender.start();
+		encoder.start();
 	}
 
 }
