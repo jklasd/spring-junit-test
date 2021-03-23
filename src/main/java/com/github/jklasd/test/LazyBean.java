@@ -71,7 +71,7 @@ public class LazyBean {
 	/**
 	 * 
 	 * 构建代理对象
-	 * @param classBean 需要代理的类型
+	 * @param beanClass 需要代理的类型
 	 * @param beanName 对象Name
 	 * @return 代理对象
 	 */
@@ -607,9 +607,9 @@ public class LazyBean {
 	}
 	/**
 	 * 
-	 * @param beanName
-	 * @param tag
-	 * @return
+	 * @param beanName beanName
+	 * @param type 目标类型
+	 * @return 代理对象构建真实对象
 	 */
 	public static Object createBeanForProxy(String beanName, Class<?> type) {
 		Class<?> tagClass = null;

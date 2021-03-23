@@ -191,7 +191,7 @@ public class LazyCglib implements MethodInterceptor {
 	/**
 	 * CGLIB
 	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
-	 * @return
+	 * @return 目标对象
 	 */
 	@SuppressWarnings("unchecked")
 	protected Object getTagertObj() {
