@@ -13,6 +13,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
+import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.mq.LazyMQBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
@@ -48,16 +49,25 @@ public class LazyCglib implements MethodInterceptor {
 		setConstuctor(hasParamConstructor);
 	}
 	private Map<String, Object> attr;
-	public LazyCglib(Class beanClass, String beanName, Map<String, Object> attr) {
-		this(beanClass, beanName, false,attr);
-	}
+	private boolean inited;
+	@Getter
+	private LazyBeanInitProcess initedProcess = new LazyBeanInitProcess() {
+		public void init(Map<String, Object> attrParam) {
+			inited = true;
+			attr = attrParam;
+			if(tagertObj != null) {
+				initAttr();
+			}
+		}
+	};
 
-	public LazyCglib(Class beanClass, String beanName2, boolean hasParamConstructor, Map<String, Object> attr) {
+	public LazyCglib(Class beanClass, String beanName2, boolean hasParamConstructor) {
 		this.tag = beanClass;
 		this.beanName = beanName2;
-		this.attr = attr;
 		setConstuctor(hasParamConstructor);
 	}
+	
+	
 	private Set<Class> noPackage = Sets.newHashSet();
 	private void setConstuctor(Boolean hasParamConstructor) {
 		if(noPackage.isEmpty()) {
@@ -106,11 +116,11 @@ public class LazyCglib implements MethodInterceptor {
 	@Getter
 	private boolean hasFinal;
 	@Override
-	public Object intercept(Object arg0, Method arg1, Object[] arg2, MethodProxy arg3) throws Throwable {
+	public Object intercept(Object arg0, Method method, Object[] param, MethodProxy arg3) throws Throwable {
 		try {
-			if(!arg1.isAccessible()) {
-				if(!Modifier.isPublic(arg1.getModifiers())) {
-					log.warn("非公共方法，代理执行会出现异常 class:{},method:{}",tag,arg1);
+			if(!method.isAccessible()) {
+				if(!Modifier.isPublic(method.getModifiers())) {
+					log.warn("非公共方法，代理执行会出现异常 class:{},method:{}",tag,method);
 					return null;
 				}
 			}
@@ -120,14 +130,18 @@ public class LazyCglib implements MethodInterceptor {
 			} catch (IllegalStateException e) {
 			}
 			Object newObj = getTagertObj();
+			if(inited && tagertObj != null) {
+				initAttr();
+			}
+			LazyBeanProcess.processLazyConfig(newObj, method,param);
 			if(newObj != null) {
 				AopContextSuppert.setProxyObj(newObj);
 			}
-			Object result = arg1.invoke(newObj, arg2);
+			Object result = method.invoke(newObj, param);
 			AopContextSuppert.setProxyObj(oldObj);
 			return result;
 		} catch (Exception e) {
-			log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}",tag.getName(),arg1.getName(),e.getMessage());
+			log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}",tag.getName(),method.getName(),e.getMessage());
 			Throwable tmp = e;
 			if(e.getCause()!=null) {
 				tmp = e.getCause();
@@ -205,12 +219,6 @@ public class LazyCglib implements MethodInterceptor {
 		}
 		if (tagertObj == null) {
 			ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
-//			if(StringUtils.isNotBlank(beanName)) {//若存在beanName。则通过beanName查找
-//				tagertObj = LazyBean.findBean(beanName);
-//				if(tagertObj != null) {
-//					LazyBean.processAttr(tagertObj, tagertObj.getClass());//递归注入代理对象
-//				}
-//			}
 			if(tagertObj == null){
 				if(!LazyBean.existBean(tag)) {
 					if(!XmlBeanUtil.containClass(tag)) {
@@ -244,16 +252,17 @@ public class LazyCglib implements MethodInterceptor {
 				LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
 			}
 		}
-		if(attr != null && tagertObj != null) {
-			attr.forEach((k,v)->{
-				Object value = v;
-				if(v.toString().contains("ref:")) {
-					value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
-				}
-				LazyBean.setAttr(k, tagertObj, tag, value);
-			});
-		}
 		return tagertObj;
+	}
+	private void initAttr() {
+		inited = false;
+		attr.forEach((k,v)->{
+			Object value = v;
+			if(v.toString().contains("ref:")) {
+				value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
+			}
+			LazyBean.setAttr(k, tagertObj, tag, value);
+		});
 	}
 	public boolean isNoConstructor() {
 		return hasParamConstructor;

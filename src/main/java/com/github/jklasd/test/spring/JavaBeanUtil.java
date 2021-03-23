@@ -1,5 +1,6 @@
 package com.github.jklasd.test.spring;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -9,11 +10,11 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
@@ -160,11 +161,13 @@ public class JavaBeanUtil {
 		 * 处理数据库
 		 */
 		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
-		configurableList.stream().filter(configura ->configura.getAnnotation(MapperScan.class)!=null).forEach(configura ->{
-			MapperScan scan = configura.getAnnotation(MapperScan.class);
-			String[] packagePath = scan.basePackages();
-			if(packagePath.length>0) {
-				LazyMybatisMapperBean.processConfig(configura,packagePath);
+		configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
+			Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
+			if(scan != null) {
+				String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
+				if(packagePath.length>0) {
+					LazyMybatisMapperBean.processConfig(configura,packagePath);
+				}
 			}
 		});
 		/**

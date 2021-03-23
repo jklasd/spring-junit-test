@@ -1,5 +1,6 @@
 package com.github.jklasd.test;
 
+import java.awt.datatransfer.FlavorEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -539,5 +540,14 @@ public class ScanUtil {
 			log.error("#loadClass",e.getMessage());
 		}
 		return null;
+	}
+	
+	public static  boolean isBasicClass(Class cal){
+		return cal == Integer.class || cal == int.class
+				|| cal == Boolean.class || cal == boolean.class
+				|| cal == Short.class || cal == short.class
+				|| cal == Double.class || cal == double.class
+				|| cal == Long.class || cal == long.class
+				|| cal == Float.class || cal == float.class;
 	}
 }

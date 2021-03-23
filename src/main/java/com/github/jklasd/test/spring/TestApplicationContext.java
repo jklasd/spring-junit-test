@@ -5,11 +5,13 @@ import java.lang.annotation.Annotation;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
@@ -155,6 +157,9 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public Object getBean(String name) throws BeansException {
 		if(parentContext == null || parentContext == this) {
+			if(beanDefinitionMap.containsKey(name)) {
+				return beanDefinitionMap.get(name);
+			}
 			if(getAutowireCapableBeanFactory().containsBean(name)) {
 				return getAutowireCapableBeanFactory().getBean(name);
 			}
@@ -186,6 +191,9 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
+			if(beanForClassMap.containsKey(requiredType)) {
+				return (T) beanForClassMap.get(requiredType);
+			}
 			if(getAutowireCapableBeanFactory().getBean(requiredType) != null) {
 				return getAutowireCapableBeanFactory().getBean(requiredType);
 			}
@@ -347,10 +355,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException {
-		if(beanFactory == null) {
-			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
-		}
-		return beanFactory;
+		return getBeanFactory();
 	}
 
 	public Properties getProperties() {
@@ -441,6 +446,19 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
 		}
 		return beanFactory;
+	}
+	
+	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>(256);
+	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>(256);
+	public void registBean(String beanName, Object newBean ,Class beanClass) {
+		if(newBean!=null) {
+			if(StringUtils.isNotBlank(beanName)) {
+				beanDefinitionMap.put(beanName, newBean);
+			}
+			if(!beanForClassMap.containsKey(beanClass)) {
+				beanForClassMap.put(beanClass, newBean);
+			}
+		}
 	}
 
 }

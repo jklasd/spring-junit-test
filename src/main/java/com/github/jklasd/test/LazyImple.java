@@ -9,10 +9,12 @@ import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -32,13 +34,20 @@ public class LazyImple implements InvocationHandler {
 	}
 	private Type[] classGeneric;
 	private Map<String, Object> attr;
+	private boolean inited;
+	@Getter
+	private LazyBeanInitProcess initedProcess = new LazyBeanInitProcess() {
+		public void init(Map<String, Object> attrParam) {
+			inited = true;
+			attr = attrParam;
+			if(tagertObj != null) {
+				initAttr();
+			}
+		}
+	};
 	public LazyImple(Class classBean, String beanName2, Type[] classGeneric) {
 		this(classBean,beanName2);
 		this.classGeneric = classGeneric;
-	}
-	public LazyImple(Class beanClass, String beanName2, Map<String, Object> attr) {
-		this(beanClass,beanName2);
-		this.attr = attr;
 	}
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
@@ -49,9 +58,13 @@ public class LazyImple implements InvocationHandler {
 			} catch (IllegalStateException e) {
 			}
 			Object newObj = getTagertObj();
+			if(inited && tagertObj != null) {
+				initAttr();
+			}
 			if(newObj != null) {
 				AopContextSuppert.setProxyObj(newObj);
 			}
+			LazyBeanProcess.processLazyConfig(newObj, method,args);
 			Object result = method.invoke(newObj, args);
 			AopContextSuppert.setProxyObj(oldObj);
 			if(!isDbConnect) {
@@ -70,15 +83,25 @@ public class LazyImple implements InvocationHandler {
 			throw new Exception("代理类执行异常");
 		}
 	}
+	private void initAttr() {
+		inited = false;
+		attr.forEach((k,v)->{
+			Object value = v;
+			if(v.toString().contains("ref:")) {
+				value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
+			}
+			LazyBean.setAttr(k, tagertObj, tag, value);
+		});
+	}
 	/**
 	 * 接口类型
 	 * 当调用目标对象方法时，对目标对象tagertObj进行实例化
 	 * @return
 	 */
 	private Object getTagertObj() {
-		if(tag.getName().contains("AttachmentDao")) {
-			log.info("断点");
-		}
+//		if(tag.getName().contains("AttachmentDao")) {
+//			log.info("断点");
+//		}
 		if(tagertObj != null) {
 			if(tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
 				log.warn("循环处理代理Bean问题");
@@ -97,7 +120,7 @@ public class LazyImple implements InvocationHandler {
 		if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
 			tagertObj = LazyDubboBean.buildBean(tag);
 		}else if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
-			tagertObj = LazyMongoBean.buildBean(tag,null);
+			tagertObj = LazyMongoBean.buildBean(tag,beanName);
 		} else {
 			if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
 				isDbConnect = true;

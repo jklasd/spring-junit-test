@@ -22,6 +22,7 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.TestApplicationContext;
 import com.github.jklasd.test.spring.XmlBeanUtil;
@@ -54,9 +55,9 @@ public class TestUtil {
 		log.info("--实例化TestUtil--");
 	}
 
-	private static ApplicationContext applicationContext;
+	private static TestApplicationContext applicationContext;
 
-	public static ApplicationContext getApplicationContext() {
+	public static TestApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
@@ -68,6 +69,8 @@ public class TestUtil {
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
 	private void processConfig() {
+		LazyMybatisMapperBean.configure();
+		
 		XmlBeanUtil.process();
 		JavaBeanUtil.process();
 

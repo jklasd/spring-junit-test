@@ -34,6 +34,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.ObjectProviderImpl;
@@ -90,14 +91,14 @@ public class LazyBean {
 		Object tag = buildProxy(classBean,getBeanName(classBean));
 		return tag;
 	}
-	private synchronized static String getBeanName(Class classBean) {
+	private synchronized static String getBeanName(Class<?> classBean) {
 		Component comp = (Component) classBean.getAnnotation(Component.class);
 		if(comp!=null && StringUtils.isNotBlank(comp.value())) {
 			return comp.value();
 		}
 		Service service = (Service) classBean.getAnnotation(Service.class);
 		if(service!=null && StringUtils.isNotBlank(service.value())) {
-			return comp.value();
+			return service.value();
 		}
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
@@ -277,11 +278,14 @@ public class LazyBean {
 						fv = TestUtil.value(value.toString(), m.getParameterTypes()[0]);	
 					}
 					try {
+						if(fv.toString().contains("ref:")) {
+							
+						}
 						m.invoke(obj, fv);
+						return true;
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						e.printStackTrace();
 					}
-					return true;
 				}
 			}
 			Field[] fields = superClass.getDeclaredFields();
@@ -507,7 +511,7 @@ public class LazyBean {
 		return list;
 	}
 	@SuppressWarnings("rawtypes")
-	public synchronized static Object buildProxy(Class beanClass, String beanName, Map<String, Object> attr) {
+	public synchronized static Object buildProxy(Class beanClass, String beanName, LazyBeanInitProcessImpl initProcess) {
 		/**
 		 * 取缓存值
 		 */
@@ -524,7 +528,7 @@ public class LazyBean {
 				|| ScanUtil.isImple(beanClass, ApplicationContext.class)) {
 			return TestUtil.getApplicationContext();
 		}
-		Object tag = createBean(beanClass, beanName, attr);
+		Object tag = createBean(beanClass, beanName, initProcess);
 		if(tag!=null) {
 			if(StringUtils.isNotBlank(beanName)) {
 				singletonName.put(beanName, tag);
@@ -537,7 +541,7 @@ public class LazyBean {
 		}
 		return tag;
 	}
-	private static Object createBean(Class beanClass, String beanName, Map<String, Object> attr) {
+	private static Object createBean(Class beanClass, String beanName,LazyBeanInitProcessImpl initProcess) {
 		/**
 		 * 开始构建对象
 		 */
@@ -550,16 +554,22 @@ public class LazyBean {
 		 */
 		try {
 			if (beanClass.isInterface()) {
-				InvocationHandler handler = new LazyImple(beanClass,beanName,attr);
+				LazyImple handler = new LazyImple(beanClass,beanName);
+				if(initProcess!=null) {
+					initProcess.setProcess(handler.getInitedProcess());
+				}
 				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
 			} else {
 				Constructor[] structors = beanClass.getConstructors();
 				/**
 				 * 查看是否存在无参构造函数
 				 */
-				for(Constructor c : structors) {
+				for(Constructor<?> c : structors) {
 					if(c.getParameterCount() == 0 ) {
-						LazyCglib handler = new LazyCglib(beanClass,beanName,attr);
+						LazyCglib handler = new LazyCglib(beanClass,beanName);
+						if(initProcess!=null) {
+							initProcess.setProcess(handler.getInitedProcess());
+						}
 						if(!handler.isHasFinal()) {
 							tag = Enhancer.create(beanClass, handler);
 						}else {
@@ -569,8 +579,11 @@ public class LazyBean {
 					}
 				}
 				if(tag == null && structors.length>0) {
-					log.warn("不存在无参构造函数");
-					LazyCglib handler = new LazyCglib(beanClass,beanName,true,attr);
+					log.debug("=======不存在无参构造函数=======");
+					LazyCglib handler = new LazyCglib(beanClass,beanName,true);
+					if(initProcess!=null) {
+						initProcess.setProcess(handler.getInitedProcess());
+					}
 					if(!handler.isHasFinal()) {
 						Enhancer enhancer = new Enhancer();
 						enhancer.setSuperclass(beanClass);
