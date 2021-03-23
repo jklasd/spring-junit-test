@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @SuppressWarnings("rawtypes")
 public class LazyCglib implements MethodInterceptor {
+	@Getter
 	private Class tag;
 	private String beanName;
 	private boolean hasParamConstructor;

@@ -160,22 +160,23 @@ public class JavaBeanUtil {
 		/**
 		 * 处理数据库
 		 */
-		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
-		configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
-			Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
-			if(scan != null) {
-				String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
-				if(packagePath.length>0) {
-					LazyMybatisMapperBean.processConfig(configura,packagePath);
+		if(LazyMybatisMapperBean.useMybatis()) {
+			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
+			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
+				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
+				if(scan != null) {
+					String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
+					if(packagePath.length>0) {
+						LazyMybatisMapperBean.processConfig(configura,packagePath);
+					}
 				}
-			}
-		});
+			});
+		}
 		/**
 		 * 处理dubbo服务类
 		 */
-		Class dubboServiceAnn = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
-		if(dubboServiceAnn!=null) {//加载到com.alibaba.dubbo.config.annotation.Service
-			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(dubboServiceAnn);
+		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass());
 			dubboServiceList.stream().forEach(dubboServiceClass ->{
 				LazyDubboBean.putAnnService(dubboServiceClass);
 			});

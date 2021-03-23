@@ -126,9 +126,9 @@ public class XmlBeanUtil {
 		String beanName = "";
 		if (ele.hasAttribute("id")) {
 			beanName = ele.getAttribute("id");
-			if(beanName.equals("dataSource")) {
-				log.info("断点");
-			}
+//			if(beanName.equals("dataSource")) {
+//				log.info("断点");
+//			}
 		}
 		try {
 			Class<?> c = ScanUtil.loadClass(className);

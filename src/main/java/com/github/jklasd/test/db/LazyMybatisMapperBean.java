@@ -7,11 +7,14 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.util.ClassUtils;
+
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.LazyBeanProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyConfigProcess;
+import com.github.jklasd.test.LazyCglib;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.google.common.collect.Lists;
@@ -41,6 +44,9 @@ public class LazyMybatisMapperBean{
 	}
 	@SuppressWarnings("unchecked")
 	private static final Class<? extends Annotation> mapperScanClass =  ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
+	public static final boolean useMybatis() {
+		return factoryBeanClass!=null;
+	}
 	public static final Class<? extends Annotation> getAnnotionClass() {
 		if(mapperScanClass!=null) {
 			return mapperScanClass;
@@ -109,84 +115,6 @@ public class LazyMybatisMapperBean{
 		}
 	}
 
-
-//	public static DataSource buildDataSource(String id) {
-//		if(dataSource == null) {
-//			if(cacheDocument != null) {
-//				Object obj = LazyBean.buildProxy(DataSource.class);
-//				if(obj != null) {
-//					dataSource = (DataSource) obj;
-//				}else {
-//					processXmlForDataSource(id);
-//				}
-//			}else {
-//				//查询注解方式
-//				processAnnaForDataSource();
-//			}
-//		}
-//		return dataSource;
-//	}
-
-//	private static Object processXmlCreateDS(String id) {
-//		Element dataSourceNode = XmlBeanUtil.getBeanById(cacheDocument, id);
-//		try {
-//			Class<?> dataSourceC = Class.forName(dataSourceNode.getAttribute("class"));
-//			Object obj = dataSourceC.newInstance();
-//			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceNode.getChildNodes());
-//			dataSourceProp.keySet().forEach(field -> {
-//				try {
-//					log.debug("{}=>{}", field, dataSourceProp.get(field.toString()));
-//					LazyBean.setAttr(field, obj, dataSourceC, dataSourceProp.get(field.toString()));
-//				} catch (SecurityException e) {
-//					log.error("buildDataSource", e);
-//				}
-//			});
-////			if(dataSourceAttr.containsKey("init-method")) {
-////				Method init = dataSourceC.getDeclaredMethod(dataSourceAttr.get("init-method"));
-////				init.invoke(obj);
-////			}
-//			return obj;
-//		} catch (Exception e) {
-//			return null;
-//		}
-//	}
-
-//	private static void processXmlForDataSource(String id) {
-//		Element dataSourceAttr = XmlBeanUtil.getBeanById(cacheDocument, id);
-//		try {
-//			Class<?> dataSourceC = Class.forName(dataSourceAttr.getAttribute("class"));
-//			Object obj = dataSourceC.newInstance();
-//			Map<String, Object> dataSourceProp = XmlBeanUtil.loadXmlNodeProp(dataSourceAttr.getChildNodes());
-//			dataSourceProp.keySet().forEach(field ->{
-//				try {
-//					log.debug("{}=>{}",field,dataSourceProp.get(field.toString()));
-//					LazyBean.setAttr(field,obj, dataSourceC, dataSourceProp.get(field.toString()));
-//				} catch (SecurityException e) {
-//					log.error("buildDataSource",e);
-//				}
-//			});
-//			try {
-//				Class AbstractRoutingDataSource = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
-//				if(ScanUtil.isExtends(dataSourceC, AbstractRoutingDataSource)) {
-//					Map<String,Object> dataSource = Maps.newHashMap();
-//					Map<String,String> targetDataSources = (Map<String, String>) dataSourceProp.get("targetDataSources");
-//					targetDataSources.keySet().forEach(key ->{
-//						DataSource ds = (DataSource) processXmlCreateDS(targetDataSources.get(key));
-//						dataSource.put(key, ds);
-//					});
-//					LazyBean.setAttr("targetDataSources",obj, dataSourceC, dataSource);
-//					Method afterPropertiesSet = AbstractRoutingDataSource.getDeclaredMethod("afterPropertiesSet");
-//					afterPropertiesSet.invoke(obj);
-//				}
-//			} catch (Exception e) {
-//			}
-//			dataSource = (DataSource) obj;
-//		} catch (InstantiationException | IllegalAccessException | ClassNotFoundException e) {
-//			log.error("buildDataSource",e);
-//		}
-//	}
-
-
 	public static void over() {
 //		if(sessionList.get()!=null) {
 //			sessionList.get().commit();
@@ -240,6 +168,7 @@ public class LazyMybatisMapperBean{
 	public static void configure() {
 		//判断是否存在类
 		LazyBeanProcess.putAllMethod("org.mybatis.spring.SqlSessionFactoryBean",new LazyConfigProcess() {
+			private Class<?> abstractRoutingDataSource = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
 			private boolean init = false;
 			public void process(Object tagObj, Method method, Object[] param) {
 				if(init)
@@ -251,7 +180,9 @@ public class LazyMybatisMapperBean{
 						dataSourceField.setAccessible(true);
 					}
 					Object dataSource = dataSourceField.get(tagObj);
-					InvokeUtil.invokeMethod(dataSource, "afterPropertiesSet");
+					if(ScanUtil.isExtends(dataSource.getClass(), abstractRoutingDataSource)) {
+						InvokeUtil.invokeMethod(dataSource, "afterPropertiesSet");
+					}
 				} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 					log.error("dataSource#afterPropertiesSet",e);
 				}

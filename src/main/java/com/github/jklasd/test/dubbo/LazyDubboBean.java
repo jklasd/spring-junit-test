@@ -1,5 +1,6 @@
 package com.github.jklasd.test.dubbo;
 
+import java.lang.annotation.Annotation;
 import java.util.Map;
 
 import org.w3c.dom.Attr;
@@ -17,6 +18,7 @@ import com.alibaba.dubbo.config.ReferenceConfig;
 import com.alibaba.dubbo.config.RegistryConfig;
 import com.alibaba.dubbo.config.ServiceConfig;
 import com.github.jklasd.test.LazyBean;
+import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.google.common.collect.Maps;
 
@@ -33,6 +35,19 @@ public class LazyDubboBean {
 	@SuppressWarnings("rawtypes")
 	private static Map<Class,Element> dubboRefferCache = Maps.newHashMap();
 	private static Map<Class,Element> dubboServiceCache = Maps.newHashMap();
+	
+	public static final boolean useDubbo() {
+		return Service!=null;
+	}
+	@SuppressWarnings("unchecked")
+	private static final Class<? extends Annotation> Service = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
+	public static final Class<? extends Annotation> getAnnotionClass() {
+		if(Service!=null) {
+			return Service;
+		}
+		return null;
+	}
+	
 	public static boolean isDubbo(Class<?> classBean) {
 		return dubboRefferCache.containsKey(classBean);
 	}
