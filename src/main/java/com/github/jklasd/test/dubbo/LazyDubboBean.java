@@ -84,18 +84,25 @@ public class LazyDubboBean {
 	public static void registerDubboService(Class<?> dubboServiceClass) {
 		if(dubboServiceCache.containsKey(dubboServiceClass)) {
 			log.info("注册dubboService=>{}",dubboServiceClass);
+			Element ele = dubboServiceCache.get(dubboServiceClass);
 			ServiceConfig<Object>  serviceConfig = new ServiceConfig<>();
 			serviceConfig.setApplication(new ApplicationConfig("dubbo-examples-service"));
 			serviceConfig.setInterface(dubboServiceClass);
-			if(dubboServiceCache.get(dubboServiceClass).hasAttribute("group")) {
-				serviceConfig.setGroup(TestUtil.getPropertiesValue(dubboServiceCache.get(dubboServiceClass).getAttribute("group")));
+			if(ele.hasAttribute("group")) {
+				serviceConfig.setGroup(TestUtil.getPropertiesValue(ele.getAttribute("group")));
 			}
-			if(dubboServiceCache.get(dubboServiceClass).hasAttribute("timeout")) {
-				serviceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(dubboServiceCache.get(dubboServiceClass).getAttribute("timeout"))));
+			if(ele.hasAttribute("timeout")) {
+				serviceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(ele.getAttribute("timeout"))));
 			}
-			serviceConfig.setRef(LazyBean.buildProxy(dubboServiceClass));
+			if(ele.hasAttribute("ref")) {
+			    serviceConfig.setRef(LazyBean.buildProxy(ScanUtil.findClassImplInterfaceByBeanName(dubboServiceClass, null, ele.getAttribute("ref")) ,ele.getAttribute("ref")));
+			}else {
+			    serviceConfig.setRef(LazyBean.buildProxy(dubboServiceClass));
+			}
 			serviceConfig.setRegistry(registryConfig);
 			serviceConfig.export();
+			
+			log.info("注册=========={}===============成功",dubboServiceClass);
 		}
 	}
 	private static void cacheService(NodeList serviceList) {

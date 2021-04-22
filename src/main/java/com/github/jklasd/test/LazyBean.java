@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.PostConstruct;
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.ObjectProviderImpl;
@@ -51,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyBean {
+	public static final String PROXY_BEAN_FIELD = "CGLIB$CALLBACK_0";
 	public static Map<Class, List<Object>> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	/**
@@ -76,6 +79,8 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public static Object buildProxy(Class beanClass,String beanName) {
+	    if(beanClass == null)
+	        throw new JunitException();
 		return buildProxy(beanClass, beanName, null);
 	}
 	/**
@@ -90,7 +95,7 @@ public class LazyBean {
 		Object tag = buildProxy(classBean,getBeanName(classBean));
 		return tag;
 	}
-	private synchronized static String getBeanName(Class<?> classBean) {
+	public synchronized static String getBeanName(Class<?> classBean) {
 		Component comp = (Component) classBean.getAnnotation(Component.class);
 		if(comp!=null && StringUtils.isNotBlank(comp.value())) {
 			return comp.value();
@@ -153,7 +158,30 @@ public class LazyBean {
 		}
 		exist.add(obj.hashCode()+"="+objClassOrSuper.getName());
 		Field[] fields = objClassOrSuper.getDeclaredFields();
-		for(Field f : fields){
+		processField(obj, fields);
+		
+//		processMethod(objClassOrSuper,obj);
+		
+		Class<?> superC = objClassOrSuper.getSuperclass();
+		if (superC != null) {
+			processAttr(obj, superC);
+		}
+
+		Method[] ms = obj.getClass().getDeclaredMethods();
+		try {
+            processMethod(obj, ms,superC);
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("processMethod=>{}+>{}",objClassOrSuper);
+             log.error("processMethod",e);
+        }
+		
+		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
+		if(proconfig!=null) {
+			LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(obj,proconfig);
+		}
+	}
+    private static void processField(Object obj, Field[] fields) {
+        for(Field f : fields){
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
 				String bName = f.getAnnotation(Qualifier.class)!=null?f.getAnnotation(Qualifier.class).value():null;
@@ -197,18 +225,26 @@ public class LazyBean {
 				}
 			}
 		}
-		Class<?> superC = objClassOrSuper.getSuperclass();
-		if (superC != null) {
-			processAttr(obj, superC);
+    }
+	private static Class<?> getParamType(Method m, Type paramType) {
+		if(paramType instanceof ParameterizedType) {
+			ParameterizedType  pType = (ParameterizedType) paramType;
+			Type[] item = pType.getActualTypeArguments();
+			if(item.length == 1) {
+				//处理一个集合注入
+				try {
+					log.info("注入集合=>{}",m.getName());
+					return Class.forName(item[0].getTypeName());
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else {
+				log.info("其他特殊情况");
+			}
+		}else {
+			return (Class<?>) paramType;
 		}
-
-		Method[] ms = obj.getClass().getDeclaredMethods();
-		postConstruct(obj, ms,superC);
-		
-		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
-		if(proconfig!=null) {
-			LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(obj,proconfig);
-		}
+		return null;
 	}
 
 	public static Object processStatic(Class c) {
@@ -234,13 +270,17 @@ public class LazyBean {
 	 * 【2】setApplicationContext
 	 * 
 	 * 当目标对象存在父类时，遍历所有父类对相应方法进行处理
+	 * @throws InvocationTargetException 
+	 * @throws IllegalArgumentException 
+	 * @throws IllegalAccessException 
 	 */
-	private static void postConstruct(Object obj, Method[] ms,Class sup) {
+	private static void processMethod(Object obj, Method[] ms,Class sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		if(sup != null) {
 			ms = sup.getDeclaredMethods();
-			postConstruct(obj, ms, sup.getSuperclass());
+			processMethod(obj, ms, sup.getSuperclass());
 		}
 		for (Method m : ms) {
+		    Type[] paramTypes = m.getGenericParameterTypes();
 			if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。
 				try {
 					if (!m.isAccessible()) {
@@ -263,9 +303,37 @@ public class LazyBean {
 					}
 				} catch (SecurityException e) {
 				}
-			}
+			}else if(m.getAnnotation(Autowired.class) != null) {
+//			    Autowired aw = m.getAnnotation(Autowired.class);
+			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
+			    Object[] param = processParam(m, paramTypes, bName);
+                m.invoke(obj, param);
+			}else if(m.getAnnotation(Value.class) != null) {
+			    Value aw = m.getAnnotation(Value.class);
+                
+            }else if(m.getAnnotation(Resource.class) != null) {
+                Resource aw = m.getAnnotation(Resource.class);
+                Object[] param = processParam(m, paramTypes, aw.name());
+                m.invoke(obj, param);
+            }
 		}
 	}
+    private static Object[] processParam(Method m, Type[] paramTypes, String bName) {
+        Object[] param = new Object[paramTypes.length];
+        for(int i=0;i<paramTypes.length;i++) {
+            Class<?> c = getParamType(m, paramTypes[i]);
+            if(paramTypes[i] == List.class) {
+                param[i] = findListBean(c);
+            }else {
+                if(LazyBean.existBean(c) && TestUtil.getExistBean(c, m.getName())!=null) {
+                    param[i] = TestUtil.getExistBean(c, m.getName());
+                }else {
+                    param[i] = buildProxy(c,bName);
+                }
+            }
+        }
+        return param;
+    }
 	@SuppressWarnings("unchecked")
 	public static boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
 			Object fv = value;

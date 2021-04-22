@@ -44,6 +44,11 @@ public class LazyImple implements InvocationHandler {
 				initAttr();
 			}
 		}
+
+		@Override
+		public void initMethod(Map<String, String> methods) {
+			
+		}
 	};
 	public LazyImple(Class classBean, String beanName2, Type[] classGeneric) {
 		this(classBean,beanName2);
@@ -67,11 +72,11 @@ public class LazyImple implements InvocationHandler {
 			LazyBeanProcess.processLazyConfig(newObj, method,args);
 			Object result = method.invoke(newObj, args);
 			AopContextSuppert.setProxyObj(oldObj);
-			if(!isDbConnect) {
-				// 处理openSession
-				Transactional transactional = method.getAnnotation(Transactional.class);
-			}
-			LazyMybatisMapperBean.over();
+//			if(!isDbConnect) {
+//				// 处理openSession
+//				Transactional transactional = method.getAnnotation(Transactional.class);
+//			}
+//			LazyMybatisMapperBean.over();
 			return result;
 		}catch (Exception e) {
 			Throwable tmp = e;
@@ -79,8 +84,7 @@ public class LazyImple implements InvocationHandler {
 				tmp = e.getCause();
 			}
 			log.error("代理类执行异常=>{},->{}",tag,tmp.getMessage());
-			log.error("代理类执行异常",tmp);
-			throw new Exception("代理类执行异常");
+			throw tmp;
 		}
 	}
 	private void initAttr() {
@@ -99,7 +103,7 @@ public class LazyImple implements InvocationHandler {
 	 * @return
 	 */
 	private Object getTagertObj() {
-//		if(tag.getName().contains("AttachmentDao")) {
+//		if(tag.getName().contains("BankConfigMapper")) {
 //			log.info("断点");
 //		}
 		if(tagertObj != null) {

@@ -18,7 +18,9 @@ import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.mq.LazyMQBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.Getter;
@@ -49,16 +51,25 @@ public class LazyCglib implements MethodInterceptor {
 		this.tag = tag;
 		setConstuctor(hasParamConstructor);
 	}
-	private Map<String, Object> attr;
+	@Getter
+	private Map<String, Object> attr = Maps.newHashMap();
 	private boolean inited;
+	private Map<String,String> beanMethods = Maps.newHashMap();
 	@Getter
 	private LazyBeanInitProcess initedProcess = new LazyBeanInitProcess() {
 		public void init(Map<String, Object> attrParam) {
 			inited = true;
-			attr = attrParam;
+			if(attrParam != null) {
+				attr.putAll(attrParam);
+			}
 			if(tagertObj != null) {
 				initAttr();
 			}
+		}
+
+		@Override
+		public void initMethod(Map<String,String> methods) {
+			beanMethods.putAll(methods);
 		}
 	};
 
@@ -263,6 +274,9 @@ public class LazyCglib implements MethodInterceptor {
 				value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
 			}
 			LazyBean.setAttr(k, tagertObj, tag, value);
+		});
+		beanMethods.keySet().stream().filter(key -> Objects.equal(key, "init-method")).forEach(key -> {
+			InvokeUtil.invokeMethod(tagertObj, beanMethods.get(key));
 		});
 	}
 	public boolean isNoConstructor() {

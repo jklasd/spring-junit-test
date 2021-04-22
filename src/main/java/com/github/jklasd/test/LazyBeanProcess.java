@@ -16,6 +16,10 @@ public final class LazyBeanProcess {
 	private static  Map<String,Map<String,LazyConfigProcess>> methodConfig = Maps.newHashMap();
 	public final synchronized static void processLazyConfig(Object tagObj,Method method, Object[] param) {
 		try {
+			if(tagObj == null || method == null) {
+				return;
+			}
+			
 			allMethodConfig.entrySet().stream().filter(entry->entry.getKey().equals(tagObj.getClass().getName()))
 			.forEach(entry->entry.getValue().process(tagObj, method, param));
 			
@@ -25,6 +29,7 @@ public final class LazyBeanProcess {
 						.forEach(vEntry->vEntry.getValue().process(tagObj, method, param)));
 			}
 		} catch (Exception e) {
+			log.error("LazyBeanProcess#processLazyConfig=>{},=>{}",tagObj,method);
 			log.error("LazyBeanProcess#processLazyConfig",e);
 		}
 	}
@@ -44,6 +49,7 @@ public final class LazyBeanProcess {
 	}
 	public interface LazyBeanInitProcess{
 		void init(Map<String, Object> attrParam);
+		void initMethod(Map<String,String> methods);
 	}
 	@Data
 	public static class LazyBeanInitProcessImpl{

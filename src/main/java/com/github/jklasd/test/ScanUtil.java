@@ -1,6 +1,5 @@
 package com.github.jklasd.test;
 
-import java.awt.datatransfer.FlavorEvent;
 import java.io.File;
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -18,19 +17,19 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
-import org.springframework.core.type.classreading.AnnotationMetadataReadingVisitor;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.XmlBeanUtil;
 import com.github.jklasd.util.CountDownLatchUtils;
@@ -153,6 +152,7 @@ public class ScanUtil {
 							Enumeration<JarEntry> jarEntrys = jFile.entries();
 							while (jarEntrys.hasMoreElements()) {
 								String name = jarEntrys.nextElement().getName();
+								if(name.contains(".class"))
 								classNames.add(name.replace("/", ".").replace("\\", "."));
 							}
 						}
@@ -272,6 +272,30 @@ public class ScanUtil {
 		});
 		return list;
 	}
+	public static Class findClassImplInterfaceByBeanName(Class interfaceClass,Map<String,Class> classMap,String beanName){
+	    if(StringUtils.isBlank(beanName)) {
+	        throw new JunitException();
+	    }
+        Map<String,Class> tmp = Maps.newHashMap();
+        if(classMap!=null) {
+            tmp.putAll(classMap);
+        }
+        tmp.putAll(nameMap);
+        List<Class> list = Lists.newArrayList();
+        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+        .runAndWait(name ->{
+            Class<?> tmpClass = tmp.get(name);
+            if(isImple(tmpClass,interfaceClass)) {
+                if(Objects.equals(beanName, LazyBean.getBeanName(tmpClass))) {
+                    list.add(tmpClass);
+                }
+            }
+        });
+        if(list.isEmpty()) {
+            log.warn("没有找到相关实现类========{}======={}==",interfaceClass,beanName);
+        }
+        return list.isEmpty() ? null : list.get(0);
+    }
 	public static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {

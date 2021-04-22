@@ -18,6 +18,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 
 import com.github.jklasd.test.LazyBean;
+import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
@@ -92,33 +93,51 @@ public class XmlBeanUtil {
 				}
 
 			} catch (Exception e) {
+				log.error("加载xml",e);
 			}
 		}
 	}
 
 	private static void registerBean(NodeList beanList) {
 		Map<String,LazyBeanInitProcessImpl> tmpAttrMap = Maps.newHashMap();
-		for (int i = 0; i < beanList.getLength(); i++) {
+		int size = beanList.getLength();
+		log.info("bean size:{}",size);
+		for (int i = 0; i < size; i++) {
 			Element item = (Element) beanList.item(i);
 			String className = item.getAttribute("class");
 			registerBean(className, item,tmpAttrMap);
 		}
-		for (int i = 0; i < beanList.getLength(); i++) {
+		for (int i = 0; i < size; i++) {
 			Element item = (Element) beanList.item(i);
 			String className = item.getAttribute("class");
 			processBeanAttr(className, item ,tmpAttrMap);
+//			log.info("i ->{}",i);
 		}
 	}
 
 	private static void processBeanAttr(String className,Element ele, Map<String, LazyBeanInitProcessImpl> tmpAttrMap) {
-//		if(className.equals("com.alibaba.druid.pool.DruidDataSource")) {
+//		if(className.equals("org.mybatis.spring.mapper.MapperScannerConfigurer")) {
 //			log.info("断点");
 //		}
+		String beanName = "";
+		if (ele.hasAttribute("id")) {
+			beanName = ele.getAttribute("id");
+		}
+		Class<?> eleClass = ScanUtil.loadClass(className);
+		beanName = beanName==""?LazyBean.getBeanName(eleClass):beanName;
+		String key = className+"-"+beanName;
+//		log.info(className);
 		Map<String, Object> attr = loadXmlNodeProp(ele.getChildNodes());
 		loadXmlNodeProp2(attr,tmpAttrMap);
-		processValue(attr, ScanUtil.loadClass(className));
+		processValue(attr, eleClass);
 		processAttr(className, attr);
-		tmpAttrMap.get(className+"-"+ele.getAttribute("id")).getProcess().init(attr);
+		LazyBeanInitProcess processer = tmpAttrMap.get(key).getProcess();
+//		if(ele.hasAttribute("init-method")) {
+//			Map<String,String> method = Maps.newHashMap();
+//			method.put("init-method", ele.getAttribute("init-method"));
+//			processer.initMethod(method);
+//		}
+		processer.init(attr);
 	}
 
 
@@ -126,16 +145,20 @@ public class XmlBeanUtil {
 		String beanName = "";
 		if (ele.hasAttribute("id")) {
 			beanName = ele.getAttribute("id");
-//			if(beanName.equals("dataSource")) {
-//				log.info("断点");
-//			}
 		}
 		try {
+			Object obj = null;
 			Class<?> c = ScanUtil.loadClass(className);
+			beanName = beanName==""?LazyBean.getBeanName(c):beanName;
+			if((obj = TestUtil.getApplicationContext().getBean(beanName)) != null) {
+				return obj;
+			}
 			beanList.add(c);
 			String key = className +"-" + beanName;
-			tmpAttrMap.put(key, new LazyBeanInitProcessImpl());
-			Object obj = LazyBean.buildProxy(c, beanName, tmpAttrMap.get(key));
+			if(!tmpAttrMap.containsKey(key)) {
+				tmpAttrMap.put(key, new LazyBeanInitProcessImpl());
+			}
+			obj = LazyBean.buildProxy(c, beanName, tmpAttrMap.get(key));
 			TestUtil.getApplicationContext().registBean(beanName, obj, c);
 			return obj;
 		} catch (Exception e) {
@@ -251,7 +274,7 @@ public class XmlBeanUtil {
 	}
 
 	private static void processAttr(String className, Map<String, Object> attr) {
-		LazyMybatisMapperBean.processAttr(className, attr);
+		
 	}
 
 	public static List<Object> loadXmlNodeArr(NodeList nodeList, Map<String, LazyBeanInitProcessImpl> tmpAttrMap) {
