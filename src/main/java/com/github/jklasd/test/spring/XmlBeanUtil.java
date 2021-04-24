@@ -22,7 +22,6 @@ import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.github.jklasd.test.mq.LazyRabbitMQBean;
 import com.google.common.base.Objects;
@@ -87,7 +86,7 @@ public class XmlBeanUtil {
 						NodeList rabbitNodeList = document.getElementsByTagName("rabbit:connection-factory");
 						if (rabbitNodeList.getLength() > 0) {
 							Element contextAttr = (Element) rabbitNodeList.item(0);
-							LazyRabbitMQBean.loadConfig(contextAttr);
+							LazyRabbitMQBean.getInstance().loadConfig(contextAttr);
 						}
 					}
 				}

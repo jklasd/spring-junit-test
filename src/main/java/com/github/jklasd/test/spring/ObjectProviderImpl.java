@@ -12,7 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
-	private Type type;
+	/**
+     *
+     */
+    private static final long serialVersionUID = 3004906006576222643L;
+    private Type type;
 	public ObjectProviderImpl(Type type) {
 		this.type = type;
 	}

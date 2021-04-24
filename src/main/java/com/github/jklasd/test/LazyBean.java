@@ -32,7 +32,6 @@ import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RestController;
 
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.exception.JunitException;
@@ -385,7 +384,7 @@ public class LazyBean {
 			if ((type == Component.class || type.getAnnotation(Component.class)!=null)
 					|| (type == Service.class || type.getAnnotation(Service.class)!=null)
 					|| (type == Configuration.class || type.getAnnotation(Configuration.class)!=null)
-					|| (type == RestController.class || type.getAnnotation(RestController.class)!=null)
+//					|| (type == RestController.class || type.getAnnotation(RestController.class)!=null)
 					|| (type == Controller.class || type.getAnnotation(Controller.class)!=null)
 					) {
 				return true;

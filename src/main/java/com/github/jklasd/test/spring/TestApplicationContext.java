@@ -11,7 +11,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
@@ -26,9 +25,9 @@ import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
-import org.springframework.web.context.support.StandardServletEnvironment;
 
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
@@ -41,12 +40,12 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	}
 	
 	private Properties properties;
-	private StandardServletEnvironment env;
+	private ConfigurableEnvironment env;
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
 		if(parentContext == null || parentContext == this) {
 			if(env == null) {
-				env = new StandardServletEnvironment();
+				env = new StandardEnvironment();
 				if(properties == null) {
 					properties = new Properties();
 					try {
