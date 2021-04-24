@@ -34,9 +34,9 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 	@Override
 	public Object getIfAvailable() throws BeansException {
 		if(type != null) {
-			Class tagC = (Class) type;
+			Class<?> tagC = (Class<?>) type;
 			try {
-				Class builderC = Class.forName(tagC.getName()+"$Builder");
+				Class<?> builderC = Class.forName(tagC.getName()+"$Builder");
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
 					if(m.getReturnType() == tagC) {

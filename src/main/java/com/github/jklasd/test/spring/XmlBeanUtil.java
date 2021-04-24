@@ -166,7 +166,6 @@ public class XmlBeanUtil {
 		return null;
 	}
 
-	@SuppressWarnings("unchecked")
 	private static void processValue(Map<String, Object> attr, Class<?> tabClass) {
 		Map<String,Boolean> finded = Maps.newHashMap();
 		Map<String,Boolean> sameType = Maps.newHashMap();
@@ -176,7 +175,7 @@ public class XmlBeanUtil {
 			Method[] methods = tabClass.getDeclaredMethods();
 			for (Method m : methods) {
 				if (Objects.equal(m.getName(), mName)) {
-					Class paramType = m.getParameterTypes()[0];
+					Class<?> paramType = m.getParameterTypes()[0];
 					if (val.getClass() != paramType
 							&& !ScanUtil.isImple(val.getClass(), paramType)
 							&& !ScanUtil.isBasicClass(paramType)) {
@@ -218,7 +217,8 @@ public class XmlBeanUtil {
 		}
 	}
 
-	private static Object processTypeValue(String field, Object val, Class paramType) {
+	@SuppressWarnings({"unchecked", "rawtypes"})
+    private static Object processTypeValue(String field, Object val, Class<?> paramType) {
 		try {
 			if (ScanUtil.isImple(paramType, Map.class)) {
 				Object prop = paramType.newInstance();
