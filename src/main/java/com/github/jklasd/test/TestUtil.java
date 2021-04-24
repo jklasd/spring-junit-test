@@ -69,7 +69,7 @@ public class TestUtil {
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
 	private void processConfig() {
-		LazyMybatisMapperBean.configure();
+		LazyMybatisMapperBean.getInstance().configure();
 		
 		XmlBeanUtil.process();
 		JavaBeanUtil.process();

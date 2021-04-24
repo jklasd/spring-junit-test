@@ -167,7 +167,7 @@ public class JavaBeanUtil {
 				if(scan != null) {
 					String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
 					if(packagePath.length>0) {
-						LazyMybatisMapperBean.processConfig(configura,packagePath);
+						LazyMybatisMapperBean.getInstance().processConfig(configura,packagePath);
 					}
 				}
 			});

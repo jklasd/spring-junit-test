@@ -7,11 +7,14 @@ import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.db.TranstionalManager;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
 
 import lombok.Getter;
@@ -66,17 +69,34 @@ public class LazyImple implements InvocationHandler {
 			if(inited && tagertObj != null) {
 				initAttr();
 			}
-			if(newObj != null) {
-				AopContextSuppert.setProxyObj(newObj);
+			AopContextSuppert.setProxyObj(proxy);
+			
+			TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+			TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+			TransactionStatus txStatus = null;
+			if(txInfo != null) {
+			    TranstionalManager.getInstance().setTxInfo(txInfo);
+                if(oldTxInfo!=null) {
+                    //看情况开启新事务
+                    if(txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED
+                        || txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {
+                        txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+                    }
+                }else {
+                    //开启事务
+                    txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+                }
 			}
 			LazyBeanProcess.processLazyConfig(newObj, method,args);
 			Object result = method.invoke(newObj, args);
 			AopContextSuppert.setProxyObj(oldObj);
-//			if(!isDbConnect) {
-//				// 处理openSession
-//				Transactional transactional = method.getAnnotation(Transactional.class);
-//			}
-//			LazyMybatisMapperBean.over();
+			
+			if(oldTxInfo != null) {
+                TranstionalManager.getInstance().setTxInfo(oldTxInfo);
+            }
+			if(txStatus != null) {
+			    TranstionalManager.getInstance().commitTx(txStatus);
+			}
 			return result;
 		}catch (Exception e) {
 			Throwable tmp = e;
@@ -128,7 +148,7 @@ public class LazyImple implements InvocationHandler {
 		} else {
 			if(LazyMybatisMapperBean.isMybatisBean(tag)) {//判断是否是Mybatis mapper
 				isDbConnect = true;
-				return LazyMybatisMapperBean.buildBean(tag);//防止线程池执行时，出现获取不到session问题
+				return LazyMybatisMapperBean.getInstance().buildBean(tag);//防止线程池执行时，出现获取不到session问题
 			}else {
 				if(beanName == null) {
 					/**

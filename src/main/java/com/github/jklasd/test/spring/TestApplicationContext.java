@@ -448,8 +448,8 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 		return beanFactory;
 	}
 	
-	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>(256);
-	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>(256);
+	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>();
+	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>();
 	public void registBean(String beanName, Object newBean ,Class beanClass) {
 		if(newBean!=null) {
 			if(StringUtils.isNotBlank(beanName)) {

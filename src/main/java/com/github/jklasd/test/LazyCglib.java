@@ -12,9 +12,13 @@ import org.springframework.aop.framework.AopContextSuppert;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
+import org.springframework.transaction.TransactionDefinition;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
+import com.github.jklasd.test.db.TranstionalManager;
 import com.github.jklasd.test.mq.LazyMQBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.spring.XmlBeanUtil;
@@ -58,7 +62,7 @@ public class LazyCglib implements MethodInterceptor {
 	@Getter
 	private LazyBeanInitProcess initedProcess = new LazyBeanInitProcess() {
 		public void init(Map<String, Object> attrParam) {
-			inited = true;
+		    inited = true;
 			if(attrParam != null) {
 				attr.putAll(attrParam);
 			}
@@ -128,28 +132,57 @@ public class LazyCglib implements MethodInterceptor {
 	@Getter
 	private boolean hasFinal;
 	@Override
-	public Object intercept(Object arg0, Method method, Object[] param, MethodProxy arg3) throws Throwable {
+	public Object intercept(Object poxy, Method method, Object[] param, MethodProxy arg3) throws Throwable {
 		try {
-			if(!method.isAccessible()) {
-				if(!Modifier.isPublic(method.getModifiers())) {
-					log.warn("非公共方法，代理执行会出现异常 class:{},method:{}",tag,method);
-					return null;
-				}
-			}
 			Object oldObj = null;
 			try {
 				oldObj = AopContext.currentProxy();
 			} catch (IllegalStateException e) {
 			}
+			
 			Object newObj = getTagertObj();
 			if(inited && tagertObj != null) {
-				initAttr();
+                initAttr();
+            }
+			
+			if(!Modifier.isPublic(method.getModifiers())) {
+//			    log.warn("非公共方法 class:{},method:{}",tag,method.getName());
+			    if(!method.isAccessible()) {
+			        method.setAccessible(true);
+			    }
+			    if(newObj!=null) {
+			        return method.invoke(newObj, param);
+			    }
+			    return null;
 			}
+			AopContextSuppert.setProxyObj(poxy);
+			
 			LazyBeanProcess.processLazyConfig(newObj, method,param);
-			if(newObj != null) {
-				AopContextSuppert.setProxyObj(newObj);
-			}
+			TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+			TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+            TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+            TransactionStatus txStatus = null;
+            if(txInfo != null) {
+                TranstionalManager.getInstance().setTxInfo(txInfo);
+                if(oldTxInfo!=null) {
+                    //看情况开启新事务
+                    if(txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED
+                        || txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {
+                        txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+                    }
+                }else {
+                    //开启事务
+                    txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+                }
+            }
 			Object result = method.invoke(newObj, param);
+			if(oldTxInfo != null) {
+                TranstionalManager.getInstance().setTxInfo(oldTxInfo);
+            }
+            if(txStatus != null) {
+                TranstionalManager.getInstance().commitTx(txStatus);
+            }
+			TranstionalManager.getInstance().processAnnoInfo(method, newObj);
 			AopContextSuppert.setProxyObj(oldObj);
 			return result;
 		} catch (Exception e) {
@@ -225,7 +258,7 @@ public class LazyCglib implements MethodInterceptor {
 			}else if(LazyMQBean.isBean(tag)) {
 				tagertObj = LazyMQBean.buildBean(tag);
 			}
-			if(tagertObj==null) {
+			if(tagertObj==null && !inited) {
 				tagertObj = LazyBean.findCreateBeanFromFactory(tag,beanName);
 			}
 		}

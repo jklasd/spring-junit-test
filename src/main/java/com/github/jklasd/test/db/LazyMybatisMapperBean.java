@@ -5,7 +5,6 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.List;
-import java.util.Map;
 
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
@@ -26,13 +25,16 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyMybatisMapperBean {
-//	private static DataSource dataSource;
+    private static volatile LazyMybatisMapperBean bean;
+    public static LazyMybatisMapperBean getInstance() {
+        if(bean == null) {
+            bean = new LazyMybatisMapperBean();
+        }
+        return bean;
+    }
 	private static Object factory;
-	public synchronized static Object buildBean(Class<?> classBean) {
+	public synchronized Object buildBean(Class<?> classBean) {
 		try {
-			if (factory == null) {
-				buildMybatisFactory();
-			}
 			return getMapper(classBean);
 		} catch (Exception e) {
 			log.error("获取Mapper", e);
@@ -59,19 +61,26 @@ public class LazyMybatisMapperBean {
 	private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
 	private static final Class<?> factoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionFactoryBean");
 	private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
-	private static Object sqlSessionTemplate;
+	
+	private Object sqlSessionTemplate;
+	public Object getSqlSessionTemplate() throws Exception{
+	    if (factory == null) {
+            buildMybatisFactory();
+        }
+	    if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
+            Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
+            sqlSessionTemplate = structor.newInstance(factory);
+        }
+        return sqlSessionTemplate;
+    }
 
-	private static Object getMapper(Class<?> classBean) throws Exception {
-		if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
-			Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
-			sqlSessionTemplate = structor.newInstance(factory);
-		}
-		Object tag = InvokeUtil.invokeMethod(sqlSessionTemplate, "getMapper", classBean);
+	private Object getMapper(Class<?> classBean) throws Exception {
+		Object tag = InvokeUtil.invokeMethod(getSqlSessionTemplate(), "getMapper", classBean);
 		return tag;
 	}
 
 	@SuppressWarnings("rawtypes")
-	private static void buildMybatisFactory() {
+	private void buildMybatisFactory() {
 		if (factory == null) {
 			Object obj = TestUtil.getApplicationContext().getBean(factoryBeanClass);
 			if (obj != null) {
@@ -109,7 +118,7 @@ public class LazyMybatisMapperBean {
 		}
 	}
 
-	private static void processAnnaForFactory() {
+	private void processAnnaForFactory() {
 		if (factory == null) {
 			AssemblyUtil param = new AssemblyUtil();
 			param.setTagClass(factoryClass);
@@ -146,6 +155,12 @@ public class LazyMybatisMapperBean {
 			}
 			loadScaned = true;
 		}
+		Class mapperAnn = ScanUtil.loadClass("org.apache.ibatis.annotations.Mapper");
+		if(mapperAnn!=null) {
+		    if(c.getAnnotation(mapperAnn) != null) {
+		        return true;
+		    }
+		}
 		return !mybatisScanPathList.isEmpty() && mybatisScanPathList.stream()
 				.anyMatch(mybatisScanPath -> c.getPackage().getName().contains(mybatisScanPath));
 	}
@@ -167,7 +182,7 @@ public class LazyMybatisMapperBean {
 //		}
 //	}
 
-	public synchronized static void processConfig(Class<?> configura, String[] packagePath) {
+	public synchronized void processConfig(Class<?> configura, String[] packagePath) {
 		mybatisScanPathList.addAll(Lists.newArrayList(packagePath));
 	}
 
@@ -175,7 +190,7 @@ public class LazyMybatisMapperBean {
 
 	}
 
-	public static void configure() {
+	public void configure() {
 		// 判断是否存在类
 		LazyBeanProcess.putAllMethod("org.mybatis.spring.SqlSessionFactoryBean", new LazyConfigProcess() {
 			private Class<?> abstractRoutingDataSource = ScanUtil
@@ -215,4 +230,6 @@ public class LazyMybatisMapperBean {
 //			}
 //		});
 	}
+
+    
 }
