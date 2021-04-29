@@ -24,6 +24,12 @@ public class TraversingUtils<T,CountDownLatch> {
 		this.list = listData;
 		this.obj = obj;
 	}
+	protected TraversingUtils(List<T> listData) {
+		this.list = listData;
+	}
+	public static <T,CountDownLatch> TraversingUtils<T,CountDownLatch> buildTraversingUtils(List<T> listData) {
+		return new TraversingUtils<>(listData);
+	}
 	
 	public void forEach(TraversingFunction<? super T, CountDownLatch ,Integer> action) {
 		AtomicInteger index = new AtomicInteger();

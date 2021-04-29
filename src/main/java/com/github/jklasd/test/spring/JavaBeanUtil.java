@@ -1,5 +1,6 @@
 package com.github.jklasd.test.spring;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -9,14 +10,15 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
-import org.mybatis.spring.annotation.MapperScan;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -155,20 +157,30 @@ public class JavaBeanUtil {
 	 * 扫描java代码相关配置
 	 */
 	public static void process() {
-		List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
 		/**
 		 * 处理数据库
 		 */
-		configurableList.stream().filter(configura ->configura.getAnnotation(MapperScan.class)!=null).forEach(configura ->{
-			MapperScan scan = configura.getAnnotation(MapperScan.class);
-			String[] packagePath = scan.basePackages();
-			if(packagePath.length>0) {
-				LazyMybatisMapperBean.processConfig(configura,packagePath);
-			}
-		});
+		if(LazyMybatisMapperBean.useMybatis()) {
+			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
+			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
+				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
+				if(scan != null) {
+					String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
+					if(packagePath.length>0) {
+						LazyMybatisMapperBean.getInstance().processConfig(configura,packagePath);
+					}
+				}
+			});
+		}
 		/**
-		 * 处理dubbo服务
+		 * 处理dubbo服务类
 		 */
+		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass());
+			dubboServiceList.stream().forEach(dubboServiceClass ->{
+				LazyDubboBean.putAnnService(dubboServiceClass);
+			});
+		}
 	}
 
 }

@@ -12,7 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
-	private Type type;
+	/**
+     *
+     */
+    private static final long serialVersionUID = 3004906006576222643L;
+    private Type type;
 	public ObjectProviderImpl(Type type) {
 		this.type = type;
 	}
@@ -30,9 +34,9 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 	@Override
 	public Object getIfAvailable() throws BeansException {
 		if(type != null) {
-			Class tagC = (Class) type;
+			Class<?> tagC = (Class<?>) type;
 			try {
-				Class builderC = Class.forName(tagC.getName()+"$Builder");
+				Class<?> builderC = Class.forName(tagC.getName()+"$Builder");
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
 					if(m.getReturnType() == tagC) {

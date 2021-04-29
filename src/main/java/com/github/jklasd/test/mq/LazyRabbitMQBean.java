@@ -1,43 +1,50 @@
 package com.github.jklasd.test.mq;
 
-import java.util.Map;
+import java.lang.reflect.InvocationTargetException;
 
-import org.springframework.amqp.core.AmqpAdmin;
-import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
-import org.springframework.amqp.rabbit.core.RabbitMessagingTemplate;
-import org.springframework.amqp.rabbit.core.RabbitTemplate;
+import org.w3c.dom.Element;
 
 import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.InvokeUtil;
+import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
-import com.rabbitmq.client.ConnectionFactory;
 /**
  * 构建rabbit应用
  * @author jubin.zhang
  *
  */
 public class LazyRabbitMQBean extends LazyMQBean{
-	@Override
-	public Object buildBeanProcess(Class classBean) throws InstantiationException, IllegalAccessException {
+    LazyRabbitMQBean() {}
+    private static LazyRabbitMQBean bean = new LazyRabbitMQBean();
+    public static LazyRabbitMQBean getInstance() {
+        return bean;
+    }
+    private Class<?> AmqpAdminC = ScanUtil.loadClass("org.springframework.amqp.core.AmqpAdmin");
+    private Class<?>  RabbitTemplateC = ScanUtil.loadClass("org.springframework.amqp.rabbit.core.RabbitTemplate");
+    private Class<?>  ConnectionFactoryC = ScanUtil.loadClass("com.rabbitmq.client.ConnectionFactory");
+    private Class<?>  RabbitAdminC = ScanUtil.loadClass("org.springframework.amqp.rabbit.core.RabbitAdmin");
+    private Class<?>  RabbitMessagingTemplateC = ScanUtil.loadClass("org.springframework.amqp.rabbit.core.RabbitMessagingTemplate");
+    
+	public Object buildBeanProcess(Class<?> classBean) throws InstantiationException, IllegalAccessException {
 		
 		if(factory != null) {
-			if(classBean == AmqpAdmin.class) {
+			if(classBean == AmqpAdminC) {
 				if(admin == null) {
-					if(template == null) {
-						buildRabbitTemplate();
-					}
-					admin = new RabbitAdmin(template.getConnectionFactory());
+					try {
+                        admin = RabbitAdminC.getConstructors()[0].newInstance(
+                            InvokeUtil.invokeMethod(buildRabbitTemplate(),"getConnectionFactory"));
+                    } catch (IllegalArgumentException | InvocationTargetException | SecurityException e) {
+                         e.printStackTrace();
+                    }
+					//new RabbitAdmin(template.getConnectionFactory());
 				}
 				return admin;
-			}else if(classBean == RabbitMessagingTemplate.class) {
-				RabbitMessagingTemplate objM = (RabbitMessagingTemplate) classBean.newInstance();
-				if(template == null) {
-					buildRabbitTemplate();
-				}
-				objM.setRabbitTemplate(template);
+			}else if(classBean == RabbitMessagingTemplateC) {
+				Object objM = RabbitMessagingTemplateC.newInstance();
+				InvokeUtil.invokeMethod(objM, "setRabbitTemplate", buildRabbitTemplate());
 				return objM;
-			}else if(classBean == RabbitTemplate.class) {
+			}else if(classBean == RabbitTemplateC) {
 				if(template == null) {
 					buildRabbitTemplate();
 				}
@@ -46,39 +53,42 @@ public class LazyRabbitMQBean extends LazyMQBean{
 		}else {
 			AssemblyUtil assemblyData = new AssemblyUtil();
 			assemblyData.setTagClass(classBean);
-			Object obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+			Object obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 			if(obj == null) {
 				assemblyData.setNameMapTmp(ScanUtil.findClassMap("org.springframework.boot.autoconfigure.amqp"));
-				obj = ScanUtil.findCreateBeanFromFactory(assemblyData);
+				obj = LazyBean.findCreateBeanFromFactory(assemblyData);
 				return obj;
 			}
+			return obj;
 		}
 		return null;
 	}
-	private RabbitTemplate template = null;
-	private static ConnectionFactory factory;
-	private void buildRabbitTemplate() throws InstantiationException, IllegalAccessException {
+	private Object template = null;
+	private Object factory;
+	private Object buildRabbitTemplate() throws InstantiationException, IllegalAccessException {
 		if(factory != null) {
-			this.template = RabbitTemplate.class.newInstance();
-//		Connection connection = factory.newConnection();
-			template.setConnectionFactory(new CachingConnectionFactory(factory));
+		    if(template == null) {
+		        template = RabbitTemplateC.newInstance(); 
+		    }
+			InvokeUtil.invokeMethod(template, "setConnectionFactory", factory);
 		}
+		return template;
 	}
 	
-	public static void loadConfig(Map<String, String> contextAttr) {
+	public void loadConfig(Element contextAttr) throws InstantiationException, IllegalAccessException {
 		if(factory == null) {
 			// 定义一个连接工厂
-			factory = new ConnectionFactory();
+			factory = ConnectionFactoryC.newInstance();
 			// 设置服务端地址（域名地址/ip）
-			factory.setHost(TestUtil.getPropertiesValue(contextAttr.get("host")));
+			InvokeUtil.invokeMethod(factory, "setHost", TestUtil.getPropertiesValue(contextAttr.getAttribute("host")));
 			// 设置服务器端口号
-			factory.setPort(Integer.valueOf(TestUtil.getPropertiesValue(contextAttr.get("port"),"5672")));
+			InvokeUtil.invokeMethod(factory, "setPort", Integer.valueOf(TestUtil.getPropertiesValue(contextAttr.getAttribute("port"),"5672")));
 			// 设置虚拟主机(相当于数据库中的库)
-			factory.setVirtualHost("/");
+			InvokeUtil.invokeMethod(factory, "setVirtualHost", "/");
 			// 设置用户名
-			factory.setUsername(TestUtil.getPropertiesValue(contextAttr.get("username")));
+			InvokeUtil.invokeMethod(factory, "setUsername", TestUtil.getPropertiesValue(contextAttr.getAttribute("username")));
 			// 设置密码
-			factory.setPassword(TestUtil.getPropertiesValue(contextAttr.get("password")));
+			InvokeUtil.invokeMethod(factory, "setPassword", TestUtil.getPropertiesValue(contextAttr.getAttribute("password")));
 		}
 	}
 }
