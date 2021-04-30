@@ -176,11 +176,12 @@ public class LazyCglib implements MethodInterceptor {
                 }
             }
 			Object result = method.invoke(newObj, param);
+			if(txStatus != null) {
+			    TranstionalManager.getInstance().commitTx(txStatus);
+			    TranstionalManager.getInstance().clearThradLocal();
+			}
 			if(oldTxInfo != null) {
                 TranstionalManager.getInstance().setTxInfo(oldTxInfo);
-            }
-            if(txStatus != null) {
-                TranstionalManager.getInstance().commitTx(txStatus);
             }
 			TranstionalManager.getInstance().processAnnoInfo(method, newObj);
 			AopContextSuppert.setProxyObj(oldObj);

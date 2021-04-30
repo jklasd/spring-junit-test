@@ -54,7 +54,15 @@ public class TestUtil {
 	private TestUtil() {
 		log.info("--实例化TestUtil--");
 	}
-
+	private static volatile TestUtil bean;
+	public synchronized static TestUtil getInstance() {
+	    if(bean!=null) {
+	        return bean;
+	    }
+	    bean = new TestUtil();
+	    bean.setApplicationContext(null);
+	    return bean;
+	}
 	private static TestApplicationContext applicationContext;
 
 	public static TestApplicationContext getApplicationContext() {
@@ -68,7 +76,13 @@ public class TestUtil {
 	/**
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
+	private volatile boolean processed;
 	private void processConfig() {
+	    if(processed) {
+            return;
+        }
+	    processed = true;
+	    log.info("====加载配置====");
 		LazyMybatisMapperBean.getInstance().configure();
 		
 		XmlBeanUtil.process();
@@ -224,14 +238,13 @@ public class TestUtil {
 	 * 
 	 * @param obj 执行目标对象
 	 */
+	private static volatile boolean processInited;
 	public static void startTestForNoContainer(Object obj) {
-		TestUtil launch = new TestUtil();
-		launch.setApplicationContext(null);
+		TestUtil launch = getInstance();
 		loadProp();
 		LazyBean.processAttr(obj, obj.getClass());
 //		AopContextSuppert.setProxyObj(obj);
 		LogbackUtil.resetLog();
-		log.info("====加载配置====");
 		ScanUtil.loadAllClass();
 		launch.processConfig();
 	}

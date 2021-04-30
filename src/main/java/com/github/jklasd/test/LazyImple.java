@@ -91,18 +91,19 @@ public class LazyImple implements InvocationHandler {
 			Object result = method.invoke(newObj, args);
 			AopContextSuppert.setProxyObj(oldObj);
 			
-			if(oldTxInfo != null) {
-                TranstionalManager.getInstance().setTxInfo(oldTxInfo);
-            }
 			if(txStatus != null) {
 			    TranstionalManager.getInstance().commitTx(txStatus);
+			    TranstionalManager.getInstance().clearThradLocal();
+			}
+			if(oldTxInfo != null) {
+			    TranstionalManager.getInstance().setTxInfo(oldTxInfo);
 			}
 			return result;
 		}catch (Exception e) {
 			Throwable tmp = e;
-			if(e.getCause()!=null) {
-				tmp = e.getCause();
-			}
+//			if(e.getCause()!=null) {
+//				tmp = e.getCause();
+//			}
 			log.error("代理类执行异常=>{},->{}",tag,tmp.getMessage());
 			throw tmp;
 		}

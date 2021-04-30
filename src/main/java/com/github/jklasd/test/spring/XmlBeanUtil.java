@@ -31,6 +31,12 @@ import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 
+ * @author jubin.zhang
+ * @date 2021/04/24
+ * 
+ */
 @Slf4j
 public class XmlBeanUtil {
 	public static List<String> xmlPathList = Lists.newArrayList();
@@ -46,11 +52,14 @@ public class XmlBeanUtil {
 			xmlPathList.add(path);
 		}
 	}
-
+	
 	public static void process() {
 		xmlPathList.forEach(xml -> readNode(xml));
 	}
-
+	/**
+	 * 待支持 spring.handlers spring.schemas
+	 * @param xml 文件路径
+	 */
 	private static void readNode(String xml) {
 		Resource file = TestUtil.getApplicationContext().getResource(xml);
 		if (file != null) {

@@ -28,7 +28,8 @@ import lombok.extern.slf4j.Slf4j;
 public class JavaBeanUtil {
 	private static Map<Class,Object> factory = Maps.newHashMap();
 	private static Map<String,Object> cacheBean = Maps.newHashMap();
-	public static Object buildBean(Class configClass, Method method, AssemblyUtil assemblyData) {
+	@SuppressWarnings("unchecked")
+    public static Object buildBean(Class configClass, Method method, AssemblyUtil assemblyData) {
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
 			return cacheBean.get(key);
@@ -155,6 +156,8 @@ public class JavaBeanUtil {
 	}
 	/**
 	 * 扫描java代码相关配置
+	 * 
+	 * 待支持 spring.factories
 	 */
 	public static void process() {
 		/**
