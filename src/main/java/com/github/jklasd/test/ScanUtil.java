@@ -149,12 +149,17 @@ public class ScanUtil {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
 							JarFile jFile = ((JarURLConnection) connection).getJarFile();
-							Enumeration<JarEntry> jarEntrys = jFile.entries();
-							while (jarEntrys.hasMoreElements()) {
-								String name = jarEntrys.nextElement().getName();
-								if(name.contains(".class"))
-								classNames.add(name.replace("/", ".").replace("\\", "."));
-							}
+//							Enumeration<JarEntry> jarEntrys = jFile.entries();
+//							while (jarEntrys.hasMoreElements()) {
+//								String name = jarEntrys.nextElement().getName();
+//								if(name.contains(".class"))
+//								classNames.add(name.replace("/", ".").replace("\\", "."));
+//							}
+							CountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
+							    String name = JarEntry.getName();
+                              if(name.contains(".class"))
+                                  classNames.add(name.replace("/", ".").replace("\\", "."));
+							});
 						}
 					} catch (Exception e) {
 						log.error("不能加载class文件=>{}",url.getPath());
