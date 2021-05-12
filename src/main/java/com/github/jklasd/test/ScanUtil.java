@@ -1,23 +1,25 @@
 package com.github.jklasd.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -29,9 +31,10 @@ import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
-import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.github.jklasd.util.CountDownLatchUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -157,8 +160,27 @@ public class ScanUtil {
 //							}
 							CountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 							    String name = JarEntry.getName();
-                              if(name.contains(".class"))
+                              if(name.contains(".class")) {
                                   classNames.add(name.replace("/", ".").replace("\\", "."));
+                              }else {
+                                  if(name.contains("spring.handlers")) {
+//                                      System.out.println(name);
+                                      try {
+                                          InputStream is = jFile.getInputStream(JarEntry);
+                                          BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                                          String line = null;
+                                          while((line = br.readLine()) != null) {
+                                              String[] url_handler = line.split("=");
+                                              Class nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
+                                              if(nameSpaceHandlerC!=null) {
+                                                  XmlBeanUtil.getInstance().putNameSpace(url_handler[0].replace("\\", ""), nameSpaceHandlerC);
+                                              }
+                                          }
+                                    } catch (IOException e) {
+                                         e.printStackTrace();
+                                    }
+                                  }
+                              }
 							});
 						}
 					} catch (Exception e) {
@@ -174,7 +196,7 @@ public class ScanUtil {
 				 */
 				ImportResource resource = startClass.getAnnotation(ImportResource.class);
 				if(resource != null) {
-					XmlBeanUtil.loadXmlPath(resource.value());
+					XmlBeanUtil.getInstance().loadXmlPath(resource.value());
 				}
 			});
 			loadContextPathClass();

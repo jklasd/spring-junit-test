@@ -22,10 +22,11 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.TestApplicationContext;
-import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.github.jklasd.util.LogbackUtil;
 import com.google.common.collect.Sets;
 
@@ -85,7 +86,7 @@ public class TestUtil {
 	    log.info("====加载配置====");
 		LazyMybatisMapperBean.getInstance().configure();
 		
-		XmlBeanUtil.process();
+		XmlBeanUtil.getInstance().process();
 		JavaBeanUtil.process();
 
 		List<Class<?>> list = ScanUtil.findStaticMethodClass();

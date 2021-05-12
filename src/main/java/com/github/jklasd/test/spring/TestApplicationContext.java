@@ -29,8 +29,8 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.beanfactory.LazyBean;
 
 public class TestApplicationContext implements ConfigurableApplicationContext{
 
@@ -442,7 +442,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public ConfigurableListableBeanFactory getBeanFactory() throws IllegalStateException {
 		if(beanFactory == null) {
-			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+			beanFactory = new LazyListableBeanFactory(parentContext!=null?parentContext:this);
 		}
 		return beanFactory;
 	}

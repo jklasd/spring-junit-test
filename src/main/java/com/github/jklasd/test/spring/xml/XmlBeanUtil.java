@@ -1,4 +1,4 @@
-package com.github.jklasd.test.spring;
+package com.github.jklasd.test.spring.xml;
 
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
@@ -11,15 +11,31 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.xml.DefaultDocumentLoader;
+import org.springframework.beans.factory.xml.DelegatingEntityResolver;
+import org.springframework.beans.factory.xml.DocumentLoader;
+import org.springframework.beans.factory.xml.ResourceEntityResolver;
+import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
+import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.ResourceLoader;
+import org.springframework.util.xml.SimpleSaxErrorHandler;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.ErrorHandler;
+import org.xml.sax.InputSource;
 
-import com.github.jklasd.test.LazyBean;
+import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
@@ -38,28 +54,35 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class XmlBeanUtil {
+    private XmlBeanUtil() {}
+    private DocumentLoader documentLoader = new DefaultDocumentLoader();
+    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader((BeanDefinitionRegistry)TestUtil.getApplicationContext().getBeanFactory());
+    
 	public static List<String> xmlPathList = Lists.newArrayList();
 
 	private static Set<Class<?>> beanList = Sets.newHashSet();
 
-	public static boolean containClass(Class<?> tag) {
+	public synchronized boolean containClass(Class<?> tag) {
 		return beanList.contains(tag);
 	}
+	public synchronized boolean addClass(Class<?> tag) {
+        return beanList.add(tag);
+    }
 
-	public static void loadXmlPath(String... xmlPath) {
+	public synchronized void loadXmlPath(String... xmlPath) {
 		for (String path : xmlPath) {
 			xmlPathList.add(path);
 		}
 	}
 	
-	public static void process() {
+	public void process() {
 		xmlPathList.forEach(xml -> readNode(xml));
 	}
 	/**
 	 * 待支持 spring.handlers spring.schemas
 	 * @param xml 文件路径
 	 */
-	private static void readNode(String xml) {
+	public void readNode2(String xml) {
 		Resource file = TestUtil.getApplicationContext().getResource(xml);
 		if (file != null) {
 			DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
@@ -77,7 +100,7 @@ public class XmlBeanUtil {
 				if (beansList.getLength() > 0) {
 					Element nodeMap = (Element) beansList.item(0);
 					if (nodeMap.hasAttribute("xmlns:dubbo")) {
-						LazyDubboBean.processDubbo(document);
+//						LazyDubboBean.processDubbo(document);
 					} else {
 						NodeList beanList = document.getElementsByTagName("bean");
 						if(beanList.getLength()>0) {
@@ -104,7 +127,7 @@ public class XmlBeanUtil {
 			}
 		}
 	}
-
+	
 	private static void registerBean(NodeList beanList) {
 		Map<String,LazyBeanInitProcessImpl> tmpAttrMap = Maps.newHashMap();
 		int size = beanList.getLength();
@@ -136,7 +159,7 @@ public class XmlBeanUtil {
 //		log.info(className);
 		Map<String, Object> attr = loadXmlNodeProp(ele.getChildNodes());
 		loadXmlNodeProp2(attr,tmpAttrMap);
-		processValue(attr, eleClass);
+		getInstance().processValue(attr, eleClass);
 		processAttr(className, attr);
 		LazyBeanInitProcess processer = tmpAttrMap.get(key).getProcess();
 //		if(ele.hasAttribute("init-method")) {
@@ -174,11 +197,13 @@ public class XmlBeanUtil {
 		return null;
 	}
 
-	private static void processValue(Map<String, Object> attr, Class<?> tabClass) {
+	public void processValue(Map<String, Object> attr, Class<?> tabClass) {
 		Map<String,Boolean> finded = Maps.newHashMap();
 		Map<String,Boolean> sameType = Maps.newHashMap();
 		attr.keySet().forEach(field -> {
 			Object val = attr.get(field);
+			if(val == null) 
+			    return;
 			String mName = "set" + field.substring(0, 1).toUpperCase() + field.substring(1);
 			Method[] methods = tabClass.getDeclaredMethods();
 			for (Method m : methods) {
@@ -226,7 +251,7 @@ public class XmlBeanUtil {
 	}
 
 	@SuppressWarnings({"unchecked", "rawtypes"})
-    private static Object processTypeValue(String field, Object val, Class<?> paramType) {
+    public Object processTypeValue(String field, Object val, Class<?> paramType) {
 		try {
 			if (ScanUtil.isImple(paramType, Map.class)) {
 				Object prop = paramType.newInstance();
@@ -262,7 +287,7 @@ public class XmlBeanUtil {
 		} catch (Exception e) {
 			log.warn("其他类型");
 		}
-		return null;
+		return val;
 	}
 
 	private static void loadXmlNodeProp2(Map<String, Object> attr, Map<String, LazyBeanInitProcessImpl> tmpAttrMap) {
@@ -402,4 +427,79 @@ public class XmlBeanUtil {
 		}
 		return list;
 	}
+
+	private static XmlBeanUtil bean;
+    public static XmlBeanUtil getInstance() {
+        if(bean == null) {
+            bean = new XmlBeanUtil();
+        }
+         return bean;
+    }
+    
+    protected final Log logger = LogFactory.getLog(getClass());
+    private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
+
+    public void readNode(String xml) {
+        Resource file = TestUtil.getApplicationContext().getResource(xml);
+        if (file != null) {
+            try {
+//            BeanDefinitionParserDelegate beanDefinitionParserDelegate = new BeanDefinitionParserDelegate(context);
+//            ParserContext parserContext = new ParserContext(context, beanDefinitionParserDelegate);
+                log.info("load:{}",file.getFile().getPath());
+                XmlReaderContext context = xmlReader.createReaderContext(file);
+                LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
+                Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
+                    errorHandler,(int)InvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
+                
+                parsor.registerBeanDefinitions(document,context);
+            } catch (Exception e) {
+                log.error("加载xml", e);
+            }
+        }
+    }
+    
+    private Map<String, LazyBeanInitProcessImpl> tmpAttrMap = Maps.newConcurrentMap();
+    public LazyBeanInitProcessImpl getProcess(String key) {
+        return tmpAttrMap.get(key);
+    }
+    public void loadAttrMapProcess(String key) {
+        if(!tmpAttrMap.containsKey(key)) {
+            tmpAttrMap.put(key, new LazyBeanInitProcessImpl());
+        }
+    }
+
+    private static Map<String, String> loadXmlns(NamedNodeMap attributes) {
+        Map<String, String> parsorMap = Maps.newHashMap();
+        for (int i = 0; i < attributes.getLength(); i++) {
+            String name = attributes.item(i).getNodeName();
+            String prefix = "xmlns:";
+            if (name.startsWith(prefix)) {
+                String value = attributes.item(i).getNodeValue();
+                // 使用的解析器
+                parsorMap.put(name.replace(prefix, ""), value);
+            }
+        }
+        return parsorMap;
+    }
+    
+    protected EntityResolver getEntityResolver(XmlBeanDefinitionReader reader) {
+        EntityResolver entityResolver = null;
+        ResourceLoader resourceLoader = reader.getResourceLoader();
+        if (resourceLoader != null) {
+            entityResolver = new ResourceEntityResolver(resourceLoader);
+        } else {
+            entityResolver = new DelegatingEntityResolver(reader.getBeanClassLoader());
+        }
+        return entityResolver;
+    }
+    
+    private static Map<String, Class<?>> xmlParsors = Maps.newConcurrentMap();
+    public Set<String> getNamespaceURIList(){
+        return xmlParsors.keySet();
+    }
+    public void putNameSpace(String mapStr, Class<?> NamespaceHandlerC) {
+        if (!xmlParsors.containsKey(mapStr)) {
+            xmlParsors.put(mapStr, NamespaceHandlerC);
+        }
+    }
 }

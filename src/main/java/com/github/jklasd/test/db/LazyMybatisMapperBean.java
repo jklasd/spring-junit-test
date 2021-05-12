@@ -8,10 +8,10 @@ import java.util.List;
 
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.LazyBeanProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyConfigProcess;
-import com.github.jklasd.test.LazyCglib;
+import com.github.jklasd.test.beanfactory.LazyBean;
+import com.github.jklasd.test.beanfactory.LazyCglib;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.google.common.collect.Lists;

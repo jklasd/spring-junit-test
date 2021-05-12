@@ -39,6 +39,9 @@ public class TranstionalManager {
     
     private AnnotationTransactionAttributeSource atas = new AnnotationTransactionAttributeSource();
     public TransactionAttribute processAnnoInfo(Method method,Object obj) throws Exception {
+        if(obj == null) {
+            return null;
+        }
         Class<?> tagClass = obj.getClass();
         if(tagClass == DataSourceTransactionManager.class) {
             return null;

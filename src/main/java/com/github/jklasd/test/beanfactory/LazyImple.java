@@ -1,4 +1,4 @@
-package com.github.jklasd.test;
+package com.github.jklasd.test.beanfactory;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -11,6 +11,7 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
+import com.github.jklasd.test.LazyBeanProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
@@ -142,8 +143,8 @@ public class LazyImple implements InvocationHandler {
 			}
 		}
 		
-		if(LazyDubboBean.isDubbo(tag)) {//，判断是否是Dubbo服务
-			tagertObj = LazyDubboBean.buildBean(tag);
+		if(LazyDubboBean.getInstance().isDubboNew(tag)) {//，判断是否是Dubbo服务
+			tagertObj = LazyDubboBean.getInstance().buildBeanNew(tag);
 		}else if(LazyMongoBean.isMongo(tag)) {//，判断是否是Mongo
 			tagertObj = LazyMongoBean.buildBean(tag,beanName);
 		} else {

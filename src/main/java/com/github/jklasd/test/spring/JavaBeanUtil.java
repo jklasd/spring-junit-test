@@ -15,8 +15,8 @@ import org.springframework.context.annotation.Configuration;
 
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.google.common.collect.Maps;

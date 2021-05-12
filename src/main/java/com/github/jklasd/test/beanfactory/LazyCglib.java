@@ -1,4 +1,4 @@
-package com.github.jklasd.test;
+package com.github.jklasd.test.beanfactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -16,12 +16,15 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
+import com.github.jklasd.test.InvokeUtil;
+import com.github.jklasd.test.LazyBeanProcess;
+import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.db.TranstionalManager;
 import com.github.jklasd.test.mq.LazyMQBean;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
-import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -267,7 +270,7 @@ public class LazyCglib implements MethodInterceptor {
 			ConfigurationProperties propConfig = (ConfigurationProperties) tag.getAnnotation(ConfigurationProperties.class);
 			if(tagertObj == null){
 				if(!LazyBean.existBean(tag)) {
-					if(!XmlBeanUtil.containClass(tag)) {
+					if(!XmlBeanUtil.getInstance().containClass(tag)) {
 						if(propConfig==null 	|| !ScanUtil.findCreateBeanForConfigurationProperties(tag)) {
 							throw new RuntimeException(tag.getName()+" Bean 不存在");
 						}
@@ -304,10 +307,12 @@ public class LazyCglib implements MethodInterceptor {
 		inited = false;
 		attr.forEach((k,v)->{
 			Object value = v;
-			if(v.toString().contains("ref:")) {
-				value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
+			if(v!=null) {
+			    if(v.toString().contains("ref:")) {
+			        value = LazyBean.buildProxy(null, v.toString().replace("ref:", ""));
+			    }
+			    LazyBean.setAttr(k, tagertObj, tag, value);
 			}
-			LazyBean.setAttr(k, tagertObj, tag, value);
 		});
 		beanMethods.keySet().stream().filter(key -> Objects.equal(key, "init-method")).forEach(key -> {
 			InvokeUtil.invokeMethod(tagertObj, beanMethods.get(key));

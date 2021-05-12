@@ -6,9 +6,9 @@ import org.w3c.dom.Element;
 
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.beanfactory.LazyBean;
 /**
  * 构建rabbit应用
  * @author jubin.zhang

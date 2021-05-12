@@ -1,4 +1,4 @@
-package com.github.jklasd.test;
+package com.github.jklasd.test.beanfactory;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -24,6 +24,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
@@ -33,7 +34,10 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
@@ -344,10 +348,14 @@ public class LazyBean {
 						fv = TestUtil.value(value.toString(), m.getParameterTypes()[0]);	
 					}
 					try {
-						if(fv.toString().contains("ref:")) {
-							
-						}
-						m.invoke(obj, fv);
+					    if(fv != null) {
+					        if(fv.toString().contains("ref:")) {
+					            
+					        }
+					        m.invoke(obj, fv);
+					    }else {
+					        log.warn("field:{}=>{}",field,value);
+					    }
 						return true;
 					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 						e.printStackTrace();
@@ -725,5 +733,8 @@ public class LazyBean {
 		}
 		return obj;
 	}
+    public static Object buildProxy(BeanDefinition tmpBd) {
+         return buildProxy(ScanUtil.loadClass(tmpBd.getBeanClassName()));
+    }
 }
 

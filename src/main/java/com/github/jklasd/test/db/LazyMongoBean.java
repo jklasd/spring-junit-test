@@ -3,8 +3,8 @@ package com.github.jklasd.test.db;
 import java.util.Map;
 
 import com.github.jklasd.test.AssemblyUtil;
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
