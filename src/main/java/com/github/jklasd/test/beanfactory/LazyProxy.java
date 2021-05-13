@@ -135,7 +135,7 @@ public abstract class LazyProxy {
      * 开启事务
      * @param oldTxInfo 旧事务信息
      * @param txInfo 新事务信息
-     * @return
+     * @return 事务状态信息
      */
     protected TransactionStatus openTransation(TransactionAttribute oldTxInfo, TransactionAttribute txInfo) {
         TransactionStatus txStatus = null;

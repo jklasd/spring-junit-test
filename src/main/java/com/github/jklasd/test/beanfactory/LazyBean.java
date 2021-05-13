@@ -91,6 +91,8 @@ public class LazyBean {
 	}
 	/**
 	 * 开始构建对象
+	 * @param beanModel 对象配置信息
+	 * @return 代理对象
 	 */
 	public static Object buildProxy(BeanModel beanModel) {
 	    Object obj = null;
@@ -157,7 +159,7 @@ public class LazyBean {
     }
 	/**
 	 * 构建代理对象
-	 * @param classBean 需要代理的类型
+	 * @param beanClass 需要代理的类型
 	 * @return 返回ProxyObject
 	 */
 	public static Object buildProxy(Class<?> beanClass) {

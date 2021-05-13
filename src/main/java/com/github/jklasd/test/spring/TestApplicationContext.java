@@ -502,10 +502,10 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	    return null;
 	}
 	/**
-	 * Bean 管理容器有待提高
-	 * @param beanName
-	 * @param newBean
-	 * @param beanClass
+	 * Bean 容器管理有待优化
+	 * @param beanName 对象名称
+	 * @param newBean 对象
+	 * @param beanClass 对象类型
 	 */
 	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
 		if(newBean!=null) {
