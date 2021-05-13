@@ -273,17 +273,16 @@ public class ScanUtil {
 	 * @param abstractClass 接口
 	 * @return 返回继承abstractClass 的类
 	 */
-	@SuppressWarnings("rawtypes")
-	public static List<Class> findClassExtendAbstract(Class abstractClass){
+	public static List<Class<?>> findClassExtendAbstract(Class abstractClass){
 		return findClassExtendAbstract(abstractClass, null,null);
 	}
-	public static List<Class> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
+	public static List<Class<?>> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
 		}
 		tmp.putAll(nameMap);
-		List<Class> list = Lists.newArrayList();
+		List<Class<?>> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
@@ -323,13 +322,13 @@ public class ScanUtil {
         }
         return list.isEmpty() ? null : list.get(0);
     }
-	public static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
+	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
 		}
 		tmp.putAll(nameMap);
-		List<Class> list = Lists.newArrayList();
+		List<Class<?>> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
@@ -350,8 +349,7 @@ public class ScanUtil {
 	 * @param interfaceClass 接口
 	 * @return 返回实现 interfaceClass 的类
 	 */
-	@SuppressWarnings("rawtypes")
-	public static List<Class> findClassImplInterface(Class interfaceClass){
+	public static List<Class<?>> findClassImplInterface(Class interfaceClass){
 		return findClassImplInterface(interfaceClass, null,null);
 	}
 	/**

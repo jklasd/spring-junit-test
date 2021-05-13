@@ -24,7 +24,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
@@ -81,22 +80,91 @@ public class LazyBean {
 	 * @param beanName 对象Name
 	 * @return 代理对象
 	 */
-	public static Object buildProxy(Class beanClass,String beanName) {
+	public static Object buildProxy(Class<?> beanClass,String beanName) {
 	    if(beanClass == null)
 	        throw new JunitException();
-		return buildProxy(beanClass, beanName, null);
+	    
+	    BeanModel model = new BeanModel();
+	    model.setBeanName(beanName);
+	    model.setTagClass(beanClass);
+		return buildProxy(model);
 	}
+	/**
+	 * 开始构建对象
+	 */
+	public static Object buildProxy(BeanModel beanModel) {
+	    Object obj = null;
+	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
+	        obj = TestUtil.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(),beanModel.getTagClass());
+	        if(obj!=null) {
+	            return obj;
+	        }
+	    }else {
+	        obj = TestUtil.getApplicationContext().getBeanByClass(beanModel.getTagClass());
+            if(obj!=null) {
+                return obj;
+            }
+	    }
+	    
+	    if(beanModel.getTagClass() == ApplicationContext.class
+	        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
+	        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
+	        return TestUtil.getApplicationContext();
+	    }
+	    obj = createBean(beanModel);
+	    TestUtil.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+        return obj;
+	}
+    private static Object createBean(BeanModel beanModel) {
+        Class<?> beanClass = beanModel.getTagClass();
+        Object tag = null;
+        /**
+         * 构建其他类型的代理对象
+         * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
+         * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
+         */
+        try {
+            if (beanClass.isInterface()) {
+                LazyImple2 handler = new LazyImple2(beanModel);
+                tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
+            } else {
+                LazyCglib2 handler = new LazyCglib2(beanModel);
+                if(!handler.hasFinalMethod()) {
+                    if(handler.getArgumentTypes().length>0) {
+                        Enhancer enhancer = new Enhancer();
+                        enhancer.setSuperclass(beanClass);
+                        enhancer.setCallback(handler);
+                        tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
+                    }else {
+                        tag = Enhancer.create(beanClass, handler);
+                    }
+                }else {
+                    tag = handler.getTagertObj();
+                }
+                if(tag == null) {
+                    log.error("不存在公开无参构造函数");
+                }
+            }
+        } catch (Exception e) {
+            if(e.getCause()!=null) {
+                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getCause().getMessage());
+            }else {
+                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getMessage());
+            }
+            e.printStackTrace();
+        }
+        return tag;
+    }
 	/**
 	 * 构建代理对象
 	 * @param classBean 需要代理的类型
 	 * @return 返回ProxyObject
 	 */
-	public static Object buildProxy(Class classBean) {
-		if (singleton.containsKey(classBean)) {
-			return singleton.get(classBean).get(0);
-		}
-		Object tag = buildProxy(classBean,getBeanName(classBean));
-		return tag;
+	public static Object buildProxy(Class<?> beanClass) {
+	    BeanModel model = new BeanModel();
+		model.setTagClass(beanClass);
+		model.setBeanName(getBeanName(beanClass));
+		return buildProxy(model);
 	}
 	public synchronized static String getBeanName(Class<?> classBean) {
 		Component comp = (Component) classBean.getAnnotation(Component.class);
@@ -424,9 +492,9 @@ public class LazyBean {
 	 * @return 返回bean
 	 */
 	public static Object findBean(String beanName) {
-		if(singletonName.containsKey(beanName)) {
-			return singletonName.get(beanName);
-		}
+//		if(singletonName.containsKey(beanName)) {
+//			return singletonName.get(beanName);
+//		}
 		if(beanName.equals("DEFAULT_DATASOURCE")) {
 			if(!singletonName.containsKey("dataSource")) {
 				if(singleton.get(DataSource.class) != null) {
@@ -447,8 +515,8 @@ public class LazyBean {
 	 */
 	public static Object findBean(String beanName,Class<?> type) {
 		if(type.isInterface()) {
-			List<Class> classList = ScanUtil.findClassImplInterface(type);
-			for(Class c : classList) {
+			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
+			for(Class<?> c : classList) {
 				Service ann = (Service) findByAnnotation(c,Service.class);
 				Component cAnn = (Component) findByAnnotation(c,Component.class);
 				if ((ann != null && ann.value().equals(beanName)) | (cAnn != null && cAnn.value().equals(beanName))) {
@@ -494,7 +562,7 @@ public class LazyBean {
 			return findBeanByInterface(interfaceClass);
 		}
 		if(interfaceClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
 			if(!cL.isEmpty()) {
 				Class c = cL.get(0);
 			}else {
@@ -511,7 +579,7 @@ public class LazyBean {
 	 * @param interfaceClass  接口
 	 * @return 返回实现接口的对象
 	 */
-	public static Object findBeanByInterface(Class interfaceClass) {
+	public static Object findBeanByInterface(Class<?> interfaceClass) {
 		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
 			return TestUtil.getApplicationContext();
@@ -522,12 +590,12 @@ public class LazyBean {
 			return TestUtil.getApplicationContext().getEnvironment();
 		}
 		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
 			if(!cL.isEmpty()) {
 				return LazyBean.buildProxy(cL.get(0));
 			}
 		}
-		List<Class> tags = ScanUtil.findClassImplInterface(interfaceClass);
+		List<Class<?>> tags = ScanUtil.findClassImplInterface(interfaceClass);
 		if (!tags.isEmpty()) {
 			return LazyBean.buildProxy(tags.get(0));
 		}
@@ -543,7 +611,7 @@ public class LazyBean {
 		return LazyBean.buildProxy(requiredType);
 	}
 	
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
+	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		AssemblyUtil asse = new AssemblyUtil();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
@@ -573,7 +641,7 @@ public class LazyBean {
 	@SuppressWarnings("unchecked")
 	public static List findListBean(Class<?> requiredType) {
 		List list = Lists.newArrayList();
-		List<Class> tags = null;
+		List<Class<?>> tags = null;
 		if(requiredType.isInterface()) {
 			tags = ScanUtil.findClassImplInterface(requiredType);
 		}else {
@@ -689,7 +757,7 @@ public class LazyBean {
 	public static Object createBeanForProxy(String beanName, Class<?> type) {
 		Class<?> tagClass = null;
 		if(type.isInterface()) {
-			List<Class> classList = ScanUtil.findClassImplInterface(type);
+			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
 			for(Class<?> c : classList) {
 				Service ann = (Service) findByAnnotation(c,Service.class);
 				Component cAnn = (Component) findByAnnotation(c,Component.class);
@@ -733,8 +801,5 @@ public class LazyBean {
 		}
 		return obj;
 	}
-    public static Object buildProxy(BeanDefinition tmpBd) {
-         return buildProxy(ScanUtil.loadClass(tmpBd.getBeanClassName()));
-    }
 }
 

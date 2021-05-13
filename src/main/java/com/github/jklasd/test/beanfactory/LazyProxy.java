@@ -2,6 +2,7 @@
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
@@ -12,8 +13,10 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBeanProcess;
 import com.github.jklasd.test.db.TranstionalManager;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.google.common.base.Objects;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -21,6 +24,17 @@ public abstract class LazyProxy {
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
+    @Getter
+    private Map<String,Object> attr;
+    public LazyProxy(BeanModel beanModel) {
+        this.beanModel = beanModel;
+        if(beanModel.getPropValue()!=null && beanModel.getPropValue().getPropertyValueList().size()>0) {
+            attr = XmlBeanUtil.getInstance().handPropValue(beanModel.getPropValue().getPropertyValueList(), beanModel.getTagClass());
+            XmlBeanUtil.getInstance().processValue(attr, beanModel.getTagClass());
+            beanModel.setPropValue(null);
+        }
+    }
+    
     protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
         try {
             Object oldObj = null;
@@ -57,7 +71,7 @@ public abstract class LazyProxy {
             AopContextSuppert.setProxyObj(oldObj);
             return result;
         } catch (Exception e) {
-            log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}", beanModel.getBeanClassName(), method.getName(),
+            log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}", beanModel.getTagClass(), method.getName(),
                 e.getMessage());
             Throwable tmp = e;
             if (e.getCause() != null) {
@@ -70,7 +84,7 @@ public abstract class LazyProxy {
     protected Object getTagertObj() {
         if (tagertObj != null) {
             if (tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
-                log.warn("循环处理代理Bean问题=>{}", beanModel.getBeanClassName());
+                log.warn("循环处理代理Bean问题=>{}", beanModel.getTagClass());
                 if (tagertObj.getClass().getSimpleName().contains(beanModel.getTagClass().getSimpleName())) {
                     tagertObj = null;
                 }
@@ -81,8 +95,8 @@ public abstract class LazyProxy {
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
             inited = true;
-            if(beanModel.getAttr()!=null && beanModel.getAttr().size()>0) {
-                beanModel.getAttr().forEach((key,value)->{
+            if(attr!=null && attr.size()>0) {
+                attr.forEach((key,value)->{
                     LazyBean.setAttr(key, tmp, beanModel.getTagClass(), value);
                 });
             }

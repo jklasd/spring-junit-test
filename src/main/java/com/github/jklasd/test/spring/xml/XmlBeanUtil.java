@@ -13,7 +13,14 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.PropertyValue;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
+import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
+import org.springframework.beans.factory.support.ManagedArray;
 import org.springframework.beans.factory.xml.DefaultDocumentLoader;
 import org.springframework.beans.factory.xml.DelegatingEntityResolver;
 import org.springframework.beans.factory.xml.DocumentLoader;
@@ -35,10 +42,10 @@ import org.xml.sax.InputSource;
 import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcess;
 import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
-import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.dubbo.LazyDubboBean;
+import com.github.jklasd.test.beanfactory.BeanModel;
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.mq.LazyRabbitMQBean;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -65,9 +72,9 @@ public class XmlBeanUtil {
 	public synchronized boolean containClass(Class<?> tag) {
 		return beanList.contains(tag);
 	}
-	public synchronized boolean addClass(Class<?> tag) {
-        return beanList.add(tag);
-    }
+//	public synchronized boolean addClass(Class<?> tag) {
+//        return beanList.add(tag);
+//    }
 
 	public synchronized void loadXmlPath(String... xmlPath) {
 		for (String path : xmlPath) {
@@ -196,7 +203,11 @@ public class XmlBeanUtil {
 		}
 		return null;
 	}
-
+	/**
+	 * 转换类型
+	 * @param attr 赋值源数据
+	 * @param tabClass 目标类
+	 */
 	public void processValue(Map<String, Object> attr, Class<?> tabClass) {
 		Map<String,Boolean> finded = Maps.newHashMap();
 		Map<String,Boolean> sameType = Maps.newHashMap();
@@ -462,11 +473,11 @@ public class XmlBeanUtil {
     public LazyBeanInitProcessImpl getProcess(String key) {
         return tmpAttrMap.get(key);
     }
-    public void loadAttrMapProcess(String key) {
-        if(!tmpAttrMap.containsKey(key)) {
-            tmpAttrMap.put(key, new LazyBeanInitProcessImpl());
-        }
-    }
+//    public void loadAttrMapProcess(String key) {
+//        if(!tmpAttrMap.containsKey(key)) {
+//            tmpAttrMap.put(key, new LazyBeanInitProcessImpl());
+//        }
+//    }
 
     private static Map<String, String> loadXmlns(NamedNodeMap attributes) {
         Map<String, String> parsorMap = Maps.newHashMap();
@@ -501,5 +512,53 @@ public class XmlBeanUtil {
         if (!xmlParsors.containsKey(mapStr)) {
             xmlParsors.put(mapStr, NamespaceHandlerC);
         }
+    }
+    
+    public void handAttr(Map<String, MutablePropertyValues> attrs) {
+        /**
+         * 处理bean attr
+         */
+        attrs.keySet().forEach(key->{
+            Class<?> tagC = ScanUtil.loadClass(key.split("-")[0]);
+            Map<String, Object> attrParam = handPropValue(attrs.get(key).getPropertyValueList(), tagC);
+            XmlBeanUtil.getInstance().processValue(attrParam, tagC);
+            XmlBeanUtil.getInstance().getProcess(key).getProcess().init(attrParam);
+        });
+    }
+    public Map<String, Object> handPropValue(List<PropertyValue>  attrs, Class<?> tagC) {
+        Map<String, Object> attrParam = Maps.newHashMap();
+        attrs.forEach(prov->{
+            Object value = null;
+            if(prov.getValue() instanceof RuntimeBeanReference) {
+                RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
+                value = TestUtil.getApplicationContext().getBean(tmp.getBeanName());
+            }else if(prov.getValue() instanceof ManagedArray) {
+                ManagedArray tmp = (ManagedArray)prov.getValue();
+                List<Object> list = Lists.newArrayList();
+                tmp.stream().forEach(item ->{
+                    if(item instanceof BeanDefinitionHolder) {
+                        BeanDefinitionHolder tmpBdh = (BeanDefinitionHolder)item;
+                        BeanDefinition tmpBd = tmpBdh.getBeanDefinition();
+                        Class<?> tmpC= ScanUtil.loadClass(tmpBd.getBeanClassName());
+//                        XmlBeanUtil.getInstance().addClass(tmpC);
+                        BeanModel beanModel = new BeanModel();
+                        beanModel.setTagClass(tmpC);
+                        beanModel.setXmlBean(true);
+                        beanModel.setPropValue(tmpBd.getPropertyValues());
+                        list.add(LazyBean.buildProxy(beanModel));
+                    }else {
+                        log.info("ManagedArray=>{}",item);
+                    }
+                });
+                value = list;
+            }else if(prov.getValue() instanceof TypedStringValue) {
+                TypedStringValue tmp = (TypedStringValue)prov.getValue();
+                value = tmp.getValue();
+            }else {
+                log.info("value other=>{}",prov.getValue());
+            }
+            attrParam.put(prov.getName(), value);
+        });
+        return attrParam;
     }
 }

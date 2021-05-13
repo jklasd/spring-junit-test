@@ -11,6 +11,7 @@ import org.w3c.dom.Element;
 
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.beanfactory.BeanModel;
 import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
 import com.github.jklasd.test.spring.BeanDefParser;
@@ -35,11 +36,11 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
         LazyDubboBean.getInstance().load(parser);
     }
     private XmlReaderContext readerContext;
-    private LazyBeanDefinitionDocumentReader documentReader;
+//    private LazyBeanDefinitionDocumentReader documentReader;
     public LazyBeanDefinitionParserDelegate(XmlReaderContext readerContext,LazyBeanDefinitionDocumentReader documentReader) {
         super(readerContext);
         this.readerContext = readerContext;
-        this.documentReader = documentReader;
+//        this.documentReader = documentReader;
     }
 
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
@@ -60,14 +61,21 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
                 log.info("beanDef=>{},=>{},pv=>{}",ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
                 Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
                 String beanName = ele.hasAttribute("id") ?ele.getAttribute("id"):LazyBean.getBeanName(beanC);
-                XmlBeanUtil.getInstance().addClass(beanC);
+//                XmlBeanUtil.getInstance().addClass(beanC);
                 
-                String key = beanDef.getBeanClassName() +"-" + beanName;
-                XmlBeanUtil.getInstance().loadAttrMapProcess(key);
-                Object obj = LazyBean.buildProxy(beanC, beanName, XmlBeanUtil.getInstance().getProcess(key));
-                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
+//                String key = beanDef.getBeanClassName() +"-" + beanName;
+//                XmlBeanUtil.getInstance().loadAttrMapProcess(key);
                 
-                documentReader.attrs.put(key, beanDef.getPropertyValues());
+                BeanModel beanModel = new BeanModel();
+                beanModel.setXmlBean(true);
+                beanModel.setTagClass(beanC);
+//                beanModel.setBeanClassName(beanDef.getBeanClassName());
+                beanModel.setBeanName(beanName);
+                beanModel.setPropValue(beanDef.getPropertyValues());
+                LazyBean.buildProxy(beanModel);
+//                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
+                
+//                documentReader.attrs.put(key, beanDef.getPropertyValues());
             }
         }
         return beanDef;

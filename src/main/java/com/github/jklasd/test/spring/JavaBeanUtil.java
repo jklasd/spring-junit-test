@@ -16,6 +16,7 @@ import org.springframework.context.annotation.Configuration;
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
@@ -39,45 +40,7 @@ public class JavaBeanUtil {
 //				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
 				Constructor[] cons = configClass.getConstructors();
 				if(cons.length>0) {
-					int min = 10;
-					Constructor minC = null;
-					for(Constructor con : cons) {
-						if(con.getParameterCount()<min) {
-							min = con.getParameterCount();
-							minC = con;
-						}
-					}
-					Type[] paramTypes = minC.getGenericParameterTypes();
-					Object[] param = new Object[paramTypes.length];
-					for(int i=0;i<paramTypes.length;i++) {
-						AssemblyUtil tmp = new AssemblyUtil();
-						if(paramTypes[i] instanceof ParameterizedType) {
-							ParameterizedType  pType = (ParameterizedType) paramTypes[i];
-							tmp.setTagClass((Class<?>) pType.getRawType());
-							tmp.setClassGeneric(pType.getActualTypeArguments());
-						}else {
-							tmp.setTagClass((Class<?>) paramTypes[i]);
-						}
-						tmp.setBeanName(null);
-						tmp.setNameMapTmp(assemblyData.getNameMapTmp());
-//						if(paramTypes[i] instanceof ParameterizedType) {
-//						}
-//						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
-						Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-//						log.debug("ojb_meth=>{}",ojb_meth);
-						
-						if(ojb_meth[0]!=null && ojb_meth[1] != null) {
-							param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
-						}else {
-							if(tmp.getClassGeneric()!=null) {
-								param[i] = LazyBean.buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
-							}else {
-								param[i] = LazyBean.buildProxy(tmp.getTagClass());
-							}
-						}
-					}
-					
-					factory.put(configClass, minC.newInstance(param));
+					findAndCreateBean(configClass, assemblyData, cons);
 				}else {
 					cons = configClass.getDeclaredConstructors();
 					if(!Modifier.isPublic(configClass.getModifiers())) {
@@ -85,7 +48,7 @@ public class JavaBeanUtil {
 						cons[0].setAccessible(true);
 					}
 					if(cons.length>0) {
-						factory.put(configClass, cons[0].newInstance());
+					    findAndCreateBean(configClass, assemblyData, cons);
 					}
 				}
 				if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
@@ -94,6 +57,8 @@ public class JavaBeanUtil {
 				LazyBean.processAttr(factory.get(configClass), configClass);
 			}
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		    log.error("构建Bean=>{}，method=>{}",configClass.getSimpleName(), method.getName());
+		    log.error("构建Bean=>data:{}",assemblyData);
 			if(e.getCause()!=null) {
 				log.error("构建Bean",e.getCause());
 			}else {
@@ -154,6 +119,58 @@ public class JavaBeanUtil {
 		}
 		return cacheBean.get(key);
 	}
+    private static void findAndCreateBean(Class configClass, AssemblyUtil assemblyData, Constructor[] cons)
+        throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        int min = 10;
+        Constructor minC = null;
+        for(Constructor con : cons) {
+        	if(con.getParameterCount()<min) {
+        		min = con.getParameterCount();
+        		minC = con;
+        	}
+        }
+        Type[] paramTypes = minC.getGenericParameterTypes();
+        Object[] param = buildParam(assemblyData, paramTypes);
+        factory.put(configClass, minC.newInstance(param));
+    }
+    private static Object[] buildParam(AssemblyUtil assemblyData, Type[] paramTypes) {
+        Object[] param = new Object[paramTypes.length];
+        for(int i=0;i<paramTypes.length;i++) {
+        	AssemblyUtil tmp = new AssemblyUtil();
+        	if(paramTypes[i] instanceof ParameterizedType) {
+        		ParameterizedType  pType = (ParameterizedType) paramTypes[i];
+        		tmp.setTagClass((Class<?>) pType.getRawType());
+        		tmp.setClassGeneric(pType.getActualTypeArguments());
+        	}else {
+        		tmp.setTagClass((Class<?>) paramTypes[i]);
+        		Object obj = TestUtil.getApplicationContext().getBeanByClass(tmp.getTagClass());
+        		if(obj != null) {
+        		    param[i] = obj;
+        		    continue;
+        		}
+        	}
+        	tmp.setBeanName(null);
+        	tmp.setNameMapTmp(assemblyData.getNameMapTmp());
+        	
+        	
+//						if(paramTypes[i] instanceof ParameterizedType) {
+//						}
+//						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
+        	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
+//						log.debug("ojb_meth=>{}",ojb_meth);
+        	
+        	if(ojb_meth[0]!=null && ojb_meth[1] != null) {
+        		param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
+        	}else {
+        		if(tmp.getClassGeneric()!=null) {
+        			param[i] = LazyBean.buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
+        		}else {
+        			param[i] = LazyBean.buildProxy(tmp.getTagClass());
+        		}
+        	}
+        }
+        return param;
+    }
 	/**
 	 * 扫描java代码相关配置
 	 * 

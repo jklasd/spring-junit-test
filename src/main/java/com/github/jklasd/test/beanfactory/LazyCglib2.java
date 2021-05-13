@@ -24,13 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyCglib2 extends LazyProxy implements MethodInterceptor {
     @Getter
     private Constructor<?> constructor;
-    
     public LazyCglib2(BeanModel beanModel) {
-        this.beanModel = beanModel;
+        super(beanModel);
         setConstructor();
     }
     
-    public boolean isFinal() {
+    public boolean hasFinalMethod() {
         Method[] ms = beanModel.getTagClass().getDeclaredMethods();
         for(Method m : ms) {
             if(Modifier.isFinal(m.getModifiers())
@@ -114,25 +113,23 @@ public class LazyCglib2 extends LazyProxy implements MethodInterceptor {
     @Override
     protected Object getTagertObjectCustom() {
         Class<?> tagertC = beanModel.getTagClass();
-        String beanName = null;
+        String beanName = beanModel.getBeanName();
         if(!ScanUtil.exists(tagertC)) {
             if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
                 tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
             }else if(LazyMQBean.isBean(tagertC)) {
                 tagertObj = LazyMQBean.buildBean(tagertC);
             }
-            if(tagertObj==null && !inited) {
+            if(tagertObj==null && !inited && !beanModel.isXmlBean()) {
                 tagertObj = LazyBean.findCreateBeanFromFactory(tagertC,beanName);
             }
         }
         if (tagertObj == null) {
             ConfigurationProperties propConfig = (ConfigurationProperties) tagertC.getAnnotation(ConfigurationProperties.class);
             if(tagertObj == null){
-                if(!LazyBean.existBean(tagertC)) {
-                    if(!XmlBeanUtil.getInstance().containClass(tagertC)) {
-                        if(propConfig==null     || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
-                            throw new RuntimeException(tagertC.getName()+" Bean 不存在");
-                        }
+                if(!LazyBean.existBean(tagertC) && !beanModel.isXmlBean()) {
+                    if(propConfig==null     || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
+                        throw new RuntimeException(tagertC.getName()+" Bean 不存在");
                     }
                 }
                 

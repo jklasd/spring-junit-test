@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.db.LazyMongoBean;
 import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.dubbo.LazyDubboBean;
@@ -14,7 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyImple2 extends LazyProxy implements InvocationHandler {
 
     public LazyImple2(BeanModel beanModel) {
-        this.beanModel = beanModel;
+        super(beanModel);
         this.classGeneric = beanModel.getClassGeneric();
     }
     
