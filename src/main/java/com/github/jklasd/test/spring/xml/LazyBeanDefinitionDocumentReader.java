@@ -1,8 +1,5 @@
 package com.github.jklasd.test.spring.xml;
 
-import java.util.Map;
-
-import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
@@ -11,10 +8,8 @@ import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
 import com.github.jklasd.test.ScanUtil;
-import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.beanfactory.BeanModel;
 import com.github.jklasd.test.beanfactory.LazyBean;
-import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,8 +37,6 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         return delegate;
     }
 
-    Map<String,MutablePropertyValues> attrs = Maps.newConcurrentMap();
-    
     protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
         BeanDefinitionHolder holder = delegate.parseBeanDefinitionElement(ele);
 //        log.info("id=>{}",holder.getBeanName());
@@ -63,6 +56,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         model.setTagClass(beanC);
         model.setPropValue(beanDef.getPropertyValues());
         LazyBean.buildProxy(model);
+        
 //        TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
 //        attrs.put(key, beanDef.getPropertyValues());
     }

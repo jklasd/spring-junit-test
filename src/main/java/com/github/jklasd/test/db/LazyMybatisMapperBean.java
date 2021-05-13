@@ -13,7 +13,7 @@ import com.github.jklasd.test.LazyBeanProcess.LazyConfigProcess;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.beanfactory.LazyBean;
-import com.github.jklasd.test.beanfactory.LazyCglib2;
+import com.github.jklasd.test.beanfactory.LazyCglib;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -144,7 +144,7 @@ public class LazyMybatisMapperBean {
 			try {
 				Field cglibObjField= mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
 				cglibObjField.setAccessible(true);
-				LazyCglib2 obj = (LazyCglib2) cglibObjField.get(mybatisScan);
+				LazyCglib obj = (LazyCglib) cglibObjField.get(mybatisScan);
 				if(obj.getAttr().containsKey("basePackage")) {
 					mybatisScanPathList.add(obj.getAttr().get("basePackage").toString());
 					log.info("mybatisScanPathList=>{}",mybatisScanPathList);

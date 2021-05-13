@@ -2,16 +2,21 @@
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Type;
 import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
 import org.springframework.aop.framework.AopContextSuppert;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.InvokeUtil;
 import com.github.jklasd.test.LazyBeanProcess;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.db.TranstionalManager;
 import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.google.common.base.Objects;
@@ -33,6 +38,22 @@ public abstract class LazyProxy {
             XmlBeanUtil.getInstance().processValue(attr, beanModel.getTagClass());
             beanModel.setPropValue(null);
         }
+    }
+
+    protected void init() {
+            try {
+                if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
+                    getTagertObj();
+                    if(ScanUtil.isImple(beanModel.getTagClass(), InitializingBean.class)) {
+                        InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
+                    }
+                    Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
+                    TestUtil.getApplicationContext().registBean(beanModel.getBeanName(), InvokeUtil.invokeMethod(tagertObj, "getObject"),
+                        tagC);
+                }
+            } catch (Exception e) {
+                 e.printStackTrace();
+            }
     }
     
     protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {

@@ -225,7 +225,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public boolean containsBean(String name) {
 		// TODO Auto-generated method stub
-		return false;
+		return beanDefinitionMap.containsKey(name);
 	}
 
 	@Override
@@ -445,7 +445,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public ConfigurableListableBeanFactory getBeanFactory() throws IllegalStateException {
 		if(beanFactory == null) {
-			beanFactory = new LazyListableBeanFactory(parentContext!=null?parentContext:this);
+			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
 		}
 		return beanFactory;
 	}
@@ -501,7 +501,12 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
         }
 	    return null;
 	}
-	
+	/**
+	 * Bean 管理容器有待提高
+	 * @param beanName
+	 * @param newBean
+	 * @param beanClass
+	 */
 	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
 		if(newBean!=null) {
 			if(StringUtils.isBlank(beanName)) {
@@ -512,28 +517,47 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(!beanForClassMap.containsKey(beanClass)) {
 				beanForClassMap.put(beanClass, newBean);
 				
-				handcToC(beanClass,beanName);
+				handcToC(beanClass,beanClass,beanName);
 			}
 		}
 	}
 
-    private void handcToC(Class<?> beanClass,String beanName) {
-        for(Class<?> c : beanClass.getInterfaces()) {
+    private void handcToC(Class<?> beanClass,Class<?> beanClassSup,String beanName) {
+        if(beanClassSup == null) {
+            return;
+        }
+        for(Class<?> c : beanClassSup.getInterfaces()) {
             if(!cToC.containsKey(c)) {
                 cToC.put(c,Maps.newHashMap());
             }
             if(!cToC.get(c).containsKey(beanName)) {
                 cToC.get(c).put(beanName, beanClass);
             }
+            handcToCSupInterface(c,beanClass,beanName);
         }
-        if(beanClass.getSuperclass()!=null && beanClass.getSuperclass()!=Object.class) {
-            if(!cToC.containsKey(beanClass.getSuperclass())) {
-                cToC.put(beanClass.getSuperclass(),Maps.newHashMap());
+        if(beanClassSup!=null && beanClassSup!=Object.class) {
+            if(beanClassSup != beanClass) {
+                if(!cToC.containsKey(beanClassSup)) {
+                    cToC.put(beanClassSup,Maps.newHashMap());
+                }
+                if(!cToC.get(beanClassSup).containsKey(beanName)) {
+                    cToC.get(beanClassSup).put(beanName, beanClass);
+                }
             }
-            if(!cToC.get(beanClass.getSuperclass()).containsKey(beanName)) {
-                cToC.get(beanClass.getSuperclass()).put(beanName, beanClass);
-            }
-            handcToC(beanClass.getSuperclass(),beanName);
+            handcToC(beanClass,beanClassSup.getSuperclass(),beanName);
+        }
+    }
+
+    private void handcToCSupInterface(Class<?> c, Class<?> beanClass, String beanName) {
+         if (c.getSuperclass()!=null) {
+             c = c.getSuperclass();
+             if(!cToC.containsKey(c)) {
+                 cToC.put(c,Maps.newHashMap());
+             }
+             if(!cToC.get(c).containsKey(beanName)) {
+                 cToC.get(c).put(beanName, beanClass);
+             }
+             handcToCSupInterface(c,beanClass,beanName);
         }
     }
 

@@ -8,6 +8,8 @@ import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -19,7 +21,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.xml.NamespaceHandler;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -600,4 +601,13 @@ public class ScanUtil {
 				|| cal == Long.class || cal == long.class
 				|| cal == Float.class || cal == float.class;
 	}
+    public static Type[] getGenericType(Class<?> tagClass) {
+        for(Type t:tagClass.getGenericInterfaces()) {
+            if(t instanceof ParameterizedType) {
+                ParameterizedType  pType = (ParameterizedType) t;
+                return pType.getActualTypeArguments();
+            }
+        }
+        return null;
+    }
 }
