@@ -10,6 +10,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -31,6 +32,9 @@ public class JavaBeanUtil {
 	private static Map<String,Object> cacheBean = Maps.newHashMap();
 	@SuppressWarnings("unchecked")
     public static Object buildBean(Class configClass, Method method, AssemblyUtil assemblyData) {
+	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
+	        assemblyData.setBeanName(LazyBean.getBeanName(assemblyData.getTagClass()));
+	    }
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
 			return cacheBean.get(key);
@@ -113,6 +117,7 @@ public class JavaBeanUtil {
 					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
 				}
 				cacheBean.put(key, tagObj);
+				TestUtil.getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
 			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				log.error("JavaBeanUtil#buildBean",e);
 			}

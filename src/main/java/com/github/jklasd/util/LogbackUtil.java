@@ -14,89 +14,14 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class LogbackUtil {
-	public static String level = "info";
-//	public static void init(Resource logback, StandardServletEnvironment evn) {
-//		LoggerContext lc = (LoggerContext) LoggerFactory.getILoggerFactory();
-//		Logger root = lc.getLogger("ROOT");
-//		
-//		DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-//		try {
-//			//创建DocumentBuilder对象
-//			DocumentBuilder db = dbf.newDocumentBuilder();
-//			//通过DocumentBuilder对象的parser方法加载books.xml文件到当前项目下
-//			Document document = db.parse(logback.getFile());
-//			
-//			NodeList nodeList = document.getElementsByTagName("appender");
-//			
-//			for(int i=0;i<nodeList.getLength();i++) {
-//				Element attr = (Element) nodeList.item(i);
-//				if(attr.getAttribute("class").contains("Console")) {
-//					root.detachAppender(attr.getAttribute("name"));
-//					
-//					List<Node> patterList = XmlBeanUtil.findNodeByTag(nodeList.item(i), "pattern");
-//					String logPattern = patterList.get(0).getTextContent();
-//					
-//					if(logPattern.startsWith("${")) {
-//						logPattern = logPattern.replace("${", "").replace("}", "");
-//						boolean find = false;
-//						NodeList propList = document.getElementsByTagName("Property");
-//						for(int j=0; j<propList.getLength(); j++) {
-//							Element prop = (Element) propList.item(j);
-//							if(prop.getAttribute("name").equals(logPattern)) {
-//								logPattern = prop.getAttribute("value");
-//								find = true;
-//							}
-//						}
-//						if(!find) {
-//							NodeList spropList = document.getElementsByTagName("springProperty");
-//							for(int j=0; j<spropList.getLength(); j++) {
-//								Element prop = (Element) spropList.item(j);
-//								if(prop.getAttribute("name").equals(logPattern)) {
-//									logPattern = evn.getProperty(prop.getAttribute("source"));
-//									find = true;
-//								}
-//							}
-//						}
-//					}
-//					ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
-//					appender.setName(attr.getAttribute("name"));
-////					String logPattern = this.patterns.getProperty("console", CONSOLE_LOG_PATTERN);
-////					encoder.setPattern(OptionHelper.substVars(logPattern, config.getContext()));
-////					encoder.setCharset(UTF8);
-////					config.start(encoder);
-////					appender.setEncoder(encoder);
-////					config.appender("CONSOLE", appender);
-//					PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-//					encoder.setPattern(logPattern);
-//					encoder.setCharset(Charset.forName("UTF-8"));
-//					encoder.setContext(lc);
-//					
-//					appender.setEncoder(encoder);
-//					appender.setContext(lc);
-//					root.setLevel(Level.INFO);
-//					root.addAppender(appender);
-//					
-//					appender.start();
-//					encoder.start();
-//					break;
-//				}
-//				
-//			}
-//			
-//		} catch (Exception e) {
-//			e.printStackTrace();
-//			log.error("解析异常",e);
-//		}
-//		
-//		
-////		LogbackConfigurator lcg = new LogbackConfigurator(lc);
-////		new DefaultLogbackConfiguration(new LoggingInitializationContext(evn), null).apply(lcg);
-//	}
+	private static Level level = Level.INFO;
+	public static void setJunitLevel(Level level) {
+	    LogbackUtil.level = level;
+	}
 	public static void resetLog() {
 //		JoranConfigurator jc = new JoranConfigurator();
 		LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
 		context.reset();
-//		context.setName("com.github.jklasd");
 		Logger root = context.getLogger("ROOT");
 		root.detachAppender("CONSOLE");
 		ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
@@ -114,11 +39,11 @@ public class LogbackUtil {
 		
 		appender.setEncoder(encoder);
 		appender.setContext(context);
-		root.setLevel(Level.INFO);
+		root.setLevel(level);
 		root.addAppender(appender);
 		
-		root.setLevel(Level.INFO);
-		root.addAppender(appender);
+//		root.setLevel(Level.INFO);
+//		root.addAppender(appender);
 		
 		appender.start();
 		encoder.start();

@@ -95,6 +95,9 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public static Object buildProxy(BeanModel beanModel) {
+//	    if(beanModel.getTagClass().getName().contains("MongoClient")) {
+//            log.debug("断点");
+//        }
 	    Object obj = null;
 	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
 	        obj = TestUtil.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(),beanModel.getTagClass());
@@ -106,6 +109,7 @@ public class LazyBean {
             if(obj!=null) {
                 return obj;
             }
+            beanModel.setBeanName(getBeanName(beanModel.getTagClass()));
 	    }
 	    
 	    if(beanModel.getTagClass() == ApplicationContext.class
@@ -165,7 +169,7 @@ public class LazyBean {
 	public static Object buildProxy(Class<?> beanClass) {
 	    BeanModel model = new BeanModel();
 		model.setTagClass(beanClass);
-		model.setBeanName(getBeanName(beanClass));
+		model.setBeanName(getBeanNameFormAnno(beanClass));
 		return buildProxy(model);
 	}
 	public synchronized static String getBeanName(Class<?> classBean) {
@@ -179,6 +183,17 @@ public class LazyBean {
 		}
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
+	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {
+        Component comp = (Component) classBean.getAnnotation(Component.class);
+        if(comp!=null && StringUtils.isNotBlank(comp.value())) {
+            return comp.value();
+        }
+        Service service = (Service) classBean.getAnnotation(Service.class);
+        if(service!=null && StringUtils.isNotBlank(service.value())) {
+            return service.value();
+        }
+        return null;
+    }
 	public static void setObj(Field f,Object obj,Object proxyObj) {
 		setObj(f, obj, proxyObj, null);
 	}
@@ -380,18 +395,27 @@ public class LazyBean {
 //			    Autowired aw = m.getAnnotation(Autowired.class);
 			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
 			    Object[] param = processParam(m, paramTypes, bName);
-                m.invoke(obj, param);
+                Object tmp = m.invoke(obj, param);
+//                if(tmp!=null) {
+//                    TestUtil.getApplicationContext().registBean(bName, tmp, tmp.getClass());
+//                }
 			}else if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
                 
             }else if(m.getAnnotation(Resource.class) != null) {
                 Resource aw = m.getAnnotation(Resource.class);
                 Object[] param = processParam(m, paramTypes, aw.name());
-                m.invoke(obj, param);
+                Object tmp = m.invoke(obj, param);
+                if(tmp!=null) {
+//                    TestUtil.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
+                }
             }else if(m.getAnnotation(Bean.class) != null) {
                 Bean aw = m.getAnnotation(Bean.class);
-                Object[] param = processParam(m, paramTypes, m.getName());
-                m.invoke(obj, param);
+                Object[] param = processParam(m, paramTypes, null);
+                Object tmp = m.invoke(obj, param);
+                if(tmp!=null) {
+                    TestUtil.getApplicationContext().registBean(m.getName(), tmp, tmp.getClass());
+                }
             }
 		}
 	}
@@ -423,9 +447,9 @@ public class LazyBean {
 					}
 					try {
 					    if(fv != null) {
-					        if(fv.toString().contains("ref:")) {
-					            
-					        }
+//					        if(fv.toString().contains("ref:")) {
+//					            
+//					        }
 					        m.invoke(obj, fv);
 					    }else {
 					        log.warn("field:{}=>{}",field,value);

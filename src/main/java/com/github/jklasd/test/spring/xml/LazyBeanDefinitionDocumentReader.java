@@ -43,11 +43,6 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         AbstractBeanDefinition beanDef = (AbstractBeanDefinition)holder.getBeanDefinition();
         String beanName = holder.getBeanName();
         Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
-//        XmlBeanUtil.getInstance().addClass(beanC);
-        
-//        String key = beanDef.getBeanClassName() +"-" + beanName;
-//        XmlBeanUtil.getInstance().loadAttrMapProcess(key);
-//        Object obj = LazyBean.buildProxy(beanC, beanName, XmlBeanUtil.getInstance().getProcess(key));
         
         BeanModel model = new BeanModel();
 //        model.setBeanClassName(beanDef.getBeanClassName());
@@ -55,10 +50,11 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         model.setBeanName(beanName);
         model.setTagClass(beanC);
         model.setPropValue(beanDef.getPropertyValues());
+//        if(beanName.equals("sqlSessionFactory")) {
+//            log.info("断点");
+//        }
         LazyBean.buildProxy(model);
         
-//        TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
-//        attrs.put(key, beanDef.getPropertyValues());
     }
 
     protected void processAliasRegistration(Element ele) {

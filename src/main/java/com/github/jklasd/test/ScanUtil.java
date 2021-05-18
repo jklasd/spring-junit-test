@@ -588,7 +588,7 @@ public class ScanUtil {
 			Class classObj = Class.forName(className, false, JavaBeanUtil.class.getClassLoader());
 			return classObj;
 		} catch (ClassNotFoundException e) {
-			log.error("#loadClass",e.getMessage());
+			log.warn("#loadClass=>{}",className);
 		}
 		return null;
 	}

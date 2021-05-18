@@ -82,7 +82,7 @@ public class LazyMybatisMapperBean {
 	@SuppressWarnings("rawtypes")
 	private void buildMybatisFactory() {
 		if (factory == null) {
-			Object obj = TestUtil.getApplicationContext().getBean(factoryBeanClass);
+			Object obj = TestUtil.getApplicationContext().getBeanByClass(factoryBeanClass);
 			if (obj != null) {
 				try {
 					factory = InvokeUtil.invokeMethod(obj, factoryBeanClass, "getObject");
@@ -99,7 +99,7 @@ public class LazyMybatisMapperBean {
 				}
 				return;
 			} else {
-				obj = TestUtil.getApplicationContext().getBean(factoryClass);
+				obj = TestUtil.getApplicationContext().getBeanByClass(factoryClass);
 				if (obj != null) {
 					factory = obj;
 //					Object dataSource= InvokeUtil.invokeMethod(InvokeUtil.invokeMethod(InvokeUtil.invokeMethod(factory, "getConfiguration"), 

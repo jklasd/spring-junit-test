@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.MutablePropertyValues;
@@ -16,8 +15,8 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.config.TypedStringValue;
-import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.beans.factory.support.ManagedArray;
+import org.springframework.beans.factory.support.ManagedMap;
 import org.springframework.beans.factory.xml.DefaultDocumentLoader;
 import org.springframework.beans.factory.xml.DelegatingEntityResolver;
 import org.springframework.beans.factory.xml.DocumentLoader;
@@ -28,10 +27,6 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.xml.SimpleSaxErrorHandler;
 import org.w3c.dom.Document;
-import org.w3c.dom.Element;
-import org.w3c.dom.NamedNodeMap;
-import org.w3c.dom.Node;
-import org.w3c.dom.NodeList;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
@@ -46,7 +41,6 @@ import com.github.jklasd.test.spring.LazyListableBeanFactory;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -137,13 +131,13 @@ public class XmlBeanUtil {
 				Object prop = paramType.newInstance();
 				if(val.toString().contains("=")) {
 					String[] k_v = val.toString().split("=");
-					((Map) prop).put(k_v[0], k_v[1]);
+					((Map<String, String>) prop).put(k_v[0], k_v[1]);
 					return prop;
 				}
 			}else if (paramType == Map.class) {
 				Object prop = Maps.newHashMap();
 				String[] k_v = val.toString().split("=");
-				((Map) prop).put(k_v[0], k_v[1]);
+				((Map<String, String>) prop).put(k_v[0], k_v[1]);
 				return prop;
 			} else if (!ScanUtil.isBasicClass(paramType)) {
 				if (paramType.isArray()) {
@@ -276,6 +270,22 @@ public class XmlBeanUtil {
                     }
                 });
                 value = list;
+            }else if(prov.getValue() instanceof ManagedMap) {
+                @SuppressWarnings("unchecked")
+                ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)prov.getValue();
+                Map<Object,Object> tmpMap = Maps.newHashMap();
+                tmp.forEach((k,v)->{
+                    if(k instanceof TypedStringValue) {
+                        TypedStringValue tmpV = (TypedStringValue)k;
+                        k = tmpV.getValue();
+                    }
+                    if(v instanceof RuntimeBeanReference) {
+                        RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
+                        v = TestUtil.getApplicationContext().getBean(tmpV.getBeanName());
+                    }
+                    tmpMap.put(k, v);
+                });
+                value = tmpMap;
             }else if(prov.getValue() instanceof TypedStringValue) {
                 TypedStringValue tmp = (TypedStringValue)prov.getValue();
                 value = tmp.getValue();

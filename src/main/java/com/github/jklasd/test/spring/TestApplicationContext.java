@@ -477,27 +477,6 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
                     return beanDefinitionMap.get(beanName);
                 }
             }
-//            //向下查找
-//            List<Class<?>> list = null;
-//            if(beanClass.isInterface()) {
-//                list = ScanUtil.findClassImplInterface(beanClass);
-//            }else {
-//                list = ScanUtil.findClassExtendAbstract(beanClass);
-//            }
-//            if(list.isEmpty()) {
-//                if(beanClass.isInterface()) {
-//                    list = ScanUtil.findClassImplInterface(beanClass);
-//                }else {
-//                    list = ScanUtil.findClassExtendAbstract(beanClass);
-//                }
-//            }
-//            if(!list.isEmpty()) {
-//                Optional<Class<?>> finded = list.stream().filter(itemC -> beanForClassMap.containsKey(itemC)).findFirst();
-//                if(finded.isPresent()) {
-//                    cToC.put(beanClass, finded.get());
-//                    return beanForClassMap.get(finded.get());
-//                }
-//            }
         }
 	    return null;
 	}
@@ -512,12 +491,16 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(StringUtils.isBlank(beanName)) {
 			    beanName = LazyBean.getBeanName(beanClass);
 			}
+			if(!beanForClassMap.containsKey(beanClass)) {
+			    beanForClassMap.put(beanClass, newBean);
+			}
+			if(beanDefinitionMap.containsKey(beanName)) {
+			   return; 
+			}
 			beanDefinitionMap.put(beanName, newBean);
 			bToC.put(beanName, beanClass);
 			if(!beanForClassMap.containsKey(beanClass)) {
-				beanForClassMap.put(beanClass, newBean);
-				
-				handcToC(beanClass,beanClass,beanName);
+			    handcToC(beanClass,beanClass,beanName);
 			}
 		}
 	}

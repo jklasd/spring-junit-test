@@ -50,7 +50,6 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
         if(structors.length <1) {
             structors = beanModel.getTagClass().getDeclaredConstructors();
             for(Constructor<?> c : structors) {
-//                Class<?> tagC = c.getDeclaringClass();
                 if(c.getParameterCount()<count) {
                     this.constructor = c;
                     count = c.getParameterCount();
@@ -59,7 +58,6 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
             constructor.setAccessible(true);
         }else {
             for(Constructor<?> c : structors) {
-//                Class<?> tagC = c.getDeclaringClass();
                 if(c.getParameterCount()<count) {
                     this.constructor = c;
                     count = c.getParameterCount();
