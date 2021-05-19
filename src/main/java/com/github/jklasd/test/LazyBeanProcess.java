@@ -2,18 +2,31 @@ package com.github.jklasd.test;
 
 import java.lang.reflect.Method;
 import java.util.Map;
+import java.util.Set;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.Data;
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public final class LazyBeanProcess {
 	private LazyBeanProcess() {}
+	private static Set<Class<?>> afterPropertiesSet = Sets.newHashSet();
 	private static Map<String,LazyConfigProcess> allMethodConfig = Maps.newHashMap();
 	private static  Map<String,Map<String,LazyConfigProcess>> methodConfig = Maps.newHashMap();
+	
+	public final synchronized static void afterPropertiesSet(Object tagObj) {
+	    afterPropertiesSet.stream().filter(tagC-> ScanUtil.isExtends(tagObj.getClass(), tagC))
+        .forEach(entry->{
+            try {
+                InvokeUtil.invokeMethod(tagObj, "afterPropertiesSet");
+            } catch (SecurityException | IllegalArgumentException e) {
+                log.error("dataSource#afterPropertiesSet", e);
+            }
+        });
+	}
 	public final synchronized static void processLazyConfig(Object tagObj,Method method, Object[] param) {
 		try {
 			if(tagObj == null || method == null) {
@@ -55,4 +68,8 @@ public final class LazyBeanProcess {
 	public static class LazyBeanInitProcessImpl{
 		private LazyBeanInitProcess process;
 	}
+	
+    public static void putAfterMethodEvent(Class<?> abstractClass) {
+        afterPropertiesSet.add(abstractClass);
+    }
 }

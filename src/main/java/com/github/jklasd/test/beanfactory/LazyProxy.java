@@ -2,7 +2,6 @@
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Type;
 import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
@@ -125,6 +124,9 @@ public abstract class LazyProxy {
                 beanModel.getBeanMethods().keySet().stream().filter(key -> Objects.equal(key, "init-method")).forEach(key -> {
                     InvokeUtil.invokeMethod(tagertObj, beanModel.getBeanMethods().get(key));
                 });
+            }
+            if(tagertObj instanceof InitializingBean) {
+                LazyBeanProcess.afterPropertiesSet(tagertObj);
             }
         }
         return tmp;
