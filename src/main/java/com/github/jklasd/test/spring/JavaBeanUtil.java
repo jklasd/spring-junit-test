@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -30,8 +31,8 @@ import lombok.extern.slf4j.Slf4j;
 public class JavaBeanUtil {
 	private static Map<Class,Object> factory = Maps.newHashMap();
 	private static Map<String,Object> cacheBean = Maps.newHashMap();
-	@SuppressWarnings("unchecked")
-    public static Object buildBean(Class configClass, Method method, AssemblyUtil assemblyData) {
+	
+    public static Object buildBean(Class<?> configClass, Method method, AssemblyUtil assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
 	        assemblyData.setBeanName(LazyBean.getBeanName(assemblyData.getTagClass()));
 	    }
@@ -41,24 +42,17 @@ public class JavaBeanUtil {
 		}
 		try {
 			if(!factory.containsKey(configClass)) {
+			    try {
+		            AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
+		            if(afterC!=null) {
+		                for(Class<?> itemConfigC : afterC.value()) {
+		                    buildConfigObj(itemConfigC,assemblyData.getNameMapTmp());
+		                }
+		            }
+		        } catch (Exception e) {
+		        }
 //				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
-				Constructor[] cons = configClass.getConstructors();
-				if(cons.length>0) {
-					findAndCreateBean(configClass, assemblyData, cons);
-				}else {
-					cons = configClass.getDeclaredConstructors();
-					if(!Modifier.isPublic(configClass.getModifiers())) {
-						log.info("处理非公共类");
-						cons[0].setAccessible(true);
-					}
-					if(cons.length>0) {
-					    findAndCreateBean(configClass, assemblyData, cons);
-					}
-				}
-				if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
-					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
-				}
-				LazyBean.processAttr(factory.get(configClass), configClass);
+				buildConfigObj(configClass,assemblyData.getNameMapTmp());
 			}
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 		    log.error("构建Bean=>{}，method=>{}",configClass.getSimpleName(), method.getName());
@@ -124,7 +118,27 @@ public class JavaBeanUtil {
 		}
 		return cacheBean.get(key);
 	}
-    private static void findAndCreateBean(Class configClass, AssemblyUtil assemblyData, Constructor[] cons)
+    private static void buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace)
+        throws InstantiationException, IllegalAccessException, InvocationTargetException {
+        Constructor[] cons = configClass.getConstructors();
+        if(cons.length>0) {
+        	findAndCreateBean(configClass, nameSpace, cons);
+        }else {
+        	cons = configClass.getDeclaredConstructors();
+        	if(!Modifier.isPublic(configClass.getModifiers())) {
+        		log.info("处理非公共类");
+        		cons[0].setAccessible(true);
+        	}
+        	if(cons.length>0) {
+        	    findAndCreateBean(configClass, nameSpace, cons);
+        	}
+        }
+        if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
+        	LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
+        }
+        LazyBean.processAttr(factory.get(configClass), configClass);
+    }
+    private static void findAndCreateBean(Class configClass, Map<String,Class> nameSpace, Constructor[] cons)
         throws InstantiationException, IllegalAccessException, InvocationTargetException {
         int min = 10;
         Constructor minC = null;
@@ -135,10 +149,10 @@ public class JavaBeanUtil {
         	}
         }
         Type[] paramTypes = minC.getGenericParameterTypes();
-        Object[] param = buildParam(assemblyData, paramTypes);
+        Object[] param = buildParam(nameSpace, paramTypes);
         factory.put(configClass, minC.newInstance(param));
     }
-    private static Object[] buildParam(AssemblyUtil assemblyData, Type[] paramTypes) {
+    private static Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	AssemblyUtil tmp = new AssemblyUtil();
@@ -155,9 +169,7 @@ public class JavaBeanUtil {
         		}
         	}
         	tmp.setBeanName(null);
-        	tmp.setNameMapTmp(assemblyData.getNameMapTmp());
-        	
-        	
+        	tmp.setNameMapTmp(nameSpace);
 //						if(paramTypes[i] instanceof ParameterizedType) {
 //						}
 //						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
