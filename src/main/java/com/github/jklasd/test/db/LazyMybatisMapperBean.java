@@ -7,11 +7,12 @@ import java.util.List;
 
 import com.github.jklasd.test.AssemblyUtil;
 import com.github.jklasd.test.InvokeUtil;
-import com.github.jklasd.test.LazyBeanProcess;
+import com.github.jklasd.test.LazyBeanFactory;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.beanfactory.LazyCglib;
+import com.github.jklasd.test.beanfactory.LazyProxy;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class LazyMybatisMapperBean {
+public class LazyMybatisMapperBean implements LazyBeanFactory{
     private static volatile LazyMybatisMapperBean bean;
 
     public static LazyMybatisMapperBean getInstance() {
@@ -152,9 +153,22 @@ public class LazyMybatisMapperBean {
 
     public void configure() {
         // 判断是否存在类
-        Class<?> abstractRoutingDataSource
-            = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
-        LazyBeanProcess.putAfterMethodEvent(abstractRoutingDataSource);
+//        Class<?> abstractRoutingDataSource
+//            = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
+//        LazyBeanProcess.putAfterMethodEvent(abstractRoutingDataSource);
+    }
+
+    @Override
+    public Object buildBean(LazyProxy model) {
+        Class<?> tagC = model.getBeanModel().getTagClass();
+        if(isMybatisBean(tagC)) {
+            try {
+                return getMapper(tagC);
+            } catch (Exception e) {
+                log.error("获取Mapper", e);
+            }
+        }
+        return null;
     }
 
 }

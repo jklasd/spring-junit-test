@@ -7,12 +7,13 @@ import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.w3c.dom.Element;
-import org.w3c.dom.NodeList;
 
 import com.github.jklasd.test.InvokeUtil;
+import com.github.jklasd.test.LazyBeanFactory;
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.beanfactory.LazyBean;
+import com.github.jklasd.test.beanfactory.LazyProxy;
 import com.github.jklasd.test.spring.BeanDefParser;
 import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;
@@ -24,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class LazyDubboBean implements BeanDefParser{
+public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
     private LazyDubboBean() {}
     private static volatile LazyDubboBean bean;
     public static LazyDubboBean getInstance() {
@@ -117,43 +118,29 @@ public class LazyDubboBean implements BeanDefParser{
 			log.info("注册=========={}===============成功",dubboServiceClass);
 		}
 	}
-	private static void cacheService(NodeList serviceList) {
-		for(int i = 0 ;i< serviceList.getLength();i++) {
-			Element node = (Element) serviceList.item(i);
-			String className = node.getAttribute("interface");
-			try {
-				dubboServiceCache.put(Class.forName(className),node);
-			} catch (ClassNotFoundException e) {
-				log.error("LazyDubboBean#cacheService=>{}",e.getMessage());
-			}
-		}
-	}
-	private static void cacheReference(NodeList list) {
-			for(int i = 0 ;i< list.getLength();i++) {
-				Element node = (Element) list.item(i);
-				String className = node.getAttribute("interface");
-				try {
-					dubboRefferCache.put(Class.forName(className), node);
-				} catch (Exception e) {
-					log.error("",e);
-				}
-			}
-	}
-//	private static void processRegister(NodeList elementsByTagName) {
-//		if(registryConfig == null) {
-//			Element attr = (Element) elementsByTagName.item(0);
-//			String protocol="";
-//			if(!attr.hasAttribute("protocol") || attr.getAttribute("protocol").equals("zookeeper")) {
-//				protocol  = "zookeeper://";
+//	private static void cacheService(NodeList serviceList) {
+//		for(int i = 0 ;i< serviceList.getLength();i++) {
+//			Element node = (Element) serviceList.item(i);
+//			String className = node.getAttribute("interface");
+//			try {
+//				dubboServiceCache.put(Class.forName(className),node);
+//			} catch (ClassNotFoundException e) {
+//				log.error("LazyDubboBean#cacheService=>{}",e.getMessage());
 //			}
-//			registryConfig = new RegistryConfig(protocol+ TestUtil.getPropertiesValue(attr.getAttribute("address")));
-//			registryConfig.setUsername(TestUtil.getPropertiesValue(attr.getAttribute("username")));
-//			registryConfig.setPassword(TestUtil.getPropertiesValue(attr.getAttribute("password")));
-//			registryConfig.setClient(TestUtil.getPropertiesValue(attr.getAttribute("client")));
-//			registryConfig.setSubscribe(true);
-//			registryConfig.setRegister(true);
 //		}
 //	}
+//	private static void cacheReference(NodeList list) {
+//			for(int i = 0 ;i< list.getLength();i++) {
+//				Element node = (Element) list.item(i);
+//				String className = node.getAttribute("interface");
+//				try {
+//					dubboRefferCache.put(Class.forName(className), node);
+//				} catch (Exception e) {
+//					log.error("",e);
+//				}
+//			}
+//	}
+	
 	public static void putAnnService(Class<?> dubboServiceClass) {}
 	private Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
 	private Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
@@ -225,5 +212,14 @@ public class LazyDubboBean implements BeanDefParser{
         PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
         LazyBean.setAttr("name", application, beanDef.getBeanClass(), TestUtil.getPropertiesValue(name.getValue().toString()));
         return application;
+    }
+
+    @Override
+    public Object buildBean(LazyProxy model) {
+        if (useDubbo()) {
+            Class<?> dubboClass = model.getBeanModel().getTagClass();
+            return buildBeanNew(dubboClass);
+        }
+        return null;
     }
 }

@@ -2,6 +2,7 @@
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.List;
 import java.util.Map;
 
 import org.springframework.aop.framework.AopContext;
@@ -25,6 +26,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class LazyProxy {
+    @Getter
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
@@ -38,7 +40,9 @@ public abstract class LazyProxy {
             beanModel.setPropValue(null);
         }
     }
-
+    
+    protected List factoryList;
+    
     protected void initLazyProxy() {
             try {
                 if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
