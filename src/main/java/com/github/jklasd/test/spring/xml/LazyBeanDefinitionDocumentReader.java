@@ -50,9 +50,6 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         model.setBeanName(beanName);
         model.setTagClass(beanC);
         model.setPropValue(beanDef.getPropertyValues());
-//        if(beanName.equals("sqlSessionFactory")) {
-//            log.info("断点");
-//        }
         LazyBean.buildProxy(model);
         
     }

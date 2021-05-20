@@ -6,7 +6,9 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
@@ -32,8 +34,14 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.beanfactory.LazyBean;
+import com.github.jklasd.util.CountDownLatchUtils;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class TestApplicationContext implements ConfigurableApplicationContext{
 
 	private ApplicationContext parentContext;
@@ -456,29 +464,31 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	private final Map<String, Class<?>> bToC = new ConcurrentHashMap<>();
 	
 	public Object getBeanByClassAndBeanName(String beanName,Class<?> beanClass) {
-	    if(bToC.get(beanName) == beanClass) {
-	        return beanDefinitionMap.get(beanName);
-	    }
-	    return null;
+//	    if(bToC.get(beanName) == beanClass) {
+//	        return beanDefinitionMap.get(beanName);
+//	    }
+//	    return null;
+	    return getBeanByClassAndBeanNameTmp(beanName);
 	}
 	public Object getBeanByClass(Class<?> beanClass) {
-	    if(beanForClassMap.containsKey(beanClass)) {
-            return beanForClassMap.get(beanClass);
-        }else {
-            if(cToC.containsKey(beanClass)) {
-                Map<String,Class<?>> btc = cToC.get(beanClass);
-                String beanName = LazyBean.getBeanName(beanClass);
-                if(btc.containsKey(beanName)) {
-                    return beanDefinitionMap.get(beanName);
-                }
-                Iterator<String> names = btc.keySet().iterator();
-                if(names.hasNext()) {
-                    beanName = names.next();
-                    return beanDefinitionMap.get(beanName);
-                }
-            }
-        }
-	    return null;
+//	    if(beanForClassMap.containsKey(beanClass)) {
+//            return beanForClassMap.get(beanClass);
+//        }else {
+//            if(cToC.containsKey(beanClass)) {
+//                Map<String,Class<?>> btc = cToC.get(beanClass);
+//                String beanName = LazyBean.getBeanName(beanClass);
+//                if(btc.containsKey(beanName)) {
+//                    return beanDefinitionMap.get(beanName);
+//                }
+//                Iterator<String> names = btc.keySet().iterator();
+//                if(names.hasNext()) {
+//                    beanName = names.next();
+//                    return beanDefinitionMap.get(beanName);
+//                }
+//            }
+//        }
+//	    return null;
+	    return getBeanByClassTmp(beanClass);
 	}
 	/**
 	 * Bean 容器管理有待优化
@@ -487,23 +497,117 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	 * @param beanClass 对象类型
 	 */
 	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
-		if(newBean!=null) {
-			if(StringUtils.isBlank(beanName)) {
-			    beanName = LazyBean.getBeanName(beanClass);
-			}
-			if(!beanForClassMap.containsKey(beanClass)) {
-			    beanForClassMap.put(beanClass, newBean);
-			}
-			if(beanDefinitionMap.containsKey(beanName)) {
-			   return; 
-			}
-			beanDefinitionMap.put(beanName, newBean);
-			bToC.put(beanName, beanClass);
-			if(!beanForClassMap.containsKey(beanClass)) {
-			    handcToC(beanClass,beanClass,beanName);
-			}
-		}
+//		if(newBean!=null) {
+//			if(StringUtils.isBlank(beanName)) {
+//			    beanName = LazyBean.getBeanName(beanClass);
+//			}
+//			if(beanName == null) {
+//			    return;
+//			}
+//			if(!beanForClassMap.containsKey(beanClass)) {
+//			    beanForClassMap.put(beanClass, newBean);
+//			}
+//			if(beanDefinitionMap.containsKey(beanName)) {
+//			   return; 
+//			}
+//			beanDefinitionMap.put(beanName, newBean);
+//			bToC.put(beanName, beanClass);
+//			if(!beanForClassMap.containsKey(beanClass)) {
+//			    handcToC(beanClass,beanClass,beanName);
+//			}
+//		}
+	    registBeanTmp(beanName, newBean, beanClass);
 	}
+	
+	private Map<Class<?>,TreeSet<String>> insterFaceClassToBeanName = Maps.newHashMap();
+	private Map<Class<?>,TreeSet<String>> classToBeanName = Maps.newHashMap();
+	public void registBeanTmp(String beanName, Object newBean ,Class<?> beanClass) {
+	    if(newBean!=null) {
+	        if(StringUtils.isBlank(beanName)) {
+                beanName = LazyBean.getBeanName(beanClass);
+                if(beanName == null) {
+                    return;
+                }
+            }
+	        if(!beanDefinitionMap.containsKey(beanName)) {
+	            beanDefinitionMap.put(beanName, newBean);
+	        }
+	        if(beanClass.isInterface()) {
+	            if(!insterFaceClassToBeanName.containsKey(beanClass)) {
+	                insterFaceClassToBeanName.put(beanClass, Sets.newTreeSet());
+	            }
+	            insterFaceClassToBeanName.get(beanClass).add(beanName);
+	        }else {
+	            if(!classToBeanName.containsKey(beanClass)) {
+	                classToBeanName.put(beanClass, Sets.newTreeSet());
+	            }
+	            classToBeanName.get(beanClass).add(beanName);
+	        }
+	    }else {
+	        log.error("异常数据==>{}",beanClass);
+	    }
+	}
+	public Object getBeanByClassAndBeanNameTmp(String beanName) {
+        if(beanDefinitionMap.containsKey(beanName)) {
+            return beanDefinitionMap.get(beanName);
+        }
+        return null;
+    }
+	public Object getBeanByClassTmp(Class<?> beanClass) {
+	    if(beanClass.isInterface()) {
+	        TreeSet<String> beanNames = insterFaceClassToBeanName.get(beanClass);
+	        if(beanNames!=null) {
+	            if(!beanDefinitionMap.containsKey(beanNames.first())) {
+	                log.error("getBeanByClassTmp#异常#===>{}",beanNames);
+	                return null;
+	            }
+	            return beanDefinitionMap.get(beanNames.first());
+	        }
+	        AtomicReference<Class<?>> target = new AtomicReference<>();
+	        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(insterFaceClassToBeanName.keySet())).runAndWait(insterfaceC->{
+	            if(target.get()==null && ScanUtil.isExtends(insterfaceC, beanClass)) {
+	                target.compareAndSet(null,beanClass);
+	                insterFaceClassToBeanName.put(beanClass, Sets.newTreeSet());
+	                insterFaceClassToBeanName.get(beanClass).add(insterFaceClassToBeanName.get(insterfaceC).first());
+    	        }
+	        });
+	        if(target.get()!=null) {
+	            return beanDefinitionMap.get(insterFaceClassToBeanName.get(target.get()).first());
+	        }
+            CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classToBeanName.keySet())).runAndWait(insterfaceC->{
+                if(target.get()==null && ScanUtil.isImple(insterfaceC, beanClass)) {
+                    target.compareAndSet(null,beanClass);
+                    classToBeanName.put(beanClass, Sets.newTreeSet());
+                    classToBeanName.get(beanClass).add(classToBeanName.get(insterfaceC).first());
+                }
+            });
+            if(target.get()!=null) {
+                return beanDefinitionMap.get(classToBeanName.get(target.get()).first());
+            }
+	        return target.get();
+	    }else {
+	        TreeSet<String> beanNames = classToBeanName.get(beanClass);
+            if(beanNames!=null) {
+                if(!beanDefinitionMap.containsKey(beanNames.first())) {
+                    log.error("getBeanByClassTmp#异常#===>{}",beanNames);
+                    return null;
+                }
+                return beanDefinitionMap.get(beanNames.first());
+            }
+            AtomicReference<Class<?>> target = new AtomicReference<>();
+            CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classToBeanName.keySet())).runAndWait(nonClass->{
+                if(target.get()==null && ScanUtil.isExtends(nonClass, beanClass)) {
+                    target.compareAndSet(null,beanClass);
+                    classToBeanName.put(beanClass, Sets.newTreeSet());
+                    classToBeanName.get(beanClass).add(classToBeanName.get(nonClass).first());
+                }
+            });
+            if(target.get()!=null) {
+                return beanDefinitionMap.get(classToBeanName.get(target.get()).first());
+            }
+            return target.get();
+	    }
+    }
 
     private void handcToC(Class<?> beanClass,Class<?> beanClassSup,String beanName) {
         if(beanClassSup == null) {

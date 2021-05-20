@@ -17,16 +17,16 @@ public final class LazyBeanProcess {
 	private static Map<String,LazyConfigProcess> allMethodConfig = Maps.newHashMap();
 	private static  Map<String,Map<String,LazyConfigProcess>> methodConfig = Maps.newHashMap();
 	
-	public final synchronized static void afterPropertiesSet(Object tagObj) {
-	    afterPropertiesSet.stream().filter(tagC-> ScanUtil.isExtends(tagObj.getClass(), tagC))
-        .forEach(entry->{
-            try {
-                InvokeUtil.invokeMethod(tagObj, "afterPropertiesSet");
-            } catch (SecurityException | IllegalArgumentException e) {
-                log.error("dataSource#afterPropertiesSet", e);
-            }
-        });
-	}
+//	public final synchronized static void afterPropertiesSet(Object tagObj) {
+//	    afterPropertiesSet.stream().filter(tagC-> ScanUtil.isExtends(tagObj.getClass(), tagC))
+//        .forEach(entry->{
+//            try {
+//                InvokeUtil.invokeMethod(tagObj, "afterPropertiesSet");
+//            } catch (SecurityException | IllegalArgumentException e) {
+//                log.error("dataSource#afterPropertiesSet", e);
+//            }
+//        });
+//	}
 	public final synchronized static void processLazyConfig(Object tagObj,Method method, Object[] param) {
 		try {
 			if(tagObj == null || method == null) {

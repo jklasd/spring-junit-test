@@ -26,7 +26,7 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
     public LazyCglib(BeanModel beanModel) {
         super(beanModel);
         setConstructor();
-        init();
+        initLazyProxy();
     }
     
     public boolean hasFinalMethod() {
@@ -111,6 +111,9 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
     @Override
     protected Object getTagertObjectCustom() {
         Class<?> tagertC = beanModel.getTagClass();
+//        if(tagertC.getName().contains("JedisCluster")) {
+//            log.info("");
+//        }
         String beanName = beanModel.getBeanName();
         if(!ScanUtil.exists(tagertC)) {
             if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo

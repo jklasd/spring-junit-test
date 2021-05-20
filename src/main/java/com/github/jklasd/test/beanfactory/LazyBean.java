@@ -101,7 +101,7 @@ public class LazyBean {
 //        }
 	    Object obj = null;
 	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
-	        obj = TestUtil.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(),beanModel.getTagClass());
+	        obj = TestUtil.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
 	        if(obj!=null) {
 	            return obj;
 	        }
@@ -182,6 +182,9 @@ public class LazyBean {
 		if(service!=null && StringUtils.isNotBlank(service.value())) {
 			return service.value();
 		}
+		if(classBean.isInterface()) {
+		    return null;
+		}
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
 	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {
@@ -239,7 +242,7 @@ public class LazyBean {
 	 */
 	@SuppressWarnings("unchecked")
 	public static void processAttr(Object obj, Class objClassOrSuper) {
-//		if(objClassOrSuper.getName().contains("ProductRuleConfiguration")) {
+//		if(objClassOrSuper.getName().contains("JedisCluster")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
 		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {

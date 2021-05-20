@@ -39,7 +39,7 @@ public abstract class LazyProxy {
         }
     }
 
-    protected void init() {
+    protected void initLazyProxy() {
             try {
                 if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
                     getTagertObj();
@@ -126,7 +126,12 @@ public abstract class LazyProxy {
                 });
             }
             if(tagertObj instanceof InitializingBean) {
-                LazyBeanProcess.afterPropertiesSet(tagertObj);
+//                LazyBeanProcess.afterPropertiesSet(tagertObj);
+                try {
+                    InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
+                } catch (SecurityException | IllegalArgumentException e) {
+                    log.error("InitializingBean#afterPropertiesSet", e);
+                }
             }
         }
         return tmp;
