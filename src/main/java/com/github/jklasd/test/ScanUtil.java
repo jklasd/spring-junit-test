@@ -349,7 +349,6 @@ public class ScanUtil {
 	 * @param interfaceClass 接口类型
 	 * @return  true/ false
 	 */
-//	@SuppressWarnings({ "rawtypes" })
 	public static boolean isImple(Class implClass,Class<?> interfaceClass) {
 //		Class[] ics = implClass.getInterfaces();
 //		for(Class c2 : ics) {

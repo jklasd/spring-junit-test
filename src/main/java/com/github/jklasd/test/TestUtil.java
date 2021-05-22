@@ -242,11 +242,10 @@ public class TestUtil {
 	 * @param obj 执行目标对象
 	 */
 	private static volatile boolean processInited;
-	public void startTestForNoContainer(Object obj) {
+	public static void startTestForNoContainer(Object obj) {
 		TestUtil launch = getInstance();
-		loadProp();
+		launch.loadProp();
 		LazyBean.getInstance().processAttr(obj, obj.getClass());
-//		AopContextSuppert.setProxyObj(obj);
 		LogbackUtil.resetLog();
 		ScanUtil.loadAllClass();
 		launch.processConfig();
