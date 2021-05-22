@@ -1,6 +1,8 @@
 package com.github.jklasd.test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +15,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -22,10 +23,10 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.beanfactory.LazyBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.TestApplicationContext;
-import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.github.jklasd.util.LogbackUtil;
 import com.google.common.collect.Sets;
 
@@ -36,28 +37,48 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TestUtil {
-	private static Set<String> scanClassPath = Sets.newHashSet();
-	private static Set<String> scanPropertiesList = Sets.newHashSet();
+	private Set<String> scanClassPath = Sets.newHashSet();
+	private Set<String> scanPropertiesList = Sets.newHashSet();
 
-	public static void loadProperties(String... scanPropertiesPath) {
+	public void loadProperties(String... scanPropertiesPath) {
 		for (String path : scanPropertiesPath) {
 			scanPropertiesList.add(path);
 		}
 	}
 
-	public static void loadScanPath(String... scanPath) {
+	public void loadScanPath(String... scanPath) {
 		for (String path : scanPath) {
 			scanClassPath.add(path);
 		}
 	}
 
 	private TestUtil() {
-		log.info("--实例化TestUtil--");
+	    try {
+            Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");
+            if(banner!=null) {
+                BufferedReader bis = new BufferedReader(new InputStreamReader(banner.getInputStream()));
+                String line = null;
+                while((line = bis.readLine())!=null) {
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e) {
+             e.printStackTrace();
+        }
 	}
+	private static volatile TestUtil bean;
+	public synchronized static TestUtil getInstance() {
+	    if(bean!=null) {
+	        return bean;
+	    }
+	    bean = new TestUtil();
+	    bean.setApplicationContext(null);
+	    return bean;
+	}
+	
+    private TestApplicationContext applicationContext;
 
-	private static TestApplicationContext applicationContext;
-
-	public static TestApplicationContext getApplicationContext() {
+	public TestApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
@@ -68,10 +89,16 @@ public class TestUtil {
 	/**
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
+	private volatile boolean processed;
 	private void processConfig() {
-		LazyMybatisMapperBean.getInstance().configure();
+	    if(processed) {
+            return;
+        }
+	    processed = true;
+	    log.info("====加载配置====");
+//		LazyMybatisMapperBean.getInstance().configure();
 		
-		XmlBeanUtil.process();
+		XmlBeanUtil.getInstance().process();
 		JavaBeanUtil.process();
 
 		List<Class<?>> list = ScanUtil.findStaticMethodClass();
@@ -82,49 +109,19 @@ public class TestUtil {
 		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers()))
 				.forEach(classItem -> {
 					log.debug("static class =>{}", classItem);
-					if(classItem.getName().contains("HandleMessageUtil")) {
-					    System.out.println("断点");
-					}
-					LazyBean.processStatic(classItem);
+//					if(classItem.getName().contains("HandleMessageUtil")) {
+//					    System.out.println("断点");
+//					}
+					LazyBean.getInstance().processStatic(classItem);
 				});
 	}
 
-	public static Object getExistBean(Class<?> classD) {
+	public Object getExistBean(Class<?> classD) {
 		if (classD == ApplicationContext.class) {
 			return getApplicationContext();
 		}
 		Object obj = getApplicationContext().getBean(classD);
 		return obj;
-	}
-
-	@SuppressWarnings("unchecked")
-	public static Object buildBean(Class c) {
-		Object obj = null;
-		try {
-			obj = getApplicationContext().getBean(c);
-			if (obj != null) {
-				return obj;
-			}
-		} catch (Exception e) {
-			log.error("不存在");
-		}
-		obj = getApplicationContext().getAutowireCapableBeanFactory().createBean(c);
-		return obj;
-	}
-
-	public static void registerBean(Object bean) {
-		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext()
-				.getAutowireCapableBeanFactory();
-		Object obj = null;
-		try {
-			obj = dlbf.getBean(bean.getClass());
-		} catch (Exception e) {
-			log.error("不存在");
-		}
-		if (obj == null) {
-			dlbf.registerSingleton(bean.getClass().getPackage().getName() + "." + bean.getClass().getSimpleName(),
-					bean);
-		}
 	}
 
 	/**
@@ -135,7 +132,7 @@ public class TestUtil {
 	 * @return 返回容器中已存在的Bean
 	 */
 	@SuppressWarnings("unchecked")
-	public static Object getExistBean(Class classD, String beanName) {
+	public Object getExistBean(Class classD, String beanName) {
 		try {
 			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
 				return getApplicationContext();
@@ -163,7 +160,7 @@ public class TestUtil {
 		}
 	}
 
-	public static String getPropertiesValue(String key, String defaultStr) {
+	public String getPropertiesValue(String key, String defaultStr) {
 		key = key.replace("${", "").replace("}", "");
 		if (getApplicationContext() != null) {
 			String[] keys = key.split(":");
@@ -177,11 +174,11 @@ public class TestUtil {
 		return key;
 	}
 
-	public static String getPropertiesValue(String key) {
+	public String getPropertiesValue(String key) {
 		return getPropertiesValue(key, null);
 	}
 
-	public static Object value(String key, Class<?> type) {
+	public Object value(String key, Class<?> type) {
 //		if(key.contains("finalPV.userId")) {
 //			log.debug("断点");
 //		}
@@ -200,8 +197,10 @@ public class TestUtil {
 					return new BigDecimal(value);
 				} else if (type == Boolean.class || type == boolean.class) {
 					return new Boolean(value);
-				} else {
-					log.info("其他类型");
+				} else if (type == Class.class) {
+                    return ScanUtil.loadClass(value);
+                }{
+					log.info("TestUil 类型转换=========其他类型========={}=",type);
 				}
 			} else if (type != String.class) {
 				return null;
@@ -214,7 +213,7 @@ public class TestUtil {
 		return value;
 	}
 
-	public static PropertySources getPropertySource() {
+	public PropertySources getPropertySource() {
 		StandardEnvironment env = (StandardEnvironment) getApplicationContext().getEnvironment();
 		return env.getPropertySources();
 	}
@@ -224,19 +223,20 @@ public class TestUtil {
 	 * 
 	 * @param obj 执行目标对象
 	 */
+	private static volatile boolean processInited;
 	public static void startTestForNoContainer(Object obj) {
-		TestUtil launch = new TestUtil();
-		launch.setApplicationContext(null);
-		loadProp();
-		LazyBean.processAttr(obj, obj.getClass());
-//		AopContextSuppert.setProxyObj(obj);
+	    if(processInited) {
+	        return;
+	    }
+		TestUtil launch = getInstance();
+		launch.loadProp();
+		LazyBean.getInstance().processAttr(obj, obj.getClass());
 		LogbackUtil.resetLog();
-		log.info("====加载配置====");
 		ScanUtil.loadAllClass();
 		launch.processConfig();
 	}
 
-	private static void loadProp() {
+	private void loadProp() {
 		ConfigurableEnvironment cEnv = (ConfigurableEnvironment) getApplicationContext().getEnvironment();
 		Properties properties = new Properties();
 		for(String propPath : scanPropertiesList) {
@@ -252,11 +252,7 @@ public class TestUtil {
 		cEnv.getPropertySources().addLast(new PropertiesPropertySource("loadProp", properties));
 	}
 
-	public static Boolean isScanClassPath(String cn) {
-//		if(cn.contains("RedisAutoConfiguration")) {
-//		boolean  judgment = scanClassPath.stream().anyMatch(p -> cn.contains(p));
-//			log.info("断点");
-//		}
+	public Boolean isScanClassPath(String cn) {
 		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
 	}
 //	public static void getExistBean(Class interfaceClass, Type[] classGeneric) {
