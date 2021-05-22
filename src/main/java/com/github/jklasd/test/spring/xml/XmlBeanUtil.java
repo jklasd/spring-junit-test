@@ -179,8 +179,6 @@ public class XmlBeanUtil {
         Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
         if (file != null) {
             try {
-//            BeanDefinitionParserDelegate beanDefinitionParserDelegate = new BeanDefinitionParserDelegate(context);
-//            ParserContext parserContext = new ParserContext(context, beanDefinitionParserDelegate);
                 log.info("load:{}",file.getFile().getPath());
                 XmlReaderContext context = xmlReader.createReaderContext(file);
                 LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
@@ -198,19 +196,6 @@ public class XmlBeanUtil {
     public LazyBeanInitProcessImpl getProcess(String key) {
         return tmpAttrMap.get(key);
     }
-//    private static Map<String, String> loadXmlns(NamedNodeMap attributes) {
-//        Map<String, String> parsorMap = Maps.newHashMap();
-//        for (int i = 0; i < attributes.getLength(); i++) {
-//            String name = attributes.item(i).getNodeName();
-//            String prefix = "xmlns:";
-//            if (name.startsWith(prefix)) {
-//                String value = attributes.item(i).getNodeValue();
-//                // 使用的解析器
-//                parsorMap.put(name.replace(prefix, ""), value);
-//            }
-//        }
-//        return parsorMap;
-//    }
     
     protected EntityResolver getEntityResolver(XmlBeanDefinitionReader reader) {
         EntityResolver entityResolver = null;
