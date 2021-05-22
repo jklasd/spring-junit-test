@@ -153,19 +153,12 @@ public class ScanUtil {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
 							JarFile jFile = ((JarURLConnection) connection).getJarFile();
-//							Enumeration<JarEntry> jarEntrys = jFile.entries();
-//							while (jarEntrys.hasMoreElements()) {
-//								String name = jarEntrys.nextElement().getName();
-//								if(name.contains(".class"))
-//								classNames.add(name.replace("/", ".").replace("\\", "."));
-//							}
 							CountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 							    String name = JarEntry.getName();
                               if(name.contains(".class")) {
                                   classNames.add(name.replace("/", ".").replace("\\", "."));
                               }else {
                                   if(name.contains("spring.handlers")) {
-//                                      System.out.println(name);
                                       try {
                                           InputStream is = jFile.getInputStream(JarEntry);
                                           BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -213,9 +206,6 @@ public class ScanUtil {
 			if(name.endsWith(CLASS_SUFFIX) && !nameMap.containsKey(name)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
-//				if(name.contains("RedisAutoConfiguration")) {
-//					log.info("断点");
-//				}
 				try {
 					Class<?> c = ScanUtil.class.getClassLoader().loadClass(name);
 					nameMap.put(name,c);
@@ -246,7 +236,7 @@ public class ScanUtil {
 			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
 				list.add(nameMap.get(name));
 			} else {
-				Class tagClass = nameMap.get(name);
+				Class<?> tagClass = nameMap.get(name);
 				Service sAnn = (Service) tagClass.getAnnotation(Service.class);
 				Component cAnn = (Component)tagClass.getAnnotation(Component.class);
 				
@@ -442,7 +432,7 @@ public class ScanUtil {
 							list.add(c);
 							return;
 						}
-						log.debug(returnType.getName());
+//						log.debug(returnType.getName());
 					}
 				}
 			}else if(configuration == null) {
@@ -534,7 +524,6 @@ public class ScanUtil {
 	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
-		// TODO Auto-generated method stub
 		for(String path: paths) {
 			Resource r = getRecource(path);
 			if(r!=null && r.exists()) {
@@ -571,7 +560,7 @@ public class ScanUtil {
 		return existsProp.contains(tag);
 	}
 	private static boolean readPropAnno(Class tag, List<Class<?>> list) {
-		for(Class enablePropC : list) {
+		for(Class<?> enablePropC : list) {
 			EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
 			for(Class c : ecp.value()) {
 				if(c == tag) {
