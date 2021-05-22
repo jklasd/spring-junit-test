@@ -50,7 +50,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         model.setBeanName(beanName);
         model.setTagClass(beanC);
         model.setPropValue(beanDef.getPropertyValues());
-        LazyBean.buildProxy(model);
+        LazyBean.getInstance().buildProxy(model);
         
     }
 

@@ -94,7 +94,7 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
                 objes[i] = Sets.newHashSet();
             }
             else {
-                objes[i] = LazyBean.buildProxy(getArgumentTypes()[i]);
+                objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
             }
         }
         return objes;
@@ -118,9 +118,10 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
         if(!ScanUtil.exists(tagertC)) {
             if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
                 tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
-            }else if(LazyMQBean.isBean(tagertC)) {
-                tagertObj = LazyMQBean.buildBean(tagertC);
-            }
+            }/*else if(LazyMQBean.isBean(tagertC)) {
+//                tagertObj = LazyMQBean.buildBean(tagertC);
+                log.info("");
+            }*/
             if(tagertObj==null && !inited && !beanModel.isXmlBean()) {
                 tagertObj = LazyBean.findCreateBeanFromFactory(tagertC,beanName);
             }
@@ -147,7 +148,7 @@ public class LazyCglib extends LazyProxy implements MethodInterceptor {
                      */
                     try {//直接反射构建目标对象
                         tagertObj = tagertC.newInstance();
-                        LazyBean.processAttr(tagertObj, tagertC);//递归注入代理对象
+                        LazyBean.getInstance().processAttr(tagertObj, tagertC);//递归注入代理对象
                     } catch (InstantiationException | IllegalAccessException e) {
                         log.error("构建bean=>{}",tagertC);
                         log.error("构建bean异常",e);

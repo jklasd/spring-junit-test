@@ -37,16 +37,16 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TestUtil {
-	private static Set<String> scanClassPath = Sets.newHashSet();
-	private static Set<String> scanPropertiesList = Sets.newHashSet();
+	private Set<String> scanClassPath = Sets.newHashSet();
+	private Set<String> scanPropertiesList = Sets.newHashSet();
 
-	public static void loadProperties(String... scanPropertiesPath) {
+	public void loadProperties(String... scanPropertiesPath) {
 		for (String path : scanPropertiesPath) {
 			scanPropertiesList.add(path);
 		}
 	}
 
-	public static void loadScanPath(String... scanPath) {
+	public void loadScanPath(String... scanPath) {
 		for (String path : scanPath) {
 			scanClassPath.add(path);
 		}
@@ -64,9 +64,9 @@ public class TestUtil {
 	    bean.setApplicationContext(null);
 	    return bean;
 	}
-	private static TestApplicationContext applicationContext;
+	private TestApplicationContext applicationContext;
 
-	public static TestApplicationContext getApplicationContext() {
+	public TestApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
@@ -84,7 +84,7 @@ public class TestUtil {
         }
 	    processed = true;
 	    log.info("====加载配置====");
-		LazyMybatisMapperBean.getInstance().configure();
+//		LazyMybatisMapperBean.getInstance().configure();
 		
 		XmlBeanUtil.getInstance().process();
 		JavaBeanUtil.process();
@@ -100,11 +100,11 @@ public class TestUtil {
 //					if(classItem.getName().contains("HandleMessageUtil")) {
 //					    System.out.println("断点");
 //					}
-					LazyBean.processStatic(classItem);
+					LazyBean.getInstance().processStatic(classItem);
 				});
 	}
 
-	public static Object getExistBean(Class<?> classD) {
+	public Object getExistBean(Class<?> classD) {
 		if (classD == ApplicationContext.class) {
 			return getApplicationContext();
 		}
@@ -112,35 +112,35 @@ public class TestUtil {
 		return obj;
 	}
 
-	@SuppressWarnings("unchecked")
-	public static Object buildBean(Class c) {
-		Object obj = null;
-		try {
-			obj = getApplicationContext().getBean(c);
-			if (obj != null) {
-				return obj;
-			}
-		} catch (Exception e) {
-			log.error("不存在");
-		}
-		obj = getApplicationContext().getAutowireCapableBeanFactory().createBean(c);
-		return obj;
-	}
+//	@SuppressWarnings("unchecked")
+//	public Object buildBean(Class c) {
+//		Object obj = null;
+//		try {
+//			obj = getApplicationContext().getBean(c);
+//			if (obj != null) {
+//				return obj;
+//			}
+//		} catch (Exception e) {
+//			log.error("不存在");
+//		}
+//		obj = getApplicationContext().getAutowireCapableBeanFactory().createBean(c);
+//		return obj;
+//	}
 
-	public static void registerBean(Object bean) {
-		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext()
-				.getAutowireCapableBeanFactory();
-		Object obj = null;
-		try {
-			obj = dlbf.getBean(bean.getClass());
-		} catch (Exception e) {
-			log.error("不存在");
-		}
-		if (obj == null) {
-			dlbf.registerSingleton(bean.getClass().getPackage().getName() + "." + bean.getClass().getSimpleName(),
-					bean);
-		}
-	}
+//	public static void registerBean(Object bean) {
+//		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext()
+//				.getAutowireCapableBeanFactory();
+//		Object obj = null;
+//		try {
+//			obj = dlbf.getBean(bean.getClass());
+//		} catch (Exception e) {
+//			log.error("不存在");
+//		}
+//		if (obj == null) {
+//			dlbf.registerSingleton(bean.getClass().getPackage().getName() + "." + bean.getClass().getSimpleName(),
+//					bean);
+//		}
+//	}
 
 	/**
 	 * 获取存在Service,Complent的相关对象
@@ -150,7 +150,7 @@ public class TestUtil {
 	 * @return 返回容器中已存在的Bean
 	 */
 	@SuppressWarnings("unchecked")
-	public static Object getExistBean(Class classD, String beanName) {
+	public Object getExistBean(Class classD, String beanName) {
 		try {
 			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
 				return getApplicationContext();
@@ -178,7 +178,7 @@ public class TestUtil {
 		}
 	}
 
-	public static String getPropertiesValue(String key, String defaultStr) {
+	public String getPropertiesValue(String key, String defaultStr) {
 		key = key.replace("${", "").replace("}", "");
 		if (getApplicationContext() != null) {
 			String[] keys = key.split(":");
@@ -192,11 +192,11 @@ public class TestUtil {
 		return key;
 	}
 
-	public static String getPropertiesValue(String key) {
+	public String getPropertiesValue(String key) {
 		return getPropertiesValue(key, null);
 	}
 
-	public static Object value(String key, Class<?> type) {
+	public Object value(String key, Class<?> type) {
 //		if(key.contains("finalPV.userId")) {
 //			log.debug("断点");
 //		}
@@ -215,8 +215,10 @@ public class TestUtil {
 					return new BigDecimal(value);
 				} else if (type == Boolean.class || type == boolean.class) {
 					return new Boolean(value);
-				} else {
-					log.info("其他类型");
+				} else if (type == Class.class) {
+                    return ScanUtil.loadClass(value);
+                }{
+					log.info("TestUil 类型转换=========其他类型========={}=",type);
 				}
 			} else if (type != String.class) {
 				return null;
@@ -229,7 +231,7 @@ public class TestUtil {
 		return value;
 	}
 
-	public static PropertySources getPropertySource() {
+	public PropertySources getPropertySource() {
 		StandardEnvironment env = (StandardEnvironment) getApplicationContext().getEnvironment();
 		return env.getPropertySources();
 	}
@@ -240,17 +242,17 @@ public class TestUtil {
 	 * @param obj 执行目标对象
 	 */
 	private static volatile boolean processInited;
-	public static void startTestForNoContainer(Object obj) {
+	public void startTestForNoContainer(Object obj) {
 		TestUtil launch = getInstance();
 		loadProp();
-		LazyBean.processAttr(obj, obj.getClass());
+		LazyBean.getInstance().processAttr(obj, obj.getClass());
 //		AopContextSuppert.setProxyObj(obj);
 		LogbackUtil.resetLog();
 		ScanUtil.loadAllClass();
 		launch.processConfig();
 	}
 
-	private static void loadProp() {
+	private void loadProp() {
 		ConfigurableEnvironment cEnv = (ConfigurableEnvironment) getApplicationContext().getEnvironment();
 		Properties properties = new Properties();
 		for(String propPath : scanPropertiesList) {
@@ -266,11 +268,7 @@ public class TestUtil {
 		cEnv.getPropertySources().addLast(new PropertiesPropertySource("loadProp", properties));
 	}
 
-	public static Boolean isScanClassPath(String cn) {
-//		if(cn.contains("RedisAutoConfiguration")) {
-//		boolean  judgment = scanClassPath.stream().anyMatch(p -> cn.contains(p));
-//			log.info("断点");
-//		}
+	public Boolean isScanClassPath(String cn) {
 		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
 	}
 //	public static void getExistBean(Class interfaceClass, Type[] classGeneric) {

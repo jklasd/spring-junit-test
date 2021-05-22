@@ -72,7 +72,7 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
 //                beanModel.setBeanClassName(beanDef.getBeanClassName());
                 beanModel.setBeanName(beanName);
                 beanModel.setPropValue(beanDef.getPropertyValues());
-                LazyBean.buildProxy(beanModel);
+                LazyBean.getInstance().buildProxy(beanModel);
 //                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
                 
 //                documentReader.attrs.put(key, beanDef.getPropertyValues());

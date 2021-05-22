@@ -152,9 +152,9 @@ public class XmlBeanUtil {
 						return ScanUtil.getResources(val.toString());
 					}
 				} else{
-					if(val.toString().contains("ref:")) {
-						return LazyBean.findBean(val.toString().replace("ref:", ""));
-					}
+//					if(val.toString().contains("ref:")) {
+//						return LazyBean.getInstance().findBean(val.toString().replace("ref:", ""));
+//					}
 					log.warn("其他类型 =>{}",paramType);
 				}
 			}
@@ -176,7 +176,7 @@ public class XmlBeanUtil {
     private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
 
     public void readNode(String xml) {
-        Resource file = TestUtil.getApplicationContext().getResource(xml);
+        Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
         if (file != null) {
             try {
 //            BeanDefinitionParserDelegate beanDefinitionParserDelegate = new BeanDefinitionParserDelegate(context);
@@ -250,7 +250,7 @@ public class XmlBeanUtil {
             Object value = null;
             if(prov.getValue() instanceof RuntimeBeanReference) {
                 RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
-                value = TestUtil.getApplicationContext().getBean(tmp.getBeanName());
+                value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
             }else if(prov.getValue() instanceof ManagedArray) {
                 ManagedArray tmp = (ManagedArray)prov.getValue();
                 List<Object> list = Lists.newArrayList();
@@ -264,7 +264,7 @@ public class XmlBeanUtil {
                         beanModel.setTagClass(tmpC);
                         beanModel.setXmlBean(true);
                         beanModel.setPropValue(tmpBd.getPropertyValues());
-                        list.add(LazyBean.buildProxy(beanModel));
+                        list.add(LazyBean.getInstance().buildProxy(beanModel));
                     }else {
                         log.info("ManagedArray=>{}",item);
                     }
@@ -281,7 +281,7 @@ public class XmlBeanUtil {
                     }
                     if(v instanceof RuntimeBeanReference) {
                         RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
-                        v = TestUtil.getApplicationContext().getBean(tmpV.getBeanName());
+                        v = TestUtil.getInstance().getApplicationContext().getBean(tmpV.getBeanName());
                     }
                     tmpMap.put(k, v);
                 });

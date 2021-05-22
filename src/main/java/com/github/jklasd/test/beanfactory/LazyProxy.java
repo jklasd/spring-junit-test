@@ -47,11 +47,9 @@ public abstract class LazyProxy {
             try {
                 if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
                     getTagertObj();
-                    if(ScanUtil.isImple(beanModel.getTagClass(), InitializingBean.class)) {
-                        InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
-                    }
                     Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
-                    TestUtil.getApplicationContext().registBean(beanModel.getBeanName(), InvokeUtil.invokeMethod(tagertObj, "getObject"),
+                    Object obj = InvokeUtil.invokeMethod(tagertObj, "getObject");
+                    TestUtil.getInstance().getApplicationContext().registBean(LazyBean.getBeanName(obj.getClass()), obj,
                         tagC);
                 }
             } catch (Exception e) {
@@ -121,7 +119,7 @@ public abstract class LazyProxy {
             inited = true;
             if(attr!=null && attr.size()>0) {
                 attr.forEach((key,value)->{
-                    LazyBean.setAttr(key, tmp, beanModel.getTagClass(), value);
+                    LazyBean.getInstance().setAttr(key, tmp, beanModel.getTagClass(), value);
                 });
             }
             if(beanModel.getBeanMethods()!=null) {
@@ -130,7 +128,6 @@ public abstract class LazyProxy {
                 });
             }
             if(tagertObj instanceof InitializingBean) {
-//                LazyBeanProcess.afterPropertiesSet(tagertObj);
                 try {
                     InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
                 } catch (SecurityException | IllegalArgumentException e) {

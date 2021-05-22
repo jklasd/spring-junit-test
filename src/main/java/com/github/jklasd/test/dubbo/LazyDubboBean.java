@@ -94,7 +94,7 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
 	        try {
 	            Object referenceConfig = beanDef.getBeanClass().newInstance();
 	            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-	                LazyBean.setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
+	                LazyBean.getInstance().setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
 	            });
 	            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
 	            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
@@ -102,19 +102,6 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
 	        }
-//			if(ele.hasAttribute("group")) {
-//				serviceConfig.setGroup(TestUtil.getPropertiesValue(ele.getAttribute("group")));
-//			}
-//			if(ele.hasAttribute("timeout")) {
-//				serviceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(ele.getAttribute("timeout"))));
-//			}
-//			if(ele.hasAttribute("ref")) {
-//			    serviceConfig.setRef(LazyBean.buildProxy(ScanUtil.findClassImplInterfaceByBeanName(dubboServiceClass, null, ele.getAttribute("ref")) ,ele.getAttribute("ref")));
-//			}else {
-//			    serviceConfig.setRef(LazyBean.buildProxy(dubboServiceClass));
-//			}
-//			serviceConfig.setRegistry(registryConfig);
-			
 			log.info("注册=========={}===============成功",dubboServiceClass);
 		}
 	}
@@ -175,7 +162,7 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
         try {
             Object referenceConfig = beanDef.getBeanClass().newInstance();
             beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                LazyBean.setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
+                LazyBean.getInstance().setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
             });
             InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
             InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
@@ -197,7 +184,7 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.RegistryConfig");
         registryCenter = beanDef.getBeanClass().newInstance();
         beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-            LazyBean.setAttr(pv.getName(), registryCenter, beanDef.getBeanClass(), pv.getValue());
+            LazyBean.getInstance().setAttr(pv.getName(), registryCenter, beanDef.getBeanClass(), pv.getValue());
         });
         return registryCenter;
     }
@@ -210,7 +197,7 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.ApplicationConfig");
         application = beanDef.getBeanClass().newInstance();
         PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
-        LazyBean.setAttr("name", application, beanDef.getBeanClass(), TestUtil.getPropertiesValue(name.getValue().toString()));
+        LazyBean.getInstance().setAttr("name", application, beanDef.getBeanClass(), TestUtil.getInstance().getPropertiesValue(name.getValue().toString()));
         return application;
     }
 

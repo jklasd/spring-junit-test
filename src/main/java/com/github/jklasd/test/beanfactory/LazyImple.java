@@ -41,7 +41,7 @@ public class LazyImple extends LazyProxy implements InvocationHandler {
                     /**
                      * 若是本地接口实现类的bean，则进行bean查找。
                      */
-                    Object tagImp = LazyBean.findBeanByInterface(tagertC,classGeneric);
+                    Object tagImp = LazyBean.getInstance().findBeanByInterface(tagertC,classGeneric);
                     if(tagImp == null) {
                         tagImp = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
                         if(tagImp == null) {
@@ -55,19 +55,19 @@ public class LazyImple extends LazyProxy implements InvocationHandler {
                          * 实现类是本地Bean
                          */
                         tagertObj = tagImp;
-                        LazyBean.processAttr(tagImp, tagImp.getClass());
+                        LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
                     }
                 }else {
                     // 本地bean
                     Object tagImp = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
                     if(tagImp == null) {
-                        tagImp = LazyBean.createBeanForProxy(beanName, tagertC);
+                        tagImp = LazyBean.getInstance().createBeanForProxy(beanName, tagertC);
                         if(tagImp == null) {
                             log.info("未找到本地Bean=>{}",tagertC);
                         }
                     }
                     if(tagImp != null) {
-                        LazyBean.processAttr(tagImp, tagImp.getClass());
+                        LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
                         tagertObj = tagImp;
                     }
                 }

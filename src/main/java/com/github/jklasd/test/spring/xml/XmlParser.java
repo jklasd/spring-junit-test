@@ -10,7 +10,7 @@ public class XmlParser {
 
     public BeanDefinition parse(Element ele) {
         if (ele.getTagName().equals("context:component-scan")) {
-            TestUtil.loadScanPath(ele.getAttribute("base-package"));
+            TestUtil.getInstance().loadScanPath(ele.getAttribute("base-package"));
             ScanUtil.loadContextPathClass();
         }
         return null;

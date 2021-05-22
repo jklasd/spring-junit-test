@@ -2,7 +2,6 @@ package com.github.jklasd.test.spring;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.util.Iterator;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
@@ -172,12 +171,12 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(getAutowireCapableBeanFactory().containsBean(name)) {
 				return getAutowireCapableBeanFactory().getBean(name);
 			}
-			return LazyBean.findBean(name);
+			return LazyBean.getInstance().findBean(name);
 		}
 		if(parentContext.containsBean(name)) {
 			return parentContext.getBean(name);
 		}else {
-			return LazyBean.findBean(name);
+			return LazyBean.getInstance().findBean(name);
 		}
 	}
 
@@ -187,13 +186,13 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(requiredType.getName().contains("EntityScanPackages")) {
 				return (T) EntityScanPackagesConstructor.getBean();
 			}
-			return (T)LazyBean.findBean(name, requiredType);
+			return (T)LazyBean.getInstance().findBean(name, requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(name,requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)LazyBean.findBean(name, requiredType);
+			return (T)LazyBean.getInstance().findBean(name, requiredType);
 		}
 	}
 
@@ -207,13 +206,13 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(getAutowireCapableBeanFactory().getBean(requiredType) != null) {
 				return getAutowireCapableBeanFactory().getBean(requiredType);
 			}
-			return (T)LazyBean.findBean(requiredType);
+			return (T)LazyBean.getInstance().findBean(requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)LazyBean.findBean(requiredType);
+			return (T)LazyBean.getInstance().findBean(requiredType);
 		}
 	}
 
@@ -490,38 +489,10 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 //	    return null;
 	    return getBeanByClassTmp(beanClass);
 	}
-	/**
-	 * Bean 容器管理有待优化
-	 * @param beanName 对象名称
-	 * @param newBean 对象
-	 * @param beanClass 对象类型
-	 */
-	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
-//		if(newBean!=null) {
-//			if(StringUtils.isBlank(beanName)) {
-//			    beanName = LazyBean.getBeanName(beanClass);
-//			}
-//			if(beanName == null) {
-//			    return;
-//			}
-//			if(!beanForClassMap.containsKey(beanClass)) {
-//			    beanForClassMap.put(beanClass, newBean);
-//			}
-//			if(beanDefinitionMap.containsKey(beanName)) {
-//			   return; 
-//			}
-//			beanDefinitionMap.put(beanName, newBean);
-//			bToC.put(beanName, beanClass);
-//			if(!beanForClassMap.containsKey(beanClass)) {
-//			    handcToC(beanClass,beanClass,beanName);
-//			}
-//		}
-	    registBeanTmp(beanName, newBean, beanClass);
-	}
 	
 	private Map<Class<?>,TreeSet<String>> insterFaceClassToBeanName = Maps.newHashMap();
 	private Map<Class<?>,TreeSet<String>> classToBeanName = Maps.newHashMap();
-	public void registBeanTmp(String beanName, Object newBean ,Class<?> beanClass) {
+	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
 	    if(newBean!=null) {
 	        if(StringUtils.isBlank(beanName)) {
                 beanName = LazyBean.getBeanName(beanClass);
@@ -563,28 +534,11 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	            }
 	            return beanDefinitionMap.get(beanNames.first());
 	        }
-	        AtomicReference<Class<?>> target = new AtomicReference<>();
-	        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(insterFaceClassToBeanName.keySet())).runAndWait(insterfaceC->{
-	            if(target.get()==null && ScanUtil.isExtends(insterfaceC, beanClass)) {
-	                target.compareAndSet(null,beanClass);
-	                insterFaceClassToBeanName.put(beanClass, Sets.newTreeSet());
-	                insterFaceClassToBeanName.get(beanClass).add(insterFaceClassToBeanName.get(insterfaceC).first());
-    	        }
-	        });
-	        if(target.get()!=null) {
-	            return beanDefinitionMap.get(insterFaceClassToBeanName.get(target.get()).first());
+	        Object obj = findBean(beanClass,insterFaceClassToBeanName,insterFaceClassToBeanName);
+	        if(obj==null) {
+	            obj = findBean(beanClass,classToBeanName,insterFaceClassToBeanName);
 	        }
-            CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classToBeanName.keySet())).runAndWait(insterfaceC->{
-                if(target.get()==null && ScanUtil.isImple(insterfaceC, beanClass)) {
-                    target.compareAndSet(null,beanClass);
-                    classToBeanName.put(beanClass, Sets.newTreeSet());
-                    classToBeanName.get(beanClass).add(classToBeanName.get(insterfaceC).first());
-                }
-            });
-            if(target.get()!=null) {
-                return beanDefinitionMap.get(classToBeanName.get(target.get()).first());
-            }
-	        return target.get();
+	        return obj;
 	    }else {
 	        TreeSet<String> beanNames = classToBeanName.get(beanClass);
             if(beanNames!=null) {
@@ -594,58 +548,24 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
                 }
                 return beanDefinitionMap.get(beanNames.first());
             }
-            AtomicReference<Class<?>> target = new AtomicReference<>();
-            CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classToBeanName.keySet())).runAndWait(nonClass->{
-                if(target.get()==null && ScanUtil.isExtends(nonClass, beanClass)) {
-                    target.compareAndSet(null,beanClass);
-                    classToBeanName.put(beanClass, Sets.newTreeSet());
-                    classToBeanName.get(beanClass).add(classToBeanName.get(nonClass).first());
-                }
-            });
-            if(target.get()!=null) {
-                return beanDefinitionMap.get(classToBeanName.get(target.get()).first());
-            }
-            return target.get();
+            Object obj = findBean(beanClass,classToBeanName,classToBeanName);
+            return obj;
 	    }
     }
 
-    private void handcToC(Class<?> beanClass,Class<?> beanClassSup,String beanName) {
-        if(beanClassSup == null) {
-            return;
-        }
-        for(Class<?> c : beanClassSup.getInterfaces()) {
-            if(!cToC.containsKey(c)) {
-                cToC.put(c,Maps.newHashMap());
+    private Object findBean(Class<?> beanClass, Map<Class<?>,TreeSet<String>> fromMap,
+        Map<Class<?>,TreeSet<String>> targetMap) {
+        AtomicReference<Class<?>> targetClass = new AtomicReference<>();
+        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fromMap.keySet())).runAndWait(insterfaceC->{
+            if(targetClass.get()==null && ScanUtil.isImple(insterfaceC, beanClass)) {
+                targetClass.compareAndSet(null,beanClass);
+                targetMap.put(beanClass, Sets.newTreeSet());
+                targetMap.get(beanClass).add(fromMap.get(insterfaceC).first());
             }
-            if(!cToC.get(c).containsKey(beanName)) {
-                cToC.get(c).put(beanName, beanClass);
-            }
-            handcToCSupInterface(c,beanClass,beanName);
+        });
+        if(targetClass.get()!=null) {
+            return beanDefinitionMap.get(targetMap.get(targetClass.get()).first());
         }
-        if(beanClassSup!=null && beanClassSup!=Object.class) {
-            if(beanClassSup != beanClass) {
-                if(!cToC.containsKey(beanClassSup)) {
-                    cToC.put(beanClassSup,Maps.newHashMap());
-                }
-                if(!cToC.get(beanClassSup).containsKey(beanName)) {
-                    cToC.get(beanClassSup).put(beanName, beanClass);
-                }
-            }
-            handcToC(beanClass,beanClassSup.getSuperclass(),beanName);
-        }
+        return null;
     }
-
-    private void handcToCSupInterface(Class<?> c, Class<?> beanClass, String beanName) {
-         if (c.getSuperclass()!=null) {
-             c = c.getSuperclass();
-             if(!cToC.containsKey(c)) {
-                 cToC.put(c,Maps.newHashMap());
-             }
-             if(!cToC.get(c).containsKey(beanName)) {
-                 cToC.get(c).put(beanName, beanClass);
-             }
-             handcToCSupInterface(c,beanClass,beanName);
-        }
-    }
-
 }

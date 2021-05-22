@@ -51,7 +51,7 @@ public class TranstionalManager {
     public TransactionStatus beginTx(TransactionAttribute txInfo) {
         log.info("开启事务=>{}",txInfo);
         if(txManager == null) {
-            txManager = TestUtil.getApplicationContext().getBean(DataSourceTransactionManager.class);
+            txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
         }
         return txManager.getTransaction(txInfo);
     }

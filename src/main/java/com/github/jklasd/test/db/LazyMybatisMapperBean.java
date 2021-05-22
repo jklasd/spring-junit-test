@@ -85,16 +85,7 @@ public class LazyMybatisMapperBean implements LazyBeanFactory{
     @SuppressWarnings("rawtypes")
     private void buildMybatisFactory() {
         if (factory == null) {
-//            Object obj = TestUtil.getApplicationContext().getBeanByClass(factoryBeanClass);
-//            if (obj != null) {
-//                try {
-//                    factory = InvokeUtil.invokeMethod(obj, factoryBeanClass, "getObject");
-//                } catch (Exception e) {
-//                    log.error("buildMybatisFactory#getObject", e);
-//                }
-//                return;
-//            } else {
-            Object obj = TestUtil.getApplicationContext().getBeanByClass(factoryClass);
+            Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
                 if (obj != null) {
                     factory = obj;
                     return;
@@ -123,7 +114,7 @@ public class LazyMybatisMapperBean implements LazyBeanFactory{
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
         if (useMybatis() && !loadScaned) {
-            Object mybatisScan = TestUtil.getApplicationContext().getBeanByClass(mapperScannerConfigurer);
+            Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
                 Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
                 cglibObjField.setAccessible(true);
