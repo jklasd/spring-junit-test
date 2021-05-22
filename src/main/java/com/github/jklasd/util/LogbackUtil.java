@@ -27,13 +27,13 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 public class LogbackUtil {
 	private static Level level = Level.INFO;
 	public static void setJunitLevel(Level level) {
 	    LogbackUtil.level = level;
 	}
 	public static void resetLog() {
+	    System.out.println("===========LogbackUtil=resetLog===========");
 	    try {
             Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
             Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");

@@ -637,12 +637,12 @@ public class LazyBean {
 	public Object findBeanByInterface(Class<?> interfaceClass) {
 		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
-			return util.getInstance().getApplicationContext();
+			return util.getApplicationContext();
 		}
 		if(interfaceClass == Environment.class
 				|| ScanUtil.isExtends(Environment.class,interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass, Environment.class)) {
-			return util.getInstance().getApplicationContext().getEnvironment();
+			return util.getApplicationContext().getEnvironment();
 		}
 		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
 			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);

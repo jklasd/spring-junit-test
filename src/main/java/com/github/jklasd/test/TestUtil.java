@@ -1,6 +1,8 @@
 package com.github.jklasd.test;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.util.List;
@@ -13,7 +15,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -23,7 +24,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.beanfactory.LazyBean;
-import com.github.jklasd.test.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.TestApplicationContext;
 import com.github.jklasd.test.spring.xml.XmlBeanUtil;
@@ -53,7 +53,18 @@ public class TestUtil {
 	}
 
 	private TestUtil() {
-		log.info("--实例化TestUtil--");
+	    try {
+            Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");
+            if(banner!=null) {
+                BufferedReader bis = new BufferedReader(new InputStreamReader(banner.getInputStream()));
+                String line = null;
+                while((line = bis.readLine())!=null) {
+                    System.out.println(line);
+                }
+            }
+        } catch (IOException e) {
+             e.printStackTrace();
+        }
 	}
 	private static volatile TestUtil bean;
 	public synchronized static TestUtil getInstance() {
@@ -64,7 +75,8 @@ public class TestUtil {
 	    bean.setApplicationContext(null);
 	    return bean;
 	}
-	private TestApplicationContext applicationContext;
+	
+    private TestApplicationContext applicationContext;
 
 	public TestApplicationContext getApplicationContext() {
 		return applicationContext;
@@ -111,36 +123,6 @@ public class TestUtil {
 		Object obj = getApplicationContext().getBean(classD);
 		return obj;
 	}
-
-//	@SuppressWarnings("unchecked")
-//	public Object buildBean(Class c) {
-//		Object obj = null;
-//		try {
-//			obj = getApplicationContext().getBean(c);
-//			if (obj != null) {
-//				return obj;
-//			}
-//		} catch (Exception e) {
-//			log.error("不存在");
-//		}
-//		obj = getApplicationContext().getAutowireCapableBeanFactory().createBean(c);
-//		return obj;
-//	}
-
-//	public static void registerBean(Object bean) {
-//		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext()
-//				.getAutowireCapableBeanFactory();
-//		Object obj = null;
-//		try {
-//			obj = dlbf.getBean(bean.getClass());
-//		} catch (Exception e) {
-//			log.error("不存在");
-//		}
-//		if (obj == null) {
-//			dlbf.registerSingleton(bean.getClass().getPackage().getName() + "." + bean.getClass().getSimpleName(),
-//					bean);
-//		}
-//	}
 
 	/**
 	 * 获取存在Service,Complent的相关对象
@@ -243,6 +225,9 @@ public class TestUtil {
 	 */
 	private static volatile boolean processInited;
 	public static void startTestForNoContainer(Object obj) {
+	    if(processInited) {
+	        return;
+	    }
 		TestUtil launch = getInstance();
 		launch.loadProp();
 		LazyBean.getInstance().processAttr(obj, obj.getClass());

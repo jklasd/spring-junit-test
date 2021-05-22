@@ -53,43 +53,10 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
 		return null;
 	}
 	
-//	public static boolean isDubbo(Class<?> classBean) {
-//		return dubboRefferCache.containsKey(classBean);
-//	}
-//	private static RegistryConfig registryConfig;
-//	public static Object buildBean(Class<?> dubboClass) {
-//		if(dubboData.containsKey(dubboClass)) {
-//			return dubboData.get(dubboClass);
-//		}
-//		log.info("构建Dubbo 代理服务=>{}",dubboClass);
-//		ReferenceConfig<?> referenceConfig = new ReferenceConfig<>();
-//		referenceConfig.setInterface(dubboClass);
-//		if(dubboRefferCache.get(dubboClass).hasAttribute("group")) {
-//			referenceConfig.setGroup(TestUtil.getPropertiesValue(dubboRefferCache.get(dubboClass).getAttribute("group")));
-//		}
-//		if(dubboRefferCache.get(dubboClass).hasAttribute("timeout")) {
-//			referenceConfig.setTimeout(Integer.valueOf(TestUtil.getPropertiesValue(dubboRefferCache.get(dubboClass).getAttribute("timeout"),dubboRefferCache.get(dubboClass).getAttribute("timeout"))));
-//		}else {
-//			referenceConfig.setTimeout(10*1000);
-//		}
-//		ApplicationConfig applicationConfig = new ApplicationConfig("dubbo-examples-consumer");
-//		referenceConfig.setApplication(applicationConfig);
-//		referenceConfig.setRegistry(registryConfig);
-//		Object obj = referenceConfig.get();
-//		dubboData.put(dubboClass,obj);
-//		return obj;
-//	}
-//	public static void processDubbo(Document document) {
-//		processRegister(document.getElementsByTagName("dubbo:registry"));
-//		cacheReference(document.getElementsByTagName("dubbo:reference"));
-//		cacheService(document.getElementsByTagName("dubbo:service"));
-//		//dubbo:protocol 待处理
-//	}
-	
-	public void registerDubboService(Class<?> dubboServiceClass) {
+	@SuppressWarnings("unlikely-arg-type")
+    public void registerDubboService(Class<?> dubboServiceClass) {
 		if(dubboServiceCacheDef.containsKey(dubboServiceClass)) {
 			log.info("注册dubboService=>{}",dubboServiceClass);
-			BeanDefinition ele = dubboServiceCacheDef.get(dubboServiceClass);
 	        RootBeanDefinition beanDef = (RootBeanDefinition)dubboRefferCacheDef.get(dubboServiceClass.getName());
 	        try {
 	            Object referenceConfig = beanDef.getBeanClass().newInstance();
@@ -98,35 +65,14 @@ public class LazyDubboBean implements BeanDefParser,LazyBeanFactory{
 	            });
 	            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
 	            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
-	            Object obj = InvokeUtil.invokeMethod(referenceConfig, "export");
+//	            Object obj = 
+	                InvokeUtil.invokeMethod(referenceConfig, "export");
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
 	        }
 			log.info("注册=========={}===============成功",dubboServiceClass);
 		}
 	}
-//	private static void cacheService(NodeList serviceList) {
-//		for(int i = 0 ;i< serviceList.getLength();i++) {
-//			Element node = (Element) serviceList.item(i);
-//			String className = node.getAttribute("interface");
-//			try {
-//				dubboServiceCache.put(Class.forName(className),node);
-//			} catch (ClassNotFoundException e) {
-//				log.error("LazyDubboBean#cacheService=>{}",e.getMessage());
-//			}
-//		}
-//	}
-//	private static void cacheReference(NodeList list) {
-//			for(int i = 0 ;i< list.getLength();i++) {
-//				Element node = (Element) list.item(i);
-//				String className = node.getAttribute("interface");
-//				try {
-//					dubboRefferCache.put(Class.forName(className), node);
-//				} catch (Exception e) {
-//					log.error("",e);
-//				}
-//			}
-//	}
 	
 	public static void putAnnService(Class<?> dubboServiceClass) {}
 	private Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
