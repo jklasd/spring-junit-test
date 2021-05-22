@@ -39,6 +39,9 @@ public class TranstionalManager {
     
     private AnnotationTransactionAttributeSource atas = new AnnotationTransactionAttributeSource();
     public TransactionAttribute processAnnoInfo(Method method,Object obj) throws Exception {
+        if(obj == null) {
+            return null;
+        }
         Class<?> tagClass = obj.getClass();
         if(tagClass == DataSourceTransactionManager.class) {
             return null;
@@ -48,7 +51,7 @@ public class TranstionalManager {
     public TransactionStatus beginTx(TransactionAttribute txInfo) {
         log.info("开启事务=>{}",txInfo);
         if(txManager == null) {
-            txManager = TestUtil.getApplicationContext().getBean(DataSourceTransactionManager.class);
+            txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
         }
         return txManager.getTransaction(txInfo);
     }

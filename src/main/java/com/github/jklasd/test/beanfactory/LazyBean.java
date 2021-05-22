@@ -1,9 +1,7 @@
-package com.github.jklasd.test;
+package com.github.jklasd.test.beanfactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -27,13 +25,16 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
-import com.github.jklasd.test.LazyBeanProcess.LazyBeanInitProcessImpl;
+import com.github.jklasd.test.AssemblyUtil;
+import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
 import com.github.jklasd.test.spring.LazyConfigurationPropertiesBindingPostProcessor;
@@ -53,8 +54,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LazyBean {
 	public static final String PROXY_BEAN_FIELD = "CGLIB$CALLBACK_0";
-	public static Map<Class, List<Object>> singleton = Maps.newHashMap();
+	public static Map<Class<?>, List<Object>> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
+	private TestUtil util = TestUtil.getInstance();
+	private LazyBean() {}
+	private static LazyBean bean;
+	public static LazyBean getInstance() {
+	    if(bean==null) {
+	        bean = new LazyBean();
+	    }
+	    return bean;
+	}
 	/**
 	 * 
 	 * 构建代理对象 classBean 
@@ -62,11 +72,13 @@ public class LazyBean {
 	 * @param classGeneric 代理类的泛型类型
 	 * @return 代理对象
 	 */
-	public static Object buildProxyForGeneric(Class classBean,Type[] classGeneric) {
+	public Object buildProxyForGeneric(Class classBean,Type[] classGeneric) {
 		Object tagObject = null;
 		if (classBean.isInterface()) {
-			InvocationHandler handler = new LazyImple(classBean,null,classGeneric);
-			tagObject = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { classBean }, handler);
+		    BeanModel model = new BeanModel();
+		    model.setTagClass(classBean);
+		    model.setClassGeneric(classGeneric);
+			tagObject = createBean(model);
 		}
 		return tagObject;
 	}
@@ -77,22 +89,97 @@ public class LazyBean {
 	 * @param beanName 对象Name
 	 * @return 代理对象
 	 */
-	public static Object buildProxy(Class beanClass,String beanName) {
+	public Object buildProxy(Class<?> beanClass,String beanName) {
 	    if(beanClass == null)
 	        throw new JunitException();
-		return buildProxy(beanClass, beanName, null);
+	    
+	    BeanModel model = new BeanModel();
+	    model.setBeanName(beanName);
+	    model.setTagClass(beanClass);
+		return buildProxy(model);
 	}
 	/**
+	 * 开始构建对象
+	 * @param beanModel 对象配置信息
+	 * @return 代理对象
+	 */
+	public Object buildProxy(BeanModel beanModel) {
+//	    if(beanModel.getTagClass().getName().contains("MongoClient")) {
+//            log.debug("断点");
+//        }
+	    Object obj = null;
+	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
+	        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
+	        if(obj!=null) {
+	            return obj;
+	        }
+	    }else {
+	        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
+            if(obj!=null) {
+                return obj;
+            }
+            beanModel.setBeanName(getBeanName(beanModel.getTagClass()));
+	    }
+	    
+	    if(beanModel.getTagClass() == ApplicationContext.class
+	        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
+	        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
+	        return util.getApplicationContext();
+	    }
+	    obj = createBean(beanModel);
+	    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+        return obj;
+	}
+    private static Object createBean(BeanModel beanModel) {
+        Class<?> beanClass = beanModel.getTagClass();
+        Object tag = null;
+        /**
+         * 构建其他类型的代理对象
+         * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
+         * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
+         */
+        try {
+            if (beanClass.isInterface()) {
+                LazyImple handler = new LazyImple(beanModel);
+                tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
+            } else {
+                LazyCglib handler = new LazyCglib(beanModel);
+                if(!handler.hasFinalMethod()) {
+                    if(handler.getArgumentTypes().length>0) {
+                        Enhancer enhancer = new Enhancer();
+                        enhancer.setSuperclass(beanClass);
+                        enhancer.setCallback(handler);
+                        tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
+                    }else {
+                        tag = Enhancer.create(beanClass, handler);
+                    }
+                }else {
+                    tag = handler.getTagertObj();
+                }
+                if(tag == null) {
+                    log.error("不存在公开无参构造函数");
+                }
+            }
+        } catch (Exception e) {
+            if(e.getCause()!=null) {
+                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getCause().getMessage());
+            }else {
+                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getMessage());
+            }
+            e.printStackTrace();
+        }
+        return tag;
+    }
+	/**
 	 * 构建代理对象
-	 * @param classBean 需要代理的类型
+	 * @param beanClass 需要代理的类型
 	 * @return 返回ProxyObject
 	 */
-	public static Object buildProxy(Class classBean) {
-		if (singleton.containsKey(classBean)) {
-			return singleton.get(classBean).get(0);
-		}
-		Object tag = buildProxy(classBean,getBeanName(classBean));
-		return tag;
+	public Object buildProxy(Class<?> beanClass) {
+	    BeanModel model = new BeanModel();
+		model.setTagClass(beanClass);
+		model.setBeanName(getBeanNameFormAnno(beanClass));
+		return buildProxy(model);
 	}
 	public synchronized static String getBeanName(Class<?> classBean) {
 		Component comp = (Component) classBean.getAnnotation(Component.class);
@@ -103,8 +190,22 @@ public class LazyBean {
 		if(service!=null && StringUtils.isNotBlank(service.value())) {
 			return service.value();
 		}
+		if(classBean.isInterface()) {
+		    return null;
+		}
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
+	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {
+        Component comp = (Component) classBean.getAnnotation(Component.class);
+        if(comp!=null && StringUtils.isNotBlank(comp.value())) {
+            return comp.value();
+        }
+        Service service = (Service) classBean.getAnnotation(Service.class);
+        if(service!=null && StringUtils.isNotBlank(service.value())) {
+            return service.value();
+        }
+        return null;
+    }
 	public static void setObj(Field f,Object obj,Object proxyObj) {
 		setObj(f, obj, proxyObj, null);
 	}
@@ -119,7 +220,7 @@ public class LazyBean {
 	 */
 	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
 		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
-//			TestUtil.loadLazyAttr(obj, f, proxyBeanName);
+//			util.loadLazyAttr(obj, f, proxyBeanName);
 		}
 		try {
 			if (!f.isAccessible()) {
@@ -148,8 +249,8 @@ public class LazyBean {
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
 	@SuppressWarnings("unchecked")
-	public static void processAttr(Object obj, Class objClassOrSuper) {
-//		if(objClassOrSuper.getName().contains("ProductRuleConfiguration")) {
+	public void processAttr(Object obj, Class objClassOrSuper) {
+//		if(objClassOrSuper.getName().contains("JedisCluster")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
 		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {
@@ -179,7 +280,7 @@ public class LazyBean {
 			LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(obj,proconfig);
 		}
 	}
-    private static void processField(Object obj, Field[] fields) {
+    private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
 			Autowired aw = f.getAnnotation(Autowired.class);
 			if (aw != null) {
@@ -200,8 +301,8 @@ public class LazyBean {
 						log.info("其他特殊情况");
 					}
 				}else {
-					if(LazyBean.existBean(f.getType()) && TestUtil.getExistBean(f.getType(), f.getName())!=null) {
-						setObj(f, obj, TestUtil.getExistBean(f.getType(), f.getName()));
+					if(LazyBean.existBean(f.getType()) && util.getExistBean(f.getType(), f.getName())!=null) {
+						setObj(f, obj, util.getExistBean(f.getType(), f.getName()));
 					}else {
 						setObj(f, obj, buildProxy(f.getType(),bName));
 					}
@@ -209,7 +310,7 @@ public class LazyBean {
 			} else {
 				Value v = f.getAnnotation(Value.class);
 				if (v != null) {
-					setObj(f, obj, TestUtil.value(v.value().replace("${", "").replace("}", ""), f.getType()));
+					setObj(f, obj, util.value(v.value().replace("${", "").replace("}", ""), f.getType()));
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
@@ -246,7 +347,7 @@ public class LazyBean {
 		return null;
 	}
 
-	public static Object processStatic(Class c) {
+	public Object processStatic(Class<?> c) {
 		try {
 			Object obj = buildProxy(c);
 			if(obj!=null) {
@@ -273,7 +374,7 @@ public class LazyBean {
 	 * @throws IllegalArgumentException 
 	 * @throws IllegalAccessException 
 	 */
-	private static void processMethod(Object obj, Method[] ms,Class sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+	private void processMethod(Object obj, Method[] ms,Class sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		if(sup != null) {
 			ms = sup.getDeclaredMethods();
 			processMethod(obj, ms, sup.getSuperclass());
@@ -295,7 +396,7 @@ public class LazyBean {
 				try {
 					if(m!=null) {
 						try {
-							m.invoke(obj,TestUtil.getApplicationContext());
+							m.invoke(obj,util.getApplicationContext());
 						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 							log.error("不能注入applicationContext",e);
 						}
@@ -306,26 +407,39 @@ public class LazyBean {
 //			    Autowired aw = m.getAnnotation(Autowired.class);
 			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
 			    Object[] param = processParam(m, paramTypes, bName);
-                m.invoke(obj, param);
+                Object tmp = m.invoke(obj, param);
+//                if(tmp!=null) {
+//                    util.getApplicationContext().registBean(bName, tmp, tmp.getClass());
+//                }
 			}else if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
                 
             }else if(m.getAnnotation(Resource.class) != null) {
                 Resource aw = m.getAnnotation(Resource.class);
                 Object[] param = processParam(m, paramTypes, aw.name());
-                m.invoke(obj, param);
+                Object tmp = m.invoke(obj, param);
+                if(tmp!=null) {
+//                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
+                }
+            }else if(m.getAnnotation(Bean.class) != null) {
+                Bean aw = m.getAnnotation(Bean.class);
+                Object[] param = processParam(m, paramTypes, null);
+                Object tmp = m.invoke(obj, param);
+                if(tmp!=null) {
+                    util.getApplicationContext().registBean(m.getName(), tmp, tmp.getClass());
+                }
             }
 		}
 	}
-    private static Object[] processParam(Method m, Type[] paramTypes, String bName) {
+    private Object[] processParam(Method m, Type[] paramTypes, String bName) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
             Class<?> c = getParamType(m, paramTypes[i]);
             if(paramTypes[i] == List.class) {
                 param[i] = findListBean(c);
             }else {
-                if(LazyBean.existBean(c) && TestUtil.getExistBean(c, m.getName())!=null) {
-                    param[i] = TestUtil.getExistBean(c, m.getName());
+                if(LazyBean.existBean(c) && util.getExistBean(c, m.getName())!=null) {
+                    param[i] = util.getExistBean(c, m.getName());
                 }else {
                     param[i] = buildProxy(c,bName);
                 }
@@ -333,24 +447,30 @@ public class LazyBean {
         }
         return param;
     }
-	@SuppressWarnings("unchecked")
-	public static boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
-			Object fv = value;
+    
+    private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
+    private Map<Class<?>,Map<String,Method>> fieldsCache = Maps.newHashMap();
+	public boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
+//	        if(field.contains("interface")) {
+//	            log.info("断点");
+//	        }
+//			Object fv = value;
 			String mName = "set"+field.substring(0, 1).toUpperCase()+field.substring(1);
+			if(methodsCache.containsKey(superClass)) {
+			    Method tagM = methodsCache.get(superClass).get(mName);
+			    if(tagM!=null) {
+			        invokeSet(field, obj, value, tagM);
+			    }
+			}else {
+			    methodsCache.put(superClass, Maps.newHashMap());
+			}
 			Method[] methods = superClass.getDeclaredMethods();
 			for(Method m : methods) {
 				if(Objects.equal(m.getName(), mName)) {
-					if(value instanceof String) {
-						fv = TestUtil.value(value.toString(), m.getParameterTypes()[0]);	
-					}
-					try {
-						if(fv.toString().contains("ref:")) {
-							
-						}
-						m.invoke(obj, fv);
-						return true;
-					} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-						e.printStackTrace();
+					boolean success = invokeSet(field, obj, value, m);
+					if(success) {
+					    methodsCache.get(superClass).put(mName, m);
+					    return success;
 					}
 				}
 			}
@@ -358,8 +478,9 @@ public class LazyBean {
 			boolean found = false;
 				for(Field f : fields){
 					if(Objects.equal(f.getName(), field)) {
+					    Object fv = value;
 						if(value instanceof String) {
-							fv = TestUtil.value(value.toString(), f.getType());	
+							fv = util.value(value.toString(), f.getType());	
 						}
 						try {
 							setObj(f, obj, fv);
@@ -376,6 +497,24 @@ public class LazyBean {
 			}
 		return false;
 	}
+    private boolean invokeSet(String field, Object obj, Object value, Method m) {
+        Object fv = value;
+        if(value instanceof String) {
+        	fv = util.value(value.toString(), m.getParameterTypes()[0]);	
+        }
+        try {
+            if(fv != null) {
+                m.invoke(obj, fv);
+            }else {
+                log.warn("field:{}=>{}",field,value);
+            }
+        	return true;
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		    log.info("m=>{},field=>{},value=>{}",m,field,value);
+        	e.printStackTrace();
+        }
+        return false;
+    }
 	
 	public static boolean existBean(Class beanClass) {
 		Annotation[] anns = beanClass.getDeclaredAnnotations();
@@ -415,18 +554,9 @@ public class LazyBean {
 	 * @param beanName beanName
 	 * @return 返回bean
 	 */
-	public static Object findBean(String beanName) {
-		if(singletonName.containsKey(beanName)) {
-			return singletonName.get(beanName);
-		}
+	public Object findBean(String beanName) {
 		if(beanName.equals("DEFAULT_DATASOURCE")) {
-			if(!singletonName.containsKey("dataSource")) {
-				if(singleton.get(DataSource.class) != null) {
-					return singleton.get(DataSource.class).get(0);
-				}
-			}else {
-				return singletonName.get("dataSource");
-			}
+		    return util.getApplicationContext().getBeanByClass(DataSource.class);
 		}
 		return null;
 	}
@@ -437,10 +567,10 @@ public class LazyBean {
 	 * @param type bean类型
 	 * @return 返回bean对象
 	 */
-	public static Object findBean(String beanName,Class<?> type) {
+	public Object findBean(String beanName,Class<?> type) {
 		if(type.isInterface()) {
-			List<Class> classList = ScanUtil.findClassImplInterface(type);
-			for(Class c : classList) {
+			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
+			for(Class<?> c : classList) {
 				Service ann = (Service) findByAnnotation(c,Service.class);
 				Component cAnn = (Component) findByAnnotation(c,Component.class);
 				if ((ann != null && ann.value().equals(beanName)) | (cAnn != null && cAnn.value().equals(beanName))) {
@@ -476,19 +606,20 @@ public class LazyBean {
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
 //			String beanName = getBeanName(c);
-			annoClass.put(c.getSimpleName(), LazyBean.buildProxy(c));
+			annoClass.put(c.getSimpleName(), LazyBean.getInstance().buildProxy(c));
 		});
 		return annoClass;
 	}
 	
-	public static Object findBeanByInterface(Class interfaceClass, Type[] classGeneric) {
+	public Object findBeanByInterface(Class<?> interfaceClass, Type[] classGeneric) {
 		if(classGeneric == null) {
 			return findBeanByInterface(interfaceClass);
 		}
 		if(interfaceClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
 			if(!cL.isEmpty()) {
 				Class c = cL.get(0);
+				throw new JunitException("待开发");
 			}else {
 				if(interfaceClass == ObjectProvider.class) {
 					return new ObjectProviderImpl(classGeneric[0]);
@@ -503,25 +634,25 @@ public class LazyBean {
 	 * @param interfaceClass  接口
 	 * @return 返回实现接口的对象
 	 */
-	public static Object findBeanByInterface(Class interfaceClass) {
+	public Object findBeanByInterface(Class<?> interfaceClass) {
 		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
-			return TestUtil.getApplicationContext();
+			return util.getApplicationContext();
 		}
 		if(interfaceClass == Environment.class
 				|| ScanUtil.isExtends(Environment.class,interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass, Environment.class)) {
-			return TestUtil.getApplicationContext().getEnvironment();
+			return util.getApplicationContext().getEnvironment();
 		}
 		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
 			if(!cL.isEmpty()) {
-				return LazyBean.buildProxy(cL.get(0));
+				return LazyBean.getInstance().buildProxy(cL.get(0));
 			}
 		}
-		List<Class> tags = ScanUtil.findClassImplInterface(interfaceClass);
+		List<Class<?>> tags = ScanUtil.findClassImplInterface(interfaceClass);
 		if (!tags.isEmpty()) {
-			return LazyBean.buildProxy(tags.get(0));
+			return LazyBean.getInstance().buildProxy(tags.get(0));
 		}
 		return null;
 	}
@@ -531,11 +662,11 @@ public class LazyBean {
 	 * @param requiredType bean类型
 	 * @return 返回bean
 	 */
-	public static Object findBean(Class<?> requiredType) {
-		return LazyBean.buildProxy(requiredType);
+	public Object findBean(Class<?> requiredType) {
+		return buildProxy(requiredType);
 	}
 	
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
+	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		AssemblyUtil asse = new AssemblyUtil();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
@@ -553,7 +684,7 @@ public class LazyBean {
 		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			return null;
 		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
+		Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
 		return tagObj;
 	}
 	
@@ -565,112 +696,16 @@ public class LazyBean {
 	@SuppressWarnings("unchecked")
 	public static List findListBean(Class<?> requiredType) {
 		List list = Lists.newArrayList();
-		List<Class> tags = null;
+		List<Class<?>> tags = null;
 		if(requiredType.isInterface()) {
 			tags = ScanUtil.findClassImplInterface(requiredType);
 		}else {
 			tags = ScanUtil.findClassExtendAbstract(requiredType);
 		}
 		if (!tags.isEmpty()) {
-			tags.stream().forEach(item ->list.add(LazyBean.buildProxy(item)));
+			tags.stream().forEach(item ->list.add(LazyBean.getInstance().buildProxy(item)));
 		}
 		return list;
-	}
-	@SuppressWarnings("rawtypes")
-	public synchronized static Object buildProxy(Class beanClass, String beanName, LazyBeanInitProcessImpl initProcess) {
-		/**
-		 * 取缓存值
-		 */
-		if(singletonName.containsKey(beanName)) {
-			return singletonName.get(beanName);
-		}
-		if(StringUtils.isBlank(beanName)) {
-			if (singleton.containsKey(beanClass)) {
-				return singleton.get(beanClass).get(0);
-			}
-		}
-		if(beanClass == ApplicationContext.class
-				|| ScanUtil.isExtends(beanClass, ApplicationContext.class)
-				|| ScanUtil.isImple(beanClass, ApplicationContext.class)) {
-			return TestUtil.getApplicationContext();
-		}
-		Object tag = createBean(beanClass, beanName, initProcess);
-		if(tag!=null) {
-			if(StringUtils.isNotBlank(beanName)) {
-				singletonName.put(beanName, tag);
-				if(singleton.containsKey(beanClass)) {
-					singleton.get(beanClass).add(tag);
-				}else {
-					singleton.put(beanClass,Lists.newArrayList(tag));
-				}
-			}
-		}
-		return tag;
-	}
-	private static Object createBean(Class beanClass, String beanName,LazyBeanInitProcessImpl initProcess) {
-		/**
-		 * 开始构建对象
-		 */
-		
-		Object tag = null;
-		/**
-		 * 构建其他类型的代理对象
-		 * 【Interface类型】 构建 InvocationHandler 代理对象，JDK自带
-		 * 【Class类型】构建MethodInterceptor代理对象，Cglib jar
-		 */
-		try {
-			if (beanClass.isInterface()) {
-				LazyImple handler = new LazyImple(beanClass,beanName);
-				if(initProcess!=null) {
-					initProcess.setProcess(handler.getInitedProcess());
-				}
-				tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
-			} else {
-				Constructor[] structors = beanClass.getConstructors();
-				/**
-				 * 查看是否存在无参构造函数
-				 */
-				for(Constructor<?> c : structors) {
-					if(c.getParameterCount() == 0 ) {
-						LazyCglib handler = new LazyCglib(beanClass,beanName);
-						if(initProcess!=null) {
-							initProcess.setProcess(handler.getInitedProcess());
-						}
-						if(!handler.isHasFinal()) {
-							tag = Enhancer.create(beanClass, handler);
-						}else {
-							tag = handler.getTagertObj();
-						}
-						break;
-					}
-				}
-				if(tag == null && structors.length>0) {
-					log.debug("=======不存在无参构造函数=======");
-					LazyCglib handler = new LazyCglib(beanClass,beanName,true);
-					if(initProcess!=null) {
-						initProcess.setProcess(handler.getInitedProcess());
-					}
-					if(!handler.isHasFinal()) {
-						Enhancer enhancer = new Enhancer();
-						enhancer.setSuperclass(beanClass);
-						enhancer.setCallback(handler);
-						tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
-					}else {
-						tag = handler.getTagertObj();
-					}
-				}
-				if(tag == null) {
-					log.error("不存在公开无参构造函数");
-				}
-			}
-		} catch (Exception e) {
-			if(e.getCause()!=null) {
-				log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanName,e.getCause().getMessage());
-			}else {
-				log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanName,e.getMessage());
-			}
-		}
-		return tag;
 	}
 	/**
 	 * 
@@ -678,47 +713,34 @@ public class LazyBean {
 	 * @param type 目标类型
 	 * @return 代理对象构建真实对象
 	 */
-	public static Object createBeanForProxy(String beanName, Class<?> type) {
+	public Object createBeanForProxy(String beanName, Class<?> type) {
 		Class<?> tagClass = null;
 		if(type.isInterface()) {
-			List<Class> classList = ScanUtil.findClassImplInterface(type);
+			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
 			for(Class<?> c : classList) {
 				Service ann = (Service) findByAnnotation(c,Service.class);
 				Component cAnn = (Component) findByAnnotation(c,Component.class);
-				if ((ann != null && ann.value().equals(beanName)) || (cAnn != null && cAnn.value().equals(beanName))) {
-					tagClass = c;
-					break;
-				}
-			}
-			if(tagClass == null) {
-				for(Class<?> c : classList) {
-					if (existBean(c)) {
-						tagClass = c;
-						Service ann = (Service) findByAnnotation(c,Service.class);
-						if ((ann != null)) {
-							beanName = ann.value();
-						}else {
-							Component cAnn = (Component) findByAnnotation(c,Component.class);
-							if (cAnn != null) {
-								beanName = cAnn.value();
-							}
-						}
-						break;
-					}
+				if (ann != null  || cAnn != null ) {
+				    if ((ann != null && ann.value().equals(beanName)) || (cAnn != null && cAnn.value().equals(beanName))) {
+				        tagClass = c;
+				        break;
+				    }
+				    tagClass = c;
 				}
 			}
 			log.warn("ScanUtil # findBean=>Interface[{}]",type);
 		}
 		Object obj = null;
 		if(tagClass == null) {
-			if(type.isInterface()) {
+		    obj = util.getApplicationContext().getBean(type);
+			if(obj == null && type.isInterface()) {
 				obj = findBeanByInterface(type);
 			}
-			if(obj == null) {
-				obj = TestUtil.getApplicationContext().getBean(type);
-			}
 		}else {
-			obj = createBean(tagClass, beanName, null);
+		    BeanModel model = new BeanModel();
+		    model.setBeanName(beanName);
+		    model.setTagClass(tagClass);
+			obj = buildProxy(model);
 		}
 		if(obj != null) {
 			singletonName.put(beanName, obj);
