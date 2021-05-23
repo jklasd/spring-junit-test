@@ -116,13 +116,19 @@ public class LazyMybatisMapperBean implements LazyBeanFactory{
         if (useMybatis() && !loadScaned) {
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
-                Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
-                cglibObjField.setAccessible(true);
-                LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
-                if (obj.getAttr().containsKey("basePackage")) {
-                    mybatisScanPathList.add(obj.getAttr().get("basePackage").toString());
-                    log.info("mybatisScanPathList=>{}", mybatisScanPathList);
-                }
+            	String basePackage = null;
+            	if(mybatisScan != null) {
+            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
+            		cglibObjField.setAccessible(true);
+            		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
+            		if (obj.getAttr().containsKey("basePackage")) {
+            			basePackage = obj.getAttr().get("basePackage").toString();
+            		}
+            	}
+            	if(basePackage!=null) {
+            		mybatisScanPathList.add(basePackage);
+            		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
+            	}
             } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
                 e.printStackTrace();
             }
