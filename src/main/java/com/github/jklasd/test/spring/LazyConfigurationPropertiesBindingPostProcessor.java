@@ -21,7 +21,7 @@ public class LazyConfigurationPropertiesBindingPostProcessor {
 		Object target = obj;
 		PropertiesConfigurationFactory<Object> factory = new PropertiesConfigurationFactory<Object>(
 				target);
-		factory.setPropertySources(TestUtil.getPropertySource());
+		factory.setPropertySources(TestUtil.getInstance().getPropertySource());
 //		factory.setValidator(determineValidator(bean));
 		// If no explicit conversion service is provided we add one so that (at least)
 		// comma-separated arrays of convertibles can be bound automatically

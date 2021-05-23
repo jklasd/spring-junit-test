@@ -1,36 +1,41 @@
 package com.github.jklasd.test;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
-import java.util.Enumeration;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
-import org.springframework.core.annotation.AnnotationUtils;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.beanfactory.LazyBean;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.spring.JavaBeanUtil;
-import com.github.jklasd.test.spring.XmlBeanUtil;
+import com.github.jklasd.test.spring.xml.XmlBeanUtil;
 import com.github.jklasd.util.CountDownLatchUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -106,7 +111,7 @@ public class ScanUtil {
 					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-					if(TestUtil.isScanClassPath(name)) {
+					if(TestUtil.getInstance().isScanClassPath(name)) {
 						log.error("加载{}=>未找到类{}",name,e.getMessage());
 					}
 				}catch(Error e) {
@@ -148,11 +153,29 @@ public class ScanUtil {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
 							JarFile jFile = ((JarURLConnection) connection).getJarFile();
-							Enumeration<JarEntry> jarEntrys = jFile.entries();
-							while (jarEntrys.hasMoreElements()) {
-								String name = jarEntrys.nextElement().getName();
-								classNames.add(name.replace("/", ".").replace("\\", "."));
-							}
+							CountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
+							    String name = JarEntry.getName();
+                              if(name.contains(".class")) {
+                                  classNames.add(name.replace("/", ".").replace("\\", "."));
+                              }else {
+                                  if(name.contains("spring.handlers")) {
+                                      try {
+                                          InputStream is = jFile.getInputStream(JarEntry);
+                                          BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                                          String line = null;
+                                          while((line = br.readLine()) != null) {
+                                              String[] url_handler = line.split("=");
+                                              Class nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
+                                              if(nameSpaceHandlerC!=null) {
+                                                  XmlBeanUtil.getInstance().putNameSpace(url_handler[0].replace("\\", ""), nameSpaceHandlerC);
+                                              }
+                                          }
+                                    } catch (IOException e) {
+                                         e.printStackTrace();
+                                    }
+                                  }
+                              }
+							});
 						}
 					} catch (Exception e) {
 						log.error("不能加载class文件=>{}",url.getPath());
@@ -161,13 +184,13 @@ public class ScanUtil {
 			}
 			List<Class<?>> springBoot = findClassWithAnnotation(SpringBootApplication.class);
 			springBoot.forEach(startClass ->{
-				TestUtil.loadScanPath(startClass.getPackage().getName());
+				TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
 				/**
 				 * 查看导入资源
 				 */
 				ImportResource resource = startClass.getAnnotation(ImportResource.class);
 				if(resource != null) {
-					XmlBeanUtil.loadXmlPath(resource.value());
+					XmlBeanUtil.getInstance().loadXmlPath(resource.value());
 				}
 			});
 			loadContextPathClass();
@@ -178,14 +201,11 @@ public class ScanUtil {
 	}
 	
 	public static void loadContextPathClass() {
-		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.isScanClassPath(cn)).collect(Collectors.toList()))
+		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
 		.runAndWait(name->{
 			if(name.endsWith(CLASS_SUFFIX) && !nameMap.containsKey(name)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
-//				if(name.contains("RedisAutoConfiguration")) {
-//					log.info("断点");
-//				}
 				try {
 					Class<?> c = ScanUtil.class.getClassLoader().loadClass(name);
 					nameMap.put(name,c);
@@ -202,7 +222,7 @@ public class ScanUtil {
 		List<Class> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
-			if(name.replace(CLASS_SUFFIX, "").endsWith(beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
+			if(name.replace(CLASS_SUFFIX, "").endsWith("."+beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
 				list.add(nameMap.get(name));
 			}
 		});
@@ -216,7 +236,7 @@ public class ScanUtil {
 			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
 				list.add(nameMap.get(name));
 			} else {
-				Class tagClass = nameMap.get(name);
+				Class<?> tagClass = nameMap.get(name);
 				Service sAnn = (Service) tagClass.getAnnotation(Service.class);
 				Component cAnn = (Component)tagClass.getAnnotation(Component.class);
 				
@@ -244,17 +264,16 @@ public class ScanUtil {
 	 * @param abstractClass 接口
 	 * @return 返回继承abstractClass 的类
 	 */
-	@SuppressWarnings("rawtypes")
-	public static List<Class> findClassExtendAbstract(Class abstractClass){
+	public static List<Class<?>> findClassExtendAbstract(Class abstractClass){
 		return findClassExtendAbstract(abstractClass, null,null);
 	}
-	public static List<Class> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
+	public static List<Class<?>> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
 		}
 		tmp.putAll(nameMap);
-		List<Class> list = Lists.newArrayList();
+		List<Class<?>> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
@@ -270,13 +289,37 @@ public class ScanUtil {
 		});
 		return list;
 	}
-	public static List<Class> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
+	public static Class findClassImplInterfaceByBeanName(Class interfaceClass,Map<String,Class> classMap,String beanName){
+	    if(StringUtils.isBlank(beanName)) {
+	        throw new JunitException();
+	    }
+        Map<String,Class> tmp = Maps.newHashMap();
+        if(classMap!=null) {
+            tmp.putAll(classMap);
+        }
+        tmp.putAll(nameMap);
+        List<Class> list = Lists.newArrayList();
+        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+        .runAndWait(name ->{
+            Class<?> tmpClass = tmp.get(name);
+            if(isImple(tmpClass,interfaceClass)) {
+                if(Objects.equals(beanName, LazyBean.getBeanName(tmpClass))) {
+                    list.add(tmpClass);
+                }
+            }
+        });
+        if(list.isEmpty()) {
+            log.warn("没有找到相关实现类========{}======={}==",interfaceClass,beanName);
+        }
+        return list.isEmpty() ? null : list.get(0);
+    }
+	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
 		}
 		tmp.putAll(nameMap);
-		List<Class> list = Lists.newArrayList();
+		List<Class<?>> list = Lists.newArrayList();
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
@@ -297,8 +340,7 @@ public class ScanUtil {
 	 * @param interfaceClass 接口
 	 * @return 返回实现 interfaceClass 的类
 	 */
-	@SuppressWarnings("rawtypes")
-	public static List<Class> findClassImplInterface(Class interfaceClass){
+	public static List<Class<?>> findClassImplInterface(Class interfaceClass){
 		return findClassImplInterface(interfaceClass, null,null);
 	}
 	/**
@@ -307,19 +349,18 @@ public class ScanUtil {
 	 * @param interfaceClass 接口类型
 	 * @return  true/ false
 	 */
-	@SuppressWarnings({ "rawtypes" })
-	public static boolean isImple(Class implClass,Class interfaceClass) {
-		Class[] ics = implClass.getInterfaces();
-		for(Class c2 : ics) {
-			if(c2 == interfaceClass) {
-				return true;
-			}
-		}
-		Class sc = implClass.getSuperclass();
-		if(sc!=null) {
-			return isImple(sc, interfaceClass);
-		}
-		return false;
+	public static boolean isImple(Class implClass,Class<?> interfaceClass) {
+//		Class[] ics = implClass.getInterfaces();
+//		for(Class c2 : ics) {
+//			if(c2 == interfaceClass) {
+//				return true;
+//			}
+//		}
+//		Class sc = implClass.getSuperclass();
+//		if(sc!=null) {
+//			return isImple(sc, interfaceClass);
+//		}
+		return !implClass.isInterface() && interfaceClass.isAssignableFrom(implClass);
 	}
 	/**
 	 * 判断 subClass 是否继承 abstractClass
@@ -327,22 +368,22 @@ public class ScanUtil {
 	 * @param abstractClass 父类
 	 * @return true/false
 	 */
-	public static boolean isExtends(Class subClass,Class abstractClass) {
-		if(subClass.isInterface()) {
-			Class[] interfaces = subClass.getInterfaces();
-			for(Class item : interfaces) {
-				if(item == abstractClass || isExtends(item, abstractClass)) {
-					return true;
-				}
-			}
-		}else {
-			if(subClass.getSuperclass() == abstractClass) {
-				return true;
-			}else if(subClass.getSuperclass() != null){
-				return isExtends(subClass.getSuperclass(), abstractClass);
-			}
-		}
-		return false;
+	public static boolean isExtends(Class subClass,Class<?> abstractClass) {
+//		if(subClass.isInterface()) {
+//			Class[] interfaces = subClass.getInterfaces();
+//			for(Class item : interfaces) {
+//				if(item == abstractClass || isExtends(item, abstractClass)) {
+//					return true;
+//				}
+//			}
+//		}else {
+//			if(subClass.getSuperclass() == abstractClass) {
+//				return true;
+//			}else if(subClass.getSuperclass() != null){
+//				return isExtends(subClass.getSuperclass(), abstractClass);
+//			}
+//		}
+		return abstractClass.isAssignableFrom(subClass);
 	}
 	
 	/**
@@ -384,13 +425,16 @@ public class ScanUtil {
 					|| configuration != null) {
 				Method[] methods = c.getDeclaredMethods();
 				for(Method m : methods) {
-					if(Modifier.isStatic(m.getModifiers())) {
+					if(Modifier.isStatic(m.getModifiers())
+							&& !m.getName().contains("lambda$")//非匿名方法
+						&& !m.getName().contains("access$")) {//非匿名方法
 						Class<?> returnType = m.getReturnType();
 						if(!returnType.getName().contains("void")) {
+							log.debug("method=>{}",m);
 							list.add(c);
 							return;
 						}
-						log.debug(returnType.getName());
+//						log.debug(returnType.getName());
 					}
 				}
 			}else if(configuration == null) {
@@ -400,21 +444,19 @@ public class ScanUtil {
 		return Lists.newArrayList(list);
 	}
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
-	public static Object[] findCreateBeanFactoryClass(final AssemblyUtil assemblyData) {
+	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyUtil assemblyData) {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
 		finalNameMap.putAll(nameMap);
 		if(assemblyData.getNameMapTmp() != null) {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
 		Object[] address = new Object[2];
+		Object[] tmp = new Object[2];
 		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
 			notFoundSet.add(name);
-//			log.info(e.getMessage());
-//			log.error("getDeclaredAnnotation ",e);
 		}).setError((name,e)->{
-//			log.info("TypeNotPresentExceptionProxy Error=>"+name);
 			notFoundSet.add(name);
 		}).runAndWait(name ->{
 //			if(name.contains("RabbitTemplateConfiguration")) {
@@ -429,14 +471,32 @@ public class ScanUtil {
 							Bean beanA = m.getAnnotation(Bean.class);
 							if(beanA != null) {
 								Class tagC = assemblyData.getTagClass();
+								if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
+								    String[] beanNames = beanA.value();
+							        for(String beanName : beanNames) {
+							            if(Objects.equals(beanName, assemblyData.getBeanName())) {
+							                address[0]=c;
+							                address[1]=m;
+							                break;
+							            }
+							        }
+								    beanNames = beanA.name();
+							        for(String beanName : beanA.name()) {
+							            if(Objects.equals(beanName, assemblyData.getBeanName())) {
+							                address[0]=c;
+							                address[1]=m;
+							                break;
+							            }
+							        }
+								}
 								if(tagC.isInterface()?
 										(m.getReturnType().isInterface()?
 												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
 												:ScanUtil.isImple(m.getReturnType(), tagC)
 												):
 													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-									address[0]=c;
-									address[1]=m;
+									tmp[0] = c;
+									tmp[1] = m;
 									break;
 								}
 							}
@@ -444,29 +504,10 @@ public class ScanUtil {
 					}
 			}
 		});
+		if(address[0] ==null || address[1]==null) {
+			return tmp;
+		}
 		return address;
-	}
-	@SuppressWarnings("rawtypes")
-	public static Object findCreateBeanFromFactory(Class classBean, String beanName) {
-		AssemblyUtil asse = new AssemblyUtil();
-		asse.setTagClass(classBean);
-		asse.setBeanName(beanName);
-		if(classBean.getName().startsWith(SPRING_PACKAGE)) {
-			Object tmpObj = findCreateBeanFromFactory(asse);
-			if(tmpObj!=null) {
-				return tmpObj;
-			}
-			asse.setNameMapTmp(findClassMap(SPRING_PACKAGE));
-		}
-		return findCreateBeanFromFactory(asse);
-	}
-	public static Object findCreateBeanFromFactory(AssemblyUtil assemblyData) {
-		Object[] ojb_meth = findCreateBeanFactoryClass(assemblyData);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-			return null;
-		}
-		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
-		return tagObj;
 	}
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
 //		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
@@ -485,7 +526,6 @@ public class ScanUtil {
 	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
-		// TODO Auto-generated method stub
 		for(String path: paths) {
 			Resource r = getRecource(path);
 			if(r!=null && r.exists()) {
@@ -522,7 +562,7 @@ public class ScanUtil {
 		return existsProp.contains(tag);
 	}
 	private static boolean readPropAnno(Class tag, List<Class<?>> list) {
-		for(Class enablePropC : list) {
+		for(Class<?> enablePropC : list) {
 			EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
 			for(Class c : ecp.value()) {
 				if(c == tag) {
@@ -533,4 +573,31 @@ public class ScanUtil {
 		}
 		return false;
 	}
+	public static Class loadClass(String className) {
+		try {
+			Class classObj = Class.forName(className, false, JavaBeanUtil.class.getClassLoader());
+			return classObj;
+		} catch (ClassNotFoundException e) {
+			log.warn("#loadClass=>{}",className);
+		}
+		return null;
+	}
+	
+	public static  boolean isBasicClass(Class cal){
+		return cal == Integer.class || cal == int.class
+				|| cal == Boolean.class || cal == boolean.class
+				|| cal == Short.class || cal == short.class
+				|| cal == Double.class || cal == double.class
+				|| cal == Long.class || cal == long.class
+				|| cal == Float.class || cal == float.class;
+	}
+    public static Type[] getGenericType(Class<?> tagClass) {
+        for(Type t:tagClass.getGenericInterfaces()) {
+            if(t instanceof ParameterizedType) {
+                ParameterizedType  pType = (ParameterizedType) t;
+                return pType.getActualTypeArguments();
+            }
+        }
+        return null;
+    }
 }

@@ -1,6 +1,5 @@
 package com.github.jklasd.test.mq;
 
-import org.springframework.amqp.core.AmqpAdmin;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -13,7 +12,8 @@ public abstract class LazyMQBean {
 	public final static String packageName = "org.springframework.amqp";
 	public final static String rabbitPackage = "org.springframework.amqp.rabbit";
 	
-	protected static AmqpAdmin admin;
+	//org.springframework.amqp.core.AmqpAdmin
+	protected static Object admin;
 	private static LazyMQBean factory;
 	private static LazyMQBean getFactory(String packageName) {
 		if(factory != null) {
@@ -29,7 +29,6 @@ public abstract class LazyMQBean {
 		return null;
 	}
 	
-	@SuppressWarnings("rawtypes")
 	public static Object buildBean(Class classBean){
 		try {
 			if(classBean.getPackage().getName().contains(packageName)) {
@@ -49,8 +48,7 @@ public abstract class LazyMQBean {
 		log.warn("构建{}失败",classBean);
 		return null;
 	}
-	@SuppressWarnings("rawtypes")
-	public abstract Object buildBeanProcess(Class classBean) throws InstantiationException, IllegalAccessException;
+	public abstract Object buildBeanProcess(Class<?> classBean) throws InstantiationException, IllegalAccessException;
 
 	public static boolean isBean(Class tag) {
 		return tag.getName().contains(packageName);

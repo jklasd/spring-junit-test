@@ -2,6 +2,7 @@ package com.github.jklasd.util;
 
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
@@ -34,6 +35,11 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	}
 	private BiConsumer<? super T,? super Exception> exception;
 	private BiConsumer<? super T,? super Error> error;
+	private ExecutorService executor;
+	public CountDownLatchUtils<T> setExecutorService(ExecutorService executor) {
+		this.executor = executor;
+		return this;
+	}
 	public CountDownLatchUtils<T> setError(BiConsumer<? super T,? super Error> error) {
 		this.error = error;
 		return this;
@@ -50,7 +56,7 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	public boolean runAndWait(Consumer<? super T> action) {
 		boolean await = false;
 		for(T tmp : list) {
-			ThreadPoolUtils.commonRun(()->{
+			runTask(()->{
 				try {
 					action.accept(tmp);
 				}catch(Exception e) {
@@ -82,6 +88,14 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 		}
 		return await;
 	}
+
+	private void runTask(Runnable task) {
+		if(executor != null) {
+			executor.execute(task);
+		}else {
+			ThreadPoolUtils.commonRun(task);
+		}
+	}
 	/**
 	 * item ,countDownLatch ,index
 	 * @param  action 处理方法体，方法体中可以获取遍历对象
@@ -90,9 +104,21 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 		AtomicInteger index = new AtomicInteger();
 		for(T tmp : list) {
 			index.incrementAndGet();
-			ThreadPoolUtils.commonRun(()->{
+			runTask(()->{
 				try {
 					action.accept(tmp,obj,index.get());
+				}catch(Exception e) {
+					if(exception!=null) {
+						exception.accept(tmp,e);
+					}else {
+						throw e;
+					}
+				}catch(Error err) {
+					if(error!=null) {
+						error.accept(tmp,err);
+					}else {
+						throw err;
+					}
 				} finally {
 					obj.countDown();
 				}
@@ -116,9 +142,21 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 		AtomicInteger index = new AtomicInteger();
 		for(T tmp : list) {
 			index.incrementAndGet();
-			ThreadPoolUtils.commonRun(()->{
+			runTask(()->{
 				try {
 					action.accept(tmp,index.get());
+				}catch(Exception e) {
+					if(exception!=null) {
+						exception.accept(tmp,e);
+					}else {
+						throw e;
+					}
+				}catch(Error err) {
+					if(error!=null) {
+						error.accept(tmp,err);
+					}else {
+						throw err;
+					}
 				} finally {
 					obj.countDown();
 				}
@@ -140,9 +178,21 @@ public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	 */
 	public void runAndWait(BiConsumer<? super T, ? super CountDownLatch> action) {
 		for(T tmp : list) {
-			ThreadPoolUtils.commonRun(()->{
+			runTask(()->{
 				try {
 					action.accept(tmp,obj);
+				}catch(Exception e) {
+					if(exception!=null) {
+						exception.accept(tmp,e);
+					}else {
+						throw e;
+					}
+				}catch(Error err) {
+					if(error!=null) {
+						error.accept(tmp,err);
+					}else {
+						throw err;
+					}
 				} finally {
 					obj.countDown();
 				}

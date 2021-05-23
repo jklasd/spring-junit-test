@@ -5,28 +5,43 @@ import java.lang.annotation.Annotation;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackagesConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationEvent;
+import org.springframework.context.ApplicationListener;
+import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
 import org.springframework.core.ResolvableType;
-import org.springframework.core.env.Environment;
+import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.env.StandardEnvironment;
+import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
-import org.springframework.web.context.support.StandardServletEnvironment;
 
-import com.github.jklasd.test.LazyBean;
 import com.github.jklasd.test.ScanUtil;
+import com.github.jklasd.test.beanfactory.LazyBean;
+import com.github.jklasd.util.CountDownLatchUtils;
+import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
-public class TestApplicationContext implements ApplicationContext{
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public class TestApplicationContext implements ConfigurableApplicationContext{
 
 	private ApplicationContext parentContext;
 	public TestApplicationContext(ApplicationContext context) {
@@ -34,12 +49,12 @@ public class TestApplicationContext implements ApplicationContext{
 	}
 	
 	private Properties properties;
-	private StandardServletEnvironment env;
+	private ConfigurableEnvironment env;
 	@Override
-	public Environment getEnvironment() {
+	public ConfigurableEnvironment getEnvironment() {
 		if(parentContext == null || parentContext == this) {
 			if(env == null) {
-				env = new StandardServletEnvironment();
+				env = new StandardEnvironment();
 				if(properties == null) {
 					properties = new Properties();
 					try {
@@ -79,7 +94,7 @@ public class TestApplicationContext implements ApplicationContext{
 			}
 			return env;
 		}
-		return parentContext.getEnvironment();
+		return (ConfigurableEnvironment) parentContext.getEnvironment();
 	}
 
 	@Override
@@ -150,12 +165,18 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public Object getBean(String name) throws BeansException {
 		if(parentContext == null || parentContext == this) {
-			return LazyBean.findBean(name);
+			if(beanDefinitionMap.containsKey(name)) {
+				return beanDefinitionMap.get(name);
+			}
+			if(getAutowireCapableBeanFactory().containsBean(name)) {
+				return getAutowireCapableBeanFactory().getBean(name);
+			}
+			return LazyBean.getInstance().findBean(name);
 		}
 		if(parentContext.containsBean(name)) {
 			return parentContext.getBean(name);
 		}else {
-			return LazyBean.findBean(name);
+			return LazyBean.getInstance().findBean(name);
 		}
 	}
 
@@ -165,26 +186,33 @@ public class TestApplicationContext implements ApplicationContext{
 			if(requiredType.getName().contains("EntityScanPackages")) {
 				return (T) EntityScanPackagesConstructor.getBean();
 			}
-			return (T)LazyBean.findBean(name, requiredType);
+			return (T)LazyBean.getInstance().findBean(name, requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(name,requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)LazyBean.findBean(name, requiredType);
+			return (T)LazyBean.getInstance().findBean(name, requiredType);
 		}
 	}
 
 	@Override
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
-			return (T)LazyBean.findBean(requiredType);
+			Object obj = getBeanByClass(requiredType);
+			if(obj != null) {
+			    return (T)obj;
+			}
+			if(getAutowireCapableBeanFactory().getBean(requiredType) != null) {
+				return getAutowireCapableBeanFactory().getBean(requiredType);
+			}
+			return (T)LazyBean.getInstance().findBean(requiredType);
 		}
 		try {
 			Object bean = parentContext.getBean(requiredType);
 			return (T) bean;
 		} catch (NoSuchBeanDefinitionException e) {
-			return (T)LazyBean.findBean(requiredType);
+			return (T)LazyBean.getInstance().findBean(requiredType);
 		}
 	}
 
@@ -204,7 +232,7 @@ public class TestApplicationContext implements ApplicationContext{
 	@Override
 	public boolean containsBean(String name) {
 		// TODO Auto-generated method stub
-		return false;
+		return beanDefinitionMap.containsKey(name);
 	}
 
 	@Override
@@ -301,7 +329,6 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public ClassLoader getClassLoader() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -319,7 +346,6 @@ public class TestApplicationContext implements ApplicationContext{
 
 	@Override
 	public String getDisplayName() {
-		// TODO Auto-generated method stub
 		return null;
 	}
 
@@ -334,13 +360,212 @@ public class TestApplicationContext implements ApplicationContext{
 		return parentContext;
 	}
 
+	private DefaultListableBeanFactory beanFactory;
+	
 	@Override
 	public AutowireCapableBeanFactory getAutowireCapableBeanFactory() throws IllegalStateException {
-		return new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		return getBeanFactory();
 	}
 
 	public Properties getProperties() {
 		return properties;
 	}
 
+	@Override
+	public void start() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void stop() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isRunning() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public void setId(String id) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setParent(ApplicationContext parent) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setEnvironment(ConfigurableEnvironment environment) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addBeanFactoryPostProcessor(BeanFactoryPostProcessor postProcessor) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addApplicationListener(ApplicationListener<?> listener) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void addProtocolResolver(ProtocolResolver resolver) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void refresh() throws BeansException, IllegalStateException {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void registerShutdownHook() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void close() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public boolean isActive() {
+		// TODO Auto-generated method stub
+		return false;
+	}
+
+	@Override
+	public ConfigurableListableBeanFactory getBeanFactory() throws IllegalStateException {
+		if(beanFactory == null) {
+			beanFactory = new DefaultListableBeanFactory(parentContext!=null?parentContext:this);
+		}
+		return beanFactory;
+	}
+	
+	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>();
+	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>();
+	private final Map<Class<?>, Map<String,Class<?>>> cToC = new ConcurrentHashMap<>();
+	private final Map<String, Class<?>> bToC = new ConcurrentHashMap<>();
+	
+	public Object getBeanByClassAndBeanName(String beanName,Class<?> beanClass) {
+//	    if(bToC.get(beanName) == beanClass) {
+//	        return beanDefinitionMap.get(beanName);
+//	    }
+//	    return null;
+	    return getBeanByClassAndBeanNameTmp(beanName);
+	}
+	public Object getBeanByClass(Class<?> beanClass) {
+//	    if(beanForClassMap.containsKey(beanClass)) {
+//            return beanForClassMap.get(beanClass);
+//        }else {
+//            if(cToC.containsKey(beanClass)) {
+//                Map<String,Class<?>> btc = cToC.get(beanClass);
+//                String beanName = LazyBean.getBeanName(beanClass);
+//                if(btc.containsKey(beanName)) {
+//                    return beanDefinitionMap.get(beanName);
+//                }
+//                Iterator<String> names = btc.keySet().iterator();
+//                if(names.hasNext()) {
+//                    beanName = names.next();
+//                    return beanDefinitionMap.get(beanName);
+//                }
+//            }
+//        }
+//	    return null;
+	    return getBeanByClassTmp(beanClass);
+	}
+	
+	private Map<Class<?>,TreeSet<String>> insterFaceClassToBeanName = Maps.newHashMap();
+	private Map<Class<?>,TreeSet<String>> classToBeanName = Maps.newHashMap();
+	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
+	    if(newBean!=null) {
+	        if(StringUtils.isBlank(beanName)) {
+                beanName = LazyBean.getBeanName(beanClass);
+                if(beanName == null) {
+                    return;
+                }
+            }
+	        if(!beanDefinitionMap.containsKey(beanName)) {
+	            beanDefinitionMap.put(beanName, newBean);
+	        }
+	        if(beanClass.isInterface()) {
+	            if(!insterFaceClassToBeanName.containsKey(beanClass)) {
+	                insterFaceClassToBeanName.put(beanClass, Sets.newTreeSet());
+	            }
+	            insterFaceClassToBeanName.get(beanClass).add(beanName);
+	        }else {
+	            if(!classToBeanName.containsKey(beanClass)) {
+	                classToBeanName.put(beanClass, Sets.newTreeSet());
+	            }
+	            classToBeanName.get(beanClass).add(beanName);
+	        }
+	    }else {
+	        log.error("异常数据==>{}",beanClass);
+	    }
+	}
+	public Object getBeanByClassAndBeanNameTmp(String beanName) {
+        if(beanDefinitionMap.containsKey(beanName)) {
+            return beanDefinitionMap.get(beanName);
+        }
+        return null;
+    }
+	public Object getBeanByClassTmp(Class<?> beanClass) {
+	    if(beanClass.isInterface()) {
+	        TreeSet<String> beanNames = insterFaceClassToBeanName.get(beanClass);
+	        if(beanNames!=null) {
+	            if(!beanDefinitionMap.containsKey(beanNames.first())) {
+	                log.error("getBeanByClassTmp#异常#===>{}",beanNames);
+	                return null;
+	            }
+	            return beanDefinitionMap.get(beanNames.first());
+	        }
+	        Object obj = findBean(beanClass,insterFaceClassToBeanName,insterFaceClassToBeanName);
+	        if(obj==null) {
+	            obj = findBean(beanClass,classToBeanName,insterFaceClassToBeanName);
+	        }
+	        return obj;
+	    }else {
+	        TreeSet<String> beanNames = classToBeanName.get(beanClass);
+            if(beanNames!=null) {
+                if(!beanDefinitionMap.containsKey(beanNames.first())) {
+                    log.error("getBeanByClassTmp#异常#===>{}",beanNames);
+                    return null;
+                }
+                return beanDefinitionMap.get(beanNames.first());
+            }
+            Object obj = findBean(beanClass,classToBeanName,classToBeanName);
+            return obj;
+	    }
+    }
+
+    private Object findBean(Class<?> beanClass, Map<Class<?>,TreeSet<String>> fromMap,
+        Map<Class<?>,TreeSet<String>> targetMap) {
+        AtomicReference<Class<?>> targetClass = new AtomicReference<>();
+        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fromMap.keySet())).runAndWait(insterfaceC->{
+            if(targetClass.get()==null && ScanUtil.isImple(insterfaceC, beanClass)) {
+                targetClass.compareAndSet(null,beanClass);
+                targetMap.put(beanClass, Sets.newTreeSet());
+                targetMap.get(beanClass).add(fromMap.get(insterfaceC).first());
+            }
+        });
+        if(targetClass.get()!=null) {
+            return beanDefinitionMap.get(targetMap.get(targetClass.get()).first());
+        }
+        return null;
+    }
 }
