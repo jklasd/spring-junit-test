@@ -425,9 +425,12 @@ public class ScanUtil {
 					|| configuration != null) {
 				Method[] methods = c.getDeclaredMethods();
 				for(Method m : methods) {
-					if(Modifier.isStatic(m.getModifiers())) {
+					if(Modifier.isStatic(m.getModifiers())
+							&& !m.getName().contains("lambda$")//非匿名方法
+						&& !m.getName().contains("access$")) {//非匿名方法
 						Class<?> returnType = m.getReturnType();
 						if(!returnType.getName().contains("void")) {
+							log.debug("method=>{}",m);
 							list.add(c);
 							return;
 						}
