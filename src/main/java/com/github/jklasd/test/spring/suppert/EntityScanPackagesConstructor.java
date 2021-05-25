@@ -1,4 +1,4 @@
-package com.github.jklasd.spring.suppert;
+package com.github.jklasd.test.spring.suppert;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;

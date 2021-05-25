@@ -9,7 +9,7 @@ import org.w3c.dom.Element;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.BeanModel;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 

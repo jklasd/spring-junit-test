@@ -30,10 +30,10 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.spring.suppert.EntityScanPackagesConstructor;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.util.CountDownLatchUtils;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.spring.suppert.EntityScanPackagesConstructor;
+import com.github.jklasd.test.util.CountDownLatchUtils;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

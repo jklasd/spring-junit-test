@@ -13,8 +13,8 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
-import com.github.jklasd.util.InvokeUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.google.common.collect.Maps;
 

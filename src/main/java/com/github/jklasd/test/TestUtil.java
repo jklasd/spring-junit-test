@@ -16,6 +16,7 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.Lifecycle;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -27,8 +28,8 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.TestApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
-import com.github.jklasd.util.LogbackUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.LogbackUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -37,7 +38,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author jubin.zhang 2020-11-19 工具入口类
  */
 @Slf4j
-public class TestUtil {
+public class TestUtil{
 	private Set<String> scanClassPath = Sets.newHashSet();
 	private Set<String> scanPropertiesList = Sets.newHashSet();
 
@@ -256,9 +257,5 @@ public class TestUtil {
 	public Boolean isScanClassPath(String cn) {
 		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
 	}
-//	public static void getExistBean(Class interfaceClass, Type[] classGeneric) {
-//		DefaultListableBeanFactory dlbf = (DefaultListableBeanFactory) getApplicationContext().getAutowireCapableBeanFactory();
-//		DependencyDescriptor dd = new DependencyDescriptor(null, false);
-//		dlbf.resolveDependency(dd, interfaceClass.getName());
-//	}
+
 }

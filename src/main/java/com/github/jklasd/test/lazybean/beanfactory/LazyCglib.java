@@ -11,9 +11,8 @@ import org.springframework.cglib.proxy.MethodProxy;
 
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
-import com.github.jklasd.test.lazyplugn.mq.LazyMQBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -131,35 +130,41 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             ConfigurationProperties propConfig = (ConfigurationProperties) tagertC.getAnnotation(ConfigurationProperties.class);
             if(tagertObj == null){
                 if(!LazyBean.existBean(tagertC) && !beanModel.isXmlBean()) {
-                    if(propConfig==null     || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
+                    if(propConfig == null || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
                         throw new RuntimeException(tagertC.getName()+" Bean 不存在");
                     }
                 }
-                
-                if(constructor.getParameterCount()>0) {
-                    try {
-                        tagertObj = constructor.newInstance(getArguments());
-                    } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-                            | InvocationTargetException e) {
-                        log.error("带参构造对象异常",e);
-                    }
-                }else {
-                    /**
-                     * 待优化
-                     */
-                    try {//直接反射构建目标对象
-                        tagertObj = tagertC.newInstance();
-                        LazyBean.getInstance().processAttr(tagertObj, tagertC);//递归注入代理对象
-                    } catch (InstantiationException | IllegalAccessException e) {
-                        log.error("构建bean=>{}",tagertC);
-                        log.error("构建bean异常",e);
-                    }
-                }
+                /**
+                 * 通过newInstance 创建对象
+                 */
+                buildObject();
             }
+            
             if(propConfig!=null && tagertObj!=null) {
                 LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
             }
         }
          return tagertObj;
+    }
+    /**
+     * 构建实际对象
+     * @param tagertC   实际对象的类
+     */
+    private void buildObject() {
+        Class<?> tagertC = beanModel.getTagClass();
+        try {
+            if (constructor.getParameterCount() > 0) {
+                tagertObj = constructor.newInstance(getArguments());
+            } else {
+                /**
+                 * //直接反射构建目标对象
+                 */
+                tagertObj = tagertC.newInstance();
+                LazyBean.getInstance().processAttr(tagertObj, tagertC);// 递归注入代理对象
+            }
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+            | InvocationTargetException e) {
+            log.error("带参构造对象异常", e);
+        }
     }
 }

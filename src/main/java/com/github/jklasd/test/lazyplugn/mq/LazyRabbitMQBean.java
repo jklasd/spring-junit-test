@@ -7,8 +7,8 @@ import org.w3c.dom.Element;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
-import com.github.jklasd.util.InvokeUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.ScanUtil;
 /**
  * 构建rabbit应用
  * @author jubin.zhang

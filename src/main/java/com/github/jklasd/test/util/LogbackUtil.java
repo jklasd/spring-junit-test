@@ -1,4 +1,4 @@
-package com.github.jklasd.util;
+package com.github.jklasd.test.util;
 
 import java.io.IOException;
 import java.io.InputStream;

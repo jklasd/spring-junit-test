@@ -4,7 +4,7 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 
 public class XmlParser {
 

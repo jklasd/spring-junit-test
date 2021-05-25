@@ -12,14 +12,14 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
-import com.github.jklasd.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
-import com.github.jklasd.util.InvokeUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.spring.suppert.AopContextSuppert;
+import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 
 import lombok.Getter;

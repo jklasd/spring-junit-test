@@ -1,4 +1,4 @@
-package com.github.jklasd.util;
+package com.github.jklasd.test.util;
 
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;

@@ -1,4 +1,4 @@
-package com.github.jklasd.util;
+package com.github.jklasd.test.util;
 
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;

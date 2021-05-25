@@ -20,8 +20,8 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
-import com.github.jklasd.util.InvokeUtil;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,7 +40,17 @@ public class JavaBeanUtil {
 	    }
 	    return bean;
 	}
-	
+	/**
+	 * 构建目标对象
+	 * 1、先构建configration对象
+	 * 1-1 构建前先判断，构造器是否是公共的，判断是否需要参数传入，若有参数，则先去寻找并创建响应的参数对象
+	 * 2、然后调用对应的方法去构建目标对象
+	 * 2-1在构建目标对象前，先判断构建方法是否存在参数，若存在参数，则先去寻找并创建相应的参数对象
+	 * @param configClass  构建目标对象的方法的类
+	 * @param method   构建目标对象的方法
+	 * @param assemblyData 
+	 * @return
+	 */
     public Object buildBean(Class<?> configClass, Method method, AssemblyDTO assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
 	        assemblyData.setBeanName(LazyBean.getBeanName(assemblyData.getTagClass()));
@@ -49,104 +59,90 @@ public class JavaBeanUtil {
 		if(cacheBean.containsKey(key)) {
 			return cacheBean.get(key);
 		}
-		try {
-			if(!factory.containsKey(configClass)) {
-			    try {
-		            AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
-		            if(afterC!=null) {//先加载另外一个类
-		                for(Class<?> itemConfigC : afterC.value()) {
-		                    buildConfigObj(itemConfigC,assemblyData.getNameMapTmp());
-		                }
-		            }
-		        } catch (Exception e) {
-		        }
-//				log.info("Class=>{},  method=>{},  param=>{}",configClass.getSimpleName(),method.getName(),method.getParameters());
-				buildConfigObj(configClass,assemblyData.getNameMapTmp());
-			}
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-		    log.error("构建Bean=>{}，method=>{}",configClass.getSimpleName(), method.getName());
-		    log.error("构建Bean=>data:{}",assemblyData);
-			if(e.getCause()!=null) {
-				log.error("构建Bean",e.getCause());
-			}else {
-				log.error("构建Bean",e);
-			}
-		}
+		
+		if(!factory.containsKey(configClass)) {
+		    /**
+		     * 先创建 configuration BEAN
+		     */
+            boolean buildConfigStatus = buildConfigObj(configClass,assemblyData.getNameMapTmp());
+            if(buildConfigStatus) {
+                log.warn("configClass=>{},method=>{},assemblyData=>{}",configClass.getSimpleName(),method.getName(),assemblyData);
+            }
+        }
+		
 		Object obj = factory.get(configClass);
-		if(obj!=null) {
-			try {
-				Type[] paramTypes = method.getGenericParameterTypes();
-				//如果存在参数
-				Object[] args = new Object[paramTypes.length];
-//				if(args.length>0) {
-//					log.warn("存在二级Bean，需要处理");//
-//				}
-				for(int i=0;i<paramTypes.length;i++) {
-					AssemblyDTO tmp = new AssemblyDTO();
-					if(paramTypes[i] instanceof ParameterizedType) {
-						ParameterizedType  pType = (ParameterizedType) paramTypes[i];
-						tmp.setTagClass((Class<?>) pType.getRawType());
-						tmp.setClassGeneric(pType.getActualTypeArguments());
-					}else {
-						tmp.setTagClass((Class<?>) paramTypes[i]);
-					}
-					tmp.setBeanName(null);
-					tmp.setNameMapTmp(assemblyData.getNameMapTmp());
-					
-//					log.info("AssemblyUtil 2=>{}",tmp.getTagClass());
-//					if(tmp.getTagClass().getName().contains("MongoClient")) {
-//						log.info("断点");
-//					}
-					Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-//					log.info("ojb_meth=>{}",ojb_meth);
-					
-					if(ojb_meth[0]!=null && ojb_meth[1] != null) {
-						args[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
-						if(args[i] == null) {
-							log.warn("arg 为空，警告");
-						}
-					}else {
-						if(tmp.getClassGeneric()!=null) {
-							args[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
-						}else {
-							args[i] = LazyBean.getInstance().buildProxy(tmp.getTagClass());
-						}
-					}
-				}
-				Object tagObj = method.invoke(obj,args);
-				ConfigurationProperties prop = null;
-				if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
-//					String prefix = prop.value()!=""?prop.value():prop.prefix();
-					LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
-				}
-				cacheBean.put(key, tagObj);
-				TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				log.error("JavaBeanUtil#buildBean",e);
-			}
+		if(obj!=null) {   //若configuration对象存在，则开始创建目标对象
+			buildTagObject(method, assemblyData, key, obj);
 		}
+		
 		return cacheBean.get(key);
 	}
-    private void buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace)
-        throws InstantiationException, IllegalAccessException, InvocationTargetException {
-        Constructor[] cons = configClass.getConstructors();
-        if(cons.length>0) {
-        	findAndCreateBean(configClass, nameSpace, cons);
-        }else {
-        	cons = configClass.getDeclaredConstructors();
-        	if(!Modifier.isPublic(configClass.getModifiers())) {
-        		log.info("处理非公共类");
-        		cons[0].setAccessible(true);
+    /**
+     * 构建目标对象
+     * @param method    构建目标对象
+     * @param assemblyData  传输data
+     * @param key   缓存key
+     * @param obj   configurationBean
+     */
+    private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
+        try {
+        	//如果存在参数
+        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes());
+        	
+        	Object tagObj = method.invoke(obj,args);
+        	
+        	ConfigurationProperties prop = null;
+        	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
+        		LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
         	}
-        	if(cons.length>0) {
-        	    findAndCreateBean(configClass, nameSpace, cons);
-        	}
+        	cacheBean.put(key, tagObj);
+        	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        	log.error("JavaBeanUtil#buildBean",e);
         }
-        if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
-        	LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
-        }
-        LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
     }
+    private boolean buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace) {
+        try {
+            AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
+            if(afterC!=null) {//先加载另外一个类
+                for(Class<?> itemConfigC : afterC.value()) {
+                    buildConfigObj(itemConfigC,nameSpace);
+                }
+            }
+            
+            Constructor[] cons = configClass.getConstructors();
+            if(cons.length>0) {
+                findAndCreateBean(configClass, nameSpace, cons);
+            }else {
+                cons = configClass.getDeclaredConstructors();
+                if(!Modifier.isPublic(configClass.getModifiers())) {
+                    log.info("处理非公共类");
+                    cons[0].setAccessible(true);
+                }
+                if(cons.length>0) {
+                    findAndCreateBean(configClass, nameSpace, cons);
+                }
+            }
+            if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
+                LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
+            }
+            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("构建Configuration Bean=>{}",configClass.getSimpleName());
+            log.error("构建Bean",e);
+            return false;
+        }
+        return true;
+    }
+    /**
+     * 查询对应的构造函数，并创建bean
+     * @param configClass   confirguration对象
+     * @param nameSpace 扫描域
+     * @param cons  构建函数
+     * @throws InstantiationException
+     * @throws IllegalAccessException
+     * @throws InvocationTargetException
+     */
     private void findAndCreateBean(Class configClass, Map<String,Class> nameSpace, Constructor[] cons)
         throws InstantiationException, IllegalAccessException, InvocationTargetException {
         int min = 10;
@@ -157,10 +153,17 @@ public class JavaBeanUtil {
         		minC = con;
         	}
         }
-        Type[] paramTypes = minC.getGenericParameterTypes();
-        Object[] param = buildParam(nameSpace, paramTypes);
+        //构建参数
+        Object[] param = buildParam(nameSpace, minC.getGenericParameterTypes());
+        //创建对象并缓存
         factory.put(configClass, minC.newInstance(param));
     }
+    /**
+     * 构建目标对象的方法参数对象
+     * @param nameSpace 扫描域
+     * @param paramTypes    参数类型组
+     * @return  参数对象组
+     */
     private Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
@@ -179,14 +182,12 @@ public class JavaBeanUtil {
         	}
         	tmp.setBeanName(null);
         	tmp.setNameMapTmp(nameSpace);
-//						if(paramTypes[i] instanceof ParameterizedType) {
-//						}
-//						log.info("AssemblyUtil factory=>{}",tmp.getTagClass());
         	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-//						log.debug("ojb_meth=>{}",ojb_meth);
-        	
         	if(ojb_meth[0]!=null && ojb_meth[1] != null) {
         		param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
+        		if(param[i] == null) {
+        		    log.warn("arg 为空，警告");
+        		}
         	}else {
         		if(tmp.getClassGeneric()!=null) {
         			param[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());

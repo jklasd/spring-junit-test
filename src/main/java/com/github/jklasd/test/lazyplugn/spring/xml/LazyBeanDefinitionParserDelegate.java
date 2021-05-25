@@ -14,7 +14,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;

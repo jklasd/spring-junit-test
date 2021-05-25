@@ -39,7 +39,7 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

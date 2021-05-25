@@ -5,7 +5,7 @@ import java.util.Map;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
-import com.github.jklasd.util.ScanUtil;
+import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.google.common.collect.Maps;
 
