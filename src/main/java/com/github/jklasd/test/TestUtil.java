@@ -23,11 +23,12 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.beanfactory.LazyBean;
-import com.github.jklasd.test.spring.JavaBeanUtil;
-import com.github.jklasd.test.spring.TestApplicationContext;
-import com.github.jklasd.test.spring.xml.XmlBeanUtil;
+import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
+import com.github.jklasd.test.lazyplugn.spring.TestApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.util.LogbackUtil;
+import com.github.jklasd.util.ScanUtil;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;

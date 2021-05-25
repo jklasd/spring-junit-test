@@ -14,7 +14,6 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
-import com.github.jklasd.test.ScanUtil;
 import com.github.jklasd.test.TestUtil;
 
 import ch.qos.logback.classic.Level;
