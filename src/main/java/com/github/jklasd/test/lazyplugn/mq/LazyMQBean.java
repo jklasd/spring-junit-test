@@ -21,7 +21,7 @@ public abstract class LazyMQBean {
 		}
 		switch (packageName) {
 		case rabbitPackage:
-			factory = new LazyRabbitMQBean(); 
+//			factory = new LazyRabbitMQBean(); 
 			return factory;
 		default:
 			break;

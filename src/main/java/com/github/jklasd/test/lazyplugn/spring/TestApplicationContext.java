@@ -458,13 +458,11 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	}
 	
 	private final Map<String, Object> beanDefinitionMap = new ConcurrentHashMap<String, Object>();
-	private final Map<Class<?>, Object> beanForClassMap = new ConcurrentHashMap<>();
-	private final Map<Class<?>, Map<String,Class<?>>> cToC = new ConcurrentHashMap<>();
-	private final Map<String, Class<?>> bToC = new ConcurrentHashMap<>();
 	
 	public Object getBeanByClassAndBeanName(String beanName,Class<?> beanClass) {
-//	    if(bToC.get(beanName) == beanClass) {
-//	        return beanDefinitionMap.get(beanName);
+	    if(StringUtils.isNotBlank(beanName)) {
+	        return getBeanByClassAndBeanNameTmp(beanName);
+	    }
 //	    }
 //	    return null;
 	    return getBeanByClassAndBeanNameTmp(beanName);

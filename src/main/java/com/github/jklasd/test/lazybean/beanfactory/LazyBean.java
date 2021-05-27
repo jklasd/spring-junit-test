@@ -249,15 +249,15 @@ public class LazyBean {
 	 * @param obj 目标对象
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
-	@SuppressWarnings("unchecked")
-	public void processAttr(Object obj, Class objClassOrSuper) {
+	public void processAttr(Object obj, Class<?> objClassOrSuper) {
 //		if(objClassOrSuper.getName().contains("JedisCluster")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
-		if(exist.contains(obj.hashCode()+"="+objClassOrSuper.getName())) {
+	    String existKey = obj.hashCode()+"="+objClassOrSuper.getName();
+		if(exist.contains(existKey)) {
 			return;
 		}
-		exist.add(obj.hashCode()+"="+objClassOrSuper.getName());
+		exist.add(existKey);
 		Field[] fields = objClassOrSuper.getDeclaredFields();
 		processField(obj, fields);
 		
@@ -302,11 +302,7 @@ public class LazyBean {
 						log.info("其他特殊情况");
 					}
 				}else {
-					if(LazyBean.existBean(f.getType()) && util.getExistBean(f.getType(), f.getName())!=null) {
-						setObj(f, obj, util.getExistBean(f.getType(), f.getName()));
-					}else {
-						setObj(f, obj, buildProxy(f.getType(),bName));
-					}
+				    setObj(f, obj, buildProxy(f.getType(),bName));
 				}
 			} else {
 				Value v = f.getAnnotation(Value.class);
@@ -315,11 +311,11 @@ public class LazyBean {
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
-						if(StringUtils.isNotBlank(c.name())) {
-							setObj(f, obj, buildProxy(f.getType(),c.name()),c.name());
-						}else {
-							setObj(f, obj, buildProxy(f.getType()));
-						}
+//						if(StringUtils.isNotBlank(c.name())) {
+//							setObj(f, obj, buildProxy(f.getType(),c.name()),c.name());
+//						}else {
+//						}
+						setObj(f, obj, buildProxy(f.getType(),c.name()));
 					} else {
 						log.debug("不需要需要注入=>{}", f.getName());
 					}
