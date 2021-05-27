@@ -35,11 +35,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         return bean;
     }
     
-	@SuppressWarnings("rawtypes")
-	private static Map<Class,Object> dubboData = Maps.newHashMap();
-	@SuppressWarnings("rawtypes")
-	private static Map<Class,Element> dubboRefferCache = Maps.newHashMap();
-	private static Map<Class,Element> dubboServiceCache = Maps.newHashMap();
+	private static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	
 	public static final boolean useDubbo() {
 		return Service!=null;
