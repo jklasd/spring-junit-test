@@ -17,34 +17,34 @@ import lombok.extern.slf4j.Slf4j;
  * @param <T> 遍历对象类型
  */
 @Slf4j
-public class CountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
+public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLatch>{
 	private long timeOut;
 	
-	private CountDownLatchUtils(List<T> listData) {
+	private JunitCountDownLatchUtils(List<T> listData) {
 		super(listData, new CountDownLatch(listData.size()));
 	}
 	
-	public static <T> CountDownLatchUtils<T> buildCountDownLatch(List<T> listData) {
-		return new CountDownLatchUtils<>(listData);
+	public static <T> JunitCountDownLatchUtils<T> buildCountDownLatch(List<T> listData) {
+		return new JunitCountDownLatchUtils<>(listData);
 	}
 	
-	public static <T> CountDownLatchUtils<T> buildCountDownLatch(List<T> listData,long timeOut) {
-		CountDownLatchUtils<T> cdlu = new CountDownLatchUtils<>(listData);
+	public static <T> JunitCountDownLatchUtils<T> buildCountDownLatch(List<T> listData,long timeOut) {
+		JunitCountDownLatchUtils<T> cdlu = new JunitCountDownLatchUtils<>(listData);
 		cdlu.timeOut = timeOut;
 		return cdlu;
 	}
 	private BiConsumer<? super T,? super Exception> exception;
 	private BiConsumer<? super T,? super Error> error;
 	private ExecutorService executor;
-	public CountDownLatchUtils<T> setExecutorService(ExecutorService executor) {
+	public JunitCountDownLatchUtils<T> setExecutorService(ExecutorService executor) {
 		this.executor = executor;
 		return this;
 	}
-	public CountDownLatchUtils<T> setError(BiConsumer<? super T,? super Error> error) {
+	public JunitCountDownLatchUtils<T> setError(BiConsumer<? super T,? super Error> error) {
 		this.error = error;
 		return this;
 	}
-	public CountDownLatchUtils<T> setException(BiConsumer<? super T,? super Exception> exception) {
+	public JunitCountDownLatchUtils<T> setException(BiConsumer<? super T,? super Exception> exception) {
 		this.exception = exception;
 		return this;
 	}

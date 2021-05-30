@@ -103,7 +103,7 @@ public class ScanUtil {
 			return pathForClass.get(scanPath);
 		}
 		Map<String,Class> nameMapTmp = Maps.newHashMap();
-		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->cn.contains(scanPath)).collect(Collectors.toList()))
+		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->cn.contains(scanPath)).collect(Collectors.toList()))
 		.runAndWait(name->{
 			if(name.endsWith(CLASS_SUFFIX)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
@@ -154,7 +154,7 @@ public class ScanUtil {
 						URLConnection connection = url.openConnection();
 						if (connection instanceof JarURLConnection) {
 							JarFile jFile = ((JarURLConnection) connection).getJarFile();
-							CountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
+							JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 							    String name = JarEntry.getName();
                               if(name.contains(".class")) {
                                   classNames.add(name.replace("/", ".").replace("\\", "."));
@@ -202,7 +202,7 @@ public class ScanUtil {
 	}
 	
 	public static void loadContextPathClass() {
-		CountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
+		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
 		.runAndWait(name->{
 			if(name.endsWith(CLASS_SUFFIX) && !nameMap.containsKey(name)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
@@ -221,7 +221,7 @@ public class ScanUtil {
 	
 	public static Class findClassByClassName(String beanName) {
 		List<Class> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
 			if(name.replace(CLASS_SUFFIX, "").endsWith("."+beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
 				list.add(nameMap.get(name));
@@ -232,7 +232,7 @@ public class ScanUtil {
 	public static Class findClassByName(String beanName) {
 		List<Class> list = Lists.newArrayList();
 		
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
 			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
 				list.add(nameMap.get(name));
@@ -275,7 +275,7 @@ public class ScanUtil {
 		}
 		tmp.putAll(nameMap);
 		List<Class<?>> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
 				return;
@@ -300,7 +300,7 @@ public class ScanUtil {
         }
         tmp.putAll(nameMap);
         List<Class> list = Lists.newArrayList();
-        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+        JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
         .runAndWait(name ->{
             Class<?> tmpClass = tmp.get(name);
             if(isImple(tmpClass,interfaceClass)) {
@@ -321,7 +321,7 @@ public class ScanUtil {
 		}
 		tmp.putAll(nameMap);
 		List<Class<?>> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
 		.runAndWait(name ->{
 			if(ClassName!=null && name.equals(ClassName)) {
 				return;
@@ -398,7 +398,7 @@ public class ScanUtil {
 	
 	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class> nameMapTmp){
 		List<Class<?>> list = Lists.newArrayList();
-		CountDownLatchUtils.buildCountDownLatch(nameMapTmp.keySet().stream().filter(name->!notFoundSet.contains(name)).collect(Collectors.toList()))
+		JunitCountDownLatchUtils.buildCountDownLatch(nameMapTmp.keySet().stream().filter(name->!notFoundSet.contains(name)).collect(Collectors.toList()))
 		.setException((name,e)->notFoundSet.add(name))
 		.runAndWait(name ->{
 			Class<?> c = nameMapTmp.get(name);
@@ -415,7 +415,7 @@ public class ScanUtil {
 	}
 	public static List<Class<?>> findStaticMethodClass() {
 		Set<Class<?>> list = Sets.newHashSet();
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> c = nameMap.get(name);
 			Annotation comp = c.getAnnotation(Component.class);
@@ -453,7 +453,7 @@ public class ScanUtil {
 		}
 		Object[] address = new Object[2];
 		Object[] tmp = new Object[2];
-		CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
 				.collect(Collectors.toList()))
 		.setException((name,e)->{
 			notFoundSet.add(name);

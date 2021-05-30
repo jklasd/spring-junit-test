@@ -32,7 +32,7 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.spring.suppert.EntityScanPackagesConstructor;
-import com.github.jklasd.test.util.CountDownLatchUtils;
+import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -554,7 +554,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
     private Object findBean(Class<?> beanClass, Map<Class<?>,TreeSet<String>> fromMap,
         Map<Class<?>,TreeSet<String>> targetMap) {
         AtomicReference<Class<?>> targetClass = new AtomicReference<>();
-        CountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fromMap.keySet())).runAndWait(insterfaceC->{
+        JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(fromMap.keySet())).runAndWait(insterfaceC->{
             if(targetClass.get()==null && ScanUtil.isImple(insterfaceC, beanClass)) {
                 targetClass.compareAndSet(null,beanClass);
                 targetMap.put(beanClass, Sets.newTreeSet());
