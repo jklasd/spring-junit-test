@@ -145,7 +145,7 @@ public class LazyBean {
                 tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
             } else {
                 LazyCglib handler = new LazyCglib(beanModel);
-                if(!handler.hasFinalMethod()) {
+                if(!handler.hasFinalMethod() && handler.findPublicConstrucors()) {
                     if(handler.getArgumentTypes().length>0) {
                         Enhancer enhancer = new Enhancer();
                         enhancer.setSuperclass(beanClass);

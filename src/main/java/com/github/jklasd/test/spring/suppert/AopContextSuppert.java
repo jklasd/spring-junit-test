@@ -1,6 +1,5 @@
 package com.github.jklasd.test.spring.suppert;
 
-import java.lang.invoke.MethodType;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 

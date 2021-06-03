@@ -159,12 +159,16 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                 /**
                  * //直接反射构建目标对象
                  */
-                tagertObj = tagertC.newInstance();
+                tagertObj = constructor.newInstance();
                 LazyBean.getInstance().processAttr(tagertObj, tagertC);// 递归注入代理对象
             }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
             | InvocationTargetException e) {
             log.error("带参构造对象异常", e);
         }
+    }
+
+    public boolean findPublicConstrucors() {
+         return constructor!=null && Modifier.isPublic(constructor.getModifiers());
     }
 }

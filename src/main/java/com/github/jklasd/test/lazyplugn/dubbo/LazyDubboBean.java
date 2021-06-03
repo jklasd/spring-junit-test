@@ -9,13 +9,13 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.w3c.dom.Element;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -42,8 +42,13 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	}
 	@SuppressWarnings("unchecked")
 	private static final Class<? extends Annotation> Service = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
+	@SuppressWarnings("unchecked")
+    private static final Class<? extends Annotation> apacheService = ScanUtil.loadClass("org.apache.dubbo.config.annotation.DubboService");
 	public static final Class<? extends Annotation> getAnnotionClass() {
-		if(Service!=null) {
+	    if(apacheService!=null) {
+	        return apacheService;
+	    }
+		if(Service!=null ) {
 			return Service;
 		}
 		return null;
@@ -124,9 +129,13 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             return registryCenter;
         }
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.RegistryConfig");
+        if(beanDef == null) {
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.RegistryConfig");  
+        }
+        Class<?> registerClass = beanDef.getBeanClass();
         registryCenter = beanDef.getBeanClass().newInstance();
         beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-            LazyBean.getInstance().setAttr(pv.getName(), registryCenter, beanDef.getBeanClass(), pv.getValue());
+            LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
         });
         return registryCenter;
     }
@@ -137,6 +146,9 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             return application;
         }
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.ApplicationConfig");
+        if(beanDef == null) {
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ApplicationConfig");
+        }
         application = beanDef.getBeanClass().newInstance();
         PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
         LazyBean.getInstance().setAttr("name", application, beanDef.getBeanClass(), TestUtil.getInstance().getPropertiesValue(name.getValue().toString()));
