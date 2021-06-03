@@ -111,6 +111,10 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
                 LazyBean.getInstance().setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
             });
+            /**
+             * 待后续升级，可能存在动态设定协议或者客户端问题
+             */
+            InvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
             InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
             InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
             Object obj = InvokeUtil.invokeMethod(referenceConfig, "get");
@@ -121,7 +125,25 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             return null;
         }
     }
-
+    private void getProtocol() {
+         
+    }
+    private Object consumer;
+    private Object getConsumer() throws InstantiationException, IllegalAccessException, IllegalStateException {
+        if (consumer != null) {
+            return consumer;
+        }
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.ConsumerConfig");
+        if(beanDef == null) {
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConsumerConfig");  
+        }
+        Class<?> registerClass = beanDef.getBeanClass();
+        consumer = beanDef.getBeanClass().newInstance();
+        beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+            LazyBean.getInstance().setAttr(pv.getName(), consumer, registerClass, pv.getValue());
+        });
+        return consumer;
+    }
     private Object registryCenter;
 
     private Object getRegistryConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
