@@ -16,6 +16,7 @@ import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.ManagedArray;
+import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.beans.factory.support.ManagedMap;
 import org.springframework.beans.factory.xml.DefaultDocumentLoader;
 import org.springframework.beans.factory.xml.DelegatingEntityResolver;
@@ -31,13 +32,13 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.TestUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -232,54 +233,59 @@ public class XmlBeanUtil {
     public Map<String, Object> handPropValue(List<PropertyValue>  attrs, Class<?> tagC) {
         Map<String, Object> attrParam = Maps.newHashMap();
         attrs.forEach(prov->{
-            Object value = null;
-            if(prov.getValue() instanceof RuntimeBeanReference) {
-                RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
-                value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
-            }else if(prov.getValue() instanceof ManagedArray) {
-                ManagedArray tmp = (ManagedArray)prov.getValue();
-                List<Object> list = Lists.newArrayList();
-                tmp.stream().forEach(item ->{
-                    if(item instanceof BeanDefinitionHolder) {
-                        BeanDefinitionHolder tmpBdh = (BeanDefinitionHolder)item;
-                        BeanDefinition tmpBd = tmpBdh.getBeanDefinition();
-                        Class<?> tmpC= ScanUtil.loadClass(tmpBd.getBeanClassName());
-//                        XmlBeanUtil.getInstance().addClass(tmpC);
-                        BeanModel beanModel = new BeanModel();
-                        beanModel.setTagClass(tmpC);
-                        beanModel.setXmlBean(true);
-                        beanModel.setPropValue(tmpBd.getPropertyValues());
-                        list.add(LazyBean.getInstance().buildProxy(beanModel));
-                    }else {
-                        log.info("ManagedArray=>{}",item);
-                    }
-                });
-                value = list;
-            }else if(prov.getValue() instanceof ManagedMap) {
-                @SuppressWarnings("unchecked")
-                ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)prov.getValue();
-                Map<Object,Object> tmpMap = Maps.newHashMap();
-                tmp.forEach((k,v)->{
-                    if(k instanceof TypedStringValue) {
-                        TypedStringValue tmpV = (TypedStringValue)k;
-                        k = tmpV.getValue();
-                    }
-                    if(v instanceof RuntimeBeanReference) {
-                        RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
-                        v = TestUtil.getInstance().getApplicationContext().getBean(tmpV.getBeanName());
-                    }
-                    tmpMap.put(k, v);
-                });
-                value = tmpMap;
-            }else if(prov.getValue() instanceof TypedStringValue) {
-                TypedStringValue tmp = (TypedStringValue)prov.getValue();
-                value = tmp.getValue();
-            }else {
-                log.info("value other=>{}",prov.getValue());
-                value = prov.getValue();
-            }
+            Object value = conversionValue(prov);
             attrParam.put(prov.getName(), value);
         });
         return attrParam;
+    }
+
+    public Object conversionValue(PropertyValue prov) {
+        Object value;
+        if(prov.getValue() instanceof RuntimeBeanReference) {
+            RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
+            value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
+        }else if(prov.getValue() instanceof ManagedList) {
+            ManagedList<?> tmp = (ManagedList<?>)prov.getValue();
+            List<Object> list = Lists.newArrayList();
+            tmp.stream().forEach(item ->{
+                if(item instanceof BeanDefinitionHolder) {
+                    BeanDefinitionHolder tmpBdh = (BeanDefinitionHolder)item;
+                    BeanDefinition tmpBd = tmpBdh.getBeanDefinition();
+                    Class<?> tmpC= ScanUtil.loadClass(tmpBd.getBeanClassName());
+//                        XmlBeanUtil.getInstance().addClass(tmpC);
+                    BeanModel beanModel = new BeanModel();
+                    beanModel.setTagClass(tmpC);
+                    beanModel.setXmlBean(true);
+                    beanModel.setPropValue(tmpBd.getPropertyValues());
+                    list.add(LazyBean.getInstance().buildProxy(beanModel));
+                }else {
+                    log.info("ManagedArray=>{}",item);
+                }
+            });
+            value = list;
+        }else if(prov.getValue() instanceof ManagedMap) {
+            @SuppressWarnings("unchecked")
+            ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)prov.getValue();
+            Map<Object,Object> tmpMap = Maps.newHashMap();
+            tmp.forEach((k,v)->{
+                if(k instanceof TypedStringValue) {
+                    TypedStringValue tmpV = (TypedStringValue)k;
+                    k = tmpV.getValue();
+                }
+                if(v instanceof RuntimeBeanReference) {
+                    RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
+                    v = TestUtil.getInstance().getApplicationContext().getBean(tmpV.getBeanName());
+                }
+                tmpMap.put(k, v);
+            });
+            value = tmpMap;
+        }else if(prov.getValue() instanceof TypedStringValue) {
+            TypedStringValue tmp = (TypedStringValue)prov.getValue();
+            value = tmp.getValue();
+        }else {
+            log.info("value other=>{}",prov.getValue());
+            value = prov.getValue();
+        }
+        return value;
     }
 }

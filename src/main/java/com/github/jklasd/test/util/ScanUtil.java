@@ -86,7 +86,7 @@ public class ScanUtil {
 				try {
 					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
 					nameMap.put(p,c);
-				} catch (ClassNotFoundException e) {
+				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
 					log.error("加载类异常",e);
