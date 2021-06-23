@@ -238,8 +238,7 @@ public class XmlBeanUtil {
         });
         return attrParam;
     }
-
-    public Object conversionValue(PropertyValue prov) {
+    public Object conversionValue(PropertyValue prov,Object obj) {
         Object value;
         if(prov.getValue() instanceof RuntimeBeanReference) {
             RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
@@ -275,6 +274,9 @@ public class XmlBeanUtil {
                 if(v instanceof RuntimeBeanReference) {
                     RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
                     v = TestUtil.getInstance().getApplicationContext().getBean(tmpV.getBeanName());
+                }else if(v instanceof TypedStringValue) {
+                    TypedStringValue tmpV = (TypedStringValue)v;
+                    v = tmpV.getValue();
                 }
                 tmpMap.put(k, v);
             });
@@ -287,5 +289,8 @@ public class XmlBeanUtil {
             value = prov.getValue();
         }
         return value;
+    }
+    public Object conversionValue(PropertyValue prov) {
+        return conversionValue(prov, null);
     }
 }

@@ -1,26 +1,23 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
 import java.lang.annotation.Annotation;
-import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.BeanDefinitionHolder;
-import org.springframework.beans.factory.support.ManagedList;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationEventPublisher;
 import org.w3c.dom.Element;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -59,28 +56,42 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 		return null;
 	}
 	
-	@SuppressWarnings("unlikely-arg-type")
-    public void registerDubboService(Class<?> dubboServiceClass) {
-		if(dubboServiceCacheDef.containsKey(dubboServiceClass)) {
+	public void registerDubboService(Class<?> dubboServiceClass) {
+		if(dubboServiceCacheDef.containsKey(dubboServiceClass.getName())) {
 			log.info("注册dubboService=>{}",dubboServiceClass);
-	        RootBeanDefinition beanDef = (RootBeanDefinition)dubboRefferCacheDef.get(dubboServiceClass.getName());
+	        RootBeanDefinition beanDef = (RootBeanDefinition)dubboServiceCacheDef.get(dubboServiceClass.getName());
 	        try {
-	            Object referenceConfig = beanDef.getBeanClass().newInstance();
+	            Object serviceConfig = beanDef.getBeanClass().newInstance();
 	            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-	                LazyBean.getInstance().setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), pv.getValue());
+	                if(pv.getName().equals("ref")) {
+	                    log.info("断点");
+	                    Object instance = beanDef.getPropertyValues().get("interface");
+	                    Object value = XmlBeanUtil.getInstance().conversionValue(pv);
+	                    if(value == null) {
+	                        RuntimeBeanReference tmp = (RuntimeBeanReference)pv.getValue();
+	                        value = LazyBean.getInstance().buildProxy(ScanUtil.loadClass(instance.toString()), tmp.getBeanName());
+	                    }
+	                    LazyBean.getInstance().setAttr(pv.getName(), serviceConfig, beanDef.getBeanClass(), value);
+	                }else {
+	                    LazyBean.getInstance().setAttr(pv.getName(), serviceConfig, beanDef.getBeanClass(), XmlBeanUtil.getInstance().conversionValue(pv));
+	                }
 	            });
-	            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
-	            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
+	            
+	            InvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
+	            InvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
+	            InvokeUtil.invokeMethod(serviceConfig, "setProvider",getProviderConfig());
+	            InvokeUtil.invokeMethodByParamClass(serviceConfig, "setApplicationEventPublisher",new Class[] {ApplicationEventPublisher.class},
+	                new Object[] {TestUtil.getInstance().getApplicationContext()});
 //	            Object obj = 
-	                InvokeUtil.invokeMethod(referenceConfig, "export");
+	                InvokeUtil.invokeMethod(serviceConfig, "export");
+	                log.info("注册=========={}===============成功",dubboServiceClass);
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
 	        }
-			log.info("注册=========={}===============成功",dubboServiceClass);
 		}
 	}
 	
-	public static void putAnnService(Class<?> dubboServiceClass) {}
+    public static void putAnnService(Class<?> dubboServiceClass) {}
 	private Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
 	private Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
 	private Map<String,BeanDefinition> dubboConfigCacheDef = Maps.newHashMap();
@@ -90,7 +101,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
                 dubboRefferCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
                 break;
             case "dubbo:service":
-                dubboServiceCacheDef.put(beanDef.getBeanClassName(), beanDef);
+                dubboServiceCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
                 break;
             default:
                 dubboConfigCacheDef.put(beanDef.getBeanClassName(), beanDef);
@@ -122,6 +133,9 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             InvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
             InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
             InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
+            if(getConfigCenterConfig()!=null) {
+                InvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+            }
             Object obj = InvokeUtil.invokeMethod(referenceConfig, "get");
             dubboData.put(dubboClass,obj);
             return obj;
@@ -130,6 +144,28 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             return null;
         }
     }
+    private Object configCenterConfig;
+    private Object getConfigCenterConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
+        if (configCenterConfig != null) {
+            return configCenterConfig;
+        }
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.spring.ConfigCenterBean");
+        if(beanDef == null) {
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterBean");  
+        }
+        if(beanDef!=null) {
+            Class<?> registerClass = beanDef.getBeanClass();
+            configCenterConfig = beanDef.getBeanClass().newInstance();
+            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+                LazyBean.getInstance().setAttr(pv.getName(), configCenterConfig, registerClass, XmlBeanUtil.getInstance().conversionValue(pv));
+            });
+        }else {
+            //扫描Configuration
+            configCenterConfig = scanConfigruation("com.alibaba.dubbo.config.ConfigCenterBean","org.apache.dubbo.config.ConfigCenterBean");
+        }
+        return configCenterConfig;
+    }
+
     private void getProtocol() {
          
     }
@@ -142,13 +178,40 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         if(beanDef == null) {
             beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConsumerConfig");  
         }
-        Class<?> registerClass = beanDef.getBeanClass();
-        consumer = beanDef.getBeanClass().newInstance();
-        beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-            LazyBean.getInstance().setAttr(pv.getName(), consumer, registerClass, pv.getValue());
-        });
+        if(beanDef!=null) {
+            Class<?> registerClass = beanDef.getBeanClass();
+            consumer = beanDef.getBeanClass().newInstance();
+            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+                LazyBean.getInstance().setAttr(pv.getName(), consumer, registerClass, pv.getValue());
+            });
+        }else {
+            //扫描Configuration
+            consumer = scanConfigruation("com.alibaba.dubbo.config.ConsumerConfig","org.apache.dubbo.config.ConsumerConfig");
+        }
         return consumer;
     }
+    private Object providerConfig;
+    private Object getProviderConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
+        if (providerConfig != null) {
+            return providerConfig;
+        }
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.ProviderConfig");
+        if(beanDef == null) {
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ProviderConfig");  
+        }
+        if(beanDef!=null) {
+            Class<?> registerClass = beanDef.getBeanClass();
+            registryCenter = beanDef.getBeanClass().newInstance();
+            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+                LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
+            });
+        }else {
+            // 扫描Configuration
+            registryCenter = scanConfigruation("com.alibaba.dubbo.config.ProviderConfig","org.apache.dubbo.config.ProviderConfig");
+        }
+        return registryCenter;
+    }
+    
     private Object registryCenter;
 
     private Object getRegistryConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
@@ -159,11 +222,16 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         if(beanDef == null) {
             beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.RegistryConfig");  
         }
-        Class<?> registerClass = beanDef.getBeanClass();
-        registryCenter = beanDef.getBeanClass().newInstance();
-        beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-            LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
-        });
+        if(beanDef!=null) {
+            Class<?> registerClass = beanDef.getBeanClass();
+            registryCenter = beanDef.getBeanClass().newInstance();
+            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+                LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
+            });
+        }else {
+            // 扫描Configuration
+            registryCenter = scanConfigruation("com.alibaba.dubbo.config.RegistryConfig","org.apache.dubbo.config.RegistryConfig");
+        }
         return registryCenter;
     }
 
@@ -176,10 +244,30 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         if(beanDef == null) {
             beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ApplicationConfig");
         }
-        application = beanDef.getBeanClass().newInstance();
-        PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
-        LazyBean.getInstance().setAttr("name", application, beanDef.getBeanClass(), TestUtil.getInstance().getPropertiesValue(name.getValue().toString()));
+        if(beanDef!=null) {
+            application = beanDef.getBeanClass().newInstance();
+            PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
+            LazyBean.getInstance().setAttr("name", application, beanDef.getBeanClass(), TestUtil.getInstance().getPropertiesValue(name.getValue().toString()));
+        }else {
+         // 扫描Configuration
+            application = scanConfigruation("com.alibaba.dubbo.config.ApplicationConfig","org.apache.dubbo.config.ApplicationConfig");
+        }
         return application;
+    }
+
+    private Object scanConfigruation(String oldC,String newC) {
+        Class<?> tmpC = ScanUtil.loadClass(oldC);
+        Object obj = null;
+        if(tmpC!=null) {
+            obj = LazyBean.findCreateBeanFromFactory(tmpC, null);
+        }
+        if(obj ==null) {
+            tmpC = ScanUtil.loadClass(newC);
+            if(tmpC!=null) {
+                obj = LazyBean.findCreateBeanFromFactory(tmpC, null);
+            }
+        }
+        return obj;
     }
 
     @Override
