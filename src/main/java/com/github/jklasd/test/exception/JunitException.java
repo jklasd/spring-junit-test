@@ -12,4 +12,7 @@
     public JunitException(String message) {
         super(message);
     }
+    public JunitException(Throwable e) {
+        super(e);
+    }
 }
