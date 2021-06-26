@@ -62,7 +62,7 @@
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>16.0</version>
+			<version>30.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
