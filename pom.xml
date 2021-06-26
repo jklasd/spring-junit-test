@@ -5,7 +5,7 @@
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test</artifactId>
-	<version>1.1.9-RELEASE</version>
+	<version>1.2.0-RELEASE</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -51,16 +51,18 @@
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<version>1.18.8</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
 			<version>1.2.35</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>16.0</version>
+			<version>30.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -85,6 +87,7 @@
 			<groupId>org.springframework</groupId>
 			<artifactId>spring-jdbc</artifactId>
 			<version>4.3.9.RELEASE</version>
+			<scope>compile</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.apache.commons</groupId>
