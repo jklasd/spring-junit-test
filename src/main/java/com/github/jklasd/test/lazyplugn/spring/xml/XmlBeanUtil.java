@@ -284,6 +284,8 @@ public class XmlBeanUtil {
         }else if(prov.getValue() instanceof TypedStringValue) {
             TypedStringValue tmp = (TypedStringValue)prov.getValue();
             value = tmp.getValue();
+        }else if(prov.getValue() instanceof String){
+            value = TestUtil.getInstance().getPropertiesValue(prov.getValue().toString());
         }else {
             log.info("value other=>{}",prov.getValue());
             value = prov.getValue();

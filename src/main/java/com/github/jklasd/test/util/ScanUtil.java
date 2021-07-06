@@ -351,16 +351,6 @@ public class ScanUtil {
 	 * @return  true/ false
 	 */
 	public static boolean isImple(Class implClass,Class<?> interfaceClass) {
-//		Class[] ics = implClass.getInterfaces();
-//		for(Class c2 : ics) {
-//			if(c2 == interfaceClass) {
-//				return true;
-//			}
-//		}
-//		Class sc = implClass.getSuperclass();
-//		if(sc!=null) {
-//			return isImple(sc, interfaceClass);
-//		}
 		return !implClass.isInterface() && interfaceClass.isAssignableFrom(implClass);
 	}
 	/**
@@ -370,20 +360,6 @@ public class ScanUtil {
 	 * @return true/false
 	 */
 	public static boolean isExtends(Class subClass,Class<?> abstractClass) {
-//		if(subClass.isInterface()) {
-//			Class[] interfaces = subClass.getInterfaces();
-//			for(Class item : interfaces) {
-//				if(item == abstractClass || isExtends(item, abstractClass)) {
-//					return true;
-//				}
-//			}
-//		}else {
-//			if(subClass.getSuperclass() == abstractClass) {
-//				return true;
-//			}else if(subClass.getSuperclass() != null){
-//				return isExtends(subClass.getSuperclass(), abstractClass);
-//			}
-//		}
 		return abstractClass.isAssignableFrom(subClass);
 	}
 	
