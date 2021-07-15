@@ -474,6 +474,9 @@ public class LazyBean {
 			Field[] fields = superClass.getDeclaredFields();
 			boolean found = false;
 				for(Field f : fields){
+				    if(Modifier.isFinal(f.getModifiers())) {
+				        continue;
+				    }
 					if(Objects.equal(f.getName(), field)) {
 					    Object fv = value;
 						if(value instanceof String) {
