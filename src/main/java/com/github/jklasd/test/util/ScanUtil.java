@@ -90,6 +90,8 @@ public class ScanUtil {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
 					log.error("加载类异常",e);
+				}catch (VerifyError e) {
+					log.error("加载类校验异常>{}=>{}",p,e.getMessage());
 				}
 			}else {
 //				log.debug("=============其他文件=={}===========",file);
