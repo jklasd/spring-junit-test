@@ -194,6 +194,10 @@ public class LazyBean {
 		if(classBean.isInterface()) {
 		    return null;
 		}
+		if(classBean.getSimpleName().length()<1) {
+//		    log.info("name=>{}",classBean.getSimpleName());
+		    return null;
+		}
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
 	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {
@@ -557,6 +561,13 @@ public class LazyBean {
 	public Object findBean(String beanName) {
 		if(beanName.equals("DEFAULT_DATASOURCE")) {
 		    return util.getApplicationContext().getBeanByClass(DataSource.class);
+		}
+		Class<?> tagC = ScanUtil.findClassByName(beanName);
+		if(tagC!=null) {
+		    BeanModel beanModel = new BeanModel();
+		    beanModel.setBeanName(beanName);
+		    beanModel.setTagClass(tagC);
+		    return LazyBean.createBean(beanModel);
 		}
 		return null;
 	}
