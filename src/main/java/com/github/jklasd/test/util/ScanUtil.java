@@ -221,16 +221,6 @@ public class ScanUtil {
 		});
 	}
 	
-	public static Class findClassByClassName(String beanName) {
-		List<Class> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.runAndWait(name ->{
-			if(name.replace(CLASS_SUFFIX, "").endsWith("."+beanName.substring(0, 1).toUpperCase()+beanName.substring(1))) {
-				list.add(nameMap.get(name));
-			}
-		});
-		return list.isEmpty()?null:list.get(0);
-	}
 	public static Class findClassByName(String beanName) {
 		List<Class> list = Lists.newArrayList();
 		
@@ -240,15 +230,7 @@ public class ScanUtil {
 				list.add(nameMap.get(name));
 			} else {
 				Class<?> tagClass = nameMap.get(name);
-				Service sAnn = (Service) tagClass.getAnnotation(Service.class);
-				Component cAnn = (Component)tagClass.getAnnotation(Component.class);
-				
-				String annValue = null;
-				if (sAnn != null) {
-					annValue = sAnn.value();
-				}else if(cAnn != null) {
-					annValue = cAnn.value();
-				}
+				String annValue = LazyBean.getBeanName(tagClass);
 				
 				if (Objects.equals(annValue, beanName)) {
 					list.add(tagClass);
