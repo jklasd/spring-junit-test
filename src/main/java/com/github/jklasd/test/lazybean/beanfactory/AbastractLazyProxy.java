@@ -47,6 +47,7 @@ public abstract class AbastractLazyProxy {
     protected void initLazyProxy() {
             try {
                 if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
+                    log.info("initLazyProxy=>{}",beanModel.getTagClass());
                     getTagertObj();
                     Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
                     Object obj = InvokeUtil.invokeMethod(tagertObj, "getObject");

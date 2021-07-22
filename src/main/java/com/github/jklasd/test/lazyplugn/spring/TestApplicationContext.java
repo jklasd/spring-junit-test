@@ -168,9 +168,9 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 			if(beanDefinitionMap.containsKey(name)) {
 				return beanDefinitionMap.get(name);
 			}
-			if(getAutowireCapableBeanFactory().containsBean(name)) {
-				return getAutowireCapableBeanFactory().getBean(name);
-			}
+//			if(getAutowireCapableBeanFactory().containsBean(name)) {
+//				return getAutowireCapableBeanFactory().getBean(name);
+//			}
 			return LazyBean.getInstance().findBean(name);
 		}
 		if(parentContext.containsBean(name)) {

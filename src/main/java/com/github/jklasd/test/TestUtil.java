@@ -200,7 +200,7 @@ public class TestUtil{
 					return new Boolean(value);
 				} else if (type == Class.class) {
                     return ScanUtil.loadClass(value);
-                }{
+                }else{
 					log.info("TestUil 类型转换=========其他类型========={}=",type);
 				}
 			} else if (type != String.class) {
@@ -231,10 +231,11 @@ public class TestUtil{
 	    }
 		TestUtil launch = getInstance();
 		launch.loadProp();
-		LazyBean.getInstance().processAttr(obj, obj.getClass());
 		LogbackUtil.resetLog();
 		ScanUtil.loadAllClass();
 		launch.processConfig();
+		//注入当前执行对象
+		LazyBean.getInstance().processAttr(obj, obj.getClass());
 	}
 
 	private void loadProp() {

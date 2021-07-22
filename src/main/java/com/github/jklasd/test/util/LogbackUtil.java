@@ -28,18 +28,22 @@ import lombok.extern.slf4j.Slf4j;
 
 public class LogbackUtil {
 	private static Level level = Level.INFO;
+	private static boolean useLocal = true;
 	public static void setJunitLevel(Level level) {
 	    LogbackUtil.level = level;
+	    useLocal = false;
 	}
 	public static void resetLog() {
 	    System.out.println("===========LogbackUtil=resetLog===========");
 	    try {
-            Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
-            Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
-            if(logback!=null) {
-                loadLogXml(logback,false);
-            }else if(logback_spring!=null){
-                loadLogXml(logback_spring,true);
+            if(useLocal) {
+                Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
+                Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
+                if(logback!=null) {
+                    loadLogXml(logback,false);
+                }else if(logback_spring!=null){
+                    loadLogXml(logback_spring,true);
+                }  
             }else {
                 LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
                 context.reset();
