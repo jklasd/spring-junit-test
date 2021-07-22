@@ -25,7 +25,8 @@ public class AopContextSuppert{
                 /**
                  * 兼容AopContext 升级处理
                  */
-                if(Modifier.isAbstract(AopContext.class.getModifiers())) {
+                if(Modifier.isAbstract(AopContext.class.getModifiers())
+                		&& !Modifier.isFinal(AopContext.class.getModifiers())) {
                     //抽象类处理
                     aopContext = LazyBean.getInstance().buildProxy(AopContext.class);
                 }else {
