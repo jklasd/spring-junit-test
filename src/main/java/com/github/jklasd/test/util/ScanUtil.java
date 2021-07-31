@@ -54,7 +54,7 @@ public class ScanUtil {
 	public static final String SPRING_PACKAGE = "org.springframework";
 	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
-	static Map<String,Class> nameMap = Maps.newHashMap();
+	static Map<String,Class> nameMap = Maps.newConcurrentMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
 	
 	/**
@@ -99,7 +99,7 @@ public class ScanUtil {
 		}
 	}
 	private static Set<String> classNames = Sets.newHashSet();
-	public static Map<String,Map<String,Class>> pathForClass = Maps.newHashMap();
+	public static Map<String,Map<String,Class>> pathForClass = Maps.newConcurrentMap();
 	public static Map<String, Class> findClassMap(String scanPath) {
 		if(pathForClass.containsKey(scanPath)) {
 			return pathForClass.get(scanPath);
