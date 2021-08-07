@@ -11,6 +11,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -86,8 +87,9 @@ public class JavaBeanUtil {
      */
     private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
         try {
+            
         	//如果存在参数
-        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes());
+        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes(),method.getParameterAnnotations());
         	
         	Object tagObj = method.invoke(obj,args);
         	
@@ -154,7 +156,7 @@ public class JavaBeanUtil {
         	}
         }
         //构建参数
-        Object[] param = buildParam(nameSpace, minC.getGenericParameterTypes());
+        Object[] param = buildParam(nameSpace, minC.getGenericParameterTypes(),minC.getParameterAnnotations());
         //创建对象并缓存
         factory.put(configClass, minC.newInstance(param));
     }
@@ -162,25 +164,37 @@ public class JavaBeanUtil {
      * 构建目标对象的方法参数对象
      * @param nameSpace 扫描域
      * @param paramTypes    参数类型组
+     * @param annotations 
      * @return  参数对象组
      */
-    private Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes) {
+    private Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	AssemblyDTO tmp = new AssemblyDTO();
+        	tmp.setBeanName(null);
         	if(paramTypes[i] instanceof ParameterizedType) {
         		ParameterizedType  pType = (ParameterizedType) paramTypes[i];
         		tmp.setTagClass((Class<?>) pType.getRawType());
         		tmp.setClassGeneric(pType.getActualTypeArguments());
         	}else {
         		tmp.setTagClass((Class<?>) paramTypes[i]);
-        		Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(tmp.getTagClass());
+        		for(Annotation ann :paramAnnotations[i]) {
+        		    if(ann.annotationType() == Qualifier.class) {
+        		        tmp.setBeanName(((Qualifier)ann).value());
+        		        break;
+        		    }
+        		}
+        		Object obj = null;
+        		if(tmp.getBeanName()==null) {
+        		    obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(tmp.getTagClass());
+        		}else {
+        		    obj = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
+        		}
         		if(obj != null) {
         		    param[i] = obj;
         		    continue;
         		}
         	}
-        	tmp.setBeanName(null);
         	tmp.setNameMapTmp(nameSpace);
         	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
         	if(ojb_meth[0]!=null && ojb_meth[1] != null) {

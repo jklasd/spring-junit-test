@@ -427,7 +427,11 @@ public class LazyBean {
                 Object[] param = processParam(m, paramTypes, null);
                 Object tmp = m.invoke(obj, param);
                 if(tmp!=null) {
-                    util.getApplicationContext().registBean(m.getName(), tmp, tmp.getClass());
+                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
+                    if(confPro!=null) {
+                        LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tmp,confPro);
+                    }
+                    util.getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
                 }
             }
 		}
