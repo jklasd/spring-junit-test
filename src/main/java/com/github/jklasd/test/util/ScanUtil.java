@@ -376,14 +376,21 @@ public class ScanUtil {
 	public static List<Class<?>> findStaticMethodClass() {
 		Set<Class<?>> list = Sets.newHashSet();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
+		.setException((name,e)->{
+		    log.error("遗漏#findStaticMethodClass#=>{}",name);
+		})
 		.runAndWait(name ->{
 			Class<?> c = nameMap.get(name);
-			Annotation comp = c.getAnnotation(Component.class);
-			Annotation service = c.getAnnotation(Service.class);
-			Annotation configuration = c.getAnnotation(Configuration.class);
-			if(comp != null
-					|| service != null
-					|| configuration != null) {
+			Annotation configuration = c.getDeclaredAnnotation(Configuration.class);
+			boolean finding = false;
+			if(configuration!=null) {
+			    finding = true;
+			}else {
+			    Annotation service = c.getDeclaredAnnotation(Service.class);
+			    Annotation comp = c.getDeclaredAnnotation(Component.class);
+			    finding = service!=null || comp!=null;
+			}
+			if(finding) {
 				Method[] methods = c.getDeclaredMethods();
 				for(Method m : methods) {
 					if(Modifier.isStatic(m.getModifiers())
