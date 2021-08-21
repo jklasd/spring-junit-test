@@ -21,6 +21,9 @@ public class InvokeUtil extends ReflectionUtils{
 	public static Object invokeMethod(Object obj,String methodStr,Object... arg) {
 		Class<?> tagClass = obj.getClass();
 		Method method = getMethod(tagClass,methodStr, arg);
+		if(!method.isAccessible()) {
+			method.setAccessible(true);
+		}
 		return invokeMethod(method, obj, arg);
 	}
 	private static Method getMethodByParamClass(Class<?> tagClass,String methodStr, Class<?>[] argClasses) {
@@ -47,10 +50,16 @@ public class InvokeUtil extends ReflectionUtils{
 	}
 	public static Object invokeMethod(Object obj,String methodStr,String className,Object... arg) {
 		Method method = getMethod(ScanUtil.loadClass(className), methodStr);
+		if(!method.isAccessible()) {
+			method.setAccessible(true);
+		}
 		return invokeMethod(method, obj, arg);
 	}
 	public static Object invokeMethod(Object obj,Class<?> tagClass,String methodStr,Object... arg) {
 		Method method = getMethod(tagClass, methodStr);
+		if(!method.isAccessible()) {
+			method.setAccessible(true);
+		}
 		return invokeMethod(method, obj, arg);
 	}
 	

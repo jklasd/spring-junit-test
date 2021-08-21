@@ -37,7 +37,7 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.lazyplugn.spring.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
@@ -282,7 +282,7 @@ public class LazyBean {
 		
 		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
 		if(proconfig!=null) {
-			LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(obj,proconfig);
+			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
 		}
 	}
     private void processField(Object obj, Field[] fields) {
@@ -429,7 +429,7 @@ public class LazyBean {
                 if(tmp!=null) {
                     ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
                     if(confPro!=null) {
-                        LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tmp,confPro);
+                        LazyConfPropBind.processConfigurationProperties(tmp,confPro);
                     }
                     util.getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
                 }

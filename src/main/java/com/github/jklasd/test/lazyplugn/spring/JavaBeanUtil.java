@@ -95,7 +95,7 @@ public class JavaBeanUtil {
         	
         	ConfigurationProperties prop = null;
         	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
-        		LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
+        		LazyConfPropBind.processConfigurationProperties(tagObj, prop);
         	}
         	cacheBean.put(key, tagObj);
         	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
@@ -126,7 +126,7 @@ public class JavaBeanUtil {
                 }
             }
             if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
-                LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(factory.get(configClass));
+                LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
             }
             LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
