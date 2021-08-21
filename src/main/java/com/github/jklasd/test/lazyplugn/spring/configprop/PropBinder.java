@@ -1,12 +1,12 @@
 package com.github.jklasd.test.lazyplugn.spring.configprop;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.ResolvableType;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.util.InvokeUtil;
@@ -22,14 +22,14 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 class PropBinder implements BinderHandler{
-	private Class<?> ConfigurationPropertiesBean = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBean");
-	private static Class<?> ConfigurationPropertiesBinder = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBinder");
-	private Class<?> Bindable = ScanUtil.loadClass("org.springframework.boot.context.properties.bind.Bindable");
+	private static Class<?> ConfigurationPropertiesBean = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBean");
+	private Class<?> ConfigurationPropertiesBinder = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBinder");
+	private Class<?> BindableC = ScanUtil.loadClass("org.springframework.boot.context.properties.bind.Bindable");
 	private Map<String,Constructor<?>> cacheConstructor = Maps.newHashMap();
 	private Object processObj;
 	
-	public static BinderHandler getHandler() {
-		if(ConfigurationPropertiesBinder!=null) {
+	public static BinderHandler getBinderHandler() {
+		if(ConfigurationPropertiesBean!=null) {
 			return new PropBinder();
 		}
 		return null;
@@ -53,13 +53,20 @@ class PropBinder implements BinderHandler{
 					cacheConstructor.get(propBean).setAccessible(true);
 				}
 			}
-			Method method = Bindable.getDeclaredMethod("of", ResolvableType.class);
-			Object bindTarget = method.invoke(null, ResolvableType.forClass(obj.getClass()));
-			Method withAnnotations = Bindable.getDeclaredMethod("withAnnotations", ConfigurationProperties.class);
-			withAnnotations.invoke(bindTarget, annotation);
-			if (obj != null) {
-				InvokeUtil.invokeMethod(processObj, "withExistingValue", obj);
+			
+//			Bindable<Object> bindTarget = Bindable.ofInstance(obj)
+//					.withAnnotations(new Annotation[] {annotation});
+			Object bindTarget = null;
+			Method withAnnotations = null;
+			for(Method m : BindableC.getDeclaredMethods()) {
+				if(m.getName().equals("ofInstance")) {
+					bindTarget = m.invoke(null, obj);
+				}else if(m.getName().equals("withAnnotations")) {
+					withAnnotations = m;
+				}
 			}
+			Object anns = new Annotation[] {annotation};
+			bindTarget = withAnnotations.invoke(bindTarget, anns);
 			Object configurationPropertiesBean = cacheConstructor.get(propBean)
 					.newInstance(null,obj,annotation,bindTarget);
 			InvokeUtil.invokeMethod(processObj, "bind", configurationPropertiesBean);

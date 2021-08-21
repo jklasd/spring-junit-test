@@ -10,12 +10,13 @@ public class LazyConfPropBind{
 	private static class ConfigurationPropertiesBindingPostProcessorExt{
 		private BinderHandler handler;
 		{
-			handler = PropFactory.getHandler();
+			handler = PropFactory.getBinderHandler();
 			if(handler == null) {
-				handler = PropBinder.getHandler();
+				handler = PropBinder.getBinderHandler();
 			}
 		}
 		public void postProcess(Object obj, ConfigurationProperties annotation){
+			handler.postProcess(obj, annotation);
 		}
 	}
 	
