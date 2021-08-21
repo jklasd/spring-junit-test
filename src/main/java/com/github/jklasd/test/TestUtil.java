@@ -25,6 +25,7 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.TestApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.LogbackUtil;
@@ -73,19 +74,21 @@ public class TestUtil{
 	        return bean;
 	    }
 	    bean = new TestUtil();
-	    bean.setApplicationContext(null);
+//	    bean.setApplicationContext(null);
+	    bean.applicationContext = new LazyApplicationContext();
+	    bean.applicationContext.refresh();
 	    return bean;
 	}
 	
-    private TestApplicationContext applicationContext;
+    private LazyApplicationContext applicationContext;
 
-	public TestApplicationContext getApplicationContext() {
+	public LazyApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = new TestApplicationContext(applicationContext);
-	}
+//	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+//		this.applicationContext = new TestApplicationContext(applicationContext);
+//	}
 
 	/**
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理

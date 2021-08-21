@@ -16,7 +16,6 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory{
 //    public LazyListableBeanFactory(BeanFactory arg0) {
 //        super(arg0);
 //    }
-
     @Override
     public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
         throws BeanDefinitionStoreException {

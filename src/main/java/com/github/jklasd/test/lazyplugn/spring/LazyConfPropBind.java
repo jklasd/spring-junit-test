@@ -21,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyConfPropBind extends ConfigurationPropertiesBindingPostProcessor{
 	private static ConfigurationPropertiesBindingPostProcessorExt lcpb = new ConfigurationPropertiesBindingPostProcessorExt();
 	private static class ConfigurationPropertiesBindingPostProcessorExt{
-		private ConfigurationPropertiesBindingPostProcessor process;
+//		private ConfigurationPropertiesBindingPostProcessor process;
 		//spring boot 1.5
 		private Class<?> PropertiesConfigurationFactory = ScanUtil.loadClass("");
 		//spring boot 2.0
@@ -55,8 +55,13 @@ public class LazyConfPropBind extends ConfigurationPropertiesBindingPostProcesso
 						cacheConstructor.get(propBean).setAccessible(true);
 					}
 				}
-				Bindable<?> bind = Bindable.of(ResolvableType.forClass(obj.getClass()));
-				Object configurationPropertiesBean = cacheConstructor.get(propBean).newInstance(null,obj,annotation,bind);
+				Bindable<Object> bindTarget = Bindable.of(ResolvableType.forClass(obj.getClass()))
+						.withAnnotations(annotation);
+				if (obj != null) {
+					bindTarget = bindTarget.withExistingValue(obj);
+				}
+				Object configurationPropertiesBean = cacheConstructor.get(propBean)
+						.newInstance(null,obj,annotation,bindTarget);
 				InvokeUtil.invokeMethod(processObj, "bind", configurationPropertiesBean);
 			}else {
 				log.error("=======未找到相应的ConfigurationPropertiesBindingPostProcessor处理类=======");
