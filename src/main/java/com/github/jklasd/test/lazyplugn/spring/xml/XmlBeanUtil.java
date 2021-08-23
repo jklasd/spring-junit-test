@@ -37,7 +37,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter.LazyBeanInitProcessImpl;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -184,7 +184,7 @@ public class XmlBeanUtil {
                 XmlReaderContext context = xmlReader.createReaderContext(file);
                 LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
                 Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
-                    errorHandler,(int)InvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
+                    errorHandler,(int)JunitInvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
                 
                 parsor.registerBeanDefinitions(document,context);
             } catch (Exception e) {

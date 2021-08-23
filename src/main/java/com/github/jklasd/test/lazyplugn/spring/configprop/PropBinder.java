@@ -9,7 +9,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
@@ -69,7 +69,7 @@ class PropBinder implements BinderHandler{
 			bindTarget = withAnnotations.invoke(bindTarget, anns);
 			Object configurationPropertiesBean = cacheConstructor.get(propBean)
 					.newInstance(null,obj,annotation,bindTarget);
-			InvokeUtil.invokeMethod(processObj, "bind", configurationPropertiesBean);
+			JunitInvokeUtil.invokeMethod(processObj, "bind", configurationPropertiesBean);
 		} catch (Exception e) {
 			log.error("绑定prop异常",e);
 		}

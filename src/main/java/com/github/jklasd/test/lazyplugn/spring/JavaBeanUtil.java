@@ -22,7 +22,7 @@ import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
@@ -227,7 +227,7 @@ public class JavaBeanUtil {
 			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
 				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
 				if(scan != null) {
-					String[] packagePath = (String[]) InvokeUtil.invokeMethod(scan, "basePackages");
+					String[] packagePath = (String[]) JunitInvokeUtil.invokeMethod(scan, "basePackages");
 					if(packagePath.length>0) {
 						LazyMybatisMapperBean.getInstance().processConfig(configura,packagePath);
 					}

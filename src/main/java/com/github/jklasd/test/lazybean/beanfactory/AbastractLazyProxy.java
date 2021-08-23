@@ -18,7 +18,7 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 
@@ -50,7 +50,7 @@ public abstract class AbastractLazyProxy {
                     log.info("initLazyProxy=>{}",beanModel.getTagClass());
                     getTagertObj();
                     Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
-                    Object obj = InvokeUtil.invokeMethod(tagertObj, "getObject");
+                    Object obj = JunitInvokeUtil.invokeMethod(tagertObj, "getObject");
                     TestUtil.getInstance().getApplicationContext().registBean(LazyBean.getBeanName(obj.getClass()), obj,
                         tagC);
                 }
@@ -126,12 +126,12 @@ public abstract class AbastractLazyProxy {
             }
             if(beanModel.getBeanMethods()!=null) {
                 beanModel.getBeanMethods().keySet().stream().filter(key -> Objects.equal(key, "init-method")).forEach(key -> {
-                    InvokeUtil.invokeMethod(tagertObj, beanModel.getBeanMethods().get(key));
+                    JunitInvokeUtil.invokeMethod(tagertObj, beanModel.getBeanMethods().get(key));
                 });
             }
             if(tagertObj instanceof InitializingBean) {
                 try {
-                    InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
+                    JunitInvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
                 } catch (SecurityException | IllegalArgumentException e) {
                     log.error("InitializingBean#afterPropertiesSet", e);
                 }

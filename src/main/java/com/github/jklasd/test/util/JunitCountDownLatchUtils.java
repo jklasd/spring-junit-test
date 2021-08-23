@@ -94,7 +94,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 		if(executor != null) {
 			executor.execute(task);
 		}else {
-			ThreadPoolUtils.commonRun(task);
+			JunitThreadPoolUtils.commonRun(task);
 		}
 	}
 	/**

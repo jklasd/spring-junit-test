@@ -16,7 +16,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
@@ -77,13 +77,13 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	                }
 	            });
 	            
-	            InvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
-	            InvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
-	            InvokeUtil.invokeMethod(serviceConfig, "setProvider",getProviderConfig());
-	            InvokeUtil.invokeMethodByParamClass(serviceConfig, "setApplicationEventPublisher",new Class[] {ApplicationEventPublisher.class},
+	            JunitInvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
+	            JunitInvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
+	            JunitInvokeUtil.invokeMethod(serviceConfig, "setProvider",getProviderConfig());
+	            JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setApplicationEventPublisher",new Class[] {ApplicationEventPublisher.class},
 	                new Object[] {TestUtil.getInstance().getApplicationContext()});
 //	            Object obj = 
-	                InvokeUtil.invokeMethod(serviceConfig, "export");
+	                JunitInvokeUtil.invokeMethod(serviceConfig, "export");
 	                log.info("注册=========={}===============成功",dubboServiceClass);
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
@@ -130,13 +130,13 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             /**
              * 待后续升级，可能存在动态设定协议或者客户端问题
              */
-            InvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
-            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
-            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
             if(getConfigCenterConfig()!=null) {
-                InvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+                JunitInvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
             }
-            Object obj = InvokeUtil.invokeMethod(referenceConfig, "get");
+            Object obj = JunitInvokeUtil.invokeMethod(referenceConfig, "get");
             dubboData.put(dubboClass,obj);
             return obj;
         } catch (Exception e) {

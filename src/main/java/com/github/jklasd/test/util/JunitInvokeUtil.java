@@ -9,7 +9,7 @@ import org.springframework.util.ReflectionUtils;
 
 import com.github.jklasd.test.exception.JunitException;
 
-public class InvokeUtil extends ReflectionUtils{
+public class JunitInvokeUtil extends ReflectionUtils{
     public static Object invokeMethodByParamClass(Object obj,String methodStr,Class<?>[] argClasses ,Object[] arg) {
         Class<?> tagClass = obj.getClass();
         Method method = getMethodByParamClass(tagClass,methodStr, argClasses);
