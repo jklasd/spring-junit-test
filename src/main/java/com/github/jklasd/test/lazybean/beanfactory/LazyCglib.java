@@ -11,6 +11,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
+import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -150,6 +151,9 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             if(propConfig!=null && tagertObj!=null) {
                 LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
             }
+        }
+        if(tagertObj!=null) {
+            LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
         }
          return tagertObj;
     }

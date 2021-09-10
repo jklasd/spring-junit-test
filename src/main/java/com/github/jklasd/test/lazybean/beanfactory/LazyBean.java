@@ -211,7 +211,7 @@ public class LazyBean {
         }
         return null;
     }
-	public static void setObj(Field f,Object obj,Object proxyObj) {
+	public void setObj(Field f,Object obj,Object proxyObj) {
 		setObj(f, obj, proxyObj, null);
 	}
 	/**
@@ -414,7 +414,14 @@ public class LazyBean {
 //                }
 			}else if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
-                
+			    if(paramTypes.length>0) {
+			        Type type = paramTypes[0];
+			        Object param = util.value(aw.value(), (Class<?>)type);
+			        m.invoke(obj, param);
+			    }else {
+			        m.invoke(obj);
+			    }
+			    
             }else if(m.getAnnotation(Resource.class) != null) {
                 Resource aw = m.getAnnotation(Resource.class);
                 Object[] param = processParam(m, paramTypes, aw.name());
@@ -471,7 +478,7 @@ public class LazyBean {
 			}
 			Method[] methods = superClass.getDeclaredMethods();
 			for(Method m : methods) {
-				if(Objects.equal(m.getName(), mName)) {
+				if(Objects.equal(m.getName(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
 					boolean success = invokeSet(field, obj, value, m);
 					if(success) {
 					    methodsCache.get(superClass).put(mName, m);
