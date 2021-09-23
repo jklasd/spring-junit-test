@@ -167,7 +167,11 @@ public class LazyBean {
             }else {
                 log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getMessage());
             }
-            e.printStackTrace();
+            if(beanModel.isThrows()) {
+            	throw e;
+            }else {
+            	e.printStackTrace();
+            }
         }
         return tag;
     }

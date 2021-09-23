@@ -189,6 +189,7 @@ public class XmlBeanUtil {
                 parsor.registerBeanDefinitions(document,context);
             } catch (Exception e) {
                 log.error("加载xml", e);
+                throw new RuntimeException("加载xml【"+file+"】失败");
             }
         }
     }

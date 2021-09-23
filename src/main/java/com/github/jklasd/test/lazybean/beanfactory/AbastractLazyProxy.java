@@ -55,7 +55,11 @@ public abstract class AbastractLazyProxy {
                         tagC);
                 }
             } catch (Exception e) {
-                 e.printStackTrace();
+                 if(beanModel.isThrows()) {
+                	 throw e;
+                 }else {
+                	 e.printStackTrace();
+                 }
             }
     }
     
@@ -134,6 +138,9 @@ public abstract class AbastractLazyProxy {
                     InvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
                 } catch (SecurityException | IllegalArgumentException e) {
                     log.error("InitializingBean#afterPropertiesSet", e);
+                    if(beanModel.isThrows()) {
+                    	throw e;
+                    }
                 }
             }
         }
