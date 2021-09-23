@@ -82,7 +82,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return tag;
     }
 
-    @SuppressWarnings("rawtypes")
     private void buildMybatisFactory() {
         if (factory == null) {
             Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);

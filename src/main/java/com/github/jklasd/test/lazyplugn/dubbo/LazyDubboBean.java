@@ -156,9 +156,9 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         if (configCenterConfig != null) {
             return configCenterConfig;
         }
-        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.spring.ConfigCenterBean");
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.spring.ConfigCenterConfig");
         if(beanDef == null) {
-            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterBean");  
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterConfig");  
         }
         if(beanDef!=null) {
             Class<?> registerClass = beanDef.getBeanClass();
