@@ -367,13 +367,13 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             /**
              * 待后续升级，可能存在动态设定协议或者客户端问题
              */
-            InvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
-            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
-            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
             if(getConfigCenterConfig()!=null) {
-                InvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+            	JunitInvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
             }
-            Object obj = InvokeUtil.invokeMethod(referenceConfig, "get");
+            Object obj = JunitInvokeUtil.invokeMethod(referenceConfig, "get");
             dubboData.put(dubboClass,obj);
             return obj;
         } catch (Exception e) {

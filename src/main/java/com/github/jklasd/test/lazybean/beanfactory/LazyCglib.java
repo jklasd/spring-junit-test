@@ -13,7 +13,6 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
