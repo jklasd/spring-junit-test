@@ -21,6 +21,7 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -405,8 +406,11 @@ public class ScanUtil {
 //						log.debug(returnType.getName());
 					}
 				}
-			}else if(configuration == null) {
-				
+			}
+			if(configuration != null) {
+				if(ScanUtil.isImple(c, BeanFactoryPostProcessor.class)) {
+					list.add(c);
+				}
 			}
 		});
 		return Lists.newArrayList(list);

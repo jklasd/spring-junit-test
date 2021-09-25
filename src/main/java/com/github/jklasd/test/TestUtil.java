@@ -15,6 +15,7 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -116,7 +117,16 @@ public class TestUtil{
 //					if(classItem.getName().contains("HandleMessageUtil")) {
 //					    System.out.println("断点");
 //					}
-					LazyBean.getInstance().processStatic(classItem);
+					if(ScanUtil.isImple(classItem, BeanFactoryPostProcessor.class)) {
+						try {
+							BeanFactoryPostProcessor obj = (BeanFactoryPostProcessor) classItem.newInstance();
+							obj.postProcessBeanFactory(getApplicationContext().getLazyBeanFactory());
+						} catch (InstantiationException | IllegalAccessException e) {
+							log.error("TestUtil#processConfig",e);
+						}
+					}else {
+						LazyBean.getInstance().processStatic(classItem);
+					}
 				});
 	}
 

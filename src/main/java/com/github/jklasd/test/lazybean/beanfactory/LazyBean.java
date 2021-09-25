@@ -1,6 +1,7 @@
 package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -26,6 +27,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -108,6 +110,17 @@ public class LazyBean {
 //	    if(beanModel.getTagClass().getName().contains("MongoClient")) {
 //            log.debug("断点");
 //        }
+//		Annotation[] conditionals = beanModel.getTagClass().getAnnotations();
+//		if(conditionals!=null){
+//			log.info("conditional 处理");
+//			for(Annotation ann : conditionals) {
+//				Class<? extends Annotation> annC = ann.annotationType();
+//				if(annC.isAnnotationPresent(Conditional.class)) {
+//					log.info("conditional 存在");
+//				}
+//			}
+//		}
+		
 	    Object obj = null;
 	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
 	        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
@@ -128,7 +141,9 @@ public class LazyBean {
 	        return util.getApplicationContext();
 	    }
 	    obj = createBean(beanModel);
-	    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+	    if(obj!=null) {
+	    	util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+	    }
         return obj;
 	}
     private static Object createBean(BeanModel beanModel) {
@@ -268,16 +283,16 @@ public class LazyBean {
 //		processMethod(objClassOrSuper,obj);
 		
 		Class<?> superC = objClassOrSuper.getSuperclass();
-		if (superC != null) {
+		if (superC != null && superC!=Object.class) {
 			processAttr(obj, superC);
 		}
 
 		Method[] ms = obj.getClass().getDeclaredMethods();
 		try {
-            processMethod(obj, ms,superC);
+            processMethod(obj, ms,objClassOrSuper);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             log.error("processMethod=>{}+>{}",objClassOrSuper);
-             log.error("processMethod",e);
+            log.error("processMethod",e);
         }
 		
 		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);

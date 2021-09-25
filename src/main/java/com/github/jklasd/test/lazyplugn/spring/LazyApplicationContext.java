@@ -42,7 +42,13 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	}
 
 	public Object getBeanByClassAndBeanName(String beanName, Class<?> tagClass) {
-		return lazyBeanFactory.getBean(beanName, tagClass);
+		try {
+			return lazyBeanFactory.getBean(beanName, tagClass);
+		}catch(Exception e) {
+			log.error("getBeanByClassAndBeanName,beanName=>{},tagClass=>{}",beanName,tagClass);
+			log.error("getBeanByClassAndBeanName",e);
+			return null;
+		}
 	}
 
 	public void registBean(String beanName, Object tmp, Class<?> tagC) {
