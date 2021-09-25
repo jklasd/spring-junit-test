@@ -1,6 +1,8 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.springframework.beans.PropertyValue;
@@ -40,18 +42,18 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	private static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	
 	public static final boolean useDubbo() {
-		return Service!=null;
+		return aliService!=null||apacheService!=null;
 	}
 	@SuppressWarnings("unchecked")
-	private static final Class<? extends Annotation> Service = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
+	private static final Class<? extends Annotation> aliService = ScanUtil.loadClass("com.alibaba.dubbo.config.annotation.Service");
 	@SuppressWarnings("unchecked")
     private static final Class<? extends Annotation> apacheService = ScanUtil.loadClass("org.apache.dubbo.config.annotation.DubboService");
 	public static final Class<? extends Annotation> getAnnotionClass() {
 	    if(apacheService!=null) {
 	        return apacheService;
 	    }
-		if(Service!=null ) {
-			return Service;
+		if(aliService!=null ) {
+			return aliService;
 		}
 		return null;
 	}
@@ -80,8 +82,12 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	            JunitInvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
 	            JunitInvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
 	            JunitInvokeUtil.invokeMethod(serviceConfig, "setProvider",getProviderConfig());
+	            JunitInvokeUtil.invokeMethod(serviceConfig, "setProtocol",getProtocol());
 	            JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setApplicationEventPublisher",new Class[] {ApplicationEventPublisher.class},
 	                new Object[] {TestUtil.getInstance().getApplicationContext()});
+	            if(getConfigCenterConfig()!=null) {
+	                JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+	            }
 //	            Object obj = 
 	                JunitInvokeUtil.invokeMethod(serviceConfig, "export");
 	                log.info("注册=========={}===============成功",dubboServiceClass);
@@ -116,6 +122,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
     public boolean isDubboNew(Class<?> classBean) {
         return dubboRefferCacheDef.containsKey(classBean.getName());
     }
+    
     public Object buildBeanNew(Class<?> dubboClass) {
         if(dubboData.containsKey(dubboClass)) {
             return dubboData.get(dubboClass);
@@ -149,9 +156,9 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         if (configCenterConfig != null) {
             return configCenterConfig;
         }
-        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.spring.ConfigCenterBean");
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.spring.ConfigCenterConfig");
         if(beanDef == null) {
-            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterBean");  
+            beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterConfig");  
         }
         if(beanDef!=null) {
             Class<?> registerClass = beanDef.getBeanClass();
@@ -161,13 +168,30 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             });
         }else {
             //扫描Configuration
-            configCenterConfig = scanConfigruation("com.alibaba.dubbo.config.ConfigCenterBean","org.apache.dubbo.config.ConfigCenterBean");
+            configCenterConfig = scanConfigruation("com.alibaba.dubbo.config.ConfigCenterConfig","org.apache.dubbo.config.ConfigCenterConfig");
         }
         return configCenterConfig;
     }
-
-    private void getProtocol() {
-         
+    private Object protocol;
+    private Object getProtocol() throws InstantiationException, IllegalAccessException, IllegalStateException {
+         if(protocol!=null) {
+             return protocol;
+         }
+         RootBeanDefinition beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("com.alibaba.dubbo.config.ProtocolConfig");
+         if(beanDef == null) {
+             beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ProtocolConfig");  
+         }
+         if(beanDef!=null) {
+             Class<?> registerClass = beanDef.getBeanClass();
+             protocol = beanDef.getBeanClass().newInstance();
+             beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
+                 LazyBean.getInstance().setAttr(pv.getName(), protocol, registerClass, pv.getValue());
+             });
+         }else {
+             //扫描Configuration
+             protocol = scanConfigruation("com.alibaba.dubbo.config.ProtocolConfig","org.apache.dubbo.config.ProtocolConfig");
+         }
+         return protocol;
     }
     private Object consumer;
     private Object getConsumer() throws InstantiationException, IllegalAccessException, IllegalStateException {
@@ -277,5 +301,84 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
             return buildBeanNew(dubboClass);
         }
         return null;
+    }
+
+    public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
+        if(apacheReference==null || tagertObj == null)return;
+        objClassOrSuper.getDeclaredFields();
+        Field[] fields = objClassOrSuper.getDeclaredFields();
+        processField(tagertObj, fields);
+        
+        Class<?> superC = objClassOrSuper.getSuperclass();
+        if (superC != null) {
+            processAttr(tagertObj, superC);
+        }
+    }
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Annotation> apacheReference = ScanUtil.loadClass("org.apache.dubbo.config.annotation.DubboReference");
+    @SuppressWarnings("unchecked")
+    private static final Class<? extends Annotation> aliReference = ScanUtil.loadClass("org.apache.dubbo.config.annotation.DubboReference");
+    private void processField(Object obj, Field[] fields) {
+        for(Field f : fields){
+            Annotation apaR = f.getAnnotation(apacheReference);
+            Annotation aliR = f.getAnnotation(aliReference);
+            Object ref = null;
+            if(aliR!=null) {
+                ref = buildBeanRef(f.getType(),aliR);
+            }else if(apaR!=null) {
+                ref = buildBeanRef(f.getType(),apaR);
+            }else {
+                continue;
+            }
+            if(ref!=null) {
+                LazyBean.getInstance().setObj(f, obj, ref);
+            }
+        }
+    }
+
+    private Class<?> referenceConfigC = ScanUtil.loadClass("org.apache.dubbo.config.ReferenceConfig");
+    private Object buildBeanRef(Class<?> dubboClass, Annotation aliR) {
+        if(dubboData.containsKey(dubboClass)) {
+            return dubboData.get(dubboClass);
+        }
+        log.info("构建Dubbo 代理服务=>{}",dubboClass);
+        try {
+            Object referenceConfig = referenceConfigC.newInstance();
+            Method[] ms = aliR.annotationType().getDeclaredMethods();
+            for(Method m : ms) {
+                Object pv = m.invoke(aliR);
+                if(pv!=null) {
+                    log.info("m=>{},v=>{}",m.getName(),pv);
+                }
+                if(pv instanceof String) {
+                    if(pv.toString().length()>0) {
+                        LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
+                    }
+                }else if(pv instanceof String[]) {
+                    if(((String[])pv).length>0) {
+                        LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
+                    }
+                }else if(pv instanceof Integer || pv instanceof Boolean) {
+                    LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
+                }
+            }
+            LazyBean.getInstance().setAttr("injvm", referenceConfig, referenceConfigC, false);//关闭本地
+            LazyBean.getInstance().setAttr("interface", referenceConfig, referenceConfigC, dubboClass.getName());
+            /**
+             * 待后续升级，可能存在动态设定协议或者客户端问题
+             */
+            InvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
+            InvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
+            InvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
+            if(getConfigCenterConfig()!=null) {
+                InvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+            }
+            Object obj = InvokeUtil.invokeMethod(referenceConfig, "get");
+            dubboData.put(dubboClass,obj);
+            return obj;
+        } catch (Exception e) {
+            log.error("构建Dubbo 代理服务",e);
+            return null;
+        }
     }
 }

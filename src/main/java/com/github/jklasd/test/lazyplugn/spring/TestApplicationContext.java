@@ -29,7 +29,6 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.spring.suppert.EntityScanPackagesConstructor;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -185,7 +184,8 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
 	public <T> T getBean(String name, Class<T> requiredType) throws BeansException {
 		if(parentContext == null || parentContext == this) {
 			if(requiredType.getName().contains("EntityScanPackages")) {
-				return (T) EntityScanPackagesConstructor.getBean();
+//				return (T) EntityScanPackagesConstructor.getBean();
+				throw new NoSuchBeanDefinitionException(requiredType);
 			}
 			return (T)LazyBean.getInstance().findBean(name, requiredType);
 		}

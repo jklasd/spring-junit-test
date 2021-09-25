@@ -45,6 +45,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         
         log.info("xml build proxy bean=>{}",beanDef.getBeanClassName());
         BeanModel model = new BeanModel();
+        model.setThrows(true);
 //        model.setBeanClassName(beanDef.getBeanClassName());
         model.setXmlBean(true);
         model.setBeanName(beanName);
