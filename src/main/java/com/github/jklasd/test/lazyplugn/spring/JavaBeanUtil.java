@@ -101,6 +101,7 @@ public class JavaBeanUtil {
         	cacheBean.put(key, tagObj);
         	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        	log.error("registerBean =>{}",assemblyData.getBeanName());
         	log.error("JavaBeanUtil#buildBean",e);
         }
     }

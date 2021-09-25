@@ -464,6 +464,7 @@ public class LazyBean {
 	}
     private Object[] processParam(Method m, Type[] paramTypes, String bName) {
         Object[] param = new Object[paramTypes.length];
+        Annotation[][] pAnns = m.getParameterAnnotations();
         for(int i=0;i<paramTypes.length;i++) {
             Class<?> c = getParamType(m, paramTypes[i]);
             if(paramTypes[i] == List.class) {
@@ -472,7 +473,17 @@ public class LazyBean {
                 if(LazyBean.existBean(c) && util.getExistBean(c, m.getName())!=null) {
                     param[i] = util.getExistBean(c, m.getName());
                 }else {
-                    param[i] = buildProxy(c,bName);
+//                	boolean found = false;
+                	for(Annotation ann : pAnns[i]) {
+                		if(ann.annotationType() == Qualifier.class) {
+                			bName = ((Qualifier)ann).value();
+//                			found = true;
+                			break;
+                		}
+                	}
+//                	if(!found) {
+                		param[i] = buildProxy(c,bName);
+//                	}
                 }
             }
         }
