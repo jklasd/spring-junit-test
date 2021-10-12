@@ -98,6 +98,9 @@ public class JavaBeanUtil {
         		LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagObj, prop);
         	}
         	cacheBean.put(key, tagObj);
+        	if(assemblyData.getTagClass() == null) {
+        		assemblyData.setTagClass(tagObj.getClass());
+        	}
         	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
         	log.error("JavaBeanUtil#buildBean",e);
@@ -243,5 +246,4 @@ public class JavaBeanUtil {
 			});
 		}
 	}
-
 }

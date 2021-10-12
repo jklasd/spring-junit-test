@@ -583,8 +583,9 @@ public class LazyBean {
 		    beanModel.setBeanName(beanName);
 		    beanModel.setTagClass(tagC);
 		    return LazyBean.createBean(beanModel);
+		}else {
+			return findCreateBeanFromFactory(null,beanName);
 		}
-		return null;
 	}
 	
 	/**
@@ -694,15 +695,17 @@ public class LazyBean {
 	
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		AssemblyDTO asse = new AssemblyDTO();
-		asse.setTagClass(classBean);
-		asse.setBeanName(beanName);
-		if(classBean.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			Object tmpObj = findCreateBeanFromFactory(asse);
-			if(tmpObj!=null) {
-				return tmpObj;
+		if(classBean!=null) {
+			asse.setTagClass(classBean);
+			if(classBean.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
+				Object tmpObj = findCreateBeanFromFactory(asse);
+				if(tmpObj!=null) {
+					return tmpObj;
+				}
+				asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE));
 			}
-			asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE));
 		}
+		asse.setBeanName(beanName);
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {

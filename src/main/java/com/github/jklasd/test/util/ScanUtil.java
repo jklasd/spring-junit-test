@@ -438,7 +438,6 @@ public class ScanUtil {
 						for(Method m : methods) {
 							Bean beanA = m.getAnnotation(Bean.class);
 							if(beanA != null) {
-								Class tagC = assemblyData.getTagClass();
 								if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
 								    String[] beanNames = beanA.value();
 							        for(String beanName : beanNames) {
@@ -457,7 +456,9 @@ public class ScanUtil {
 							            }
 							        }
 								}
-								if(tagC.isInterface()?
+								Class tagC = assemblyData.getTagClass();
+								if(tagC!=null
+										&& tagC.isInterface()?
 										(m.getReturnType().isInterface()?
 												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
 												:ScanUtil.isImple(m.getReturnType(), tagC)
@@ -477,6 +478,8 @@ public class ScanUtil {
 		}
 		return address;
 	}
+	
+	
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
 //		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
 //		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
