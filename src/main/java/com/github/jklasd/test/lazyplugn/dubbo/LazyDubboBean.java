@@ -238,7 +238,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
     
     private Object registryCenter;
 
-    private Object getRegistryConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
+    private synchronized Object getRegistryConfig() throws InstantiationException, IllegalAccessException, IllegalStateException {
         if (registryCenter != null) {
             return registryCenter;
         }

@@ -414,6 +414,7 @@ public class ScanUtil {
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
+		Class tagC = assemblyData.getTagClass();
 		finalNameMap.putAll(nameMap);
 		if(assemblyData.getNameMapTmp() != null) {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
@@ -455,18 +456,24 @@ public class ScanUtil {
 							                break;
 							            }
 							        }
+							        if(m.getName().equals(assemblyData.getBeanName()) && tagC!=null) {
+							        	if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
+											tmp[0] = c;
+											tmp[1] = m;
+											break;
+										}
+							        }
 								}
-								Class tagC = assemblyData.getTagClass();
-								if(tagC!=null
-										&& tagC.isInterface()?
-										(m.getReturnType().isInterface()?
-												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
-												:ScanUtil.isImple(m.getReturnType(), tagC)
-												):
-													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-									tmp[0] = c;
-									tmp[1] = m;
-									break;
+								
+								if(tagC!=null) {
+									if(!tagC.isInterface() && m.getReturnType().isInterface()) {
+										break;
+									}
+									if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
+										tmp[0] = c;
+										tmp[1] = m;
+										break;
+									}
 								}
 							}
 						}

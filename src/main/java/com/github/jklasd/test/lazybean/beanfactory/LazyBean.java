@@ -25,6 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -384,6 +385,23 @@ public class LazyBean {
 			ms = sup.getDeclaredMethods();
 			processMethod(obj, ms, sup.getSuperclass());
 		}
+		if(ScanUtil.isImple(obj.getClass(), ApplicationContextAware.class)) {
+			for (Method m : ms) {
+				if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
+						&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {
+					try {
+						if(m!=null) {
+							try {
+								m.invoke(obj,util.getApplicationContext());
+							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+								log.error("不能注入applicationContext",e);
+							}
+						}
+					} catch (SecurityException e) {
+					}
+				}
+			}
+		}
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
 			if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。
@@ -398,16 +416,16 @@ public class LazyBean {
 				}
 			}else if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
 					&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {
-				try {
-					if(m!=null) {
-						try {
-							m.invoke(obj,util.getApplicationContext());
-						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-							log.error("不能注入applicationContext",e);
-						}
-					}
-				} catch (SecurityException e) {
-				}
+//				try {
+//					if(m!=null) {
+//						try {
+//							m.invoke(obj,util.getApplicationContext());
+//						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+//							log.error("不能注入applicationContext",e);
+//						}
+//					}
+//				} catch (SecurityException e) {
+//				}
 			}else if(m.getAnnotation(Autowired.class) != null) {
 //			    Autowired aw = m.getAnnotation(Autowired.class);
 			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
@@ -435,6 +453,21 @@ public class LazyBean {
                 }
             }else if(m.getAnnotation(Bean.class) != null) {
                 Bean aw = m.getAnnotation(Bean.class);
+                String beanName = null;
+                if(aw.value().length>0) {
+                	beanName = aw.value()[0];
+                }else if(aw.name().length>0){
+                	beanName = aw.name()[0];
+                }else {
+                	beanName = m.getName();
+                }
+                if(beanName.equals("buildConsumerConfig")) {
+                	log.debug("短点");
+                }
+                Object exitBean = util.getApplicationContext().getBean(beanName);
+                if(exitBean!=null) {
+                	return;
+                }
                 Object[] param = processParam(m, paramTypes, null);
                 Object tmp = m.invoke(obj, param);
                 if(tmp!=null) {
