@@ -68,11 +68,11 @@ public abstract class AbastractLazyProxy {
     
     private ThreadLocal<Map<String,Object>> lastInvoker = new ThreadLocal<Map<String,Object>>();
     
-    private AtomicInteger buildObjTimes = new AtomicInteger();
+//    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
     protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
-    	if(buildObjTimes.get()>3 || errorTimes.get()>3) {
+    	if(errorTimes.get()>3) {
     		throw new JunitException("异常代理方式");
     	}
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
@@ -138,8 +138,6 @@ public abstract class AbastractLazyProxy {
             } else {
                 return tagertObj;
             }
-        }else {
-        	buildObjTimes.getAndIncrement();
         }
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
