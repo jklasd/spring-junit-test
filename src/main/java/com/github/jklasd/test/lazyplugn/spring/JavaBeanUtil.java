@@ -122,8 +122,16 @@ public class JavaBeanUtil {
         	}
         	//如果存在参数
         	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes(),method.getParameterAnnotations());
-        	
-        	Object tagObj = method.invoke(obj,args);
+        	if(!method.isAccessible()) {
+        		method.setAccessible(true);
+        	}
+        	Object tagObj = null;
+        	try {
+        		tagObj = method.invoke(obj,args);
+        	}catch(Exception e) {
+        		log.error("方法调用异常=>{}",method);
+        		throw new JunitException(e);
+        	}
         	
         	ConfigurationProperties prop = null;
         	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
@@ -134,9 +142,8 @@ public class JavaBeanUtil {
         		assemblyData.setTagClass(tagObj.getClass());
         	}
         	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (IllegalArgumentException e) {
         	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
-//        	log.error("JavaBeanUtil#buildBean",e);
         	throw new JunitException(e);
         }
     }

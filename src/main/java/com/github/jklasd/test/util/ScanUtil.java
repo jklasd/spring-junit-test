@@ -198,7 +198,7 @@ public class ScanUtil {
 				}
 			});
 			loadContextPathClass();
-			log.info("=============加载class结束=============");
+			log.debug("=============加载class结束=============");
 		} catch (IOException e1) {
 			log.error("读取文件异常",e1);
 		}
@@ -432,9 +432,9 @@ public class ScanUtil {
 		}).setError((name,e)->{
 			notFoundSet.add(name);
 		}).runAndWait(name ->{
-//			if(name.contains("RabbitTemplateConfiguration")) {
-//				log.info("断点");
-//			}
+			if(name.contains("MongoAutoConfiguration")) {
+				log.debug("断点");
+			}
 			Class<?> c = finalNameMap.get(name);
 			if(/*Modifier.isPublic(c.getModifiers()) && */!c.isInterface()) {
 					Configuration configuration = c.getDeclaredAnnotation(Configuration.class);

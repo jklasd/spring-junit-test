@@ -13,6 +13,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.Getter;
@@ -28,6 +29,16 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		lazyBeanFactory = getDefaultListableBeanFactory();
 	}
 	
+	public Object getBean(String beanName) {
+		try {
+			if(lazyBeanFactory.containsBean(beanName)) {
+				return lazyBeanFactory.getBean(beanName);
+			}
+			return null;
+		}catch(Exception e){
+			throw new JunitException("Bean 未找到");
+		}
+	}
 	
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		return lazyBeanFactory.getBean(requiredType);
@@ -57,7 +68,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 			if(!lazyBeanFactory.containsBean(beanName)) {
 				lazyBeanFactory.registerSingleton(beanName, tmp);
 			}else {
-				log.warn("bean已存在");
+				log.debug("bean已存在");
 			}
 		}else {
 			lazyBeanFactory.registerResolvableDependency(tagC, tmp);

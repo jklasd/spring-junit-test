@@ -1,7 +1,6 @@
 package com.github.jklasd.test.util;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -26,6 +25,7 @@ import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
 import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class LogbackUtil {
 	private static Level level = Level.INFO;
 	private static boolean useLocal = true;
@@ -34,34 +34,35 @@ public class LogbackUtil {
 	    useLocal = false;
 	}
 	public static void resetLog() {
-	    System.out.println("===========LogbackUtil=resetLog===========");
+	    log.debug("===========LogbackUtil=resetLog===========");
 	    try {
             if(useLocal) {
                 Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
                 Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
                 if(logback!=null) {
                     loadLogXml(logback,false);
+                    return;
                 }else if(logback_spring!=null){
                     loadLogXml(logback_spring,true);
+                    return;
                 }  
-            }else {
-                LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
-                context.reset();
-                Logger root = context.getLogger("ROOT");
-                ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
-                appender.setName("CONSOLE");
-                PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-                encoder.setPattern("[%-5level][%contextName]%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread][%X{traceId}] %logger - %msg%n");
-                encoder.setCharset(Charset.forName("UTF-8"));
-                encoder.setContext(context);
-                
-                appender.setEncoder(encoder);
-                appender.setContext(context);
-                root.setLevel(level);
-                root.addAppender(appender);
-                appender.start();
-                encoder.start();
             }
+            LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+            context.reset();
+            Logger root = context.getLogger("ROOT");
+            ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
+            appender.setName("CONSOLE");
+            PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+            encoder.setPattern("[%-5level][%contextName]%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread][%X{traceId}] %logger - %msg%n");
+            encoder.setCharset(Charset.forName("UTF-8"));
+            encoder.setContext(context);
+            
+            appender.setEncoder(encoder);
+            appender.setContext(context);
+            root.setLevel(level);
+            root.addAppender(appender);
+            appender.start();
+            encoder.start();
         } catch (Exception e) {
              e.printStackTrace();
         }

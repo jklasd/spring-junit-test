@@ -78,8 +78,8 @@ public abstract class AbastractLazyProxy {
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
         try {
         	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
-        	tmpInvokerInfo.put("obj", poxy);
-        	tmpInvokerInfo.put("method", method);
+        	tmpInvokerInfo.put("class", beanModel.getTagClass());
+        	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
             Object oldObj = null;
             try {
@@ -138,6 +138,10 @@ public abstract class AbastractLazyProxy {
             } else {
                 return tagertObj;
             }
+        }
+        log.debug("开始实例化:{}",beanModel);
+        if(beanModel.getTagClass().getName().contains("mongodb.MongoClient")) {
+        	log.debug("断点");
         }
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {

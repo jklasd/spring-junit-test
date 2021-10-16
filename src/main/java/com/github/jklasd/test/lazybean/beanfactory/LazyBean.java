@@ -220,6 +220,7 @@ public class LazyBean {
         return null;
     }
 	public void setObj(Field f,Object obj,Object proxyObj) {
+		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
 		setObj(f, obj, proxyObj, null);
 	}
 	/**
@@ -309,7 +310,7 @@ public class LazyBean {
 						try {
 							Class<?> c = Class.forName(item[0].getTypeName());
 							setObj(f, obj, findListBean(c));
-							log.info("注入集合=>{}",f.getName());
+							log.debug("注入集合=>{}",f.getName());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
@@ -345,7 +346,7 @@ public class LazyBean {
 			if(item.length == 1) {
 				//处理一个集合注入
 				try {
-					log.info("注入集合=>{}",m.getName());
+					log.debug("获取paramType泛型类型=>{}",paramType);
 					return Class.forName(item[0].getTypeName());
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
@@ -467,7 +468,7 @@ public class LazyBean {
                 }else {
                 	beanName = m.getName();
                 }
-                if(beanName.equals("buildConsumerConfig")) {
+                if(beanName.equals("mongoDbFactory")) {
                 	log.debug("短点");
                 }
                 Object exitBean = util.getApplicationContext().getBean(beanName);
@@ -475,7 +476,15 @@ public class LazyBean {
                 	return;
                 }
                 Object[] param = processParam(m, paramTypes, null);
-                Object tmp = m.invoke(obj, param);
+                Object tmp = null;
+                try {
+                	if(!m.isAccessible()) {
+                		m.setAccessible(true);
+                	}
+                	tmp = m.invoke(obj, param);
+                }catch(Exception e) {
+                	log.error("method:{},exception:{}",m,e.getMessage());
+                }
                 if(tmp!=null) {
                     ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
                     if(confPro!=null) {
@@ -493,7 +502,13 @@ public class LazyBean {
             Class<?> c = getParamType(m, paramTypes[i]);
             if(paramTypes[i] == List.class) {
                 param[i] = findListBean(c);
-            }else {
+            }else if(paramTypes[i] instanceof ParameterizedType) {
+        		ParameterizedType  pType = (ParameterizedType) paramTypes[i];
+//        		tmp.setTagClass((Class<?>) pType.getRawType());
+//        		tmp.setClassGeneric(pType.getActualTypeArguments());
+        		param[i] = LazyBean.getInstance().buildProxyForGeneric((Class<?>) pType.getRawType()
+        				,pType.getActualTypeArguments());
+        	}else {
                 if(LazyBean.existBean(c) && util.getExistBean(c, m.getName())!=null) {
                     param[i] = util.getExistBean(c, m.getName());
                 }else {
