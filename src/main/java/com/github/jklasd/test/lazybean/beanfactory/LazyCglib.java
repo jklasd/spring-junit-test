@@ -68,6 +68,17 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
     }
 
     public Object[] getArguments() {
+    	if(beanModel.getConstructorArgValue()!=null) {
+    		int count = beanModel.getConstructorArgValue().getArgumentCount();
+    		Object[] objes = new Object[constructor.getParameters().length];
+    		if(objes.length!=count) {
+    			throw new RuntimeException("异常构建方法");
+    		}
+    		for(int i=0;i<count;i++) {
+    			objes[i] = beanModel.getConstructorArgValue().getArgumentValue(i, getArgumentTypes()[i]).getValue();
+    		}
+    		return objes;
+    	}
         Object[] objes = new Object[constructor.getParameters().length];
         for(int i=0;i<objes.length;i++) {
             Class<?> c = getArgumentTypes()[i];

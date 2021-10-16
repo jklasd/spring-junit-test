@@ -46,7 +46,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 			return lazyBeanFactory.getBean(beanName, tagClass);
 		}catch(Exception e) {
 			log.error("getBeanByClassAndBeanName,beanName=>{},tagClass=>{}",beanName,tagClass);
-			log.error("getBeanByClassAndBeanName",e);
+//			log.error("getBeanByClassAndBeanName",e);
 			return null;
 		}
 	}
@@ -54,7 +54,11 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	public void registBean(String beanName, Object tmp, Class<?> tagC) {
 //		regist
 		if(beanName!=null) {
-			lazyBeanFactory.registerSingleton(beanName, tmp);
+			if(!lazyBeanFactory.containsBean(beanName)) {
+				lazyBeanFactory.registerSingleton(beanName, tmp);
+			}else {
+				log.warn("bean已存在");
+			}
 		}else {
 			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 		}

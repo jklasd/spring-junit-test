@@ -107,26 +107,14 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public Object buildProxy(BeanModel beanModel) {
-//	    if(beanModel.getTagClass().getName().contains("MongoClient")) {
-//            log.debug("断点");
-//        }
-//		Annotation[] conditionals = beanModel.getTagClass().getAnnotations();
-//		if(conditionals!=null){
-//			log.info("conditional 处理");
-//			for(Annotation ann : conditionals) {
-//				Class<? extends Annotation> annC = ann.annotationType();
-//				if(annC.isAnnotationPresent(Conditional.class)) {
-//					log.info("conditional 存在");
-//				}
-//			}
-//		}
 		
 	    Object obj = null;
 	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
-	        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
-	        if(obj!=null) {
-	            return obj;
-	        }
+	    	if(util.getApplicationContext().containsBean(beanModel.getBeanName())) {
+	    		obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
+	    		return obj;
+	    		
+	    	}
 	    }else {
 	        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
             if(obj!=null) {
@@ -276,11 +264,14 @@ public class LazyBean {
 //		if(objClassOrSuper.getName().contains("JedisCluster")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
-	    String existKey = obj.hashCode()+"="+objClassOrSuper.getName();
-		if(exist.contains(existKey)) {
-			return;
+		if(obj.getClass() == objClassOrSuper) {
+			//跳过
+			String existKey = obj+"="+objClassOrSuper.getName();
+			if(exist.contains(existKey)) {
+				return;
+			}
+			exist.add(existKey);
 		}
-		exist.add(existKey);
 		Field[] fields = objClassOrSuper.getDeclaredFields();
 		processField(obj, fields);
 		

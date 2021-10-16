@@ -100,7 +100,7 @@ public abstract class AbastractLazyProxy {
             return result;
         } catch (Exception e) {
             log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}", beanModel.getTagClass(), method.getName(),
-                e.getMessage());
+                e);
             Throwable tmp = e;
             if (e.getCause() != null) {
                 tmp = e.getCause();
