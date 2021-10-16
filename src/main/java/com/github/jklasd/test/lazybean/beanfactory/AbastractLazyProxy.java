@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
@@ -13,6 +14,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
@@ -21,6 +23,7 @@ import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
+import com.google.common.collect.Maps;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -63,8 +66,21 @@ public abstract class AbastractLazyProxy {
             }
     }
     
+    private ThreadLocal<Map<String,Object>> lastInvoker = new ThreadLocal<Map<String,Object>>();
+    
+//    private AtomicInteger buildObjTimes = new AtomicInteger();
+    private AtomicInteger errorTimes = new AtomicInteger();
+    
     protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    	if(errorTimes.get()>3) {
+    		throw new JunitException("异常代理方式");
+    	}
+    	Map<String,Object> lastInvokerInfo = lastInvoker.get();
         try {
+        	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
+        	tmpInvokerInfo.put("obj", poxy);
+        	tmpInvokerInfo.put("method", method);
+        	lastInvoker.set(tmpInvokerInfo);
             Object oldObj = null;
             try {
                 oldObj = AopContext.currentProxy();
@@ -97,9 +113,12 @@ public abstract class AbastractLazyProxy {
             closeTransation(oldTxInfo, txStatus);
             
             AopContextSuppert.setProxyObj(oldObj);
+            lastInvoker.set(lastInvokerInfo);
             return result;
         } catch (Exception e) {
-            log.error("LazyCglib#intercept ERROR=>{}#{}==>Message:{}", beanModel.getTagClass(), method.getName(),
+        	errorTimes.incrementAndGet();
+        	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
+            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{}", beanModel.getTagClass(), method.getName(),
                 e);
             Throwable tmp = e;
             if (e.getCause() != null) {

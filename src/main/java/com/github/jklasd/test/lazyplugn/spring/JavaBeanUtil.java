@@ -14,9 +14,12 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
@@ -79,6 +82,29 @@ public class JavaBeanUtil {
 		
 		return cacheBean.get(key);
 	}
+    
+    public Object getExists(Method method) {
+    	//查看是否已经执行过来
+    	Bean aw = method.getAnnotation(Bean.class);
+        String beanName = null;
+        if(aw.value().length>0) {
+        	beanName = aw.value()[0];
+        }else if(aw.name().length>0){
+        	beanName = aw.name()[0];
+        }else {
+        	beanName = method.getName();
+        }
+//        if(beanName.equals("buildConsumerConfig")) {
+//        	log.debug("短点");
+//        }
+        //需要过滤代理对象
+//        Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
+//        if(exitBean!=null) {
+//        	return exitBean;
+//        }
+        return null;
+    }
+    
     /**
      * 构建目标对象
      * @param method    构建目标对象
@@ -88,7 +114,12 @@ public class JavaBeanUtil {
      */
     private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
         try {
-            
+        	Object exitsBean = getExists(method);
+        	if(exitsBean != null) {//且不是代理对象
+        		log.info("---Bean 已构建,method:{}---",method);
+        		cacheBean.put(key, exitsBean);
+        		return;
+        	}
         	//如果存在参数
         	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes(),method.getParameterAnnotations());
         	
@@ -99,10 +130,14 @@ public class JavaBeanUtil {
         		LazyConfPropBind.processConfigurationProperties(tagObj, prop);
         	}
         	cacheBean.put(key, tagObj);
+        	if(assemblyData.getTagClass() == null) {
+        		assemblyData.setTagClass(tagObj.getClass());
+        	}
         	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-        	log.error("registerBean =>{}",assemblyData.getBeanName());
-        	log.error("JavaBeanUtil#buildBean",e);
+        	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
+//        	log.error("JavaBeanUtil#buildBean",e);
+        	throw new JunitException(e);
         }
     }
     private boolean buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace) {
@@ -245,5 +280,4 @@ public class JavaBeanUtil {
 			});
 		}
 	}
-
 }

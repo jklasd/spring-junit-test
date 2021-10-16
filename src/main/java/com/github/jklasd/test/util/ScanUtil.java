@@ -418,6 +418,7 @@ public class ScanUtil {
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
+		Class tagC = assemblyData.getTagClass();
 		finalNameMap.putAll(nameMap);
 		if(assemblyData.getNameMapTmp() != null) {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
@@ -442,7 +443,6 @@ public class ScanUtil {
 						for(Method m : methods) {
 							Bean beanA = m.getAnnotation(Bean.class);
 							if(beanA != null) {
-								Class tagC = assemblyData.getTagClass();
 								if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
 								    String[] beanNames = beanA.value();
 							        for(String beanName : beanNames) {
@@ -460,16 +460,24 @@ public class ScanUtil {
 							                break;
 							            }
 							        }
+							        if(m.getName().equals(assemblyData.getBeanName()) && tagC!=null) {
+							        	if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
+											tmp[0] = c;
+											tmp[1] = m;
+											break;
+										}
+							        }
 								}
-								if(tagC.isInterface()?
-										(m.getReturnType().isInterface()?
-												(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)
-												:ScanUtil.isImple(m.getReturnType(), tagC)
-												):
-													(ScanUtil.isExtends(m.getReturnType(), tagC) || m.getReturnType() == tagC)) {
-									tmp[0] = c;
-									tmp[1] = m;
-									break;
+								
+								if(tagC!=null) {
+									if(!tagC.isInterface() && m.getReturnType().isInterface()) {
+										break;
+									}
+									if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
+										tmp[0] = c;
+										tmp[1] = m;
+										break;
+									}
 								}
 							}
 						}
@@ -481,6 +489,8 @@ public class ScanUtil {
 		}
 		return address;
 	}
+	
+	
 //	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
 //		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
 //		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
