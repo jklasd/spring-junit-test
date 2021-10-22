@@ -230,10 +230,13 @@ public class ScanUtil {
 				list.add(nameMap.get(name));
 			} else {
 				Class<?> tagClass = nameMap.get(name);
-				String annValue = LazyBean.getBeanName(tagClass);
-				
-				if (Objects.equals(annValue, beanName)) {
-					list.add(tagClass);
+				try {
+					String annValue = LazyBean.getBeanName(tagClass);
+					
+					if (Objects.equals(annValue, beanName)) {
+						list.add(tagClass);
+					}
+				} catch (Exception e) {
 				}
 			}
 		});
