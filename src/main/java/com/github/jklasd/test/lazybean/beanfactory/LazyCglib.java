@@ -95,7 +95,11 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                 objes[i] = Sets.newHashSet();
             }
             else {
-                objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
+            	if(getArgumentTypes()[i].getAnnotations().length>0) {
+            		objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
+            	}else {
+            		log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+            	}
             }
         }
         return objes;

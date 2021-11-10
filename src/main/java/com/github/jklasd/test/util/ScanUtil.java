@@ -98,7 +98,7 @@ public class ScanUtil {
 			}
 		}
 	}
-	private static Set<String> classNames = Sets.newHashSet();
+	private static Set<String> classNames = Sets.newConcurrentHashSet();
 	public static Map<String,Map<String,Class>> pathForClass = Maps.newConcurrentMap();
 	public static Map<String, Class> findClassMap(String scanPath) {
 		if(pathForClass.containsKey(scanPath)) {
@@ -431,7 +431,7 @@ public class ScanUtil {
 		}).setError((name,e)->{
 			notFoundSet.add(name);
 		}).runAndWait(name ->{
-//			if(name.contains("RabbitTemplateConfiguration")) {
+//			if(name.contains("ElasticsearchConfiguration")) {
 //				log.info("断点");
 //			}
 			Class<?> c = finalNameMap.get(name);
