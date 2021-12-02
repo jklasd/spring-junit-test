@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,6 +17,9 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
@@ -147,7 +151,21 @@ public class JavaBeanUtil {
                     buildConfigObj(itemConfigC,nameSpace);
                 }
             }
-            
+            PropertySource propSrouce = configClass.getAnnotation(PropertySource.class);
+            if(propSrouce!=null) {//先加载配置
+            	try {
+            		for(String path : propSrouce.value()) {
+            			Resource propRes = ScanUtil.getRecourceAnyOne(path);
+            			if(propRes!=null && propRes.exists()) {
+            				Properties properties = new Properties();
+            				properties.load(propRes.getInputStream());
+            				TestUtil.getInstance().getApplicationContext().getEnvironment().getPropertySources()
+            				.addLast(new PropertiesPropertySource(propSrouce.name(), properties));
+            			}
+            		}
+				} catch (Exception e) {
+				}
+            }
             Constructor[] cons = configClass.getConstructors();
             if(cons.length>0) {
                 findAndCreateBean(configClass, nameSpace, cons);

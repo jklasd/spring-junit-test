@@ -16,6 +16,7 @@ import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Properties;
 import java.util.Set;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -162,20 +163,51 @@ public class ScanUtil {
                                   classNames.add(name.replace("/", ".").replace("\\", "."));
                               }else {
                                   if(name.contains("spring.handlers")) {
-                                      try {
-                                          InputStream is = jFile.getInputStream(JarEntry);
-                                          BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                                          String line = null;
-                                          while((line = br.readLine()) != null) {
-                                              String[] url_handler = line.split("=");
-                                              Class nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
-                                              if(nameSpaceHandlerC!=null) {
-                                                  XmlBeanUtil.getInstance().putNameSpace(url_handler[0].replace("\\", ""), nameSpaceHandlerC);
-                                              }
-                                          }
-                                    } catch (IOException e) {
-                                         e.printStackTrace();
-                                    }
+									try {
+										InputStream is = jFile.getInputStream(JarEntry);
+										BufferedReader br = new BufferedReader(new InputStreamReader(is));
+										String line = null;
+										while ((line = br.readLine()) != null) {
+											String[] url_handler = line.split("=");
+											Class nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
+											if (nameSpaceHandlerC != null) {
+												XmlBeanUtil.getInstance().putNameSpace(
+														url_handler[0].replace("\\", ""), nameSpaceHandlerC);
+											}
+										}
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
+                                  }else if(name.contains("spring.factories")) {
+									try {
+										InputStream is = jFile.getInputStream(JarEntry);
+//										BufferedReader br = new BufferedReader(new InputStreamReader(is));
+//										String line = br.readLine();
+//										if(line.contains("org.springframework.boot.autoconfigure.EnableAutoConfiguration")) {
+//											while ((line = br.readLine()) != null) {
+//												if(line.endsWith("\\")) {
+//													loadAutoConfigClass(line.replace("\\", ""));
+//												}
+//											}
+//										}
+										Properties prop = new Properties();
+										prop.load(new InputStreamReader(is));
+										String factoryClassNames = prop.getProperty("org.springframework.boot.autoconfigure.EnableAutoConfiguration");
+										if(StringUtils.isNotBlank(factoryClassNames)) {
+											loadAutoConfigClass(factoryClassNames.split(","));
+										}
+//										Enumeration<URL> urls = Class.class.getClassLoader().getResources(name) ;
+////											ClassLoader.getSystemResources(name));
+//										List<String> result = new ArrayList<String>();
+//										while (urls.hasMoreElements()) {
+//											URL urlP = urls.nextElement();
+//											Properties properties = PropertiesLoaderUtils.loadProperties(new UrlResource(urlP));
+//											
+////											result.addAll(Arrays.asList(StringUtils.commaDelimitedListToStringArray(factoryClassNames)));
+//										}
+									} catch (IOException e) {
+										e.printStackTrace();
+									}
                                   }
                               }
 							});
@@ -202,7 +234,17 @@ public class ScanUtil {
 			log.error("读取文件异常",e1);
 		}
 	}
-	
+//	private static Set<String> autoConfigClass = Sets.newConcurrentHashSet();
+	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
+	private static void loadAutoConfigClass(String... classNames) {
+		for(String className : classNames) {
+//			autoConfigClass.add(className);
+			Class<?> configC = loadClass(className);
+			if(configC!=null) {
+				autoConfigMap.put(className, loadClass(className));
+			}
+		}
+	}
 	public static void loadContextPathClass() {
 		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
 		.runAndWait(name->{
@@ -419,6 +461,7 @@ public class ScanUtil {
 		Map<String,Class> finalNameMap = Maps.newHashMap();
 		Class tagC = assemblyData.getTagClass();
 		finalNameMap.putAll(nameMap);
+		finalNameMap.putAll(autoConfigMap);
 		if(assemblyData.getNameMapTmp() != null) {
 			finalNameMap.putAll(assemblyData.getNameMapTmp());
 		}
@@ -519,7 +562,10 @@ public class ScanUtil {
 	public static boolean findCreateBeanForConfigurationProperties(Class tag) {
 		if(existsProp.contains(tag))
 			return true;
-		
+	
+		autoConfigMap.entrySet().forEach(entry->{
+			readPropAnno(tag, Lists.newArrayList(entry.getValue()));
+		});
 		if(tag.getName().contains(SPRING_PACKAGE)) {
 			List<Class<?>> list = findClassWithAnnotation(EnableConfigurationProperties.class);
 			if(!list.isEmpty()) {
@@ -542,13 +588,22 @@ public class ScanUtil {
 		}
 		return existsProp.contains(tag);
 	}
+	private static Set<Class> loadedPropAnn = Sets.newConcurrentHashSet();
 	private static boolean readPropAnno(Class tag, List<Class<?>> list) {
 		for(Class<?> enablePropC : list) {
-			EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
-			for(Class c : ecp.value()) {
-				if(c == tag) {
-					existsProp.add(tag);
-					return true;
+			if(!loadedPropAnn.contains(enablePropC)) {
+				try {
+					EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
+					if(ecp != null) {
+						for(Class c : ecp.value()) {
+							if(c == tag) {
+								existsProp.add(tag);
+								return true;
+							}
+						}
+					}
+					loadedPropAnn.add(enablePropC);
+				} catch (Exception e) {
 				}
 			}
 		}
