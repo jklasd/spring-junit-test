@@ -147,21 +147,21 @@ public class LazyBean {
             } else {
                 LazyCglib handler = new LazyCglib(beanModel);
                 if(!handler.hasFinalMethod() && handler.findPublicConstrucors()) {
-                    if(handler.getArgumentTypes().length>0) {
-                        Enhancer enhancer = new Enhancer();
-                        enhancer.setSuperclass(beanClass);
-                        enhancer.setCallback(handler);
-                        try {
-                        	tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
-						}catch (Exception e) {
-							//查看是否本地构建
-							tag = LazyBean.findCreateBeanFromFactory(beanModel.getTagClass(),beanModel.getBeanName());
-							if(tag == null) {
-								throw e;
-							}
-						}
-                    }else {
-                        tag = Enhancer.create(beanClass, handler);
+                	try {
+	                    if(handler.getArgumentTypes().length>0) {
+	                        Enhancer enhancer = new Enhancer();
+	                        enhancer.setSuperclass(beanClass);
+	                        enhancer.setCallback(handler);
+	                        	tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
+	                    }else {
+	                        tag = Enhancer.create(beanClass, handler);
+	                    }
+                    }catch (Exception e) {
+                    	//查看是否本地构建
+                    	tag = LazyBean.findCreateBeanFromFactory(beanModel.getTagClass(),beanModel.getBeanName());
+                    	if(tag == null) {
+                    		throw e;
+                    	}
                     }
                 }else {
                     tag = handler.getTagertObj();

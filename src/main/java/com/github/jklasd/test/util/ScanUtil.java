@@ -181,30 +181,12 @@ public class ScanUtil {
                                   }else if(name.contains("spring.factories")) {
 									try {
 										InputStream is = jFile.getInputStream(JarEntry);
-//										BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//										String line = br.readLine();
-//										if(line.contains("org.springframework.boot.autoconfigure.EnableAutoConfiguration")) {
-//											while ((line = br.readLine()) != null) {
-//												if(line.endsWith("\\")) {
-//													loadAutoConfigClass(line.replace("\\", ""));
-//												}
-//											}
-//										}
 										Properties prop = new Properties();
 										prop.load(new InputStreamReader(is));
 										String factoryClassNames = prop.getProperty("org.springframework.boot.autoconfigure.EnableAutoConfiguration");
 										if(StringUtils.isNotBlank(factoryClassNames)) {
 											loadAutoConfigClass(factoryClassNames.split(","));
 										}
-//										Enumeration<URL> urls = Class.class.getClassLoader().getResources(name) ;
-////											ClassLoader.getSystemResources(name));
-//										List<String> result = new ArrayList<String>();
-//										while (urls.hasMoreElements()) {
-//											URL urlP = urls.nextElement();
-//											Properties properties = PropertiesLoaderUtils.loadProperties(new UrlResource(urlP));
-//											
-////											result.addAll(Arrays.asList(StringUtils.commaDelimitedListToStringArray(factoryClassNames)));
-//										}
 									} catch (IOException e) {
 										e.printStackTrace();
 									}

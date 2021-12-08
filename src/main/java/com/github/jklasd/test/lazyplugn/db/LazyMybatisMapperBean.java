@@ -112,27 +112,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
-        if (useMybatis() && !loadScaned) {
-            Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
-            try {
-            	String basePackage = null;
-            	if(mybatisScan != null) {
-            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
-            		cglibObjField.setAccessible(true);
-            		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
-            		if (obj.getAttr().containsKey("basePackage")) {
-            			basePackage = obj.getAttr().get("basePackage").toString();
-            		}
-            	}
-            	if(basePackage!=null) {
-            		mybatisScanPathList.add(basePackage);
-            		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
-            	}
-            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
-                e.printStackTrace();
-            }
-            loadScaned = true;
-        }
         Class mapperAnn = ScanUtil.loadClass("org.apache.ibatis.annotations.Mapper");
         if (mapperAnn != null) {
             if (c.getAnnotation(mapperAnn) != null) {
@@ -156,6 +135,27 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     @Override
     public Object buildBean(AbastractLazyProxy model) {
+    	if (useMybatis() && !loadScaned) {
+            Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
+            try {
+            	String basePackage = null;
+            	if(mybatisScan != null) {
+            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
+            		cglibObjField.setAccessible(true);
+            		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
+            		if (obj.getAttr().containsKey("basePackage")) {
+            			basePackage = obj.getAttr().get("basePackage").toString();
+            		}
+            	}
+            	if(basePackage!=null) {
+            		mybatisScanPathList.add(basePackage);
+            		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
+            	}
+            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+                e.printStackTrace();
+            }
+            loadScaned = true;
+        }
         Class<?> tagC = model.getBeanModel().getTagClass();
         if(isMybatisBean(tagC)) {
             try {
