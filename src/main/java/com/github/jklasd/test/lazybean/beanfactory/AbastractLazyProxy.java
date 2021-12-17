@@ -71,9 +71,22 @@ public abstract class AbastractLazyProxy {
 //    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    protected synchronized Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>3) {
     		throw new JunitException("异常代理方式");
+    	}
+    	if(method.getName().equals("toString")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.toString();
+    		}else {
+    			return this.toString();
+    		}
+    	}else if(method.getName().equals("hashCode")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.hashCode();
+    		}else {
+    			return this.hashCode();
+    		}
     	}
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
         try {
