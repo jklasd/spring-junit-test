@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class ThreadPoolUtils {
+final class ThreadPoolUtils {
 	private ThreadPoolUtils() {}
 	private static ThreadPoolExecutor executorServer;
 	/** 排队任务的最大数目，
@@ -29,33 +29,20 @@ public final class ThreadPoolUtils {
 	private static final int PRIORITY_MAX_THREAD_COUNT = 12;
 	private static final long ALIVE_TIME = 600;
 	
-	private static ExecutorService signExecutor;
-	
 	private static ThreadPoolExecutor priorityExecutor;
-//	static {
-//		
-//		
-//		
-//	}
 	
-	public static final synchronized void commonRun(Runnable runnable){
+	public static final void commonRun(Runnable runnable){
+		if (executorServer == null) {
+			initCommonPool();
+		}
+		executorServer.execute(runnable);
+	}
+	private static synchronized void initCommonPool() {
 		if (executorServer == null) {
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
 			executorServer = new ThreadPoolExecutor(COMMON_CORE_THREAD_COUNT,COMMON_CORE_THREAD_COUNT, ALIVE_TIME,TimeUnit.SECONDS,queue);
 		}
-		executorServer.execute(runnable);
 	}
-//	public static final synchronized void commonRunMdc(Runnable runnable){
-//		commonRun(MdcExecutors.wrap(runnable, MDC.getCopyOfContextMap()));
-//	}
-	
-	public static final synchronized void signRun(Runnable runnable){
-		if(signExecutor==null){
-			signExecutor = Executors.newSingleThreadExecutor();
-		}
-		signExecutor.execute(runnable);
-	}
-	
 	private static synchronized void initPriority() {
 		if(priorityExecutor == null) {
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(MAX_QUEUE_COUNT);
@@ -63,18 +50,8 @@ public final class ThreadPoolUtils {
 					queue,new ThreadPoolExecutor.CallerRunsPolicy());
 		}
 	}
-//	public static final synchronized void priorityRunMdc(Runnable runnable){
-//		priorityRun(MdcExecutors.wrap(runnable, MDC.getCopyOfContextMap()));
-//	}
-
 	public static final void priorityRun(Runnable runnable){
 		initPriority();
 		priorityExecutor.execute(runnable);
 	}
-
-	public static final <T> Future<T> commitRun(Callable<T> task) {
-		initPriority();
-		return priorityExecutor.submit(task);
-	}
-
 }
