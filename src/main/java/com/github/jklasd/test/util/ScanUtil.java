@@ -73,7 +73,7 @@ public class ScanUtil {
 	public static boolean exists(Class record) {
 		return nameMap.values().contains(record);
 	}
-	private static void loadClass(File file,String rootPath){
+	public static void loadClass(File file,String rootPath){
 		File[] files = file.listFiles();
 		for (File f : files) {
 			if (f.isDirectory()) {
