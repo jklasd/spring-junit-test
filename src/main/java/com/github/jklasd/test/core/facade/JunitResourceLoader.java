@@ -1,8 +1,12 @@
 package com.github.jklasd.test.core.facade;
 
-import java.util.jar.JarFile;
+import java.io.InputStream;
+
+import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 
 public interface JunitResourceLoader {
-	void loadResource(JarFile jarFile);
+	void loadResource(InputStream jarFileIs);
+	void loadResource(String... sourcePath);
 	void initResource();
+	public Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData);
 }
