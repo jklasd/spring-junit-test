@@ -280,4 +280,21 @@ public class ClassScan implements Scan{
 		pathForClass.put(scanPath, nameMapTmp);
 		return nameMapTmp;
 	}
+	public Boolean isInScanPath(Class<?> requiredType) {
+		return classPathMap.containsKey(requiredType.getName());
+	}
+	public List<Class<?>> findClassExtendAbstract(Class<?> abstractClass) {
+		List<Class<?>> list = Lists.newArrayList();
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classPathMap.keySet()))
+		.runAndWait(name ->{
+			Class<?> tmpClass = classPathMap.get(name);
+			if(ScanUtil.isExtends(tmpClass,abstractClass)) {
+				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
+						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
+					list.add(tmpClass);
+				}
+			}
+		});
+		return list;
+	}
 }

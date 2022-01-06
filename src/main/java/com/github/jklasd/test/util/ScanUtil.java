@@ -90,7 +90,7 @@ public class ScanUtil {
 	
 	
 	public static Boolean isInScanPath(Class<?> requiredType) {
-		return nameMap.containsKey(requiredType.getName());
+		return scaner.isInScanPath(requiredType);
 	}
 	/**
 	 * 扫描继承abstractClass 的类
@@ -98,54 +98,9 @@ public class ScanUtil {
 	 * @return 返回继承abstractClass 的类
 	 */
 	public static List<Class<?>> findClassExtendAbstract(Class abstractClass){
-		return findClassExtendAbstract(abstractClass, null,null);
+		return scaner.findClassExtendAbstract(abstractClass);
 	}
-	public static List<Class<?>> findClassExtendAbstract(Class abstractClass,Map<String,Class> classMap,String ClassName){
-		Map<String,Class> tmp = Maps.newHashMap();
-		if(classMap!=null) {
-			tmp.putAll(classMap);
-		}
-		tmp.putAll(nameMap);
-		List<Class<?>> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
-		.runAndWait(name ->{
-			if(ClassName!=null && name.equals(ClassName)) {
-				return;
-			}
-			Class<?> tmpClass = tmp.get(name);
-			if(isExtends(tmpClass,abstractClass)) {
-				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
-						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
-				}
-			}
-		});
-		return list;
-	}
-	public static Class findClassImplInterfaceByBeanName(Class interfaceClass,Map<String,Class> classMap,String beanName){
-	    if(StringUtils.isBlank(beanName)) {
-	        throw new JunitException();
-	    }
-        Map<String,Class> tmp = Maps.newHashMap();
-        if(classMap!=null) {
-            tmp.putAll(classMap);
-        }
-        tmp.putAll(nameMap);
-        List<Class> list = Lists.newArrayList();
-        JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
-        .runAndWait(name ->{
-            Class<?> tmpClass = tmp.get(name);
-            if(isImple(tmpClass,interfaceClass)) {
-                if(Objects.equals(beanName, LazyBean.getBeanName(tmpClass))) {
-                    list.add(tmpClass);
-                }
-            }
-        });
-        if(list.isEmpty()) {
-            log.warn("没有找到相关实现类========{}======={}==",interfaceClass,beanName);
-        }
-        return list.isEmpty() ? null : list.get(0);
-    }
+	
 	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class<?>> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
@@ -195,15 +150,6 @@ public class ScanUtil {
 		return abstractClass.isAssignableFrom(subClass);
 	}
 	
-	/**
-	 * 扫描类 for class
-	 * @param annotationType 注解类型
-	 * @return 存在 annotationType 注解的类
-	 */
-//	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
-//		return findClassWithAnnotation(annotationType, nameMap);
-//	}
-	
 	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class<?>> nameMapTmp){
 		List<Class<?>> list = Lists.newArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(nameMapTmp.keySet().stream().filter(name->!notFoundSet.contains(name)).collect(Collectors.toList()))
@@ -221,44 +167,7 @@ public class ScanUtil {
 		});
 		return list;
 	}
-	public static List<Class<?>> findStaticMethodClass() {
-		Set<Class<?>> list = Sets.newHashSet();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.setException((name,e)->{
-		    log.error("遗漏#findStaticMethodClass#=>{}",name);
-		})
-		.runAndWait(name ->{
-			Class<?> c = nameMap.get(name);
-			Annotation configuration = c.getDeclaredAnnotation(Configuration.class);
-			boolean finding = false;
-			if(configuration!=null) {
-			    finding = true;
-			}else {
-			    Annotation service = c.getDeclaredAnnotation(Service.class);
-			    Annotation comp = c.getDeclaredAnnotation(Component.class);
-			    finding = service!=null || comp!=null;
-			}
-			if(finding) {
-				Method[] methods = c.getDeclaredMethods();
-				for(Method m : methods) {
-					if(Modifier.isStatic(m.getModifiers())
-							&& !m.getName().contains("lambda$")//非匿名方法
-						&& !m.getName().contains("access$")) {//非匿名方法
-						Class<?> returnType = m.getReturnType();
-						if(!returnType.getName().contains("void")) {
-							log.debug("method=>{}",m);
-							list.add(c);
-							return;
-						}
-//						log.debug(returnType.getName());
-					}
-				}
-			}else if(configuration == null) {
-				
-			}
-		});
-		return Lists.newArrayList(list);
-	}
+	
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	private static BeanCreaterScan beanFactoryScaner = BeanCreaterScan.getInstance();
 	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
