@@ -12,7 +12,6 @@ import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -23,12 +22,17 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AnnotationResourceLoader implements JunitResourceLoader{
+	private static AnnotationResourceLoader loader = new AnnotationResourceLoader();
+	private AnnotationResourceLoader() {}
+	public static JunitResourceLoader getInstance() {
+		return loader;
+	}
 	
 	private Set<Class<?>> thridAutoConfigClass = Sets.newConcurrentHashSet();
 	private Map<String,Class<?>> thridAutoConfigMap = Maps.newConcurrentMap();
 	private Map<String,Class<?>> thridAutoPropMap = Maps.newConcurrentMap();
 	
-	private ConfigurationScan configurationScan = new ConfigurationScan();
+	private ConfigurationScan configurationScan = ConfigurationScan.getInstance();
 	
 	@Override
 	public void loadResource(InputStream jarFileIs) {
@@ -64,22 +68,11 @@ public class AnnotationResourceLoader implements JunitResourceLoader{
 				log.error("AnnotationResourceLoader#scanConfigClass",e);
 			}
 		});
+		thridAutoConfigClass.clear();
+		thridAutoConfigClass = null;
 	}
-	private CachingMetadataReaderFactory cachingmetadatareaderfactory = new CachingMetadataReaderFactory(this.getClass().getClassLoader());
-	private Map<String, Object> getAnnotationValue(Class<?> configClass,Class<?> annotation) throws IOException {
-		return cachingmetadatareaderfactory.getMetadataReader(configClass.getName()).getAnnotationMetadata()
-				.getAnnotationAttributes(annotation.getName(), true);
-	}
-
-	@Override
-	public Object[] findCreateBeanFactoryClass(AssemblyDTO assemblyData) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
 	@Override
 	public void loadResource(String... sourcePath) {
-		// TODO Auto-generated method stub
 		
 	}
 

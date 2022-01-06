@@ -138,9 +138,10 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                     //本地查找是否有构建bean的@Bean方法
                     tagertObj = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
                     if(tagertObj == null) {
-                        if(propConfig == null || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
-                            throw new RuntimeException(tagertC.getName()+" Bean 不存在");
-                        }
+                    	if(propConfig == null) {
+                    		throw new RuntimeException(tagertC.getName()+" Bean 不存在");
+                    	}
+                    	tagertObj = LazyBean.findCreateByProp(tagertC);
                     }
                     
                 }

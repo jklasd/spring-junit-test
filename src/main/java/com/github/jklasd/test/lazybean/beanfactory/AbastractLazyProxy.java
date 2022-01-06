@@ -1,5 +1,6 @@
  package com.github.jklasd.test.lazybean.beanfactory;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -46,6 +47,15 @@ public abstract class AbastractLazyProxy {
     }
     
     protected List factoryList;
+    public static final String PROXY_BOUND = "CGLIB$BOUND";
+    public static boolean isProxy(Object obj){
+    	try {
+			Field bound = obj.getClass().getDeclaredField(PROXY_BOUND);
+			return bound!=null;
+		} catch (NoSuchFieldException | SecurityException e) {
+			return false;
+		}
+    }
     
     protected void initLazyProxy() {
             try {
@@ -132,8 +142,8 @@ public abstract class AbastractLazyProxy {
         } catch (Exception e) {
         	errorTimes.incrementAndGet();
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
-            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{}", beanModel.getTagClass(), method.getName(),
-                e.getMessage());
+            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
+                e.getMessage(),param.length);
             Throwable tmp = e;
             if (e.getCause() != null) {
                 tmp = e.getCause();

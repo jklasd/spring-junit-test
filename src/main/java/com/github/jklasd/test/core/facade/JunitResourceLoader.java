@@ -8,5 +8,4 @@ public interface JunitResourceLoader {
 	void loadResource(InputStream jarFileIs);
 	void loadResource(String... sourcePath);
 	void initResource();
-	public Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData);
 }

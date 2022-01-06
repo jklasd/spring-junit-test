@@ -23,14 +23,17 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
+import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.TestApplicationContext;
-import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.LogbackUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -38,6 +41,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class TestUtil{
+	@Getter
 	private Set<String> scanClassPath = Sets.newHashSet();
 	private Set<String> scanPropertiesList = Sets.newHashSet();
 
@@ -98,11 +102,11 @@ public class TestUtil{
 	    processed = true;
 	    log.info("====加载配置====");
 //		LazyMybatisMapperBean.getInstance().configure();
-		
-		XmlBeanUtil.getInstance().process();
+	    AnnotationResourceLoader.getInstance().initResource();
+	    XMLResourceLoader.getInstance().initResource();
 		JavaBeanUtil.process();
 
-		List<Class<?>> list = ScanUtil.findStaticMethodClass();
+		List<Class<?>> list = ClassScan.getInstance().findStaticMethodClass();
 		log.debug("static class =>{}", list.size());
 		/**
 		 * 不能是抽象类
@@ -255,6 +259,9 @@ public class TestUtil{
 	}
 
 	public Boolean isScanClassPath(String cn) {
+//		if(cn.contains("SpringContextUtil")) {
+//			log.info("短点");
+//		}
 		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
 	}
 

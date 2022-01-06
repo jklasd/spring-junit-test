@@ -23,7 +23,9 @@ import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
@@ -100,11 +102,11 @@ public class JavaBeanUtil {
 //        if(beanName.equals("buildConsumerConfig")) {
 //        	log.debug("短点");
 //        }
-        //需要过滤代理对象
-//        Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
-//        if(exitBean!=null) {
-//        	return exitBean;
-//        }
+//        需要过滤代理对象
+        Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
+        if(exitBean!=null) {
+        	return exitBean;
+        }
         return null;
     }
     
@@ -117,8 +119,11 @@ public class JavaBeanUtil {
      */
     private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
         try {
+        	if(AbastractLazyProxy.isProxy(obj)) {//不能是代理对象
+        		return;
+        	}
         	Object exitsBean = getExists(method);
-        	if(exitsBean != null) {//且不是代理对象
+        	if(exitsBean != null && !AbastractLazyProxy.isProxy(exitsBean)) {//不能是代理对象
         		log.info("---Bean 已构建,method:{}---",method);
         		cacheBean.put(key, exitsBean);
         		return;
@@ -143,7 +148,7 @@ public class JavaBeanUtil {
         	throw new JunitException(e);
         }
     }
-    private boolean buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace) {
+    private boolean buildConfigObj(Class<?> configClass, Map<String,Class<?>> nameSpace) {
         try {
             AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
             if(afterC!=null) {//先加载另外一个类
@@ -199,7 +204,7 @@ public class JavaBeanUtil {
      * @throws IllegalAccessException
      * @throws InvocationTargetException
      */
-    private void findAndCreateBean(Class configClass, Map<String,Class> nameSpace, Constructor[] cons)
+    private void findAndCreateBean(Class<?> configClass, Map<String,Class<?>> nameSpace, Constructor[] cons)
         throws InstantiationException, IllegalAccessException, InvocationTargetException {
         int min = 10;
         Constructor minC = null;
@@ -221,7 +226,7 @@ public class JavaBeanUtil {
      * @param annotations 
      * @return  参数对象组
      */
-    private Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
+    private Object[] buildParam(Map<String,Class<?>> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	AssemblyDTO tmp = new AssemblyDTO();
@@ -276,7 +281,7 @@ public class JavaBeanUtil {
 		 * 处理数据库
 		 */
 		if(LazyMybatisMapperBean.useMybatis()) {
-			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
+			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getAllClassMap());
 			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
 				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
 				if(scan != null) {
@@ -291,7 +296,7 @@ public class JavaBeanUtil {
 		 * 处理dubbo服务类
 		 */
 		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
-			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass());
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getAllClassMap());
 			dubboServiceList.stream().forEach(dubboServiceClass ->{
 				LazyDubboBean.putAnnService(dubboServiceClass);
 			});

@@ -4,7 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.List;
+import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -14,8 +14,6 @@ import org.springframework.beans.factory.xml.DocumentLoader;
 import org.springframework.beans.factory.xml.ResourceEntityResolver;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
 import org.springframework.beans.factory.xml.XmlReaderContext;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
 import org.springframework.util.xml.SimpleSaxErrorHandler;
@@ -26,13 +24,12 @@ import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyBeanDefinitionDocumentReader;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,7 +39,7 @@ public class XMLResourceLoader implements JunitResourceLoader{
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
     private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
     
-	public static List<String> xmlPathList = Lists.newArrayList();
+	public static Set<String> xmlpathlist = Sets.newConcurrentHashSet();
 	protected final Log logger = LogFactory.getLog(getClass());
     private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
 
@@ -62,23 +59,17 @@ public class XMLResourceLoader implements JunitResourceLoader{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		
-		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class);
-		springBoot.forEach(startClass ->{
-			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
-			/**
-			 * 查看导入资源
-			 */
-			ImportResource resource = startClass.getAnnotation(ImportResource.class);
-			if(resource != null) {
-				XmlBeanUtil.getInstance().loadXmlPath(resource.value());
-			}
-		});
+	}
+	
+	public void loadXmlPath(String... xmlPath) {
+		for (String path : xmlPath) {
+			xmlpathlist.add(path);
+		}
 	}
 
 	@Override
 	public void initResource() {
-		xmlPathList.forEach(xml -> readNode(xml));
+		xmlpathlist.forEach(xml -> readNode(xml));
 	}
 	private void readNode(String xml) {
         Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
@@ -109,14 +100,14 @@ public class XMLResourceLoader implements JunitResourceLoader{
     }
 
 	@Override
-	public Object[] findCreateBeanFactoryClass(AssemblyDTO assemblyData) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public void loadResource(String... sourcePath) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	private static XMLResourceLoader loader = new XMLResourceLoader();
+	private XMLResourceLoader() {}
+	public static XMLResourceLoader getInstance() {
+		return loader;
 	}
 }

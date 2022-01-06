@@ -1,44 +1,31 @@
 package com.github.jklasd.test.util;
 
-import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.net.JarURLConnection;
-import java.net.URL;
-import java.net.URLConnection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.Properties;
 import java.util.Set;
-import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
+import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
-import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -55,7 +42,7 @@ public class ScanUtil {
 	public static final String SPRING_PACKAGE = "org.springframework";
 	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
-	static Map<String,Class> nameMap = Maps.newConcurrentMap();
+	static Map<String,Class<?>> nameMap = Maps.newConcurrentMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
 	
 	/**
@@ -73,58 +60,9 @@ public class ScanUtil {
 	public static boolean exists(Class record) {
 		return nameMap.values().contains(record);
 	}
-	public static void loadClass(File file,String rootPath){
-		File[] files = file.listFiles();
-		for (File f : files) {
-			if (f.isDirectory()) {
-				// 递归
-				loadClass(f,rootPath);
-			} else if (f.getName().endsWith(CLASS_SUFFIX)) {
-				String p = f.getPath();
-				File tmp = new File(rootPath);
-				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(".class", "");
-				// 查看是否class
-				try {
-					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
-					nameMap.put(p,c);
-				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-					log.error("未找到类=>{}",p);
-				}catch(Exception e) {
-					log.error("加载类异常",e);
-				}catch (VerifyError e) {
-					log.error("加载类校验异常>{}=>{}",p,e.getMessage());
-				}
-			}else {
-//				log.debug("=============其他文件=={}===========",file);
-			}
-		}
-	}
-	private static Set<String> classNames = Sets.newConcurrentHashSet();
-	public static Map<String,Map<String,Class>> pathForClass = Maps.newConcurrentMap();
-	public static Map<String, Class> findClassMap(String scanPath) {
-		if(pathForClass.containsKey(scanPath)) {
-			return pathForClass.get(scanPath);
-		}
-		Map<String,Class> nameMapTmp = Maps.newHashMap();
-		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->cn.contains(scanPath)).collect(Collectors.toList()))
-		.runAndWait(name->{
-			if(name.endsWith(CLASS_SUFFIX)) {
-				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
-				// 查看是否class
-				try {
-					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
-					nameMapTmp.put(name,c);
-				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-					if(TestUtil.getInstance().isScanClassPath(name)) {
-						log.error("加载{}=>未找到类{}",name,e.getMessage());
-					}
-				}catch(Error e) {
-					log.error("未找到类{}=>{}",name,e.getMessage());
-				}
-			}
-		});
-		pathForClass.put(scanPath, nameMapTmp);
-		return nameMapTmp;
+	
+	public static Map<String, Class<?>> findClassMap(String scanPath) {
+		return scaner.findClassMap(scanPath);
 	}
 	
 	private static boolean init = false;
@@ -132,139 +70,22 @@ public class ScanUtil {
 	 * 加载所有class，缓存起来
 	 * 类似加载 AbstractEmbeddedServletContainerFactory
 	 */
-	@SuppressWarnings("resource")
+	private static ClassScan scaner= ClassScan.getInstance();
 	public static void loadAllClass() {
-		try {
-			if(init) {
-				return;
-			}
-			init = true;
-//			log.debug("=============开始加载class=============");
-			Resource[] resources = getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
-//			log.debug("=============加载class={}============",resources.length);
-			for (Resource r : resources) {
-				URL url = r.getURL();
-				if("file".equals(url.getProtocol())) {
-					File f = r.getFile();
-//					log.debug("=======加载{}内的====class=========",f);
-					loadClass(f,url.getFile());
-				}else if("jar".equals(url.getProtocol())){
-					if(url.getPath().contains("jre/lib")) {
-						continue;
-					}
-//					log.debug("=======加载{}内的====class=========",url.getPath());
-					try {
-						URLConnection connection = url.openConnection();
-						if (connection instanceof JarURLConnection) {
-							JarFile jFile = ((JarURLConnection) connection).getJarFile();
-							JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
-							    String name = JarEntry.getName();
-                              if(name.contains(".class")) {
-                                  classNames.add(name.replace("/", ".").replace("\\", "."));
-                              }else {
-                                  if(name.contains("spring.handlers")) {
-									try {
-										InputStream is = jFile.getInputStream(JarEntry);
-										BufferedReader br = new BufferedReader(new InputStreamReader(is));
-										String line = null;
-										while ((line = br.readLine()) != null) {
-											String[] url_handler = line.split("=");
-											Class nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
-											if (nameSpaceHandlerC != null) {
-												XmlBeanUtil.getInstance().putNameSpace(
-														url_handler[0].replace("\\", ""), nameSpaceHandlerC);
-											}
-										}
-									} catch (IOException e) {
-										e.printStackTrace();
-									}
-                                  }else if(name.contains("spring.factories")) {
-									try {
-										InputStream is = jFile.getInputStream(JarEntry);
-										Properties prop = new Properties();
-										prop.load(new InputStreamReader(is));
-										String factoryClassNames = prop.getProperty("org.springframework.boot.autoconfigure.EnableAutoConfiguration");
-										if(StringUtils.isNotBlank(factoryClassNames)) {
-											loadAutoConfigClass(factoryClassNames.split(","));
-										}
-									} catch (IOException e) {
-										e.printStackTrace();
-									}
-                                  }
-                              }
-							});
-						}
-					} catch (Exception e) {
-						log.error("不能加载class文件=>{}",url.getPath());
-					}
-				}
-			}
-			List<Class<?>> springBoot = findClassWithAnnotation(SpringBootApplication.class);
-			springBoot.forEach(startClass ->{
-				TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
-				/**
-				 * 查看导入资源
-				 */
-				ImportResource resource = startClass.getAnnotation(ImportResource.class);
-				if(resource != null) {
-					XmlBeanUtil.getInstance().loadXmlPath(resource.value());
-				}
-			});
-			loadContextPathClass();
-			log.info("=============加载class结束=============");
-		} catch (IOException e1) {
-			log.error("读取文件异常",e1);
+		if(init) {
+			return;
 		}
+		init = true;
+		scaner.scan();
 	}
 //	private static Set<String> autoConfigClass = Sets.newConcurrentHashSet();
-	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
-	private static void loadAutoConfigClass(String... classNames) {
-		for(String className : classNames) {
-//			autoConfigClass.add(className);
-			Class<?> configC = loadClass(className);
-			if(configC!=null) {
-				autoConfigMap.put(className, loadClass(className));
-			}
-		}
-	}
+//	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
 	public static void loadContextPathClass() {
-		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
-		.runAndWait(name->{
-			if(name.endsWith(CLASS_SUFFIX) && !nameMap.containsKey(name)) {
-				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
-				// 查看是否class
-				try {
-					Class<?> c = ScanUtil.class.getClassLoader().loadClass(name);
-					nameMap.put(name,c);
-				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-					log.error("加载{}=>未找到类{}",name,e.getMessage());
-				}catch(Error e) {
-					log.error("未找到类{}=>{}",name,e.getMessage());
-				}
-			}
-		});
+		scaner.loadContextPathClass();
 	}
 	
 	public static Class findClassByName(String beanName) {
-		List<Class> list = Lists.newArrayList();
-		
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(nameMap.keySet()))
-		.runAndWait(name ->{
-			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
-				list.add(nameMap.get(name));
-			} else {
-				Class<?> tagClass = nameMap.get(name);
-				try {
-					String annValue = LazyBean.getBeanName(tagClass);
-					
-					if (Objects.equals(annValue, beanName)) {
-						list.add(tagClass);
-					}
-				} catch (Exception e) {
-				}
-			}
-		});
-		return list.isEmpty()?null:list.get(0);
+		return scaner.findClassByName(beanName);
 	}
 	
 	
@@ -325,7 +146,7 @@ public class ScanUtil {
         }
         return list.isEmpty() ? null : list.get(0);
     }
-	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class> classMap,String ClassName){
+	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class<?>> classMap,String ClassName){
 		Map<String,Class> tmp = Maps.newHashMap();
 		if(classMap!=null) {
 			tmp.putAll(classMap);
@@ -353,7 +174,7 @@ public class ScanUtil {
 	 * @return 返回实现 interfaceClass 的类
 	 */
 	public static List<Class<?>> findClassImplInterface(Class interfaceClass){
-		return findClassImplInterface(interfaceClass, null,null);
+		return scaner.findClassImplInterface(interfaceClass);
 	}
 	/**
 	 * 判断 c 是否是interfaceC的实现类
@@ -379,11 +200,11 @@ public class ScanUtil {
 	 * @param annotationType 注解类型
 	 * @return 存在 annotationType 注解的类
 	 */
-	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
-		return findClassWithAnnotation(annotationType, nameMap);
-	}
+//	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType){
+//		return findClassWithAnnotation(annotationType, nameMap);
+//	}
 	
-	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class> nameMapTmp){
+	public static List<Class<?>> findClassWithAnnotation(Class<? extends Annotation> annotationType,Map<String,Class<?>> nameMapTmp){
 		List<Class<?>> list = Lists.newArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(nameMapTmp.keySet().stream().filter(name->!notFoundSet.contains(name)).collect(Collectors.toList()))
 		.setException((name,e)->notFoundSet.add(name))
@@ -439,90 +260,10 @@ public class ScanUtil {
 		return Lists.newArrayList(list);
 	}
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
+	private static BeanCreaterScan beanFactoryScaner = BeanCreaterScan.getInstance();
 	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
-		Map<String,Class> finalNameMap = Maps.newHashMap();
-		Class tagC = assemblyData.getTagClass();
-		finalNameMap.putAll(nameMap);
-		finalNameMap.putAll(autoConfigMap);
-		if(assemblyData.getNameMapTmp() != null) {
-			finalNameMap.putAll(assemblyData.getNameMapTmp());
-		}
-		Object[] address = new Object[2];
-		Object[] tmp = new Object[2];
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(finalNameMap.keySet()).stream().filter(name->!notFoundSet.contains(name))
-				.collect(Collectors.toList()))
-		.setException((name,e)->{
-			notFoundSet.add(name);
-		}).setError((name,e)->{
-			notFoundSet.add(name);
-		}).runAndWait(name ->{
-//			if(name.contains("ElasticsearchConfiguration")) {
-//				log.info("断点");
-//			}
-			Class<?> c = finalNameMap.get(name);
-			if(/*Modifier.isPublic(c.getModifiers()) && */!c.isInterface()) {
-					Configuration configuration = c.getDeclaredAnnotation(Configuration.class);
-					if(configuration != null) {
-						Method[] methods = c.getDeclaredMethods();
-						for(Method m : methods) {
-							Bean beanA = m.getAnnotation(Bean.class);
-							if(beanA != null) {
-								if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
-								    String[] beanNames = beanA.value();
-							        for(String beanName : beanNames) {
-							            if(Objects.equals(beanName, assemblyData.getBeanName())) {
-							                address[0]=c;
-							                address[1]=m;
-							                break;
-							            }
-							        }
-								    beanNames = beanA.name();
-							        for(String beanName : beanA.name()) {
-							            if(Objects.equals(beanName, assemblyData.getBeanName())) {
-							                address[0]=c;
-							                address[1]=m;
-							                break;
-							            }
-							        }
-							        if(m.getName().equals(assemblyData.getBeanName()) && tagC!=null) {
-							        	if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
-											tmp[0] = c;
-											tmp[1] = m;
-											break;
-										}
-							        }
-								}
-								
-								if(tagC!=null) {
-									if(!tagC.isInterface() && m.getReturnType().isInterface()) {
-										break;
-									}
-									if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
-										tmp[0] = c;
-										tmp[1] = m;
-										break;
-									}
-								}
-							}
-						}
-					}
-			}
-		});
-		if(address[0] ==null || address[1]==null) {
-			return tmp;
-		}
-		return address;
+		return beanFactoryScaner.findCreateBeanFactoryClass(assemblyData);
 	}
-	
-	
-//	public static Object findCreateBeanFromFactory(Class classBean, String beanName,Map<String,Class> tmpBeanMap) {
-//		Object[] ojb_meth = findCreateBeanFactoryClass(classBean, beanName,tmpBeanMap);
-//		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-//			return null;
-//		}
-//		Object tagObj = JavaBeanUtil.buildBean((Class)ojb_meth[0],(Method)ojb_meth[1],classBean,beanName,tmpBeanMap);
-//		return tagObj;
-//	}
 	public static Resource getRecource(String location) throws IOException {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
@@ -540,63 +281,24 @@ public class ScanUtil {
 		}
 		return null;
 	}
-	private static Set<Class> existsProp = Sets.newHashSet();
+	private static PropResourceLoader propLoader = PropResourceLoader.getInstance();
 	public static boolean findCreateBeanForConfigurationProperties(Class tag) {
-		if(existsProp.contains(tag))
-			return true;
+		return propLoader.contains(tag);
+	}
+	private static Set<String> notFundClassSet = Sets.newConcurrentHashSet();
 	
-		autoConfigMap.entrySet().forEach(entry->{
-			readPropAnno(tag, Lists.newArrayList(entry.getValue()));
-		});
-		if(tag.getName().contains(SPRING_PACKAGE)) {
-			List<Class<?>> list = findClassWithAnnotation(EnableConfigurationProperties.class);
-			if(!list.isEmpty()) {
-				readPropAnno(tag, list);
-			}
-			if(!existsProp.contains(tag)) {
-				if(tag.getName().contains(BOOT_AUTO_CONFIG)) {
-					list = findClassWithAnnotation(EnableConfigurationProperties.class,findClassMap(BOOT_AUTO_CONFIG));
-					if(!list.isEmpty()) {
-						readPropAnno(tag, list);
-					}
-				}
-				if(!existsProp.contains(tag)) {
-					list = findClassWithAnnotation(EnableConfigurationProperties.class,findClassMap(SPRING_PACKAGE));
-					if(!list.isEmpty()) {
-						readPropAnno(tag, list);
-					}
-				}
-			}
-		}
-		return existsProp.contains(tag);
-	}
-	private static Set<Class> loadedPropAnn = Sets.newConcurrentHashSet();
-	private static boolean readPropAnno(Class tag, List<Class<?>> list) {
-		for(Class<?> enablePropC : list) {
-			if(!loadedPropAnn.contains(enablePropC)) {
-				try {
-					EnableConfigurationProperties ecp = (EnableConfigurationProperties) enablePropC.getDeclaredAnnotation(EnableConfigurationProperties.class);
-					if(ecp != null) {
-						for(Class c : ecp.value()) {
-							if(c == tag) {
-								existsProp.add(tag);
-								return true;
-							}
-						}
-					}
-					loadedPropAnn.add(enablePropC);
-				} catch (Exception e) {
-				}
-			}
-		}
-		return false;
-	}
 	public static Class loadClass(String className) {
+		if(notFundClassSet.contains(className))
+			return null;
 		try {
 			Class classObj = Class.forName(className, false, JavaBeanUtil.class.getClassLoader());
 			return classObj;
+		} catch (NoClassDefFoundError e) {
+			log.warn("#NoClassDefFoundError=>{}",className);
+			notFundClassSet.add(className);
 		} catch (ClassNotFoundException e) {
-			log.warn("#loadClass=>{}",className);
+			log.warn("#ClassNotFoundException=>{}",className);
+			notFundClassSet.add(className);
 		}
 		return null;
 	}
