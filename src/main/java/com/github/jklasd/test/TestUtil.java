@@ -57,7 +57,14 @@ public class TestUtil{
 		}
 	}
 
-	private TestUtil() {
+	private TestUtil() {}
+	private static volatile TestUtil bean;
+	public synchronized static TestUtil getInstance() {
+	    if(bean!=null) {
+	        return bean;
+	    }
+	    bean = new TestUtil();
+	    bean.setApplicationContext(null);
 	    try {
             Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");
             if(banner!=null) {
@@ -70,14 +77,6 @@ public class TestUtil{
         } catch (IOException e) {
              e.printStackTrace();
         }
-	}
-	private static volatile TestUtil bean;
-	public synchronized static TestUtil getInstance() {
-	    if(bean!=null) {
-	        return bean;
-	    }
-	    bean = new TestUtil();
-	    bean.setApplicationContext(null);
 	    return bean;
 	}
 	
@@ -100,8 +99,7 @@ public class TestUtil{
             return;
         }
 	    processed = true;
-	    log.info("====加载配置====");
-//		LazyMybatisMapperBean.getInstance().configure();
+	    log.debug("=========加载配置========");
 	    AnnotationResourceLoader.getInstance().initResource();
 	    XMLResourceLoader.getInstance().initResource();
 		JavaBeanUtil.process();
@@ -236,6 +234,7 @@ public class TestUtil{
 		TestUtil launch = getInstance();
 		launch.loadProp();
 		LogbackUtil.resetLog();
+		
 		ScanUtil.loadAllClass();
 		launch.processConfig();
 		//注入当前执行对象
@@ -246,23 +245,33 @@ public class TestUtil{
 		ConfigurableEnvironment cEnv = (ConfigurableEnvironment) getApplicationContext().getEnvironment();
 		Properties properties = new Properties();
 		for(String propPath : scanPropertiesList) {
-			try {
-				Resource propRes = ScanUtil.getRecourceAnyOne(propPath);
-				if (propRes != null && propRes.exists()) {
-					properties.load(propRes.getInputStream());
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
+			loadEnv(propPath, properties);
 		}
 		cEnv.getPropertySources().addLast(new PropertiesPropertySource("loadProp", properties));
 	}
 
 	public Boolean isScanClassPath(String cn) {
-//		if(cn.contains("SpringContextUtil")) {
-//			log.info("短点");
-//		}
 		return scanClassPath.stream().anyMatch(p -> cn.contains(p));
+	}
+	public void loadEnv(String propPath,String name) {
+		ConfigurableEnvironment cEnv = (ConfigurableEnvironment) getApplicationContext().getEnvironment();
+		Properties properties = new Properties();
+		loadEnv(propPath, properties);
+		if(name.contains("default")) {
+			cEnv.getPropertySources().addLast(new PropertiesPropertySource(name, properties));
+		}else {
+			cEnv.getPropertySources().addFirst(new PropertiesPropertySource(name, properties));
+		}
+	}
+	public void loadEnv(String propPath,Properties properties) {
+		try {
+			Resource propRes = ScanUtil.getRecourceAnyOne(propPath);
+			if (propRes != null && propRes.exists()) {
+				properties.load(propRes.getInputStream());
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

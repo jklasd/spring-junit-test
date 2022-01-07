@@ -22,6 +22,6 @@ public class AssemblyDTO {
 	private Map<String,Class<?>> nameMapTmp;
 	
 	public String toString(){
-	    return "tagClass=>"+tagClass+"beanName=>"+beanName+"classGeneric=>"+classGeneric;
+	    return "tagClass=>"+tagClass+";beanName=>"+beanName+";classGeneric=>"+classGeneric;
 	}
 }

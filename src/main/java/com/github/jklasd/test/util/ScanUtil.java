@@ -170,9 +170,11 @@ public class ScanUtil {
 	
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	private static BeanCreaterScan beanFactoryScaner = BeanCreaterScan.getInstance();
-	public synchronized static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
+
+	public /* synchronized */static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
 		return beanFactoryScaner.findCreateBeanFactoryClass(assemblyData);
 	}
+	
 	public static Resource getRecource(String location) throws IOException {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;

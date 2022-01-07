@@ -30,7 +30,7 @@ import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -45,7 +45,7 @@ public class ClassScan implements Scan{
 
 	private boolean init;
 	private static Set<String> classNames = Sets.newConcurrentHashSet();
-	Map<String,Class<?>> classPathMap = Maps.newConcurrentMap();
+	Map<String,Class<?>> componentClassPathMap = Maps.newConcurrentMap();
 	private static String CLASS_SUFFIX = ".class";
 	
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
@@ -57,6 +57,7 @@ public class ClassScan implements Scan{
 			return;
 		}
 		init = true;
+		log.debug("=========加载class========");
 		AtomicBoolean loadFaile = new AtomicBoolean();
 		try {
 			Resource[] resources = ScanUtil.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
@@ -108,7 +109,8 @@ public class ClassScan implements Scan{
 		if(loadFaile.get()) {
 			throw new JunitException();
 		}
-		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,allClassMap);
+		log.debug("=============加载class结束=============");
+		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
 		springBoot.forEach(startClass ->{
 			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
 			/**
@@ -119,12 +121,11 @@ public class ClassScan implements Scan{
 				XMLResourceLoader.getInstance().loadXmlPath(resource.value());
 			}
 		});
-		
 		loadContextPathClass();
-		log.info("=============加载class结束=============");
+		log.debug("=============加载class结束=============");
 	}
 	@Getter
-	static Map<String,Class<?>> allClassMap = Maps.newConcurrentMap();
+	static Map<String,Class<?>> applicationAllClassMap = Maps.newConcurrentMap();
 	public void loadClass(File file,String rootPath){
 		File[] files = file.listFiles();
 		for (File f : files) {
@@ -139,7 +140,7 @@ public class ClassScan implements Scan{
 				try {
 					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
-					allClassMap.put(p,c);
+					applicationAllClassMap.put(p,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
@@ -159,7 +160,7 @@ public class ClassScan implements Scan{
 //			if(name.contains("SpringContextUtil")) {
 //				log.info("短点");
 //			}
-			if(name.endsWith(CLASS_SUFFIX) && !classPathMap.containsKey(name)) {
+			if(name.endsWith(CLASS_SUFFIX) && !componentClassPathMap.containsKey(name)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
@@ -169,7 +170,7 @@ public class ClassScan implements Scan{
 					} catch (IOException e) {
 						log.error("scanConfigClass for loadContextPathClass");
 					}
-					classPathMap.putIfAbsent(name,c);
+					componentClassPathMap.putIfAbsent(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("加载{}=>未找到类{}",name,e.getMessage());
 				}catch(Error e) {
@@ -186,7 +187,7 @@ public class ClassScan implements Scan{
 
 	public List<Class<?>> findStaticMethodClass() {
 		Set<Class<?>> list = Sets.newHashSet();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classPathMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.setException((name,e)->{
 		    log.error("遗漏#findStaticMethodClass#=>{}",name);
 		})
@@ -194,7 +195,7 @@ public class ClassScan implements Scan{
 //			if(name.contains("SpringContextUtil")) {
 //				log.info("短点");
 //			}
-			Class<?> c = classPathMap.get(name);
+			Class<?> c = componentClassPathMap.get(name);
 			if(c.getAnnotations().length>0) {
 				if(c.isAnnotationPresent(Configuration.class)
 						|| c.isAnnotationPresent(Service.class)
@@ -222,14 +223,14 @@ public class ClassScan implements Scan{
 	public Class<?> findClassByName(String beanName) {
 		List<Class<?>> list = Lists.newArrayList();
 		
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classPathMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
-				list.add(classPathMap.get(name));
+				list.add(componentClassPathMap.get(name));
 			} else {
-				Class<?> tagClass = classPathMap.get(name);
+				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
-					String annValue = LazyBean.getBeanName(tagClass);
+					String annValue = BeanNameUtil.getBeanName(tagClass);
 					
 					if (Objects.equals(annValue, beanName)) {
 						list.add(tagClass);
@@ -242,9 +243,9 @@ public class ClassScan implements Scan{
 	}
 	public List<Class<?>> findClassImplInterface(Class<?> interfaceClass) {
 		List<Class<?>> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classPathMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
-			Class<?> tmpClass = classPathMap.get(name);
+			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isImple(tmpClass,interfaceClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
@@ -281,13 +282,13 @@ public class ClassScan implements Scan{
 		return nameMapTmp;
 	}
 	public Boolean isInScanPath(Class<?> requiredType) {
-		return classPathMap.containsKey(requiredType.getName());
+		return componentClassPathMap.containsKey(requiredType.getName());
 	}
 	public List<Class<?>> findClassExtendAbstract(Class<?> abstractClass) {
 		List<Class<?>> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(classPathMap.keySet()))
+		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
-			Class<?> tmpClass = classPathMap.get(name);
+			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isExtends(tmpClass,abstractClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {

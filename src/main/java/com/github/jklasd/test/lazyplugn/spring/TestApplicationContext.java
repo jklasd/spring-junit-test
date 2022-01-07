@@ -31,6 +31,7 @@ import org.springframework.core.io.ProtocolResolver;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -492,7 +493,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
 	    if(newBean!=null) {
 	        if(StringUtils.isBlank(beanName)) {
-                beanName = LazyBean.getBeanName(beanClass);
+                beanName = BeanNameUtil.getBeanName(beanClass);
                 if(beanName == null) {
                     return;
                 }

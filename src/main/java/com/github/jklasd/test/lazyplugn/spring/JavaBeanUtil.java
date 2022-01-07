@@ -30,6 +30,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
@@ -63,7 +64,7 @@ public class JavaBeanUtil {
 	 */
     public Object buildBean(Class<?> configClass, Method method, AssemblyDTO assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
-	        assemblyData.setBeanName(LazyBean.getBeanName(assemblyData.getTagClass()));
+	        assemblyData.setBeanName(BeanNameUtil.getBeanName(assemblyData.getTagClass()));
 	    }
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
@@ -281,7 +282,7 @@ public class JavaBeanUtil {
 		 * 处理数据库
 		 */
 		if(LazyMybatisMapperBean.useMybatis()) {
-			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getAllClassMap());
+			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getApplicationAllClassMap());
 			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
 				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
 				if(scan != null) {
@@ -296,7 +297,7 @@ public class JavaBeanUtil {
 		 * 处理dubbo服务类
 		 */
 		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
-			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getAllClassMap());
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getApplicationAllClassMap());
 			dubboServiceList.stream().forEach(dubboServiceClass ->{
 				LazyDubboBean.putAnnService(dubboServiceClass);
 			});

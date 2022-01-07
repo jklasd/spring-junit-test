@@ -7,7 +7,6 @@ import java.util.concurrent.TimeUnit;
 
 import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 final class JunitThreadPoolUtils {
 	private JunitThreadPoolUtils() {}
 	private static volatile ThreadPoolExecutor IO_EXECUTOR;
@@ -17,7 +16,7 @@ final class JunitThreadPoolUtils {
 	private final static int CPU_CORE_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
 	private final static int CPU_MAX_QUEUE_COUNT = 2000;
 	
-	private final static int ALIVE_TIME = 600;
+	private final static int ALIVE_TIME = 3;
 	public static final void commonRun(Runnable runnable){
 		if (IO_EXECUTOR == null) {
 			initCommonExecutor();

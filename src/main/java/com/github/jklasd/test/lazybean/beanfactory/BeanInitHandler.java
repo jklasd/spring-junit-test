@@ -123,9 +123,9 @@ public class BeanInitHandler {
                 }else {
                 	beanName = m.getName();
                 }
-                if(beanName.equals("buildConsumerConfig")) {
-                	log.debug("短点");
-                }
+//                if(beanName.equals("buildConsumerConfig")) {
+//                	log.debug("短点");
+//                }
                 Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
                 if(exitBean!=null) {
                 	return;

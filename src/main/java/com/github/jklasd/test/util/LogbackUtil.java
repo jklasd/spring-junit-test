@@ -1,7 +1,6 @@
 package com.github.jklasd.test.util;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.Charset;
 
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -24,7 +23,6 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
-import lombok.extern.slf4j.Slf4j;
 
 public class LogbackUtil {
 	private static Level level = Level.INFO;
