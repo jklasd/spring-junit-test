@@ -71,7 +71,7 @@ public class XMLResourceLoader implements JunitResourceLoader{
 	public void initResource() {
 		xmlpathlist.forEach(xml -> readNode(xml));
 	}
-	private void readNode(String xml) {
+	public void readNode(String xml) {
         Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
         if (file != null) {
             try {

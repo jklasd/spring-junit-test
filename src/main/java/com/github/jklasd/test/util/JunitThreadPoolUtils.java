@@ -5,8 +5,6 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-import lombok.extern.slf4j.Slf4j;
-
 final class JunitThreadPoolUtils {
 	private JunitThreadPoolUtils() {}
 	private static volatile ThreadPoolExecutor IO_EXECUTOR;

@@ -53,20 +53,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class XmlBeanUtil {
     private XmlBeanUtil() {}
-    private DocumentLoader documentLoader = new DefaultDocumentLoader();
-    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
-    
-	public static List<String> xmlPathList = Lists.newArrayList();
-
-	public synchronized void loadXmlPath(String... xmlPath) {
-		for (String path : xmlPath) {
-			xmlPathList.add(path);
-		}
-	}
+//    private DocumentLoader documentLoader = new DefaultDocumentLoader();
+//    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
+//    
+//	public static List<String> xmlPathList = Lists.newArrayList();
+//
+//	public synchronized void loadXmlPath(String... xmlPath) {
+//		for (String path : xmlPath) {
+//			xmlPathList.add(path);
+//		}
+//	}
 	
-	public void process() {
-		xmlPathList.forEach(xml -> readNode(xml));
-	}
+//	public void process() {
+//		xmlPathList.forEach(xml -> readNode(xml));
+//	}
 	/**
 	 * 转换类型
 	 * @param attr 赋值源数据
@@ -174,25 +174,25 @@ public class XmlBeanUtil {
     }
     
     protected final Log logger = LogFactory.getLog(getClass());
-    private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
+//    private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
 
-    public void readNode(String xml) {
-        Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
-        if (file != null) {
-            try {
-                log.info("load:{}",file.getFile().getPath());
-                XmlReaderContext context = xmlReader.createReaderContext(file);
-                LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
-                Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
-                    errorHandler,(int)InvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
-                
-                parsor.registerBeanDefinitions(document,context);
-            } catch (Exception e) {
-                log.error("加载xml", e);
-                throw new RuntimeException("加载xml【"+file+"】失败");
-            }
-        }
-    }
+//    public void readNode(String xml) {
+//        Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
+//        if (file != null) {
+//            try {
+//                log.info("load:{}",file.getFile().getPath());
+//                XmlReaderContext context = xmlReader.createReaderContext(file);
+//                LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
+//                Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
+//                    errorHandler,(int)InvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
+//                
+//                parsor.registerBeanDefinitions(document,context);
+//            } catch (Exception e) {
+//                log.error("加载xml", e);
+//                throw new RuntimeException("加载xml【"+file+"】失败");
+//            }
+//        }
+//    }
     
     private Map<String, LazyBeanInitProcessImpl> tmpAttrMap = Maps.newConcurrentMap();
     public LazyBeanInitProcessImpl getProcess(String key) {
