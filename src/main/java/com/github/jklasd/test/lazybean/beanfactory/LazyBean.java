@@ -279,7 +279,7 @@ public class LazyBean {
 							Class<?> c = Class.forName(item[0].getTypeName());
 							List<?> list = findListBean(c);
 							setObj(f, obj, list);
-							log.info("注入集合=>{},{}个对象",f.getName(),list.size());
+							log.info("{}注入集合=>{},{}个对象",obj.getClass(),f.getName(),list.size());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
