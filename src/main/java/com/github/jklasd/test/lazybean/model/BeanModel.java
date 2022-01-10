@@ -4,6 +4,7 @@ import java.lang.reflect.Type;
 import java.util.Map;
 
 import org.springframework.beans.MutablePropertyValues;
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 
 import lombok.Data;
 
@@ -15,5 +16,6 @@ public class BeanModel {
     private Type[] classGeneric;
     private boolean xmlBean;
     private Map<String,String> beanMethods;
+    private ConstructorArgumentValues constructorArgs;
     private boolean isThrows;
 }

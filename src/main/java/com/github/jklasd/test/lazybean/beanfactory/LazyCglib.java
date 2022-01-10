@@ -5,6 +5,9 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
+import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder;
+import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -13,6 +16,7 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -97,8 +101,13 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             else {
             	if(getArgumentTypes()[i].getAnnotations().length>0) {
             		objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
-            	}else {
-            		log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+            	}else{
+            		if(beanModel.isXmlBean() && beanModel.getConstructorArgs()!=null) {
+            			ConstructorArgumentValues args = beanModel.getConstructorArgs();
+            			objes[i] = XmlBeanUtil.getInstance().conversionValue(args.getIndexedArgumentValues().get(i).getValue());
+            		}else {
+            			log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+            		}
             	}
             }
         }

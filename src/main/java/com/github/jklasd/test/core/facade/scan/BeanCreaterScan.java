@@ -35,11 +35,6 @@ public class BeanCreaterScan implements Scan{
 		Object[] tmp = new Object[2];
 		final String beanName = assemblyData.getBeanName();
 		final Class<?> tagC = assemblyData.getTagClass();
-//		DebugObjectView.readView(()->{
-//			Lists.newArrayList(thridAutoConfigClass).stream().filter(c->c.getName().contains("com.yomahub")).forEach(c->{
-//				log.warn("=================重试查找bean=configClass={}==={}============",c,assemblyData);
-//			});
-//		});
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(thridAutoConfigClass))
 		.setError((c,e)->{
 			log.error(c+"处理异常",e);
@@ -112,10 +107,12 @@ public class BeanCreaterScan implements Scan{
 	
 	public Object[] findCreateBeanFactoryClass(AssemblyDTO assemblyData) {
 		if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
-			return findClassMethodByBeanName(assemblyData);
-		}else {
-			return findClassMethodByResultType(assemblyData);
+			Object[] result = findClassMethodByBeanName(assemblyData);
+			if(result[0] != null) {
+				return result;
+			}
 		}
+		return findClassMethodByResultType(assemblyData);
 	}
 	
 	private volatile Set<Class<?>> thridAutoConfigClass = Sets.newConcurrentHashSet();

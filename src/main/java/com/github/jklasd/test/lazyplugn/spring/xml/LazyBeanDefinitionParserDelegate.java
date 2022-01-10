@@ -58,13 +58,9 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
             if(parser.containsKey(namespaceUri)) {
                 parser.get(namespaceUri).handBeanDef(ele,beanDef);
             }else {
-                log.info("beanDef=>{},=>{},pv=>{}",ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
                 Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
                 String beanName = ele.hasAttribute("id") ?ele.getAttribute("id"):BeanNameUtil.getBeanName(beanC);
-//                XmlBeanUtil.getInstance().addClass(beanC);
-                
-//                String key = beanDef.getBeanClassName() +"-" + beanName;
-//                XmlBeanUtil.getInstance().loadAttrMapProcess(key);
+                log.info("beanName=>{};beanDef=>{},=>{},pv=>{};",beanName,ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
                 
                 BeanModel beanModel = new BeanModel();
                 beanModel.setXmlBean(true);
@@ -72,6 +68,7 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
 //                beanModel.setBeanClassName(beanDef.getBeanClassName());
                 beanModel.setBeanName(beanName);
                 beanModel.setPropValue(beanDef.getPropertyValues());
+                beanModel.setConstructorArgs(beanDef.getConstructorArgumentValues());
                 LazyBean.getInstance().buildProxy(beanModel);
 //                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
                 
