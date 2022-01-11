@@ -10,6 +10,7 @@ import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -33,6 +34,7 @@ import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.InvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -90,25 +92,22 @@ public class JavaBeanUtil {
 	}
     
     public Object getExists(Method method) {
-    	//查看是否已经执行过来
-    	Bean aw = method.getAnnotation(Bean.class);
-        String beanName = null;
-        if(aw.value().length>0) {
-        	beanName = aw.value()[0];
-        }else if(aw.name().length>0){
-        	beanName = aw.name()[0];
-        }else {
-        	beanName = method.getName();
-        }
-//        if(beanName.equals("buildConsumerConfig")) {
-//        	log.debug("短点");
-//        }
-//        需要过滤代理对象
-        Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
-        if(exitBean!=null) {
-        	return exitBean;
-        }
-        return null;
+    	return StackOverCheckUtil.exec(()->{
+    		//查看是否已经执行过来
+        	Bean aw = method.getAnnotation(Bean.class);
+            String beanName = null;
+            if(aw.value().length>0) {
+            	beanName = aw.value()[0];
+            }else if(aw.name().length>0){
+            	beanName = aw.name()[0];
+            }else {
+            	beanName = method.getName();
+            }
+            if(TestUtil.getInstance().getApplicationContext().containsBean(beanName)) {
+            	return TestUtil.getInstance().getApplicationContext().getBean(beanName);
+            }
+            return null;
+    	},method);
     }
     
     /**

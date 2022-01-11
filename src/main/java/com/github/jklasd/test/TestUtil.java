@@ -142,6 +142,10 @@ public class TestUtil{
 			} else if (classD == Environment.class) {
 				return getApplicationContext().getEnvironment();
 			}
+			if (beanName != null) {
+				Object obj = getApplicationContext().getBean(beanName);
+				return obj;
+			}
 			Object obj = getApplicationContext().getBean(classD);
 			return obj;
 		} catch (NullPointerException e) {

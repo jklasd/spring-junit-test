@@ -5,10 +5,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,7 +25,13 @@ public class LazyImple extends AbastractLazyProxy implements InvocationHandler {
 	private Type[] classGeneric;
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] param) throws Throwable {
-	    return commonIntercept(proxy, method, param);
+		return StackOverCheckUtil.observeIgnore(()->{
+    		try {
+				return commonIntercept(proxy, method, param);
+			} catch (Throwable e) {
+				throw new JunitException(e);
+			}
+    	});
 	}
 	
     @Override

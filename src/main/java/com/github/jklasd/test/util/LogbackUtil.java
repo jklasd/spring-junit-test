@@ -2,11 +2,14 @@ package com.github.jklasd.test.util;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.util.UUID;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -23,10 +26,12 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class LogbackUtil {
 	private static Level level = Level.INFO;
-	private static boolean useLocal = true;
+	private static boolean useLocal = false;
 	public static void setJunitLevel(Level level) {
 	    LogbackUtil.level = level;
 	    useLocal = false;
@@ -49,7 +54,7 @@ public class LogbackUtil {
                 ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
                 appender.setName("CONSOLE");
                 PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-                encoder.setPattern("[%-5level][%contextName]%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread][%X{traceId}] %logger - %msg%n");
+                encoder.setPattern("[%-5level][%contextName] %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%X{traceId}] %logger - %msg%n");
                 encoder.setCharset(Charset.forName("UTF-8"));
                 encoder.setContext(context);
                 
@@ -92,5 +97,19 @@ public class LogbackUtil {
         }
         jc.doConfigure(logback.getInputStream());
     }
+    private static volatile boolean test = true;
+	public static void setTraceId() {
+		if(StringUtils.isBlank(MDC.get("traceId"))) {
+			MDC.put("traceId", UUID.randomUUID().toString());
+		}
+		if(test) {
+			test = false;
+			log.info("test");
+		}
+	}
+	
+	public static void clearTraceId() {
+		MDC.remove("traceId");
+	}
 
 }

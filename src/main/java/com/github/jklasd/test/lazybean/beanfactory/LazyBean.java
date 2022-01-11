@@ -41,6 +41,7 @@ import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.DebugObjectView;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -106,31 +107,30 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public Object buildProxy(BeanModel beanModel) {
-//	    if(beanModel.getTagClass().getName().contains("MongoClient")) {
-//            log.debug("断点");
-//        }
-	    Object obj = null;
-	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
-	        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
-	        if(obj!=null) {
-	            return obj;
-	        }
-	    }else {
-	        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
-            if(obj!=null) {
-                return obj;
-            }
-            beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
-	    }
-	    
-	    if(beanModel.getTagClass() == ApplicationContext.class
-	        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
-	        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
-	        return util.getApplicationContext();
-	    }
-	    obj = createBean(beanModel);
-	    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
-        return obj;
+		return StackOverCheckUtil.observeIgnore(()->{
+			Object obj = null;
+		    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
+		        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
+		        if(obj!=null) {
+		            return obj;
+		        }
+		    }else {
+		        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
+	            if(obj!=null) {
+	                return obj;
+	            }
+	            beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
+		    }
+		    
+		    if(beanModel.getTagClass() == ApplicationContext.class
+		        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
+		        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
+		        return util.getApplicationContext();
+		    }
+		    obj = createBean(beanModel);
+		    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+	        return obj;
+		});
 	}
     private static Object createBean(BeanModel beanModel) {
         Class<?> beanClass = beanModel.getTagClass();
@@ -584,12 +584,14 @@ public class LazyBean {
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
-		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-			return null;
-		}
-		Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
-		return tagObj;
+		return StackOverCheckUtil.observeIgnore(()->StackOverCheckUtil.observe(()->{
+			Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
+			if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+				return null;
+			}
+			Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
+			return tagObj;
+		}, assemblyData));
 	}
 	
 	/**
