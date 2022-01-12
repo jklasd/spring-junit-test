@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LogbackUtil {
 	private static Level level = Level.INFO;
-	private static boolean useLocal = false;
+	private static boolean useLocal = true;
 	public static void setJunitLevel(Level level) {
 	    LogbackUtil.level = level;
 	    useLocal = false;
@@ -97,15 +97,15 @@ public class LogbackUtil {
         }
         jc.doConfigure(logback.getInputStream());
     }
-    private static volatile boolean test = true;
+//    private static volatile boolean test = true;
 	public static void setTraceId() {
 		if(StringUtils.isBlank(MDC.get("traceId"))) {
 			MDC.put("traceId", UUID.randomUUID().toString());
 		}
-		if(test) {
-			test = false;
-			log.info("test");
-		}
+//		if(test) {
+//			test = false;
+//			log.info("test");
+//		}
 	}
 	
 	public static void clearTraceId() {

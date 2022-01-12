@@ -31,6 +31,7 @@ import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.BeanNameUtil;
+import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -170,7 +171,11 @@ public class ClassScan implements Scan{
 					} catch (IOException e) {
 						log.error("scanConfigClass for loadContextPathClass");
 					}
-					componentClassPathMap.putIfAbsent(name,c);
+					
+					if(CheckUtil.checkClassExists(c)
+							&& CheckUtil.checkProp(c)) {
+						componentClassPathMap.putIfAbsent(name,c);
+					}
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("加载{}=>未找到类{}",name,e.getMessage());
 				}catch(Error e) {

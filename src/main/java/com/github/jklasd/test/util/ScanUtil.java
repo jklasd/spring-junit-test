@@ -205,10 +205,10 @@ public class ScanUtil {
 			Class classObj = Class.forName(className, false, JavaBeanUtil.class.getClassLoader());
 			return classObj;
 		} catch (NoClassDefFoundError e) {
-			log.warn("#NoClassDefFoundError=>{}",className);
+			log.debug("#NoClassDefFoundError=>{}",className);
 			notFundClassSet.add(className);
 		} catch (ClassNotFoundException e) {
-			log.warn("#ClassNotFoundException=>{}",className);
+			log.debug("#ClassNotFoundException=>{}",className);
 			notFundClassSet.add(className);
 		}
 		return null;

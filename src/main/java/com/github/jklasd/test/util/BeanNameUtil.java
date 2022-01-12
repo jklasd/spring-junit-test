@@ -4,6 +4,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class BeanNameUtil {
 
 	public synchronized static String getBeanName(Class<?> classBean) {
@@ -19,9 +22,9 @@ public class BeanNameUtil {
 		    return null;
 		}
 		if(classBean.getSimpleName().length()<1) {
-//		    log.info("name=>{}",classBean.getSimpleName());
 		    return null;
 		}
+		
 		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
 	}
 	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {

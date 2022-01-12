@@ -177,7 +177,7 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
         if(tagertObj!=null) {
             LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
         }
-         return tagertObj;
+        return tagertObj;
     }
     /**
      * 构建实际对象

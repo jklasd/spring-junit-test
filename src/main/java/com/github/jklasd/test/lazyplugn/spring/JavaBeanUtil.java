@@ -297,9 +297,9 @@ public class JavaBeanUtil {
 		 */
 		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
 			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getApplicationAllClassMap());
-			dubboServiceList.stream().forEach(dubboServiceClass ->{
-				LazyDubboBean.putAnnService(dubboServiceClass);
-			});
+//			dubboServiceList.stream().forEach(dubboServiceClass ->{
+//				LazyDubboBean.putAnnService(dubboServiceClass);
+//			});
 		}
 	}
 }
