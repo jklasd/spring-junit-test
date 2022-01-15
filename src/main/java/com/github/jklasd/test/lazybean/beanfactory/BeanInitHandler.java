@@ -1,13 +1,10 @@
 package com.github.jklasd.test.lazybean.beanfactory;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
@@ -20,10 +17,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.ScanUtil;
-import com.google.common.collect.Maps;
-import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -135,7 +130,7 @@ public class BeanInitHandler {
                 if(tmp!=null) {
                     ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
                     if(confPro!=null) {
-                        LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tmp,confPro);
+                    	LazyConfPropBind.processConfigurationProperties(tmp,confPro);
                     }
                     TestUtil.getInstance().getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
                 }

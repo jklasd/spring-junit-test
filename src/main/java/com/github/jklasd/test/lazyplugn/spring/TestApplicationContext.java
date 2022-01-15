@@ -23,6 +23,7 @@ import org.springframework.context.ApplicationListener;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.MessageSourceResolvable;
 import org.springframework.context.NoSuchMessageException;
+import org.springframework.context.support.PropertySourcesPlaceholderConfigurer;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -141,8 +142,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
 	@Override
 	public <T> Map<String, T> getBeansOfType(Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
 			throws BeansException {
-		// TODO Auto-generated method stub
-		return null;
+		return getBeanFactory().getBeansOfType(type, includeNonSingletons, allowEagerInit);
 	}
 
 	public String[] getBeanNamesForAnnotation(Class<? extends Annotation> annotationType) {
@@ -499,6 +499,7 @@ public class TestApplicationContext implements ConfigurableApplicationContext{
                 }
             }
 	        if(!beanDefinitionMap.containsKey(beanName)) {
+	        	getBeanFactory().registerSingleton(beanName, newBean);
 	            beanDefinitionMap.put(beanName, newBean);
 	        }
 	        if(beanClass.isInterface()) {

@@ -6,8 +6,6 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
-import org.springframework.beans.factory.config.ConstructorArgumentValues.ValueHolder;
-import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
@@ -16,7 +14,7 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
@@ -171,7 +169,7 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             }
             
             if(propConfig!=null && tagertObj!=null) {
-                LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
+            	LazyConfPropBind.processConfigurationProperties(tagertObj,propConfig);
             }
         }
         if(tagertObj!=null) {
