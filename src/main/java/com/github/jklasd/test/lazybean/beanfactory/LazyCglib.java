@@ -10,10 +10,8 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
-import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -130,13 +128,9 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
     }
     
     @Override
-    public Object intercept(Object poxy, Method method, Object[] param, MethodProxy arg3) throws JunitException {
-    	return StackOverCheckUtil.observeIgnore(()->{
-    		try {
-				return commonIntercept(poxy, method, param);
-			} catch (Throwable e) {
-				throw new JunitException(e);
-			}
+    public Object intercept(Object poxy, Method method, Object[] param, MethodProxy arg3) throws Throwable {
+    	return StackOverCheckUtil.observeThrowException(()->{
+    		return commonIntercept(poxy, method, param);
     	});
     }
     

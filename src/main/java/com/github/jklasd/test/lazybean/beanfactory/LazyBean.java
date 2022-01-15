@@ -109,7 +109,7 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public Object buildProxy(BeanModel beanModel) {
-		return StackOverCheckUtil.observeIgnore(()->{
+		return StackOverCheckUtil.observeIgnoreException(()->{
 			Object obj = null;
 		    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
 		        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
@@ -310,26 +310,26 @@ public class LazyBean {
 			}
 		}
     }
-	private static Class<?> getParamType(Method m, Type paramType) {
-		if(paramType instanceof ParameterizedType) {
-			ParameterizedType  pType = (ParameterizedType) paramType;
-			Type[] item = pType.getActualTypeArguments();
-			if(item.length == 1) {
-				//处理一个集合注入
-				try {
-					log.debug("获取paramType泛型类型=>{}",paramType);
-					return Class.forName(item[0].getTypeName());
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-			}else {
-				log.info("其他特殊情况");
-			}
-		}else {
-			return (Class<?>) paramType;
-		}
-		return null;
-	}
+//	private static Class<?> getParamType(Method m, Type paramType) {
+//		if(paramType instanceof ParameterizedType) {
+//			ParameterizedType  pType = (ParameterizedType) paramType;
+//			Type[] item = pType.getActualTypeArguments();
+//			if(item.length == 1) {
+//				//处理一个集合注入
+//				try {
+//					log.debug("获取paramType泛型类型=>{}",paramType);
+//					return Class.forName(item[0].getTypeName());
+//				} catch (ClassNotFoundException e) {
+//					e.printStackTrace();
+//				}
+//			}else {
+//				log.info("其他特殊情况");
+//			}
+//		}else {
+//			return (Class<?>) paramType;
+//		}
+//		return null;
+//	}
 
 	public Object processStatic(Class<?> c) {
 		try {
@@ -555,6 +555,9 @@ public class LazyBean {
 //			if(!cL.isEmpty()) {
 //				return LazyBean.getInstance().buildProxy(cL.get(0));
 //			}
+//			if(interfaceClass == ObjectProvider.class) {
+//				return new ObjectProviderImpl(classGeneric[0]);
+//			}
 			log.error("****************SPRING_PACKAGE 需处理**{}**************",interfaceClass);
 			return null;
 		}
@@ -575,7 +578,7 @@ public class LazyBean {
 	}
 	public static Object refindCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		DebugObjectView.readView(()->{
-			log.warn("=================重试查找bean=={}=={}=============",classBean,beanName);
+			log.debug("=================重试查找bean=={}=={}=============",classBean,beanName);
 		});
 		AssemblyDTO asse = new AssemblyDTO();
 		asse.setTagClass(classBean);
@@ -583,7 +586,7 @@ public class LazyBean {
 		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
 		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			DebugObjectView.readView(()->{
-				log.warn("=================重试查找bean失败2=={}===============",asse);
+				log.debug("=================重试查找bean失败2=={}===============",asse);
 			});
 			return null;
 		}
@@ -606,7 +609,7 @@ public class LazyBean {
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
-		return StackOverCheckUtil.observeIgnore(()->StackOverCheckUtil.observe(()->{
+		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
 			Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
 			if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 				return null;
@@ -623,6 +626,9 @@ public class LazyBean {
 	 */
 	@SuppressWarnings("unchecked")
 	public static List findListBean(Class<?> requiredType) {
+		/*
+		 * TODO List 处理
+		 */
 		List list = Lists.newArrayList();
 		List<Class<?>> tags = null;
 		if(requiredType.isInterface()) {

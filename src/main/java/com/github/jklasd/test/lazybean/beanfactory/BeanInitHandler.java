@@ -9,6 +9,8 @@ import java.util.List;
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -17,6 +19,8 @@ import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.Bean;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.ScanUtil;
 
@@ -86,7 +90,7 @@ public class BeanInitHandler {
 				}
 			}else if(m.getAnnotation(Autowired.class) != null) {
 			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
-			    Object[] param = processParam(m, paramTypes, bName);
+			    Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
 //                if(tmp!=null) {
 //                    util.getApplicationContext().registBean(bName, tmp, tmp.getClass());
@@ -103,7 +107,8 @@ public class BeanInitHandler {
 			    
             }else if(m.getAnnotation(Resource.class) != null) {
                 Resource aw = m.getAnnotation(Resource.class);
-                Object[] param = processParam(m, paramTypes, aw.name());
+                String beanName = aw.name();
+                Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
                 if(tmp!=null) {
 //                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
@@ -125,7 +130,10 @@ public class BeanInitHandler {
                 if(exitBean!=null) {
                 	return;
                 }
-                Object[] param = processParam(m, paramTypes, null);
+                if (!m.isAccessible()) {
+					m.setAccessible(true);
+				}
+                Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
                 if(tmp!=null) {
                     ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
@@ -139,41 +147,37 @@ public class BeanInitHandler {
 	}
 	
 
-    private Object[] processParam(Method m, Type[] paramTypes, String bName) {
-        Object[] param = new Object[paramTypes.length];
-        for(int i=0;i<paramTypes.length;i++) {
-            Class<?> c = getParamType(m, paramTypes[i]);
-            if(paramTypes[i] == List.class) {
-                param[i] = LazyBean.findListBean(c);
-            }else {
-                if(LazyBean.existBean(c) && TestUtil.getInstance().getExistBean(c, m.getName())!=null) {
-                    param[i] = TestUtil.getInstance().getExistBean(c, m.getName());
-                }else {
-                    param[i] = LazyBean.getInstance().buildProxy(c,bName);
-                }
-            }
-        }
-        return param;
+    private Object[] processParam(Method m, Type[] paramTypes) {
+    	Object[] param = new Object[paramTypes.length];
+    	try {
+    		for(int i=0;i<paramTypes.length;i++) {
+    			BeanModel bm = getParamType(m, paramTypes[i]);
+//    			if(bm.getTagClass() == List.class) {
+//    				param[i] = LazyBean.findListBean(bm.getClassGeneric()[0].getClass());
+//    			}else{
+    				param[i] = LazyBean.getInstance().buildProxy(bm);
+//    			}
+    		}
+    		return param;
+    	}catch(Exception e) {
+    		throw new JunitException(e,true);
+    	}
     }
-    
-    private static Class<?> getParamType(Method m, Type paramType) {
-		if(paramType instanceof ParameterizedType) {
-			ParameterizedType  pType = (ParameterizedType) paramType;
+    private static BeanModel getParamType(Method m, Type paramType) {
+    	BeanModel model = new BeanModel();
+    	if(paramType instanceof ParameterizedType) {
+    		ParameterizedType  pType = (ParameterizedType) paramType;
 			Type[] item = pType.getActualTypeArguments();
 			if(item.length == 1) {
 				//处理一个集合注入
-				try {
-					log.info("注入集合=>{}",m.getName());
-					return Class.forName(item[0].getTypeName());
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
+				model.setTagClass((Class<?>) pType.getRawType());
+				model.setClassGeneric(item);
 			}else {
 				log.info("其他特殊情况");
 			}
-		}else {
-			return (Class<?>) paramType;
+    	}else {
+    		model.setTagClass((Class<?>) paramType);
 		}
-		return null;
-	}
+    	return model;
+    }
 }
