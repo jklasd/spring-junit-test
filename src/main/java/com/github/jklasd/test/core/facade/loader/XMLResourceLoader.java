@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class XMLResourceLoader implements JunitResourceLoader{
 	
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
-    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
+    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory(LazyListableBeanFactory.XML_TYPE));
     
 	public static Set<String> xmlpathlist = Sets.newConcurrentHashSet();
 	protected final Log logger = LogFactory.getLog(getClass());

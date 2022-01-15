@@ -14,7 +14,6 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
 import org.springframework.beans.factory.UnsatisfiedDependencyException;
-import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.Environment;
@@ -25,6 +24,7 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
@@ -111,23 +111,15 @@ public class TestUtil{
 		/**
 		 * 不能是抽象类
 		 */
-		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers()))
+		list.stream().filter(classItem -> classItem != getClass() 
+				&& !Modifier.isAbstract(classItem.getModifiers())
+				&& BeanFactoryProcessor.getInstance().notBFProcessor(classItem))
 				.forEach(classItem -> {
 					log.debug("static class =>{}", classItem);
-//					if(classItem.getName().contains("HandleMessageUtil")) {
-//					    System.out.println("断点");
-//					}
-					if(ScanUtil.isImple(classItem, BeanFactoryPostProcessor.class)) {
-						try {
-							BeanFactoryPostProcessor obj = (BeanFactoryPostProcessor) classItem.newInstance();
-							obj.postProcessBeanFactory(getApplicationContext().getLazyBeanFactory());
-						} catch (InstantiationException | IllegalAccessException e) {
-							log.error("TestUtil#processConfig",e);
-						}
-					}else {
-						LazyBean.getInstance().processStatic(classItem);
-					}
+					LazyBean.getInstance().processStatic(classItem);
 				});
+		
+		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 	}
 
 	public Object getExistBean(Class<?> classD) {

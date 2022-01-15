@@ -1,10 +1,11 @@
 package com.github.jklasd.test.core.facade.scan;
 
 import java.io.IOException;
-import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 import java.util.Map;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -18,9 +19,9 @@ import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.CheckUtil;
-import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 
@@ -108,6 +109,10 @@ public class ConfigurationScan {
 		ClassScan scaner = ClassScan.getInstance();
 		if(scaner.hasStaticMethod(configClass) && !configClass.getName().startsWith("org.springframework")) {
 			scaner.loadComponentClass(configClass);
+		}
+		
+		if(ScanUtil.isImple(configClass, BeanFactoryPostProcessor.class)) {
+			BeanFactoryProcessor.getInstance().loadProcessor(configClass);
 		}
 	}
 	
