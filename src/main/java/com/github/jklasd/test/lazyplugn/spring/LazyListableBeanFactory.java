@@ -1,8 +1,11 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
+import javax.annotation.Nullable;
+
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -40,6 +43,17 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		log.debug("registerAnnBean registerBeanDefinition===={}", beanName);
 		super.registerBeanDefinition(beanName, beanDefinition);
 	}
+	
+	protected Object getObjectForBeanInstance(
+			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
+		Object obj = super.getObjectForBeanInstance(beanInstance, name, beanName, mbd);
+		LazyBean.getInstance().processAttr(obj, obj.getClass());
+		return obj;
+	}
+	
+//	protected void resetBeanDefinition(String beanName) {
+//		super.resetBeanDefinition(beanName);
+//	}
 
 	private void registerXmlBean(String beanName, BeanDefinition beanDefinition) {
 		log.debug("registerXmlBean registerBeanDefinition===={}", beanName);

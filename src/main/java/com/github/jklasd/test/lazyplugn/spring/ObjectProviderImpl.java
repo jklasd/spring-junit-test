@@ -40,7 +40,7 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 			try {
 				Object obj = LazyBean.findCreateBeanFromFactory(tagC, null);
 				if(obj != null) {
-					return null;
+					return obj;
 				}
 				
 				Class<?> builderC = Class.forName(tagC.getName()+"$Builder");

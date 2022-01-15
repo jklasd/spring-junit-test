@@ -555,6 +555,9 @@ public class LazyBean {
 //			if(!cL.isEmpty()) {
 //				return LazyBean.getInstance().buildProxy(cL.get(0));
 //			}
+//			if(interfaceClass == ObjectProvider.class) {
+//				return new ObjectProviderImpl(classGeneric[0]);
+//			}
 			log.error("****************SPRING_PACKAGE 需处理**{}**************",interfaceClass);
 			return null;
 		}
@@ -575,7 +578,7 @@ public class LazyBean {
 	}
 	public static Object refindCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		DebugObjectView.readView(()->{
-			log.warn("=================重试查找bean=={}=={}=============",classBean,beanName);
+			log.debug("=================重试查找bean=={}=={}=============",classBean,beanName);
 		});
 		AssemblyDTO asse = new AssemblyDTO();
 		asse.setTagClass(classBean);
@@ -583,7 +586,7 @@ public class LazyBean {
 		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
 		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 			DebugObjectView.readView(()->{
-				log.warn("=================重试查找bean失败2=={}===============",asse);
+				log.debug("=================重试查找bean失败2=={}===============",asse);
 			});
 			return null;
 		}
@@ -623,6 +626,9 @@ public class LazyBean {
 	 */
 	@SuppressWarnings("unchecked")
 	public static List findListBean(Class<?> requiredType) {
+		/*
+		 * TODO List 处理
+		 */
 		List list = Lists.newArrayList();
 		List<Class<?>> tags = null;
 		if(requiredType.isInterface()) {
