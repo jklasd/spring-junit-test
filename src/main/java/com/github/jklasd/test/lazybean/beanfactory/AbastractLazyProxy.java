@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -128,14 +129,19 @@ public abstract class AbastractLazyProxy {
 
             LazyBeanFilter.processLazyConfig(newObj, method, param);
             
-            TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            
-            TransactionStatus txStatus = openTransation(oldTxInfo, txInfo);
-            
-            Object result = method.invoke(newObj, param);
-            
-            closeTransation(oldTxInfo, txStatus);
+            Object result = null;
+            if(TranstionalManager.isFindTranstional()) {
+            	TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+            	
+            	TransactionStatus txStatus = openTransation(oldTxInfo, txInfo);
+            	
+            	result = method.invoke(newObj, param);
+            	
+            	closeTransation(oldTxInfo, txStatus);
+            }else {
+            	result = method.invoke(newObj, param);
+            }
             
             AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
