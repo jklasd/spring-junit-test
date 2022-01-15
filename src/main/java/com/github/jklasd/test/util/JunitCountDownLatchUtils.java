@@ -82,6 +82,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 			}else {
 				obj.await();
 			}
+			list = null;
 		} catch (Exception e) {
 			log.error("CountDownLatchUtils#runAndWait多线程控制",e);
 			return await;
@@ -93,7 +94,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 		if(executor != null) {
 			executor.execute(task);
 		}else {
-			ThreadPoolUtils.commonRun(task);
+			JunitThreadPoolUtils.commonRun(task);
 		}
 	}
 	/**
@@ -130,6 +131,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 			}else {
 				obj.await();
 			}
+			list = null;
 		} catch (Exception e) {
 			log.error("CountDownLatchUtils#runAndWait多线程控制",e);
 		}
@@ -168,6 +170,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 			}else {
 				obj.await();
 			}
+			list = null;
 		} catch (Exception e) {
 			log.error("CountDownLatchUtils#runAndWaitForIndex多线程控制",e);
 		}
@@ -204,6 +207,7 @@ public class JunitCountDownLatchUtils<T> extends TraversingUtils<T, CountDownLat
 			}else {
 				obj.await();
 			}
+			list = null;
 		} catch (Exception e) {
 			log.error("CountDownLatchUtils#runAndWaitForIndex多线程控制",e);
 		}

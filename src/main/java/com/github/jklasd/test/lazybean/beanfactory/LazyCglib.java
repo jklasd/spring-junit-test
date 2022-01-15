@@ -5,14 +5,18 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
+import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
+import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
+import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
+import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -67,6 +71,17 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
     }
 
     public Object[] getArguments() {
+    	if(beanModel.getConstructorArgValue()!=null) {
+    		int count = beanModel.getConstructorArgValue().getArgumentCount();
+    		Object[] objes = new Object[constructor.getParameters().length];
+    		if(objes.length!=count) {
+    			throw new RuntimeException("异常构建方法");
+    		}
+    		for(int i=0;i<count;i++) {
+    			objes[i] = beanModel.getConstructorArgValue().getArgumentValue(i, getArgumentTypes()[i]).getValue();
+    		}
+    		return objes;
+    	}
         Object[] objes = new Object[constructor.getParameters().length];
         for(int i=0;i<objes.length;i++) {
             Class<?> c = getArgumentTypes()[i];
@@ -94,7 +109,16 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                 objes[i] = Sets.newHashSet();
             }
             else {
-                objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
+            	if(getArgumentTypes()[i].getAnnotations().length>0) {
+            		objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
+            	}else{
+            		if(beanModel.isXmlBean() && beanModel.getConstructorArgs()!=null) {
+            			ConstructorArgumentValues args = beanModel.getConstructorArgs();
+            			objes[i] = XmlBeanUtil.getInstance().conversionValue(args.getIndexedArgumentValues().get(i).getValue());
+            		}else {
+            			log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+            		}
+            	}
             }
         }
         return objes;
@@ -105,7 +129,9 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
     
     @Override
     public Object intercept(Object poxy, Method method, Object[] param, MethodProxy arg3) throws Throwable {
-        return commonIntercept(poxy, method, param);
+    	return StackOverCheckUtil.observeThrowException(()->{
+    		return commonIntercept(poxy, method, param);
+    	});
     }
     
     @Override
@@ -130,21 +156,32 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             ConfigurationProperties propConfig = (ConfigurationProperties) tagertC.getAnnotation(ConfigurationProperties.class);
             if(tagertObj == null){
                 if(!LazyBean.existBean(tagertC) && !beanModel.isXmlBean()) {
-                    if(propConfig == null || !ScanUtil.findCreateBeanForConfigurationProperties(tagertC)) {
-                        throw new RuntimeException(tagertC.getName()+" Bean 不存在");
+                    //本地查找是否有构建bean的@Bean方法
+                    tagertObj = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
+                    if(tagertObj == null) {
+                    	if(propConfig == null) {
+                    		throw new RuntimeException(tagertC.getName()+" Bean 不存在");
+                    	}
+                    	tagertObj = LazyBean.findCreateByProp(tagertC);
                     }
+                    
                 }
-                /**
-                 * 通过newInstance 创建对象
-                 */
-                buildObject();
+                if(tagertObj == null) {
+                    /**
+                     * 通过newInstance 创建对象
+                     */
+                    buildObject();
+                }
             }
             
             if(propConfig!=null && tagertObj!=null) {
-                LazyConfigurationPropertiesBindingPostProcessor.processConfigurationProperties(tagertObj,propConfig);
+            	LazyConfPropBind.processConfigurationProperties(tagertObj,propConfig);
             }
         }
-         return tagertObj;
+        if(tagertObj!=null) {
+            LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
+        }
+        return tagertObj;
     }
     /**
      * 构建实际对象
