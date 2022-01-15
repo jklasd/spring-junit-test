@@ -9,6 +9,7 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -16,17 +17,24 @@ import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.core.env.PropertiesPropertySource;
+import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -58,7 +66,7 @@ public class JavaBeanUtil {
 	 */
     public Object buildBean(Class<?> configClass, Method method, AssemblyDTO assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
-	        assemblyData.setBeanName(LazyBean.getBeanName(assemblyData.getTagClass()));
+	        assemblyData.setBeanName(BeanNameUtil.getBeanName(assemblyData.getTagClass()));
 	    }
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
@@ -84,25 +92,22 @@ public class JavaBeanUtil {
 	}
     
     public Object getExists(Method method) {
-    	//查看是否已经执行过来
-    	Bean aw = method.getAnnotation(Bean.class);
-        String beanName = null;
-        if(aw.value().length>0) {
-        	beanName = aw.value()[0];
-        }else if(aw.name().length>0){
-        	beanName = aw.name()[0];
-        }else {
-        	beanName = method.getName();
-        }
-//        if(beanName.equals("buildConsumerConfig")) {
-//        	log.debug("短点");
-//        }
-        //需要过滤代理对象
-//        Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
-//        if(exitBean!=null) {
-//        	return exitBean;
-//        }
-        return null;
+    	return StackOverCheckUtil.exec(()->{
+    		//查看是否已经执行过来
+        	Bean aw = method.getAnnotation(Bean.class);
+            String beanName = null;
+            if(aw.value().length>0) {
+            	beanName = aw.value()[0];
+            }else if(aw.name().length>0){
+            	beanName = aw.name()[0];
+            }else {
+            	beanName = method.getName();
+            }
+            if(TestUtil.getInstance().getApplicationContext().containsBean(beanName)) {
+            	return TestUtil.getInstance().getApplicationContext().getBean(beanName);
+            }
+            return null;
+    	},method);
     }
     
     /**
@@ -114,8 +119,11 @@ public class JavaBeanUtil {
      */
     private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
         try {
+        	if(AbastractLazyProxy.isProxy(obj)) {//不能是代理对象
+        		return;
+        	}
         	Object exitsBean = getExists(method);
-        	if(exitsBean != null) {//且不是代理对象
+        	if(exitsBean != null && !AbastractLazyProxy.isProxy(exitsBean)) {//不能是代理对象
         		log.info("---Bean 已构建,method:{}---",method);
         		cacheBean.put(key, exitsBean);
         		return;
@@ -147,7 +155,7 @@ public class JavaBeanUtil {
         	throw new JunitException(e);
         }
     }
-    private boolean buildConfigObj(Class<?> configClass, Map<String,Class> nameSpace) {
+    private boolean buildConfigObj(Class<?> configClass, Map<String,Class<?>> nameSpace) {
         try {
             AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
             if(afterC!=null) {//先加载另外一个类
@@ -155,7 +163,21 @@ public class JavaBeanUtil {
                     buildConfigObj(itemConfigC,nameSpace);
                 }
             }
-            
+            PropertySource propSrouce = configClass.getAnnotation(PropertySource.class);
+            if(propSrouce!=null) {//先加载配置
+            	try {
+            		for(String path : propSrouce.value()) {
+            			Resource propRes = ScanUtil.getRecourceAnyOne(path);
+            			if(propRes!=null && propRes.exists()) {
+            				Properties properties = new Properties();
+            				properties.load(propRes.getInputStream());
+            				TestUtil.getInstance().getApplicationContext().getEnvironment().getPropertySources()
+            				.addLast(new PropertiesPropertySource(propSrouce.name(), properties));
+            			}
+            		}
+				} catch (Exception e) {
+				}
+            }
             Constructor[] cons = configClass.getConstructors();
             if(cons.length>0) {
                 findAndCreateBean(configClass, nameSpace, cons);
@@ -170,7 +192,7 @@ public class JavaBeanUtil {
                 }
             }
             if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
-                LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
+            	LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
             }
             LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -189,7 +211,7 @@ public class JavaBeanUtil {
      * @throws IllegalAccessException
      * @throws InvocationTargetException
      */
-    private void findAndCreateBean(Class configClass, Map<String,Class> nameSpace, Constructor[] cons)
+    private void findAndCreateBean(Class<?> configClass, Map<String,Class<?>> nameSpace, Constructor[] cons)
         throws InstantiationException, IllegalAccessException, InvocationTargetException {
         int min = 10;
         Constructor minC = null;
@@ -211,7 +233,7 @@ public class JavaBeanUtil {
      * @param annotations 
      * @return  参数对象组
      */
-    private Object[] buildParam(Map<String,Class> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
+    private Object[] buildParam(Map<String,Class<?>> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	AssemblyDTO tmp = new AssemblyDTO();
@@ -266,7 +288,7 @@ public class JavaBeanUtil {
 		 * 处理数据库
 		 */
 		if(LazyMybatisMapperBean.useMybatis()) {
-			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class);
+			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getApplicationAllClassMap());
 			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
 				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
 				if(scan != null) {
@@ -281,10 +303,10 @@ public class JavaBeanUtil {
 		 * 处理dubbo服务类
 		 */
 		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
-			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass());
-			dubboServiceList.stream().forEach(dubboServiceClass ->{
-				LazyDubboBean.putAnnService(dubboServiceClass);
-			});
+			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getApplicationAllClassMap());
+//			dubboServiceList.stream().forEach(dubboServiceClass ->{
+//				LazyDubboBean.putAnnService(dubboServiceClass);
+//			});
 		}
 	}
 }

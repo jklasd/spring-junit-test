@@ -17,5 +17,6 @@ public class BeanModel {
     private Type[] classGeneric;
     private boolean xmlBean;
     private Map<String,String> beanMethods;
+    private ConstructorArgumentValues constructorArgs;
     private boolean isThrows;
 }

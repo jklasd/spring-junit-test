@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
@@ -26,8 +24,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
@@ -36,13 +32,18 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
+import com.github.jklasd.test.util.BeanNameUtil;
+import com.github.jklasd.test.util.DebugObjectView;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -108,32 +109,30 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public Object buildProxy(BeanModel beanModel) {
-		
-	    Object obj = null;
-	    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
-	    	if(util.getApplicationContext().containsBean(beanModel.getBeanName())) {
-	    		obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
-	    		return obj;
-	    		
-	    	}
-	    }else {
-	        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
-            if(obj!=null) {
-                return obj;
-            }
-            beanModel.setBeanName(getBeanName(beanModel.getTagClass()));
-	    }
-	    
-	    if(beanModel.getTagClass() == ApplicationContext.class
-	        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
-	        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
-	        return util.getApplicationContext();
-	    }
-	    obj = createBean(beanModel);
-	    if(obj!=null) {
-	    	util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
-	    }
-        return obj;
+		return StackOverCheckUtil.observeIgnore(()->{
+			Object obj = null;
+		    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
+		        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
+		        if(obj!=null) {
+		            return obj;
+		        }
+		    }else {
+		        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
+	            if(obj!=null) {
+	                return obj;
+	            }
+	            beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
+		    }
+		    
+		    if(beanModel.getTagClass() == ApplicationContext.class
+		        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
+		        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
+		        return util.getApplicationContext();
+		    }
+		    obj = createBean(beanModel);
+		    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
+	        return obj;
+		});
 	}
     private static Object createBean(BeanModel beanModel) {
         Class<?> beanClass = beanModel.getTagClass();
@@ -166,16 +165,19 @@ public class LazyBean {
                 }
             }
         } catch (Exception e) {
-            if(e.getCause()!=null) {
-                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getCause().getMessage());
-            }else {
-                log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getMessage());
-            }
-            if(beanModel.isThrows()) {
-            	throw e;
-            }else {
-            	e.printStackTrace();
-            }
+        	//查看是否本地构建
+        	DebugObjectView.openView();
+        	tag = LazyBean.refindCreateBeanFromFactory(beanModel.getTagClass(),beanModel.getBeanName());
+        	DebugObjectView.clear();
+        	if(tag == null) {
+        		log.error("============重试查找bean失败============");
+	        	if(e.getCause()!=null) {
+	        		log.error("构建代理类异常=>beanClass:{},beanName:{}=>getCause：{};",beanClass,beanModel.getBeanName(),e.getCause().getMessage());
+	        	}else {
+	        		log.error("构建代理类异常=>beanClass:{},beanName:{}=>{}",beanClass,beanModel.getBeanName(),e.getMessage());
+	        	}
+        		throw e;
+        	}
         }
         return tag;
     }
@@ -187,38 +189,10 @@ public class LazyBean {
 	public Object buildProxy(Class<?> beanClass) {
 	    BeanModel model = new BeanModel();
 		model.setTagClass(beanClass);
-		model.setBeanName(getBeanNameFormAnno(beanClass));
+		model.setBeanName(BeanNameUtil.getBeanNameFormAnno(beanClass));
 		return buildProxy(model);
 	}
-	public synchronized static String getBeanName(Class<?> classBean) {
-		Component comp = (Component) classBean.getAnnotation(Component.class);
-		if(comp!=null && StringUtils.isNotBlank(comp.value())) {
-			return comp.value();
-		}
-		Service service = (Service) classBean.getAnnotation(Service.class);
-		if(service!=null && StringUtils.isNotBlank(service.value())) {
-			return service.value();
-		}
-		if(classBean.isInterface()) {
-		    return null;
-		}
-		if(classBean.getSimpleName().length()<1) {
-//		    log.info("name=>{}",classBean.getSimpleName());
-		    return null;
-		}
-		return classBean.getSimpleName().substring(0,1).toLowerCase()+classBean.getSimpleName().substring(1);
-	}
-	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {
-        Component comp = (Component) classBean.getAnnotation(Component.class);
-        if(comp!=null && StringUtils.isNotBlank(comp.value())) {
-            return comp.value();
-        }
-        Service service = (Service) classBean.getAnnotation(Service.class);
-        if(service!=null && StringUtils.isNotBlank(service.value())) {
-            return service.value();
-        }
-        return null;
-    }
+	
 	public void setObj(Field f,Object obj,Object proxyObj) {
 		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
 		setObj(f, obj, proxyObj, null);
@@ -286,7 +260,7 @@ public class LazyBean {
 
 		Method[] ms = obj.getClass().getDeclaredMethods();
 		try {
-            processMethod(obj, ms,objClassOrSuper);
+			BeanInitHandler.getInstance().processMethod(obj, ms,superC);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             log.error("processMethod=>{}+>{}",objClassOrSuper);
             log.error("processMethod",e);
@@ -309,8 +283,9 @@ public class LazyBean {
 						//处理一个集合注入
 						try {
 							Class<?> c = Class.forName(item[0].getTypeName());
-							setObj(f, obj, findListBean(c));
-							log.debug("注入集合=>{}",f.getName());
+							List<?> list = findListBean(c);
+							setObj(f, obj, list);
+							log.info("{}注入集合=>{},{}个对象",obj.getClass(),f.getName(),list.size());
 						} catch (ClassNotFoundException e) {
 							e.printStackTrace();
 						}
@@ -372,163 +347,6 @@ public class LazyBean {
 			return null;
 		}
 	}
-	/**
-	 * 对目标对象方法进行处理
-	 * @param obj 目标对象
-	 * @param ms 方法组
-	 * @param sup 父类
-	 * 
-	 * 主要处理 
-	 * 【1】PostConstruct注解方法
-	 * 【2】setApplicationContext
-	 * 
-	 * 当目标对象存在父类时，遍历所有父类对相应方法进行处理
-	 * @throws InvocationTargetException 
-	 * @throws IllegalArgumentException 
-	 * @throws IllegalAccessException 
-	 */
-	private void processMethod(Object obj, Method[] ms,Class sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(sup != null) {
-			ms = sup.getDeclaredMethods();
-			processMethod(obj, ms, sup.getSuperclass());
-		}
-		if(ScanUtil.isImple(obj.getClass(), ApplicationContextAware.class)) {
-			for (Method m : ms) {
-				if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
-						&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {
-					try {
-						if(m!=null) {
-							try {
-								m.invoke(obj,util.getApplicationContext());
-							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-								log.error("不能注入applicationContext",e);
-							}
-						}
-					} catch (SecurityException e) {
-					}
-				}
-			}
-		}
-		for (Method m : ms) {
-		    Type[] paramTypes = m.getGenericParameterTypes();
-			if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。
-				try {
-					if (!m.isAccessible()) {
-						m.setAccessible(true);
-					}
-					m.invoke(obj, null);
-				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					log.error("初始化方法执行异常{}#{}",obj,m);
-					log.error("初始化方法执行异常",e);
-				}
-			}else if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
-					&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {
-//				try {
-//					if(m!=null) {
-//						try {
-//							m.invoke(obj,util.getApplicationContext());
-//						} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-//							log.error("不能注入applicationContext",e);
-//						}
-//					}
-//				} catch (SecurityException e) {
-//				}
-			}else if(m.getAnnotation(Autowired.class) != null) {
-//			    Autowired aw = m.getAnnotation(Autowired.class);
-			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
-			    Object[] param = processParam(m, paramTypes, bName);
-                Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    util.getApplicationContext().registBean(bName, tmp, tmp.getClass());
-//                }
-			}else if(m.getAnnotation(Value.class) != null) {
-			    Value aw = m.getAnnotation(Value.class);
-			    if(paramTypes.length>0) {
-			        Type type = paramTypes[0];
-			        Object param = util.value(aw.value(), (Class<?>)type);
-			        m.invoke(obj, param);
-			    }else {
-			        m.invoke(obj);
-			    }
-			    
-            }else if(m.getAnnotation(Resource.class) != null) {
-                Resource aw = m.getAnnotation(Resource.class);
-                Object[] param = processParam(m, paramTypes, aw.name());
-                Object tmp = m.invoke(obj, param);
-                if(tmp!=null) {
-//                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
-                }
-            }else if(m.getAnnotation(Bean.class) != null) {
-                Bean aw = m.getAnnotation(Bean.class);
-                String beanName = null;
-                if(aw.value().length>0) {
-                	beanName = aw.value()[0];
-                }else if(aw.name().length>0){
-                	beanName = aw.name()[0];
-                }else {
-                	beanName = m.getName();
-                }
-                if(beanName.equals("mongoDbFactory")) {
-                	log.debug("短点");
-                }
-                Object exitBean = util.getApplicationContext().getBean(beanName);
-                if(exitBean!=null) {
-                	return;
-                }
-                Object[] param = processParam(m, paramTypes, null);
-                Object tmp = null;
-                try {
-                	if(!m.isAccessible()) {
-                		m.setAccessible(true);
-                	}
-                	tmp = m.invoke(obj, param);
-                }catch(Exception e) {
-                	log.error("method:{},exception:{}",m,e.getMessage());
-                }
-                if(tmp!=null) {
-                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
-                    if(confPro!=null) {
-                        LazyConfPropBind.processConfigurationProperties(tmp,confPro);
-                    }
-                    util.getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
-                }
-            }
-		}
-	}
-    private Object[] processParam(Method m, Type[] paramTypes, String bName) {
-        Object[] param = new Object[paramTypes.length];
-        Annotation[][] pAnns = m.getParameterAnnotations();
-        for(int i=0;i<paramTypes.length;i++) {
-            Class<?> c = getParamType(m, paramTypes[i]);
-            if(paramTypes[i] == List.class) {
-                param[i] = findListBean(c);
-            }else if(paramTypes[i] instanceof ParameterizedType) {
-        		ParameterizedType  pType = (ParameterizedType) paramTypes[i];
-//        		tmp.setTagClass((Class<?>) pType.getRawType());
-//        		tmp.setClassGeneric(pType.getActualTypeArguments());
-        		param[i] = LazyBean.getInstance().buildProxyForGeneric((Class<?>) pType.getRawType()
-        				,pType.getActualTypeArguments());
-        	}else {
-                if(LazyBean.existBean(c) && util.getExistBean(c, m.getName())!=null) {
-                    param[i] = util.getExistBean(c, m.getName());
-                }else {
-//                	boolean found = false;
-                	for(Annotation ann : pAnns[i]) {
-                		if(ann.annotationType() == Qualifier.class) {
-                			bName = ((Qualifier)ann).value();
-//                			found = true;
-                			break;
-                		}
-                	}
-//                	if(!found) {
-                		param[i] = buildProxy(c,bName);
-//                	}
-                }
-            }
-        }
-        return param;
-    }
-    
     private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
     private Map<Class<?>,Map<String,Method>> fieldsCache = Maps.newHashMap();
 	public boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
@@ -694,7 +512,7 @@ public class LazyBean {
 	 * @return 返回存在annotationType 的对象
 	 */
 	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
-		List<Class<?>> list = ScanUtil.findClassWithAnnotation(annotationType);
+		List<Class<?>> list = ScanUtil.findClassWithAnnotation(annotationType,ClassScan.getApplicationAllClassMap());
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
 //			String beanName = getBeanName(c);
@@ -737,10 +555,12 @@ public class LazyBean {
 			return util.getApplicationContext().getEnvironment();
 		}
 		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
-			if(!cL.isEmpty()) {
-				return LazyBean.getInstance().buildProxy(cL.get(0));
-			}
+//			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
+//			if(!cL.isEmpty()) {
+//				return LazyBean.getInstance().buildProxy(cL.get(0));
+//			}
+			log.error("****************SPRING_PACKAGE 需处理**{}**************",interfaceClass);
+			return null;
 		}
 		List<Class<?>> tags = ScanUtil.findClassImplInterface(interfaceClass);
 		if (!tags.isEmpty()) {
@@ -757,7 +577,23 @@ public class LazyBean {
 	public Object findBean(Class<?> requiredType) {
 		return buildProxy(requiredType);
 	}
-	
+	public static Object refindCreateBeanFromFactory(Class<?> classBean, String beanName) {
+		DebugObjectView.readView(()->{
+			log.warn("=================重试查找bean=={}=={}=============",classBean,beanName);
+		});
+		AssemblyDTO asse = new AssemblyDTO();
+		asse.setTagClass(classBean);
+		asse.setBeanName(beanName);
+		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
+		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+			DebugObjectView.readView(()->{
+				log.warn("=================重试查找bean失败2=={}===============",asse);
+			});
+			return null;
+		}
+		Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],asse);
+		return tagObj;
+	}
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		AssemblyDTO asse = new AssemblyDTO();
 		if(classBean!=null) {
@@ -774,12 +610,14 @@ public class LazyBean {
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
-		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
-			return null;
-		}
-		Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
-		return tagObj;
+		return StackOverCheckUtil.observeIgnore(()->StackOverCheckUtil.observe(()->{
+			Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
+			if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+				return null;
+			}
+			Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
+			return tagObj;
+		}, assemblyData));
 	}
 	
 	/**
@@ -840,6 +678,13 @@ public class LazyBean {
 			singletonName.put(beanName, obj);
 		}
 		return obj;
+	}
+	public static Object findCreateByProp(Class<?> tagertC) {
+		try {
+			return PropResourceLoader.getInstance().findCreateByProp(tagertC);
+		} catch (InstantiationException | IllegalAccessException e) {
+			return null;
+		}
 	}
 }
 

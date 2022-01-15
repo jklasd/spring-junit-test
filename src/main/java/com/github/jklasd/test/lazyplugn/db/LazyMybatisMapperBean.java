@@ -112,7 +112,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
-        if (useMybatis() && !loadScaned) {
+    	if (useMybatis() && !loadScaned) {
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;

@@ -9,28 +9,21 @@ import java.util.Set;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.springframework.beans.BeanMetadataElement;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.config.TypedStringValue;
-import org.springframework.beans.factory.support.ManagedArray;
 import org.springframework.beans.factory.support.ManagedList;
 import org.springframework.beans.factory.support.ManagedMap;
-import org.springframework.beans.factory.xml.DefaultDocumentLoader;
 import org.springframework.beans.factory.xml.DelegatingEntityResolver;
-import org.springframework.beans.factory.xml.DocumentLoader;
 import org.springframework.beans.factory.xml.ResourceEntityResolver;
 import org.springframework.beans.factory.xml.XmlBeanDefinitionReader;
-import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.ResourceLoader;
-import org.springframework.util.xml.SimpleSaxErrorHandler;
-import org.w3c.dom.Document;
 import org.xml.sax.EntityResolver;
-import org.xml.sax.ErrorHandler;
-import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -53,20 +46,20 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class XmlBeanUtil {
     private XmlBeanUtil() {}
-    private DocumentLoader documentLoader = new DefaultDocumentLoader();
-    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
-    
-	public static List<String> xmlPathList = Lists.newArrayList();
-
-	public synchronized void loadXmlPath(String... xmlPath) {
-		for (String path : xmlPath) {
-			xmlPathList.add(path);
-		}
-	}
+//    private DocumentLoader documentLoader = new DefaultDocumentLoader();
+//    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
+//    
+//	public static List<String> xmlPathList = Lists.newArrayList();
+//
+//	public synchronized void loadXmlPath(String... xmlPath) {
+//		for (String path : xmlPath) {
+//			xmlPathList.add(path);
+//		}
+//	}
 	
-	public void process() {
-		xmlPathList.forEach(xml -> readNode(xml));
-	}
+//	public void process() {
+//		xmlPathList.forEach(xml -> readNode(xml));
+//	}
 	/**
 	 * 转换类型
 	 * @param attr 赋值源数据
@@ -174,25 +167,25 @@ public class XmlBeanUtil {
     }
     
     protected final Log logger = LogFactory.getLog(getClass());
-    private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
+//    private ErrorHandler errorHandler = new SimpleSaxErrorHandler(logger);
 
-    public void readNode(String xml) {
-        Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
-        if (file != null) {
-            try {
-                log.info("load:{}",file.getFile().getPath());
-                XmlReaderContext context = xmlReader.createReaderContext(file);
-                LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
-                Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
-                    errorHandler,(int)JunitInvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
-                
-                parsor.registerBeanDefinitions(document,context);
-            } catch (Exception e) {
-                log.error("加载xml", e);
-                throw new RuntimeException("加载xml【"+file+"】失败");
-            }
-        }
-    }
+//    public void readNode(String xml) {
+//        Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
+//        if (file != null) {
+//            try {
+//                log.info("load:{}",file.getFile().getPath());
+//                XmlReaderContext context = xmlReader.createReaderContext(file);
+//                LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
+//                Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 
+//                    errorHandler,(int)InvokeUtil.invokeMethodByParamClass(xmlReader, "getValidationModeForResource",new Class[] {Resource.class}, new Object[] {file}),xmlReader.isNamespaceAware());
+//                
+//                parsor.registerBeanDefinitions(document,context);
+//            } catch (Exception e) {
+//                log.error("加载xml", e);
+//                throw new RuntimeException("加载xml【"+file+"】失败");
+//            }
+//        }
+//    }
     
     private Map<String, LazyBeanInitProcessImpl> tmpAttrMap = Maps.newConcurrentMap();
     public LazyBeanInitProcessImpl getProcess(String key) {
@@ -239,13 +232,72 @@ public class XmlBeanUtil {
         });
         return attrParam;
     }
-    public Object conversionValue(PropertyValue prov,Object obj) {
-        Object value;
-        if(prov.getValue() instanceof RuntimeBeanReference) {
-            RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
+//    public Object conversionValue(PropertyValue prov,Object obj) {
+//        Object value;
+//        if(prov.getValue() instanceof RuntimeBeanReference) {
+//            RuntimeBeanReference tmp = (RuntimeBeanReference)prov.getValue();
+//            value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
+//        }else if(prov.getValue() instanceof ManagedList) {
+//            ManagedList<?> tmp = (ManagedList<?>)prov.getValue();
+//            List<Object> list = Lists.newArrayList();
+//            tmp.stream().forEach(item ->{
+//                if(item instanceof BeanDefinitionHolder) {
+//                    BeanDefinitionHolder tmpBdh = (BeanDefinitionHolder)item;
+//                    BeanDefinition tmpBd = tmpBdh.getBeanDefinition();
+//                    Class<?> tmpC= ScanUtil.loadClass(tmpBd.getBeanClassName());
+////                        XmlBeanUtil.getInstance().addClass(tmpC);
+//                    BeanModel beanModel = new BeanModel();
+//                    beanModel.setTagClass(tmpC);
+//                    beanModel.setXmlBean(true);
+//                    beanModel.setPropValue(tmpBd.getPropertyValues());
+//                    list.add(LazyBean.getInstance().buildProxy(beanModel));
+//                }else {
+//                    log.info("ManagedArray=>{}",item);
+//                }
+//            });
+//            value = list;
+//        }else if(prov.getValue() instanceof ManagedMap) {
+//            @SuppressWarnings("unchecked")
+//            ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)prov.getValue();
+//            Map<Object,Object> tmpMap = Maps.newHashMap();
+//            tmp.forEach((k,v)->{
+//                if(k instanceof TypedStringValue) {
+//                    TypedStringValue tmpV = (TypedStringValue)k;
+//                    k = tmpV.getValue();
+//                }
+//                if(v instanceof RuntimeBeanReference) {
+//                    RuntimeBeanReference tmpV = (RuntimeBeanReference)v;
+//                    v = TestUtil.getInstance().getApplicationContext().getBean(tmpV.getBeanName());
+//                }else if(v instanceof TypedStringValue) {
+//                    TypedStringValue tmpV = (TypedStringValue)v;
+//                    v = tmpV.getValue();
+//                }
+//                tmpMap.put(k, v);
+//            });
+//            value = tmpMap;
+//        }else if(prov.getValue() instanceof TypedStringValue) {
+//            TypedStringValue tmp = (TypedStringValue)prov.getValue();
+//            value = tmp.getValue();
+//        }else if(prov.getValue() instanceof String){
+//            value = prov.getValue().toString();//设值时转化
+//        }else if(prov.getValue()!=null){
+//            log.info("value other=>{}",prov.getValue());
+//            value = prov.getValue();
+//        }else {
+//        	value = null;
+//        }
+//        return value;
+//    }
+    public Object conversionValue(PropertyValue prov) {
+        return conversionValue(prov.getValue());
+    }
+    public Object conversionValue(Object ele) {
+    	Object value;
+        if(ele instanceof RuntimeBeanReference) {
+            RuntimeBeanReference tmp = (RuntimeBeanReference)ele;
             value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
-        }else if(prov.getValue() instanceof ManagedList) {
-            ManagedList<?> tmp = (ManagedList<?>)prov.getValue();
+        }else if(ele instanceof ManagedList) {
+            ManagedList<?> tmp = (ManagedList<?>)ele;
             List<Object> list = Lists.newArrayList();
             tmp.stream().forEach(item ->{
                 if(item instanceof BeanDefinitionHolder) {
@@ -263,9 +315,9 @@ public class XmlBeanUtil {
                 }
             });
             value = list;
-        }else if(prov.getValue() instanceof ManagedMap) {
+        }else if(ele instanceof ManagedMap) {
             @SuppressWarnings("unchecked")
-            ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)prov.getValue();
+            ManagedMap<Object, Object> tmp = (ManagedMap<Object, Object>)ele;
             Map<Object,Object> tmpMap = Maps.newHashMap();
             tmp.forEach((k,v)->{
                 if(k instanceof TypedStringValue) {
@@ -282,18 +334,17 @@ public class XmlBeanUtil {
                 tmpMap.put(k, v);
             });
             value = tmpMap;
-        }else if(prov.getValue() instanceof TypedStringValue) {
-            TypedStringValue tmp = (TypedStringValue)prov.getValue();
+        }else if(ele instanceof TypedStringValue) {
+            TypedStringValue tmp = (TypedStringValue)ele;
             value = tmp.getValue();
-        }else if(prov.getValue() instanceof String){
-            value = prov.getValue().toString();//设值时转化
+        }else if(ele instanceof String){
+            value = ele.toString();//设值时转化
+        }else if(ele!=null){
+            log.info("value other=>{}",ele);
+            value = ele;
         }else {
-            log.info("value other=>{}",prov.getValue());
-            value = prov.getValue();
+        	value = null;
         }
         return value;
-    }
-    public Object conversionValue(PropertyValue prov) {
-        return conversionValue(prov, null);
     }
 }

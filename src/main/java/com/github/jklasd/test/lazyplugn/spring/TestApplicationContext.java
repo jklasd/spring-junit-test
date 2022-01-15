@@ -13,6 +13,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.config.AutowireCapableBeanFactory;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
@@ -29,6 +30,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -138,11 +140,7 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
 	@Override
 	public <T> Map<String, T> getBeansOfType(Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
 			throws BeansException {
-		// TODO Auto-generated method stub
-		if(type == PropertySourcesPlaceholderConfigurer.class) {
-			return Maps.newHashMap();
-		}
-		return null;
+		return getBeanFactory().getBeansOfType(type, includeNonSingletons, allowEagerInit);
 	}
 
 	public String[] getBeanNamesForAnnotation(Class<? extends Annotation> annotationType) {
@@ -414,12 +412,13 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
 	public void registBean(String beanName, Object newBean ,Class<?> beanClass) {
 	    if(newBean!=null) {
 	        if(StringUtils.isBlank(beanName)) {
-                beanName = LazyBean.getBeanName(beanClass);
+                beanName = BeanNameUtil.getBeanName(beanClass);
                 if(beanName == null) {
                     return;
                 }
             }
 	        if(!beanDefinitionMap.containsKey(beanName)) {
+	        	getBeanFactory().registerSingleton(beanName, newBean);
 	            beanDefinitionMap.put(beanName, newBean);
 	        }
 	        if(beanClass.isInterface()) {
@@ -487,4 +486,28 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
         }
         return null;
     }
+
+	@Override
+	public String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(Class<T> requiredType) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(ResolvableType requiredType) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public Class<?> getType(String name, boolean allowFactoryBeanInit) throws NoSuchBeanDefinitionException {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

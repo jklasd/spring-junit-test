@@ -1,5 +1,6 @@
  package com.github.jklasd.test.lazybean.beanfactory;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.List;
@@ -20,6 +21,7 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
@@ -46,6 +48,15 @@ public abstract class AbastractLazyProxy {
     }
     
     protected List factoryList;
+    public static final String PROXY_BOUND = "CGLIB$BOUND";
+    public static boolean isProxy(Object obj){
+    	try {
+			Field bound = obj.getClass().getDeclaredField(PROXY_BOUND);
+			return bound!=null;
+		} catch (NoSuchFieldException | SecurityException e) {
+			return false;
+		}
+    }
     
     protected void initLazyProxy() {
             try {
@@ -54,7 +65,7 @@ public abstract class AbastractLazyProxy {
                     getTagertObj();
                     Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
                     Object obj = JunitInvokeUtil.invokeMethod(tagertObj, "getObject");
-                    TestUtil.getInstance().getApplicationContext().registBean(LazyBean.getBeanName(obj.getClass()), obj,
+                    TestUtil.getInstance().getApplicationContext().registBean(BeanNameUtil.getBeanName(obj.getClass()), obj,
                         tagC);
                 }
             } catch (Exception e) {
@@ -71,9 +82,23 @@ public abstract class AbastractLazyProxy {
 //    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    protected Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    protected synchronized Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>3) {
-    		throw new JunitException("异常代理方式");
+    		log.error("method=>{}",method.getName());
+    		throw new JunitException("----------异常代理方式--------");
+    	}
+    	if(method.getName().equals("toString")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.toString();
+    		}else {
+    			return this.toString();
+    		}
+    	}else if(method.getName().equals("hashCode")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.hashCode();
+    		}else {
+    			return this.hashCode();
+    		}
     	}
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
         try {
@@ -118,8 +143,8 @@ public abstract class AbastractLazyProxy {
         } catch (Exception e) {
         	errorTimes.incrementAndGet();
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
-            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{}", beanModel.getTagClass(), method.getName(),
-                e);
+            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
+                e.getMessage(),param.length);
             Throwable tmp = e;
             if (e.getCause() != null) {
                 tmp = e.getCause();

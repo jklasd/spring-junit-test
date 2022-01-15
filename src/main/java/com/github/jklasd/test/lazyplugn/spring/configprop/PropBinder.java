@@ -5,6 +5,7 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
 
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 class PropBinder implements BinderHandler{
 	private static Class<?> ConfigurationPropertiesBean = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBean");
 	private Class<?> ConfigurationPropertiesBinder = ScanUtil.loadClass("org.springframework.boot.context.properties.ConfigurationPropertiesBinder");
+	private Class<?> PropertySourcesPlaceholderConfigurer = ScanUtil.loadClass("org.springframework.context.support.PropertySourcesPlaceholderConfigurer");
 	private Class<?> BindableC = ScanUtil.loadClass("org.springframework.boot.context.properties.bind.Bindable");
 	private Map<String,Constructor<?>> cacheConstructor = Maps.newHashMap();
 	private Object processObj;
@@ -43,6 +45,11 @@ class PropBinder implements BinderHandler{
 				if(!con.isAccessible()) {
 					con.setAccessible(true);
 				}
+				BeanFactoryPostProcessor postProcessor = (BeanFactoryPostProcessor) PropertySourcesPlaceholderConfigurer.newInstance();
+				postProcessor.postProcessBeanFactory(TestUtil.getInstance().getApplicationContext().getBeanFactory());
+				
+				TestUtil.getInstance().getApplicationContext().registBean("propertySourcesPlaceholderConfigurer", postProcessor, PropertySourcesPlaceholderConfigurer);
+				
 				processObj = con.newInstance(TestUtil.getInstance().getApplicationContext());
 			}
 			

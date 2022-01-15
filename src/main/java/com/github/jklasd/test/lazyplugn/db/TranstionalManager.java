@@ -49,7 +49,7 @@ public class TranstionalManager {
         return atas.getTransactionAttribute(method, tagClass);
     }
     public TransactionStatus beginTx(TransactionAttribute txInfo) {
-        log.info("开启事务=>{}",txInfo);
+        log.debug("开启事务=>{}",txInfo);
         if(txManager == null) {
             txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
         }
