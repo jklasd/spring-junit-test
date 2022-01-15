@@ -10,7 +10,6 @@ import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
@@ -25,10 +24,11 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
-import com.github.jklasd.test.lazyplugn.spring.TestApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.util.LogbackUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
@@ -64,7 +64,9 @@ public class TestUtil{
 	        return bean;
 	    }
 	    bean = new TestUtil();
-	    bean.setApplicationContext(null);
+//	    bean.setApplicationContext(null);
+	    bean.applicationContext = new LazyApplicationContext();
+	    bean.applicationContext.refresh();
 	    try {
             Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");
             if(banner!=null) {
@@ -80,15 +82,15 @@ public class TestUtil{
 	    return bean;
 	}
 	
-    private TestApplicationContext applicationContext;
+    private LazyApplicationContext applicationContext;
 
-	public TestApplicationContext getApplicationContext() {
+	public LazyApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 
-	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-		this.applicationContext = new TestApplicationContext(applicationContext);
-	}
+//	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+//		this.applicationContext = new TestApplicationContext(applicationContext);
+//	}
 
 	/**
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
@@ -109,14 +111,15 @@ public class TestUtil{
 		/**
 		 * 不能是抽象类
 		 */
-		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers()))
+		list.stream().filter(classItem -> classItem != getClass() 
+				&& !Modifier.isAbstract(classItem.getModifiers())
+				&& BeanFactoryProcessor.getInstance().notBFProcessor(classItem))
 				.forEach(classItem -> {
 					log.debug("static class =>{}", classItem);
-//					if(classItem.getName().contains("HandleMessageUtil")) {
-//					    System.out.println("断点");
-//					}
 					LazyBean.getInstance().processStatic(classItem);
 				});
+		
+		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 	}
 
 	public Object getExistBean(Class<?> classD) {

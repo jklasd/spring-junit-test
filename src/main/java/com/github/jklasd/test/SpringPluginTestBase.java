@@ -1,6 +1,6 @@
 package com.github.jklasd.test;
 
-public class SpringPluginTestBase {
+public abstract class SpringPluginTestBase {
 	public SpringPluginTestBase() {
 		TestUtil.startTestForNoContainer(this);
 	}

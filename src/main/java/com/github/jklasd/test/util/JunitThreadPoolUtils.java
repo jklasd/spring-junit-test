@@ -1,50 +1,80 @@
 package com.github.jklasd.test.util;
 
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
-final class JunitThreadPoolUtils {
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
+public final class JunitThreadPoolUtils {
 	private JunitThreadPoolUtils() {}
-	private static volatile ThreadPoolExecutor IO_EXECUTOR;
-	private final static double BLOCK_NUM = 0.9;//阻塞系数越大，线程数越大
-	private final static int MAX_COMMON_THREAD_COUNT = (int) (Runtime.getRuntime().availableProcessors()/(1-BLOCK_NUM));
-	private static volatile ThreadPoolExecutor CPU_EXECUTOR;
-	private final static int CPU_CORE_THREAD_COUNT = Runtime.getRuntime().availableProcessors();
-	private final static int CPU_MAX_QUEUE_COUNT = 2000;
+	private static ThreadPoolExecutor executorServer;
+	/** 排队任务的最大数目，
+	 * 如果超过则创建新线程(不超过MAX_THREAD_COUNT否则任务丢弃)，
+	 * 此参数为0则MAX_THREAD_COUNT无效线程池最多有CORE_THREAD_COUNT数目的线程*/
+	private static final int MAX_QUEUE_COUNT=1000;
+	/** 核心线程数目也即最小的数目，小于此数目的任务直接运行而无需排队*/
+	private static final int COMMON_CORE_THREAD_COUNT=8;
+	/** 最大线程数目*/
+//	private static final int COMMON_MAX_THREAD_COUNT = 64;
+	/** 核心线程数目也即最小的数目，小于此数目的任务直接运行而无需排队*/
+	private static final int PRIORITY_CORE_THREAD_COUNT=4;
+	/** 最大线程数目*/
+	private static final int PRIORITY_MAX_THREAD_COUNT = 12;
+	private static final long ALIVE_TIME = 600;
 	
-	private final static int ALIVE_TIME = 3;
-	public static final void commonRun(Runnable runnable){
-		if (IO_EXECUTOR == null) {
-			initCommonExecutor();
-		}
-		IO_EXECUTOR.execute(runnable);
-	}
-	private static synchronized void initCommonExecutor() {
-		if (IO_EXECUTOR == null) {
+	private static ExecutorService signExecutor;
+	
+	private static ThreadPoolExecutor priorityExecutor;
+//	static {
+//		
+//		
+//		
+//	}
+	
+	public static final synchronized void commonRun(Runnable runnable){
+		if (executorServer == null) {
 			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
-			IO_EXECUTOR = new ThreadPoolExecutor(CPU_CORE_THREAD_COUNT*2,MAX_COMMON_THREAD_COUNT, ALIVE_TIME,TimeUnit.SECONDS,queue);
+			executorServer = new ThreadPoolExecutor(COMMON_CORE_THREAD_COUNT,COMMON_CORE_THREAD_COUNT, ALIVE_TIME,TimeUnit.SECONDS,queue);
 		}
+		executorServer.execute(runnable);
 	}
-	public static final void commonRunMdc(Runnable runnable){
-		commonRun(runnable);
+//	public static final synchronized void commonRunMdc(Runnable runnable){
+//		commonRun(MdcExecutors.wrap(runnable, MDC.getCopyOfContextMap()));
+//	}
+	
+	public static final synchronized void signRun(Runnable runnable){
+		if(signExecutor==null){
+			signExecutor = Executors.newSingleThreadExecutor();
+		}
+		signExecutor.execute(runnable);
 	}
 	
 	private static synchronized void initPriority() {
-		if(CPU_EXECUTOR == null) {
-			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(CPU_MAX_QUEUE_COUNT);
-			CPU_EXECUTOR = new ThreadPoolExecutor(CPU_CORE_THREAD_COUNT,CPU_CORE_THREAD_COUNT*2, ALIVE_TIME,TimeUnit.SECONDS,
+		if(priorityExecutor == null) {
+			BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>(MAX_QUEUE_COUNT);
+			priorityExecutor = new ThreadPoolExecutor(PRIORITY_CORE_THREAD_COUNT,PRIORITY_MAX_THREAD_COUNT, ALIVE_TIME,TimeUnit.SECONDS,
 					queue,new ThreadPoolExecutor.CallerRunsPolicy());
 		}
 	}
-	public static final void priorityRunMdc(Runnable runnable){
-		priorityRun(runnable);
-	}
+//	public static final synchronized void priorityRunMdc(Runnable runnable){
+//		priorityRun(MdcExecutors.wrap(runnable, MDC.getCopyOfContextMap()));
+//	}
+
 	public static final void priorityRun(Runnable runnable){
-		if(CPU_EXECUTOR == null) {
-			initPriority();
-		}
-		CPU_EXECUTOR.execute(runnable);
+		initPriority();
+		priorityExecutor.execute(runnable);
 	}
+
+	public static final <T> Future<T> commitRun(Callable<T> task) {
+		initPriority();
+		return priorityExecutor.submit(task);
+	}
+
 }

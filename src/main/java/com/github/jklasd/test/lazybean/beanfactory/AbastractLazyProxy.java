@@ -10,6 +10,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -103,8 +104,8 @@ public abstract class AbastractLazyProxy {
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
         try {
         	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
-        	tmpInvokerInfo.put("obj", poxy);
-        	tmpInvokerInfo.put("method", method);
+        	tmpInvokerInfo.put("class", beanModel.getTagClass());
+        	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
             Object oldObj = null;
             try {
@@ -128,14 +129,19 @@ public abstract class AbastractLazyProxy {
 
             LazyBeanFilter.processLazyConfig(newObj, method, param);
             
-            TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            
-            TransactionStatus txStatus = openTransation(oldTxInfo, txInfo);
-            
-            Object result = method.invoke(newObj, param);
-            
-            closeTransation(oldTxInfo, txStatus);
+            Object result = null;
+            if(TranstionalManager.isFindTranstional()) {
+            	TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+            	
+            	TransactionStatus txStatus = openTransation(oldTxInfo, txInfo);
+            	
+            	result = method.invoke(newObj, param);
+            	
+            	closeTransation(oldTxInfo, txStatus);
+            }else {
+            	result = method.invoke(newObj, param);
+            }
             
             AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
@@ -164,6 +170,10 @@ public abstract class AbastractLazyProxy {
                 return tagertObj;
             }
         }
+        log.debug("开始实例化:{}",beanModel);
+//        if(beanModel.getTagClass().getName().contains("mongodb.MongoClient")) {
+//        	log.debug("断点");
+//        }
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
             inited = true;

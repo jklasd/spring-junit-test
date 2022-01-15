@@ -27,7 +27,7 @@ public class BeanCreaterScan implements Scan{
 	public void scan() {
 		
 	}
-	private ApplicationContext coreComponent = TestUtil.getInstance().getApplicationContext();
+//	private ApplicationContext coreComponent = TestUtil.getInstance().getApplicationContext();
 //	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	
 	private Object[] findClassMethodByBeanName(AssemblyDTO assemblyData) {

@@ -1,6 +1,7 @@
 package com.github.jklasd.test.core.facade.scan;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -52,6 +53,10 @@ public class ClassScan implements Scan{
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
 	
+	public void loadComponentClass(Class<?> c) {
+		componentClassPathMap.put(c.getName(), c);
+	}
+	
 	@Override
 	public void scan() {
 		if(init) {
@@ -76,6 +81,9 @@ public class ClassScan implements Scan{
 							URLConnection connection = url.openConnection();
 							if (connection instanceof JarURLConnection) {
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
+								if(jFile.getName().contains("util")) {
+									log.debug("断点");
+								}
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
 									if(name.contains(".class")) {
@@ -150,6 +158,15 @@ public class ClassScan implements Scan{
 					log.error("加载类校验异常>{}=>{}",p,e.getMessage());
 				}
 			}else {
+				try {
+					if(f.getName().contains("spring.handlers")) {
+						xmlResourceLoader.loadResource(new FileInputStream(f));
+					}else if(f.getName().contains("spring.factories")) {
+						annoResourceLoader.loadResource(new FileInputStream(f));
+					}
+				} catch (IOException e) {
+					log.error("jFile.getInputStream(JarEntry)",e);
+				}
 //				log.debug("=============其他文件=={}===========",file);
 			}
 		}
@@ -189,7 +206,30 @@ public class ClassScan implements Scan{
 	public static ClassScan getInstance() {
 		return scaner;
 	}
-
+	/**
+	 * 个别自定义类
+	 * @param configClass
+	 */
+	public boolean hasStaticMethod(Class<?> configClass) {
+		try {
+			Method[] methods = configClass.getDeclaredMethods();
+			return Lists.newArrayList(methods).stream().anyMatch(m->{
+				if(Modifier.isStatic(m.getModifiers())
+						&& !m.getName().contains("lambda$")//非匿名方法
+						&& !m.getName().contains("access$")) {//非匿名方法
+					Class<?> returnType = m.getReturnType();
+					if(!returnType.getName().contains("void")) {
+						log.debug("method=>{}",m);
+						return true;
+					}
+				}
+				return false;
+			});
+		}catch(Exception e) {
+			log.error("hasStaticMethod",e);
+		}
+		return false;
+	}
 	public List<Class<?>> findStaticMethodClass() {
 		Set<Class<?>> list = Sets.newHashSet();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
@@ -197,27 +237,14 @@ public class ClassScan implements Scan{
 		    log.error("遗漏#findStaticMethodClass#=>{}",name);
 		})
 		.runAndWait(name ->{
-//			if(name.contains("SpringContextUtil")) {
-//				log.info("短点");
-//			}
 			Class<?> c = componentClassPathMap.get(name);
 			if(c.getAnnotations().length>0) {
 				if(c.isAnnotationPresent(Configuration.class)
 						|| c.isAnnotationPresent(Service.class)
 						|| c.isAnnotationPresent(Component.class)
 						|| c.isAnnotationPresent(Repository.class)) {
-					Method[] methods = c.getDeclaredMethods();
-					for(Method m : methods) {
-						if(Modifier.isStatic(m.getModifiers())
-								&& !m.getName().contains("lambda$")//非匿名方法
-								&& !m.getName().contains("access$")) {//非匿名方法
-							Class<?> returnType = m.getReturnType();
-							if(!returnType.getName().contains("void")) {
-								log.debug("method=>{}",m);
-								list.add(c);
-								return;
-							}
-						}
+					if(hasStaticMethod(c)) {
+						list.add(c);
 					}
 				}
 			}

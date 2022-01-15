@@ -1,7 +1,6 @@
 package com.github.jklasd.test.util;
 
 import java.io.IOException;
-import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
@@ -9,12 +8,17 @@ import java.util.Set;
 import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
+import org.springframework.core.type.classreading.MetadataReader;
 
 public class AnnHandlerUtil {
 	private static AnnHandlerUtil bean = new AnnHandlerUtil();
 	private AnnHandlerUtil() {}
 	public static AnnHandlerUtil getInstance() {return bean;}
 	private CachingMetadataReaderFactory cachingmetadatareaderfactory = new CachingMetadataReaderFactory(this.getClass().getClassLoader());
+	
+	public MetadataReader getMetadataReader(String className) throws IOException {
+		return cachingmetadatareaderfactory.getMetadataReader(className);
+	}
 	
 	public AnnotationMetadata getAnnotationMetadata(Class<?> configClass) throws IOException {
 		return cachingmetadatareaderfactory.getMetadataReader(configClass.getName()).getAnnotationMetadata();

@@ -6,8 +6,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Set;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.xml.DefaultDocumentLoader;
 import org.springframework.beans.factory.xml.DelegatingEntityResolver;
 import org.springframework.beans.factory.xml.DocumentLoader;
@@ -37,7 +35,7 @@ import lombok.extern.slf4j.Slf4j;
 public class XMLResourceLoader implements JunitResourceLoader{
 	
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
-    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory());
+    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory(LazyListableBeanFactory.XML_TYPE));
     
 	public static Set<String> xmlpathlist = Sets.newConcurrentHashSet();
 	protected final Log logger = LogFactory.getLog(getClass());

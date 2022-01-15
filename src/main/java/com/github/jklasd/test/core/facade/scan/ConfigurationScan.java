@@ -3,6 +3,9 @@ package com.github.jklasd.test.core.facade.scan;
 import java.io.IOException;
 import java.util.Map;
 
+import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -10,11 +13,13 @@ import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
+import org.springframework.core.type.classreading.MetadataReader;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.ScanUtil;
@@ -66,16 +71,20 @@ public class ConfigurationScan {
 			return;
 		}
 		beanCreaterScan.load(configClass);
+		MetadataReader sourceToProcess = null;
 		try {
 			Class<?>[] subCs = configClass.getDeclaredClasses();
 			for(Class<?> c : subCs) {
 				scanConfigClass(c);
 			}
 		} catch (NoClassDefFoundError e2) {
-			log.error("scanConfigClass=>{}",configClass,e2);
+			sourceToProcess = AnnHandlerUtil.getInstance().getMetadataReader(configClass.getName());
+			String[] memberClassNames = sourceToProcess.getClassMetadata().getMemberClassNames();
+			scanConfigClasses(memberClassNames);
 		} catch (Exception e2) {
 			log.error("scanConfigClass=>{}",configClass,e2);
 		}
+		
 		//@ImportResource;
 		if(AnnHandlerUtil.isAnnotationPresent(configClass,ImportResource.class)) {
 			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, ImportResource.class);
@@ -96,5 +105,15 @@ public class ConfigurationScan {
 				TestUtil.getInstance().loadEnv(sourcePath,resource.getFilename());
 			}
 		}
+		
+		ClassScan scaner = ClassScan.getInstance();
+		if(scaner.hasStaticMethod(configClass) && !configClass.getName().startsWith("org.springframework")) {
+			scaner.loadComponentClass(configClass);
+		}
+		
+		if(ScanUtil.isImple(configClass, BeanFactoryPostProcessor.class)) {
+			BeanFactoryProcessor.getInstance().loadProcessor(configClass);
+		}
 	}
+	
 }

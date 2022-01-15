@@ -1,6 +1,7 @@
 package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -23,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -192,6 +194,7 @@ public class LazyBean {
 	}
 	
 	public void setObj(Field f,Object obj,Object proxyObj) {
+		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
 		setObj(f, obj, proxyObj, null);
 	}
 	/**
@@ -237,18 +240,21 @@ public class LazyBean {
 //		if(objClassOrSuper.getName().contains("JedisCluster")) {
 //			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
 //		}
-	    String existKey = obj.hashCode()+"="+objClassOrSuper.getName();
-		if(exist.contains(existKey)) {
-			return;
+		if(obj.getClass() == objClassOrSuper) {
+			//跳过
+			String existKey = obj+"="+objClassOrSuper.getName();
+			if(exist.contains(existKey)) {
+				return;
+			}
+			exist.add(existKey);
 		}
-		exist.add(existKey);
 		Field[] fields = objClassOrSuper.getDeclaredFields();
 		processField(obj, fields);
 		
 //		processMethod(objClassOrSuper,obj);
 		
 		Class<?> superC = objClassOrSuper.getSuperclass();
-		if (superC != null) {
+		if (superC != null && superC!=Object.class) {
 			processAttr(obj, superC);
 		}
 
@@ -257,7 +263,7 @@ public class LazyBean {
 			BeanInitHandler.getInstance().processMethod(obj, ms,superC);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             log.error("processMethod=>{}+>{}",objClassOrSuper);
-             log.error("processMethod",e);
+            log.error("processMethod",e);
         }
 		
 		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
@@ -296,10 +302,6 @@ public class LazyBean {
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
-//						if(StringUtils.isNotBlank(c.name())) {
-//							setObj(f, obj, buildProxy(f.getType(),c.name()),c.name());
-//						}else {
-//						}
 						setObj(f, obj, buildProxy(f.getType(),c.name()));
 					} else {
 						log.debug("不需要需要注入=>{}", f.getName());
@@ -308,6 +310,26 @@ public class LazyBean {
 			}
 		}
     }
+	private static Class<?> getParamType(Method m, Type paramType) {
+		if(paramType instanceof ParameterizedType) {
+			ParameterizedType  pType = (ParameterizedType) paramType;
+			Type[] item = pType.getActualTypeArguments();
+			if(item.length == 1) {
+				//处理一个集合注入
+				try {
+					log.debug("获取paramType泛型类型=>{}",paramType);
+					return Class.forName(item[0].getTypeName());
+				} catch (ClassNotFoundException e) {
+					e.printStackTrace();
+				}
+			}else {
+				log.info("其他特殊情况");
+			}
+		}else {
+			return (Class<?>) paramType;
+		}
+		return null;
+	}
 
 	public Object processStatic(Class<?> c) {
 		try {

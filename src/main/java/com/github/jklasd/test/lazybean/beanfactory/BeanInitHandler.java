@@ -45,7 +45,7 @@ public class BeanInitHandler {
 	 * @throws IllegalAccessException 
 	 */
 	public void processMethod(Object obj, Method[] ms,Class<?> sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(sup != null) {
+		if(sup != null && sup!=Object.class) {
 			ms = sup.getDeclaredMethods();
 			processMethod(obj, ms, sup.getSuperclass());
 		}

@@ -44,8 +44,10 @@ public class LogbackUtil {
                 Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
                 if(logback!=null) {
                     loadLogXml(logback,false);
+                    return;
                 }else if(logback_spring!=null){
                     loadLogXml(logback_spring,true);
+                    return;
                 }  
             }else {
                 LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
@@ -65,6 +67,22 @@ public class LogbackUtil {
                 appender.start();
                 encoder.start();
             }
+            LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
+            context.reset();
+            Logger root = context.getLogger("ROOT");
+            ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
+            appender.setName("CONSOLE");
+            PatternLayoutEncoder encoder = new PatternLayoutEncoder();
+            encoder.setPattern("[%-5level][%contextName]%d{yyyy-MM-dd HH:mm:ss.SSS}[%thread][%X{traceId}] %logger - %msg%n");
+            encoder.setCharset(Charset.forName("UTF-8"));
+            encoder.setContext(context);
+            
+            appender.setEncoder(encoder);
+            appender.setContext(context);
+            root.setLevel(level);
+            root.addAppender(appender);
+            appender.start();
+            encoder.start();
         } catch (Exception e) {
              e.printStackTrace();
         }
