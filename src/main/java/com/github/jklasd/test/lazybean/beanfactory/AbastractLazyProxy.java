@@ -171,9 +171,9 @@ public abstract class AbastractLazyProxy {
             }
         }
         log.debug("开始实例化:{}",beanModel);
-        if(beanModel.getTagClass().getName().contains("mongodb.MongoClient")) {
-        	log.debug("断点");
-        }
+//        if(beanModel.getTagClass().getName().contains("mongodb.MongoClient")) {
+//        	log.debug("断点");
+//        }
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
             inited = true;

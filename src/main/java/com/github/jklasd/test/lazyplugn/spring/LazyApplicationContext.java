@@ -80,6 +80,13 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	@Override
 	public ConfigurableEnvironment getEnvironment() {
 		if(env == null) {
+			buildEnv();
+		}
+		return env;
+	}
+
+	private synchronized void buildEnv() {
+		if(env == null) {
 			env = new StandardEnvironment();
 			if(properties == null) {
 				properties = new Properties();
@@ -116,9 +123,8 @@ public class LazyApplicationContext extends GenericApplicationContext{
 					e.printStackTrace();
 				}
 			}
-			env.getPropertySources().addFirst(new PropertiesPropertySource("local", properties));
+			env.getPropertySources().addFirst(new PropertiesPropertySource("junitProp", properties));
 		}
-		return env;
 	}
 
 }

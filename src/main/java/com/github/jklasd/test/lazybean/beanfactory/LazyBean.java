@@ -302,10 +302,6 @@ public class LazyBean {
 				} else {
 					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
 					if (c != null) {
-//						if(StringUtils.isNotBlank(c.name())) {
-//							setObj(f, obj, buildProxy(f.getType(),c.name()),c.name());
-//						}else {
-//						}
 						setObj(f, obj, buildProxy(f.getType(),c.name()));
 					} else {
 						log.debug("不需要需要注入=>{}", f.getName());

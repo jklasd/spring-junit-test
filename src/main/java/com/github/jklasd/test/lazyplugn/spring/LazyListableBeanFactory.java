@@ -15,8 +15,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyListableBeanFactory extends DefaultListableBeanFactory{
 
     public LazyListableBeanFactory() {
-        super(null);
+        super();
     }
+    
 //    public LazyListableBeanFactory(BeanFactory arg0) {
 //        super(arg0);
 //    }

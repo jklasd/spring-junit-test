@@ -2,14 +2,17 @@ package com.github.jklasd.test.lazyplugn.spring.configprop;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContext;
+import org.springframework.context.EnvironmentAware;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
@@ -29,10 +32,12 @@ class PropBinder implements BinderHandler{
 	private Class<?> BindableC = ScanUtil.loadClass("org.springframework.boot.context.properties.bind.Bindable");
 	private Map<String,Constructor<?>> cacheConstructor = Maps.newHashMap();
 	private Object processObj;
-	
+	private LazyApplicationContext applicationContext;
 	public static BinderHandler getBinderHandler() {
 		if(ConfigurationPropertiesBean!=null) {
-			return new PropBinder();
+			PropBinder signBean = new PropBinder();
+			signBean.applicationContext= TestUtil.getInstance().getApplicationContext();
+			return signBean;
 		}
 		return null;
 	}
@@ -41,16 +46,7 @@ class PropBinder implements BinderHandler{
 	public void postProcess(Object obj, ConfigurationProperties annotation) {
 		try {
 			if(processObj == null) {
-				Constructor<?> con = ConfigurationPropertiesBinder.getDeclaredConstructor(ApplicationContext.class);
-				if(!con.isAccessible()) {
-					con.setAccessible(true);
-				}
-				BeanFactoryPostProcessor postProcessor = (BeanFactoryPostProcessor) PropertySourcesPlaceholderConfigurer.newInstance();
-				postProcessor.postProcessBeanFactory(TestUtil.getInstance().getApplicationContext().getBeanFactory());
-				
-				TestUtil.getInstance().getApplicationContext().registBean("propertySourcesPlaceholderConfigurer", postProcessor, PropertySourcesPlaceholderConfigurer);
-				
-				processObj = con.newInstance(TestUtil.getInstance().getApplicationContext());
+				buildProcessObj();
 			}
 			
 			String propBean = "ConfigurationPropertiesBean";
@@ -79,6 +75,24 @@ class PropBinder implements BinderHandler{
 			JunitInvokeUtil.invokeMethod(processObj, "bind", configurationPropertiesBean);
 		} catch (Exception e) {
 			log.error("绑定prop异常",e);
+		}
+	}
+
+	private synchronized void buildProcessObj()
+			throws NoSuchMethodException, InstantiationException, IllegalAccessException, InvocationTargetException {
+		if(processObj==null) {
+			
+			Constructor<?> con = ConfigurationPropertiesBinder.getDeclaredConstructor(ApplicationContext.class);
+			if(!con.isAccessible()) {
+				con.setAccessible(true);
+			}
+			BeanFactoryPostProcessor postProcessor = (BeanFactoryPostProcessor) PropertySourcesPlaceholderConfigurer.newInstance();
+			EnvironmentAware aware = (EnvironmentAware) postProcessor;
+			aware.setEnvironment(applicationContext.getEnvironment());
+			postProcessor.postProcessBeanFactory(applicationContext.getBeanFactory());
+			
+			applicationContext.registBean("propertySourcesPlaceholderConfigurer", postProcessor, PropertySourcesPlaceholderConfigurer);
+			processObj = con.newInstance(applicationContext);
 		}
 	}
 }

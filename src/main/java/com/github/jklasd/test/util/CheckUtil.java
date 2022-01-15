@@ -10,6 +10,7 @@ import java.util.Set;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnCloudPlatform;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
@@ -27,9 +28,11 @@ import lombok.extern.slf4j.Slf4j;
 public class CheckUtil {
 	private static Map<String, SpringBootCondition> checkClassMap = Maps.newHashMap();
 	private static Map<String, SpringBootCondition> checkPropMap = Maps.newHashMap();
+	private static Map<String, SpringBootCondition> otherMap = Maps.newHashMap();
 	static {
 		loadCondition(checkClassMap,ConditionalOnClass.class,ConditionalOnBean.class,ConditionalOnMissingClass.class);
 		loadCondition(checkPropMap,ConditionalOnProperty.class,ConditionalOnResource.class);
+		loadCondition(otherMap, ConditionalOnCloudPlatform.class,ConditionalOnProperty.class,ConditionalOnResource.class);
 	}
 
 	protected static void loadCondition(Map<String, SpringBootCondition> checkClassMap, Class<?>... classes) {
@@ -52,15 +55,23 @@ public class CheckUtil {
 
 	private static ConditionContext context = new ConditionContextImpl();
 
+	public static boolean checkOther(Class<?> configClass) {
+		return checkCommonMethod(configClass,otherMap);
+	}
+	
 	public static boolean checkProp(Class<?> configClass) {
+		return checkCommonMethod(configClass,otherMap);
+	}
+
+	private static boolean checkCommonMethod(Class<?> configClass,Map<String, SpringBootCondition> checkMap) {
 		try {
 			Set<String> anns = AnnHandlerUtil.getInstance().loadAnnoName(configClass);
 			if (anns == null) {
 				return false;
 			}
 			for (String ann : anns) {
-				if (checkPropMap.containsKey(ann)) {
-					SpringBootCondition condition = checkPropMap.get(ann);
+				if (checkMap.containsKey(ann)) {
+					SpringBootCondition condition = checkMap.get(ann);
 					ConditionOutcome outcome = condition.getMatchOutcome(context,
 							AnnHandlerUtil.getInstance().getAnnotationMetadata(configClass));
 					if(!outcome.isMatch()) {
