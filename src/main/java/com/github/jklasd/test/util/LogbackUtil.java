@@ -39,7 +39,7 @@ public class LogbackUtil {
 	public static void resetLog() {
 	    try {
             if(useLocal) {
-            	System.out.println("===========LogbackUtil=resetLog===========");
+//            	System.out.println("===========LogbackUtil=resetLog===========");
                 Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
                 Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
                 if(logback!=null) {

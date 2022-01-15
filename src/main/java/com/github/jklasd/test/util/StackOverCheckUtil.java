@@ -2,8 +2,6 @@ package com.github.jklasd.test.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.github.jklasd.test.exception.JunitException;
-
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -12,10 +10,20 @@ public class StackOverCheckUtil {
 	public interface StackOverCheckI{
 		public Object run();	
 	}
+	public interface StackOverCheckThrowExcepitonI{
+		public Object run()  throws Throwable;	
+	}
 	
 	private static ThreadLocal<AtomicInteger> stackOverCheck = new InheritableThreadLocal<AtomicInteger>();
 	
-	public static Object observeIgnore(StackOverCheckI execTrack)  throws JunitException {
+	public static Object observeThrowException(StackOverCheckThrowExcepitonI execTrack) throws Throwable{
+		LogbackUtil.setTraceId();
+		Object result = execTrack.run();
+		LogbackUtil.clearTraceId();
+        return result;
+	}
+	
+	public static Object observeIgnoreException(StackOverCheckI execTrack){
 		LogbackUtil.setTraceId();
 		Object result = execTrack.run();
 		LogbackUtil.clearTraceId();

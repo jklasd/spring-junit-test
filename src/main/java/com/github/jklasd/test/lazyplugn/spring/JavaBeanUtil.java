@@ -184,7 +184,6 @@ public class JavaBeanUtil {
             }else {
                 cons = configClass.getDeclaredConstructors();
                 if(!Modifier.isPublic(configClass.getModifiers())) {
-                    log.info("处理非公共类");
                     cons[0].setAccessible(true);
                 }
                 if(cons.length>0) {

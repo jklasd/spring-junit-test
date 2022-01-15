@@ -25,12 +25,8 @@ public class LazyImple extends AbastractLazyProxy implements InvocationHandler {
 	private Type[] classGeneric;
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] param) throws Throwable {
-		return StackOverCheckUtil.observeIgnore(()->{
-    		try {
-				return commonIntercept(proxy, method, param);
-			} catch (Throwable e) {
-				throw new JunitException(e);
-			}
+		return StackOverCheckUtil.observeThrowException(()->{
+			return commonIntercept(proxy, method, param);
     	});
 	}
 	

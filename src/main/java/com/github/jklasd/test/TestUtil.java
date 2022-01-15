@@ -235,17 +235,22 @@ public class TestUtil{
 	 */
 	private static volatile boolean processInited;
 	public static void startTestForNoContainer(Object obj) {
-	    if(processInited) {
+		resourcePreparation();
+		//注入当前执行对象
+		LazyBean.getInstance().processAttr(obj, obj.getClass());
+	}
+
+	public static void resourcePreparation() {
+		if(processInited) {
 	        return;
 	    }
+		processInited = true;
 		TestUtil launch = getInstance();
 		launch.loadProp();
 		LogbackUtil.resetLog();
 		
 		ScanUtil.loadAllClass();
 		launch.processConfig();
-		//注入当前执行对象
-		LazyBean.getInstance().processAttr(obj, obj.getClass());
 	}
 
 	private void loadProp() {

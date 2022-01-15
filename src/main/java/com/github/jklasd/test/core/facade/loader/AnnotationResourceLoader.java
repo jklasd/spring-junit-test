@@ -52,7 +52,7 @@ public class AnnotationResourceLoader implements JunitResourceLoader{
 
 	private void loadAutoConfigClass(String... classNames) {
 		for(String className : classNames) {
-			log.info("loadAutoConfigClass=>{}",className);
+			log.debug("loadAutoConfigClass=>{}",className);
 			Class<?> configC = ScanUtil.loadClass(className);
 			if(configC!=null) {
 				thridAutoConfigClass.add(ScanUtil.loadClass(className));

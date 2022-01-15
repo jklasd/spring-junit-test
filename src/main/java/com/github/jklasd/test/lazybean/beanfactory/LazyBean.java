@@ -109,7 +109,7 @@ public class LazyBean {
 	 * @return 代理对象
 	 */
 	public Object buildProxy(BeanModel beanModel) {
-		return StackOverCheckUtil.observeIgnore(()->{
+		return StackOverCheckUtil.observeIgnoreException(()->{
 			Object obj = null;
 		    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
 		        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
@@ -310,26 +310,26 @@ public class LazyBean {
 			}
 		}
     }
-	private static Class<?> getParamType(Method m, Type paramType) {
-		if(paramType instanceof ParameterizedType) {
-			ParameterizedType  pType = (ParameterizedType) paramType;
-			Type[] item = pType.getActualTypeArguments();
-			if(item.length == 1) {
-				//处理一个集合注入
-				try {
-					log.debug("获取paramType泛型类型=>{}",paramType);
-					return Class.forName(item[0].getTypeName());
-				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
-				}
-			}else {
-				log.info("其他特殊情况");
-			}
-		}else {
-			return (Class<?>) paramType;
-		}
-		return null;
-	}
+//	private static Class<?> getParamType(Method m, Type paramType) {
+//		if(paramType instanceof ParameterizedType) {
+//			ParameterizedType  pType = (ParameterizedType) paramType;
+//			Type[] item = pType.getActualTypeArguments();
+//			if(item.length == 1) {
+//				//处理一个集合注入
+//				try {
+//					log.debug("获取paramType泛型类型=>{}",paramType);
+//					return Class.forName(item[0].getTypeName());
+//				} catch (ClassNotFoundException e) {
+//					e.printStackTrace();
+//				}
+//			}else {
+//				log.info("其他特殊情况");
+//			}
+//		}else {
+//			return (Class<?>) paramType;
+//		}
+//		return null;
+//	}
 
 	public Object processStatic(Class<?> c) {
 		try {
@@ -609,7 +609,7 @@ public class LazyBean {
 		return findCreateBeanFromFactory(asse);
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
-		return StackOverCheckUtil.observeIgnore(()->StackOverCheckUtil.observe(()->{
+		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
 			Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
 			if(ojb_meth[0] ==null || ojb_meth[1]==null) {
 				return null;
