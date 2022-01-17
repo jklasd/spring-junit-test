@@ -2,7 +2,6 @@ package com.github.jklasd.test.core.facade.loader;
 
 import java.util.Set;
 
-import com.github.jklasd.test.lazyplugn.spring.LazyConfigurationPropertiesBindingPostProcessor;
 import com.google.common.collect.Sets;
 
 public class PropResourceLoader {

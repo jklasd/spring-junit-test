@@ -30,7 +30,7 @@ public class ConditionContextImpl implements ConditionContext{
 	@Override
 	public ResourceLoader getResourceLoader() {
 		// TODO Auto-generated method stub
-		return null;
+		return TestUtil.getInstance().getApplicationContext();
 	}
 
 	@Override

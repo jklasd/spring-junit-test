@@ -21,7 +21,7 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory{
     public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
         throws BeanDefinitionStoreException {
 //         super.registerBeanDefinition(beanName, beanDefinition);
-//        log.info("registerBeanDefinition===={}",beanName);
+        log.debug("registerBeanDefinition===={}",beanName);
 //        if(!TestUtil.getApplicationContext().containsBean(beanName)) {
 //            Class<?> tagC = ScanUtil.loadClass(beanDefinition.getBeanClassName());
 //            BeanModel beanModel = new BeanModel();
