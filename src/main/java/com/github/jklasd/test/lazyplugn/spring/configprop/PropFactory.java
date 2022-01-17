@@ -8,6 +8,7 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -49,11 +50,11 @@ class PropFactory implements BinderHandler{
 				setTargetName.invoke(factory, annotation.prefix());
 			}
 			
-			Method bindPropertiesToTarget = PropertiesConfigurationFactory.getDeclaredMethod("setPropertySources", PropertySources.class);
+			Method bindPropertiesToTarget = PropertiesConfigurationFactory.getDeclaredMethod("bindPropertiesToTarget");
 			bindPropertiesToTarget.invoke(factory);
 		} catch (NoSuchMethodException | SecurityException | IllegalAccessException 
 				| IllegalArgumentException | InvocationTargetException | InstantiationException e) {
-			e.printStackTrace();
+			throw new JunitException("构建PropFactory异常");
 		}
 //		factory.setPropertySources(TestUtil.getInstance().getPropertySource());
 //		factory.setIgnoreInvalidFields(annotation.ignoreInvalidFields());

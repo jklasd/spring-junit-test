@@ -24,8 +24,8 @@ import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
-import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyBeanDefinitionDocumentReader;
+import com.github.jklasd.test.lazyplugn.spring.xml.LazyXmlListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
@@ -37,7 +37,7 @@ import lombok.extern.slf4j.Slf4j;
 public class XMLResourceLoader implements JunitResourceLoader{
 	
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
-    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(new LazyListableBeanFactory(LazyListableBeanFactory.XML_TYPE));
+    private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(LazyXmlListableBeanFactory.getInstance());
     
 	public static Set<String> xmlpathlist = Sets.newConcurrentHashSet();
 	protected final Log logger = LogFactory.getLog(getClass());

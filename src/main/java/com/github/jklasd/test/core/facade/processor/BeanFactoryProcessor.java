@@ -30,14 +30,11 @@ public class BeanFactoryProcessor {
 		}
 	}
 //	List<BeanFactoryPostProcessor> processorList = Lists.newArrayList();
-	Set<Class<?>> filter;
+	Set<Class<?>> filter = Sets.newConcurrentHashSet();
 	LazyApplicationContext lazyApplicationContext = TestUtil.getInstance().getApplicationContext();
 	public void loadProcessor(Class<?> configClass) {
 		synchronized(lazyApplicationContext.getBeanFactoryPostProcessors()) {
 			try {
-				if(filter==null) {
-					filter = Sets.newConcurrentHashSet();
-				}
 				if(filter.contains(configClass)) {
 					return;
 				}
