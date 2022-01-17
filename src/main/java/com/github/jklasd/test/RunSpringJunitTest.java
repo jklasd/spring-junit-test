@@ -27,7 +27,8 @@ public class RunSpringJunitTest extends BlockJUnit4ClassRunner{
 
 	@Override
 	public Description getDescription() {
-		return Description.createTestDescription(runClass, "spring-junit-test");
+		return super.getDescription();
+//		return Description.createTestDescription(runClass, "spring-junit-test");
 	}
 
 	@Override
