@@ -112,9 +112,6 @@ public class TestUtil{
 		list.stream().filter(classItem -> classItem != getClass() && !Modifier.isAbstract(classItem.getModifiers()))
 				.forEach(classItem -> {
 					log.debug("static class =>{}", classItem);
-//					if(classItem.getName().contains("HandleMessageUtil")) {
-//					    System.out.println("断点");
-//					}
 					LazyBean.getInstance().processStatic(classItem);
 				});
 	}

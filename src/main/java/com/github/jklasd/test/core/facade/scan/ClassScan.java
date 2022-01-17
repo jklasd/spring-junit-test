@@ -12,6 +12,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
@@ -197,9 +198,6 @@ public class ClassScan implements Scan{
 		    log.error("遗漏#findStaticMethodClass#=>{}",name);
 		})
 		.runAndWait(name ->{
-//			if(name.contains("SpringContextUtil")) {
-//				log.info("短点");
-//			}
 			Class<?> c = componentClassPathMap.get(name);
 			if(c.getAnnotations().length>0) {
 				if(c.isAnnotationPresent(Configuration.class)
@@ -225,26 +223,34 @@ public class ClassScan implements Scan{
 		return Lists.newArrayList(list);
 	}
 	
+	Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
-		List<Class<?>> list = Lists.newArrayList();
-		
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
-		.runAndWait(name ->{
-			if (beanName.toLowerCase().equals(name.replace(CLASS_SUFFIX, ""))) {
-				list.add(componentClassPathMap.get(name));
-			} else {
+		if(!cacheBeanNameClass.isEmpty()) {
+			return cacheBeanNameClass.get(beanName);
+		}
+		synchronized (cacheBeanNameClass) {
+			if(!cacheBeanNameClass.isEmpty()) {
+				return cacheBeanNameClass.get(beanName);
+			}	
+			AtomicReference<Class<?>> findClass = new AtomicReference<Class<?>>();
+			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
+			.runAndWait(name ->{
+				if(findClass.get()!=null) {
+					return;
+				}
+				
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
-					
+					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
-						list.add(tagClass);
+						findClass.set(tagClass);
 					}
 				} catch (Exception e) {
 				}
-			}
-		});
-		return list.isEmpty()?null:list.get(0);
+			});
+			return findClass.get();
+		}
 	}
 	public List<Class<?>> findClassImplInterface(Class<?> interfaceClass) {
 		List<Class<?>> list = Lists.newArrayList();

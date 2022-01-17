@@ -38,7 +38,7 @@ public class StackOverCheckUtil {
         	stackOverCheck.set(new AtomicInteger());
         }
         stackOverCheck.get().incrementAndGet();
-        if(stackOverCheck.get().get()>3) {
+        if(stackOverCheck.get().get()>5) {
         	log.error("------------异常查找-------------");
         	if(args.length>0) {
         		log.error("------------异常查找--args[{}]-----------",args);
