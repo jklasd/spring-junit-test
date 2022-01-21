@@ -16,19 +16,6 @@ Spring-junit-test 插件，就是为了解决这个问题，而产生的。以�
 比如：
 
 ```java
-public class HttpTest extends SpringPluginTestBase{
-
-	@Autowired
-	private StockHttpService stockHttpService;
-	
-	@Test
-	public void stockTest() {
-		stockHttpService.collectData("");
-	}
-}
-```
-
-```java
 @Runwith(RunSpringJunitTest.class)
 public class HttpTest{
 
