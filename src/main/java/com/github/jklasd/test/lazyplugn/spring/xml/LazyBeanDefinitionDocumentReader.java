@@ -7,6 +7,7 @@ import org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader
 import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
+import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.util.ScanUtil;
@@ -45,6 +46,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         
         log.info("xml build proxy bean=>{}",beanDef.getBeanClassName());
         BeanModel model = new BeanModel();
+        model.setThrows(true);
 //        model.setBeanClassName(beanDef.getBeanClassName());
         model.setXmlBean(true);
         model.setBeanName(beanName);
@@ -59,7 +61,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
     }
 
     protected void importBeanDefinitionResource(Element ele) {
-        XmlBeanUtil.getInstance().readNode(ele.getAttribute(RESOURCE_ATTRIBUTE));
+    	XMLResourceLoader.getInstance().readNode(ele.getAttribute(RESOURCE_ATTRIBUTE));
     }
 
     public void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {

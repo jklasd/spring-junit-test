@@ -10,7 +10,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
-import com.github.jklasd.test.util.InvokeUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.google.common.collect.Lists;
@@ -78,11 +78,10 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     private Object getMapper(Class<?> classBean) throws Exception {
-        Object tag = InvokeUtil.invokeMethod(getSqlSessionTemplate(), "getMapper", classBean);
+        Object tag = JunitInvokeUtil.invokeMethod(getSqlSessionTemplate(), "getMapper", classBean);
         return tag;
     }
 
-    @SuppressWarnings("rawtypes")
     private void buildMybatisFactory() {
         if (factory == null) {
             Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
@@ -113,7 +112,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
-        if (useMybatis() && !loadScaned) {
+    	if (useMybatis() && !loadScaned) {
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;

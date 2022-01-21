@@ -12,8 +12,8 @@ import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public final class ThreadPoolUtils {
-	private ThreadPoolUtils() {}
+public final class JunitThreadPoolUtils {
+	private JunitThreadPoolUtils() {}
 	private static ThreadPoolExecutor executorServer;
 	/** 排队任务的最大数目，
 	 * 如果超过则创建新线程(不超过MAX_THREAD_COUNT否则任务丢弃)，

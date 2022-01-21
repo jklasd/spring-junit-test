@@ -9,6 +9,7 @@ import org.springframework.transaction.annotation.AnnotationTransactionAttribute
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -17,6 +18,10 @@ public class TranstionalManager {
     private static TranstionalManager transtionManager;
     private volatile PlatformTransactionManager txManager;
     private TranstionalManager() {}
+    private static Class<?> DataSourceTransactionManager = ScanUtil.loadClass("org.springframework.jdbc.datasource.DataSourceTransactionManager");
+    public static boolean isFindTranstional() {
+    	return DataSourceTransactionManager != null;
+    }
     public synchronized static TranstionalManager getInstance() {
         if(transtionManager == null) {
             transtionManager = new TranstionalManager();
@@ -49,7 +54,7 @@ public class TranstionalManager {
         return atas.getTransactionAttribute(method, tagClass);
     }
     public TransactionStatus beginTx(TransactionAttribute txInfo) {
-        log.info("开启事务=>{}",txInfo);
+        log.debug("开启事务=>{}",txInfo);
         if(txManager == null) {
             txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
         }

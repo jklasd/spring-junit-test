@@ -8,6 +8,8 @@ import java.lang.reflect.Type;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 
+import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -36,6 +38,11 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 		if(type != null) {
 			Class<?> tagC = (Class<?>) type;
 			try {
+				Object obj = LazyBean.findCreateBeanFromFactory(tagC, null);
+				if(obj != null) {
+					return obj;
+				}
+				
 				Class<?> builderC = Class.forName(tagC.getName()+"$Builder");
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
@@ -44,7 +51,7 @@ public class ObjectProviderImpl implements ObjectProvider<Object>, Serializable{
 					}
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				log.error("ObjectProvider#getIfAvailable",e);
+				log.error("ObjectProvider#getIfAvailable##############{}##############",type);
 			}
 		}
 		return null;
