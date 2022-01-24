@@ -253,7 +253,7 @@ public class ClassScan implements Scan{
 		return Lists.newArrayList(list);
 	}
 	
-	Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
+	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
 		if(!cacheBeanNameClass.isEmpty()) {
 			return cacheBeanNameClass.get(beanName);
@@ -265,13 +265,10 @@ public class ClassScan implements Scan{
 			AtomicReference<Class<?>> findClass = new AtomicReference<Class<?>>();
 			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 			.runAndWait(name ->{
-				if(findClass.get()!=null) {
-					return;
-				}
-				
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
+					log.info("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
 						findClass.set(tagClass);

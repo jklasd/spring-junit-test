@@ -126,8 +126,8 @@ public class BeanInitHandler {
 //                if(beanName.equals("buildConsumerConfig")) {
 //                	log.debug("短点");
 //                }
-                Object exitBean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
-                if(exitBean!=null) {
+                boolean exitBean = TestUtil.getInstance().getApplicationContext().containsBean(beanName);
+                if(exitBean) {
                 	return;
                 }
                 if (!m.isAccessible()) {
