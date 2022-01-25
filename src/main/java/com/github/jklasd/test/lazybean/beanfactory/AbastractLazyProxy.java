@@ -86,7 +86,7 @@ public abstract class AbastractLazyProxy {
     
     protected synchronized Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>3) {
-    		log.error("method=>{}",method.getName());
+    		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
     		throw new JunitException("----------异常代理方式--------",true);
     	}
     	if(method.getName().equals("toString")) {
