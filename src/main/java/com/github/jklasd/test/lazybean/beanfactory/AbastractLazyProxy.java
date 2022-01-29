@@ -84,7 +84,7 @@ public abstract class AbastractLazyProxy {
 //    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    protected synchronized Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>3) {
     		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
     		throw new JunitException("----------异常代理方式--------",true);
@@ -143,6 +143,8 @@ public abstract class AbastractLazyProxy {
             }else {
             	result = method.invoke(newObj, param);
             }
+            
+            errorTimes.set(0);
             
             AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
