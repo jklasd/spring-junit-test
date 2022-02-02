@@ -2,10 +2,9 @@ package com.github.jklasd.test.core.facade.scan;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Set;
 
-import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
@@ -24,6 +23,7 @@ import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -42,10 +42,14 @@ public class ConfigurationScan {
 			scanConfigClass(ScanUtil.loadClass(cName));
 		}
 	}
+	
+	Set<Class<?>> cacheScanConfig = Sets.newHashSet();
+	
 	public void scanConfigClass(Class<?> configClass) throws IOException {
-		if(configClass==null || beanCreaterScan.contains(configClass)) {
+		if(configClass==null || cacheScanConfig.contains(configClass)) {
 			return;
 		}
+		cacheScanConfig.add(configClass);
 		//@Configuration
 		if(!AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {
 			return;
