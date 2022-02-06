@@ -10,6 +10,8 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
+import org.springframework.boot.logging.LogFile;
+import org.springframework.boot.logging.LoggingInitializationContext;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -17,6 +19,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.lazyplugn.logbackspring.LogbackLoggingSystemExt;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -94,15 +98,22 @@ public class LogbackUtil {
         context.reset(); // 重置默认配置
         DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
         Document doc = factory.newDocumentBuilder().parse(logback.getInputStream());
+        
         if(isSpringLogback) {
-            NodeList springPropertys = doc.getElementsByTagName("springProperty");
-            for(int i=0 ;i<springPropertys.getLength();i++) {
-                Element node = (Element)springPropertys.item(i);
-                String key = node.getAttribute("name");
-                String val = node.getAttribute("source");
-                val = TestUtil.getInstance().getPropertiesValue(val);
-                context.putProperty(key, val);
-            }
+//            NodeList springPropertys = doc.getElementsByTagName("springProperty");
+//            for(int i=0 ;i<springPropertys.getLength();i++) {
+//                Element node = (Element)springPropertys.item(i);
+//                String key = node.getAttribute("name");
+//                String val = node.getAttribute("source");
+//                val = TestUtil.getInstance().getPropertiesValue(val, node.getAttribute("defaultValue"));
+//                context.putProperty(key, val);
+//            }
+            
+            LoggingInitializationContext initializationContext = new LoggingInitializationContext(
+    				TestUtil.getInstance().getEnvironment());
+            LogbackLoggingSystemExt logbackSystem = new LogbackLoggingSystemExt(ClassScan.getInstance().getClassLoader());
+            logbackSystem.initialize(initializationContext, null, LogFile.get(TestUtil.getInstance().getEnvironment()));
+            return ;
         }
         
         NodeList propertys = doc.getElementsByTagName("Property");

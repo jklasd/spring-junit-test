@@ -88,6 +88,10 @@ public class TestUtil{
 	public LazyApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
+	
+	public ConfigurableEnvironment getEnvironment() {
+		return applicationContext.getEnvironment();
+	}
 
 //	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
 //		this.applicationContext = new TestApplicationContext(applicationContext);

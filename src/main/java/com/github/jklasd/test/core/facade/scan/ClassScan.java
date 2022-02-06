@@ -32,6 +32,7 @@ import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
@@ -53,6 +54,8 @@ public class ClassScan implements Scan{
 	
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
+	
+	private ClassLoader classLoader = JavaBeanUtil.class.getClassLoader();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -336,4 +339,9 @@ public class ClassScan implements Scan{
 		});
 		return list;
 	}
+
+	public ClassLoader getClassLoader() {
+		return classLoader;
+	}
+
 }

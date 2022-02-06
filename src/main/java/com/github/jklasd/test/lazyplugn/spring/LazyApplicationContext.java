@@ -29,6 +29,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		super(LazyListableBeanFactory.getInstance());
 		lazyBeanFactory = getDefaultListableBeanFactory();
 	}
+	
 	public Object getBean(String beanName) {
 		try {
 			if(lazyBeanFactory.containsBean(beanName)) {

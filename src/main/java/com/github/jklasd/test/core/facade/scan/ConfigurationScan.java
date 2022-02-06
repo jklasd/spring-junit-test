@@ -49,6 +49,11 @@ public class ConfigurationScan {
 		if(configClass==null || cacheScanConfig.contains(configClass)) {
 			return;
 		}
+		
+//		if(configClass.getName().contains("MongoReactiveDataAutoConfiguration")) {
+//			log.debug("=============加载{}=============",configClass);			
+//		}
+		
 		cacheScanConfig.add(configClass);
 		//@Configuration
 		if(!AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {
