@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
+import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +32,7 @@ import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
+import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
@@ -157,11 +159,15 @@ public class JavaBeanUtil {
     }
     private boolean buildConfigObj(Class<?> configClass, Map<String,Class<?>> nameSpace) {
         try {
-            AutoConfigureAfter afterC = configClass.getAnnotation(AutoConfigureAfter.class);
-            if(afterC!=null) {//先加载另外一个类
-                for(Class<?> itemConfigC : afterC.value()) {
-                    buildConfigObj(itemConfigC,nameSpace);
-                }
+        	Map<String, Object> annoData = AnnHandlerUtil.getInstance().getAnnotationValue(configClass,AutoConfigureAfter.class);
+            if(annoData!=null && !annoData.isEmpty()) {//先加载另外一个类
+            	String[] classArr = (String[]) annoData.get("value");
+            	for(String className : classArr) {
+            		Class<?> tmp = ScanUtil.loadClass(className);
+            		if(tmp!=null) {
+            			buildConfigObj(tmp,nameSpace);
+            		}
+            	}
             }
             PropertySource propSrouce = configClass.getAnnotation(PropertySource.class);
             if(propSrouce!=null) {//先加载配置
@@ -194,7 +200,7 @@ public class JavaBeanUtil {
             	LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
             }
             LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
             log.error("构建Configuration Bean=>{}",configClass.getSimpleName());
             log.error("构建Bean",e);
             return false;

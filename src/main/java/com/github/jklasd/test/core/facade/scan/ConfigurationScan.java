@@ -43,7 +43,7 @@ public class ConfigurationScan {
 		}
 	}
 	
-	Set<Class<?>> cacheScanConfig = Sets.newHashSet();
+	Set<Class<?>> cacheScanConfig = Sets.newConcurrentHashSet();
 	
 	public void scanConfigClass(Class<?> configClass) throws IOException {
 		if(configClass==null || cacheScanConfig.contains(configClass)) {

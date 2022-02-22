@@ -106,6 +106,10 @@ public class BeanInitHandler {
 			    }
 			    
             }else if(m.getAnnotation(Resource.class) != null) {
+            	if(m.getReturnType() != Void.class
+            			&& m.getReturnType() != void.class) {
+            		return;
+            	}
                 Resource aw = m.getAnnotation(Resource.class);
                 String beanName = aw.name();
                 Object[] param = processParam(m, paramTypes);
@@ -114,6 +118,10 @@ public class BeanInitHandler {
 //                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
                 }
             }else if(m.getAnnotation(Bean.class) != null) {
+            	if(m.getReturnType() != Void.class
+            			&& m.getReturnType() != void.class) {
+            		return;
+            	}
                 Bean aw = m.getAnnotation(Bean.class);
                 String beanName = null;
                 if(aw.value().length>0) {
