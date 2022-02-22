@@ -75,7 +75,7 @@ public class XMLResourceLoader implements JunitResourceLoader{
         Resource file = TestUtil.getInstance().getApplicationContext().getResource(xml);
         if (file != null) {
             try {
-                log.info("load:{}",file.getFile().getPath());
+                log.info("load:{}",file.getURL().getPath());
                 XmlReaderContext context = xmlReader.createReaderContext(file);
                 LazyBeanDefinitionDocumentReader parsor = new LazyBeanDefinitionDocumentReader();
                 Document document = documentLoader.loadDocument(new InputSource(file.getInputStream()), getEntityResolver(xmlReader), 

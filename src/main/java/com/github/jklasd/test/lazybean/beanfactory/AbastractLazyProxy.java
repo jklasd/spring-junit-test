@@ -152,7 +152,10 @@ public abstract class AbastractLazyProxy {
         }catch (JunitException e) {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
         	throw e;
-        }catch (Exception e) {
+        }catch (InvocationTargetException e) {
+        	log.warn("===================InvocationTargetException处理===================");
+        	throw e.getTargetException();
+		}catch (Exception e) {
         	errorTimes.incrementAndGet();
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
