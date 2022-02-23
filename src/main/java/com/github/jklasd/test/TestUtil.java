@@ -26,6 +26,7 @@ import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
@@ -86,6 +87,10 @@ public class TestUtil{
 
 	public LazyApplicationContext getApplicationContext() {
 		return applicationContext;
+	}
+	
+	public ConfigurableEnvironment getEnvironment() {
+		return applicationContext.getEnvironment();
 	}
 
 //	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
@@ -245,12 +250,17 @@ public class TestUtil{
 	        return;
 	    }
 		processInited = true;
-		TestUtil launch = getInstance();
-		launch.loadProp();
-		LogbackUtil.resetLog();
-		
-		ScanUtil.loadAllClass();
-		launch.processConfig();
+		try {
+			TestUtil launch = getInstance();
+			launch.loadProp();
+			LogbackUtil.resetLog();
+			
+			ScanUtil.loadAllClass();
+			launch.processConfig();
+		}catch(Error e) {
+			log.error("resourcePreparation 异常",e);
+			throw new JunitException(e);
+		}
 	}
 
 	private void loadProp() {

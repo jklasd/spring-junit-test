@@ -5,14 +5,11 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 
-import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.util.CheckUtil;
-import com.github.jklasd.test.util.DebugObjectView;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -70,6 +67,15 @@ public class BeanCreaterScan implements Scan{
 		}
 		return address;
 	}
+	
+	public void checkConfig(String className) {
+		Lists.newArrayList(thridAutoConfigClass).forEach(config->{
+			if(config.getName().contains(className)) {
+				log.info("checked=>>>{}",className);
+			}
+		});
+	}
+	
 	public Object[] findClassMethodByResultType(AssemblyDTO assemblyData) {
 		Object[] address = new Object[2];
 		Object[] tmp = new Object[2];
@@ -106,7 +112,7 @@ public class BeanCreaterScan implements Scan{
 	}
 	
 	public Object[] findCreateBeanFactoryClass(AssemblyDTO assemblyData) {
-		if(StringUtils.isNoneBlank(assemblyData.getBeanName())) {
+		if(StringUtils.isNotBlank(assemblyData.getBeanName())) {
 			Object[] result = findClassMethodByBeanName(assemblyData);
 			if(result[0] != null) {
 				return result;
@@ -129,6 +135,11 @@ public class BeanCreaterScan implements Scan{
 	}
 	public boolean contains(Class<?> configClass) {
 		return thridAutoConfigClass.contains(configClass);
+	}
+	public Object[] findCreateBeanFactoryClass(Class<?> tagC) {
+		AssemblyDTO assemblyData = new AssemblyDTO();
+		assemblyData.setTagClass(tagC);
+		return findClassMethodByResultType(assemblyData);
 	}
 
 }

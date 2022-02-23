@@ -31,7 +31,7 @@ public class LazyImple extends AbastractLazyProxy implements InvocationHandler {
 	}
 	
     @Override
-    protected Object getTagertObjectCustom() {
+    protected synchronized Object getTagertObjectCustom() {
         Class<?> tagertC = beanModel.getTagClass();
         String beanName = beanModel.getBeanName();
         if(LazyDubboBean.getInstance().isDubboNew(tagertC)) {//，判断是否是Dubbo服务

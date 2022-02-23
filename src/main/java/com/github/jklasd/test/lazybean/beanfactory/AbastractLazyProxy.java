@@ -84,9 +84,9 @@ public abstract class AbastractLazyProxy {
 //    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    protected synchronized Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>3) {
-    		log.error("method=>{}",method.getName());
+    		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
     		throw new JunitException("----------异常代理方式--------",true);
     	}
     	if(method.getName().equals("toString")) {
@@ -144,13 +144,18 @@ public abstract class AbastractLazyProxy {
             	result = method.invoke(newObj, param);
             }
             
+            errorTimes.set(0);
+            
             AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
             return result;
         }catch (JunitException e) {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
         	throw e;
-        }catch (Exception e) {
+        }catch (InvocationTargetException e) {
+        	log.warn("===================InvocationTargetException处理===================");
+        	throw e.getTargetException();
+		}catch (Exception e) {
         	errorTimes.incrementAndGet();
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),

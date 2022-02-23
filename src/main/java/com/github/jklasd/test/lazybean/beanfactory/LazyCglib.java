@@ -135,7 +135,7 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
     }
     
     @Override
-    protected Object getTagertObjectCustom() {
+    protected  synchronized Object getTagertObjectCustom() {
         Class<?> tagertC = beanModel.getTagClass();
 //        if(tagertC.getName().contains("JedisCluster")) {
 //            log.info("");

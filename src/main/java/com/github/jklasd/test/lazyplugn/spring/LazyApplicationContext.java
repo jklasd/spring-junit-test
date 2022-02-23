@@ -14,6 +14,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.Getter;
@@ -33,6 +34,13 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		try {
 			if(lazyBeanFactory.containsBean(beanName)) {
 				return lazyBeanFactory.getBean(beanName);
+			}
+			/**
+			 * 尝试筛选域中，查看bean是否存在
+			 */
+			Class<?> beanClass = ScanUtil.findClassByName(beanName);
+			if(beanClass!=null) {
+				return LazyBean.getInstance().buildProxy(beanClass,beanName);
 			}
 			return null;
 		}catch(Exception e){

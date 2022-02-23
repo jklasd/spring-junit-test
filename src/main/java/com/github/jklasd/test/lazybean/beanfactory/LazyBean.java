@@ -528,7 +528,8 @@ public class LazyBean {
 				throw new JunitException("待开发");
 			}else {
 				if(interfaceClass == ObjectProvider.class) {
-					return new ObjectProviderImpl(classGeneric[0]);
+					return new ObjectProviderImpl((Class<?>)classGeneric[0]);
+//					return util.getApplicationContext().getDefaultListableBeanFactory();
 				}
 			}
 		}

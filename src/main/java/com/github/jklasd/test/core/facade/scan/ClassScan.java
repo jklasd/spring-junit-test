@@ -32,6 +32,7 @@ import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
@@ -53,6 +54,8 @@ public class ClassScan implements Scan{
 	
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
+	
+	private ClassLoader classLoader = JavaBeanUtil.class.getClassLoader();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -253,7 +256,7 @@ public class ClassScan implements Scan{
 		return Lists.newArrayList(list);
 	}
 	
-	Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
+	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
 		if(!cacheBeanNameClass.isEmpty()) {
 			return cacheBeanNameClass.get(beanName);
@@ -265,13 +268,10 @@ public class ClassScan implements Scan{
 			AtomicReference<Class<?>> findClass = new AtomicReference<Class<?>>();
 			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 			.runAndWait(name ->{
-				if(findClass.get()!=null) {
-					return;
-				}
-				
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
+					log.info("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
 						findClass.set(tagClass);
@@ -339,4 +339,9 @@ public class ClassScan implements Scan{
 		});
 		return list;
 	}
+
+	public ClassLoader getClassLoader() {
+		return classLoader;
+	}
+
 }
