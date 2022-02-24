@@ -225,6 +225,36 @@ public class LazyBean {
 	 * @param objClassOrSuper
 	 */
 	static Set<String> exist = Sets.newHashSet();
+	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
+		if(obj.getClass() == objClassOrSuper) {
+			//跳过
+			String existKey = obj+"="+objClassOrSuper.getName();
+			if(exist.contains(existKey)) {
+				return;
+			}
+			exist.add(existKey);
+		}
+		Field[] fields = objClassOrSuper.getDeclaredFields();
+		processField(obj, fields);
+		
+		Class<?> superC = objClassOrSuper.getSuperclass();
+		if (superC != null && superC!=Object.class) {
+			processAttr(obj, superC,isStatic);
+		}
+
+		Method[] ms = objClassOrSuper.getDeclaredMethods();
+		try {
+			BeanInitHandler.getInstance().processMethod(BeanInitHandler.Param.builder().obj(obj).ms(ms).hasStatic(isStatic).sup(objClassOrSuper).build());
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("processMethod=>{}+>{}",objClassOrSuper);
+            log.error("processMethod",e);
+        }
+		
+		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
+		if(proconfig!=null) {
+			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
+		}
+	}
 	/**
 	 * 注入对应的属性值
 	 * 
@@ -237,39 +267,7 @@ public class LazyBean {
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
 	public void processAttr(Object obj, Class<?> objClassOrSuper) {
-//		if(objClassOrSuper.getName().contains("JedisCluster")) {
-//			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
-//		}
-		if(obj.getClass() == objClassOrSuper) {
-			//跳过
-			String existKey = obj+"="+objClassOrSuper.getName();
-			if(exist.contains(existKey)) {
-				return;
-			}
-			exist.add(existKey);
-		}
-		Field[] fields = objClassOrSuper.getDeclaredFields();
-		processField(obj, fields);
-		
-//		processMethod(objClassOrSuper,obj);
-		
-		Class<?> superC = objClassOrSuper.getSuperclass();
-		if (superC != null && superC!=Object.class) {
-			processAttr(obj, superC);
-		}
-
-		Method[] ms = obj.getClass().getDeclaredMethods();
-		try {
-			BeanInitHandler.getInstance().processMethod(obj, ms,superC);
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            log.error("processMethod=>{}+>{}",objClassOrSuper);
-            log.error("processMethod",e);
-        }
-		
-		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
-		if(proconfig!=null) {
-			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
-		}
+		processAttr(obj, objClassOrSuper, false);
 	}
     private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
@@ -335,7 +333,7 @@ public class LazyBean {
 		try {
 			Object obj = buildProxy(c);
 			if(obj!=null) {
-				processAttr(obj, c);
+				processAttr(obj, c , true);
 			}
 			return obj;
 		} catch (Exception e) {
