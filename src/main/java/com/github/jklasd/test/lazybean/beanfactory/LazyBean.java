@@ -1,7 +1,6 @@
 package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -58,7 +56,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyBean {
-	public static final String PROXY_BEAN_FIELD = "CGLIB$CALLBACK_0";
 	public static Map<Class<?>, List<Object>> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	private TestUtil util = TestUtil.getInstance();
@@ -308,26 +305,6 @@ public class LazyBean {
 			}
 		}
     }
-//	private static Class<?> getParamType(Method m, Type paramType) {
-//		if(paramType instanceof ParameterizedType) {
-//			ParameterizedType  pType = (ParameterizedType) paramType;
-//			Type[] item = pType.getActualTypeArguments();
-//			if(item.length == 1) {
-//				//处理一个集合注入
-//				try {
-//					log.debug("获取paramType泛型类型=>{}",paramType);
-//					return Class.forName(item[0].getTypeName());
-//				} catch (ClassNotFoundException e) {
-//					e.printStackTrace();
-//				}
-//			}else {
-//				log.info("其他特殊情况");
-//			}
-//		}else {
-//			return (Class<?>) paramType;
-//		}
-//		return null;
-//	}
 
 	public Object processStatic(Class<?> c) {
 		try {

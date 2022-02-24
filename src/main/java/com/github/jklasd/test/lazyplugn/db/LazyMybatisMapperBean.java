@@ -117,7 +117,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             try {
             	String basePackage = null;
             	if(mybatisScan != null) {
-            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(LazyBean.PROXY_BEAN_FIELD);
+            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(AbastractLazyProxy.PROXY_CALLBACK_0);
             		cglibObjField.setAccessible(true);
             		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
             		if (obj.getAttr().containsKey("basePackage")) {
