@@ -320,11 +320,8 @@ public class LazyBean {
 	}
     private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
     private Map<Class<?>,Map<String,Method>> fieldsCache = Maps.newHashMap();
+
 	public boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
-//	        if(field.contains("interface")) {
-//	            log.info("断点");
-//	        }
-//			Object fv = value;
 			String mName = "set"+field.substring(0, 1).toUpperCase()+field.substring(1);
 			if(methodsCache.containsKey(superClass)) {
 			    Method tagM = methodsCache.get(superClass).get(mName);

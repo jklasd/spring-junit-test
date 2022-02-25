@@ -153,7 +153,7 @@ public abstract class AbastractLazyProxy {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
         	throw e;
         }catch (InvocationTargetException e) {
-        	log.warn("===================InvocationTargetException处理===================");
+//        	log.warn("===================InvocationTargetException处理===================");
         	throw e.getTargetException();
 		}catch (Exception e) {
         	errorTimes.incrementAndGet();
