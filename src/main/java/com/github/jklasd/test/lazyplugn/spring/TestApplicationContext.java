@@ -29,6 +29,7 @@ import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
@@ -327,7 +328,7 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
 
 	@Override
 	public ClassLoader getClassLoader() {
-		return null;
+		return JunitClassLoader.getInstance();
 	}
 
 	@Override

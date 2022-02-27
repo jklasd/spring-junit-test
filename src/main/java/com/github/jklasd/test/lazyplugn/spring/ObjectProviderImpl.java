@@ -86,14 +86,20 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 			if(c_m[0] == null) {
 				
 			}else {
-				matchingBeans.put(BeanNameUtil.getBeanName(tagC),getIfAvailable());
+				String name = BeanNameUtil.getBeanName(tagC);
+				matchingBeans.put(name==null?tagC.getName():name,getIfAvailable());
 			}
 			
 			Stream<T> stream = matchingBeans.values().stream();
 			if(matchingBeans.isEmpty()) {
 				return stream;
 			}
-			return stream.sorted(adaptOrderComparator(matchingBeans));
+			Comparator<Object> comparator = adaptOrderComparator(matchingBeans);
+			if(comparator!=null) {
+				return stream.sorted(comparator);
+			}else {
+				return stream;
+			}
 		}else {
 			return null;
 		}

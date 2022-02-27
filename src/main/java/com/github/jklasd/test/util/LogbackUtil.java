@@ -19,6 +19,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.lazyplugn.logbackspring.LogbackLoggingSystemExt;
 
@@ -111,7 +112,7 @@ public class LogbackUtil {
             
             LoggingInitializationContext initializationContext = new LoggingInitializationContext(
     				TestUtil.getInstance().getEnvironment());
-            LogbackLoggingSystemExt logbackSystem = new LogbackLoggingSystemExt(ClassScan.getInstance().getClassLoader());
+            LogbackLoggingSystemExt logbackSystem = new LogbackLoggingSystemExt(JunitClassLoader.getInstance());
             logbackSystem.initialize(initializationContext, null, LogFile.get(TestUtil.getInstance().getEnvironment()));
             return ;
         }
