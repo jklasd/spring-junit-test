@@ -11,7 +11,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -51,6 +50,7 @@ public abstract class AbastractLazyProxy {
     
     protected List factoryList;
     public static final String PROXY_BOUND = "CGLIB$BOUND";
+    public static final String PROXY_CALLBACK_0 = "CGLIB$CALLBACK_0";
     public static boolean isProxy(Object obj){
     	try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_BOUND);
@@ -153,7 +153,7 @@ public abstract class AbastractLazyProxy {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
         	throw e;
         }catch (InvocationTargetException e) {
-        	log.warn("===================InvocationTargetException处理===================");
+//        	log.warn("===================InvocationTargetException处理===================");
         	throw e.getTargetException();
 		}catch (Exception e) {
         	errorTimes.incrementAndGet();
@@ -244,4 +244,14 @@ public abstract class AbastractLazyProxy {
             TranstionalManager.getInstance().setTxInfo(oldTxInfo);
         }
     }
+
+	public static void instantiateProxy(Object obj) {
+		try {
+			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
+			bound.setAccessible(true);
+			AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+			proxy.getTagertObjectCustom();
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		}
+	}
 }

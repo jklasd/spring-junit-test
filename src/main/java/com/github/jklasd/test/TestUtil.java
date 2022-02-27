@@ -111,18 +111,18 @@ public class TestUtil{
 	    XMLResourceLoader.getInstance().initResource();
 		JavaBeanUtil.process();
 
-		List<Class<?>> list = ClassScan.getInstance().findStaticMethodClass();
-		log.debug("static class =>{}", list.size());
+//		List<Class<?>> list = ClassScan.getInstance().findStaticMethodClass();
+//		log.debug("static class =>{}", list.size());
 		/**
 		 * 不能是抽象类
 		 */
-		list.stream().filter(classItem -> classItem != getClass() 
-				&& !Modifier.isAbstract(classItem.getModifiers())
-				&& BeanFactoryProcessor.getInstance().notBFProcessor(classItem))
-				.forEach(classItem -> {
-					log.debug("static class =>{}", classItem);
-					LazyBean.getInstance().processStatic(classItem);
-				});
+//		list.stream().filter(classItem -> classItem != getClass() 
+//				&& !Modifier.isAbstract(classItem.getModifiers())
+//				&& BeanFactoryProcessor.getInstance().notBFProcessor(classItem))
+//				.forEach(classItem -> {
+//					log.debug("static class =>{}", classItem);
+//					LazyBean.getInstance().processStatic(classItem);
+//				});
 		
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 	}

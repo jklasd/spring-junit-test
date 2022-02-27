@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.BeanMetadataElement;
@@ -306,6 +307,9 @@ public class XmlBeanUtil {
                     Class<?> tmpC= ScanUtil.loadClass(tmpBd.getBeanClassName());
 //                        XmlBeanUtil.getInstance().addClass(tmpC);
                     BeanModel beanModel = new BeanModel();
+                    if(StringUtils.isNotBlank(tmpBdh.getBeanName())) {
+                    	beanModel.setBeanName(tmpBdh.getBeanName());
+                    }
                     beanModel.setTagClass(tmpC);
                     beanModel.setXmlBean(true);
                     beanModel.setPropValue(tmpBd.getPropertyValues());

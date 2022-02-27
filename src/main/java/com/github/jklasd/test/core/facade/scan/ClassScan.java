@@ -27,12 +27,12 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
@@ -46,7 +46,8 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ClassScan implements Scan{
-
+	private ClassScan() {}
+	private static ClassScan scaner;
 	private boolean init;
 	private static Set<String> classNames = Sets.newConcurrentHashSet();
 	Map<String,Class<?>> componentClassPathMap = Maps.newConcurrentMap();
@@ -55,7 +56,7 @@ public class ClassScan implements Scan{
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
 	
-	private ClassLoader classLoader = JavaBeanUtil.class.getClassLoader();
+	private ClassLoader classLoader = JunitClassLoader.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -205,9 +206,10 @@ public class ClassScan implements Scan{
 			}
 		});
 	}
-	private static ClassScan scaner = new ClassScan();
-	private ClassScan() {}
 	public static ClassScan getInstance() {
+		if(scaner==null) {
+			scaner = new ClassScan();
+		}
 		return scaner;
 	}
 	/**

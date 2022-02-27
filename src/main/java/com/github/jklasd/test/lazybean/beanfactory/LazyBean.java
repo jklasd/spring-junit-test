@@ -1,7 +1,6 @@
 package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.AnnotatedType;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -24,7 +23,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.env.Environment;
 import org.springframework.stereotype.Component;
@@ -58,7 +56,6 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyBean {
-	public static final String PROXY_BEAN_FIELD = "CGLIB$CALLBACK_0";
 	public static Map<Class<?>, List<Object>> singleton = Maps.newHashMap();
 	public static Map<String, Object> singletonName = Maps.newHashMap();
 	private TestUtil util = TestUtil.getInstance();
@@ -225,6 +222,36 @@ public class LazyBean {
 	 * @param objClassOrSuper
 	 */
 	static Set<String> exist = Sets.newHashSet();
+	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
+		if(obj.getClass() == objClassOrSuper) {
+			//跳过
+			String existKey = obj+"="+objClassOrSuper.getName();
+			if(exist.contains(existKey)) {
+				return;
+			}
+			exist.add(existKey);
+		}
+		Field[] fields = objClassOrSuper.getDeclaredFields();
+		processField(obj, fields);
+		
+		Class<?> superC = objClassOrSuper.getSuperclass();
+		if (superC != null && superC!=Object.class) {
+			processAttr(obj, superC,isStatic);
+		}
+
+		Method[] ms = objClassOrSuper.getDeclaredMethods();
+		try {
+			BeanInitHandler.getInstance().processMethod(BeanInitHandler.Param.builder().obj(obj).ms(ms).hasStatic(isStatic).sup(objClassOrSuper).build());
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+            log.error("processMethod=>{}+>{}",objClassOrSuper);
+            log.error("processMethod",e);
+        }
+		
+		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
+		if(proconfig!=null) {
+			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
+		}
+	}
 	/**
 	 * 注入对应的属性值
 	 * 
@@ -237,39 +264,7 @@ public class LazyBean {
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
 	public void processAttr(Object obj, Class<?> objClassOrSuper) {
-//		if(objClassOrSuper.getName().contains("JedisCluster")) {
-//			log.info("需要注入=>{}=>{}",objClassOrSuper.getName());
-//		}
-		if(obj.getClass() == objClassOrSuper) {
-			//跳过
-			String existKey = obj+"="+objClassOrSuper.getName();
-			if(exist.contains(existKey)) {
-				return;
-			}
-			exist.add(existKey);
-		}
-		Field[] fields = objClassOrSuper.getDeclaredFields();
-		processField(obj, fields);
-		
-//		processMethod(objClassOrSuper,obj);
-		
-		Class<?> superC = objClassOrSuper.getSuperclass();
-		if (superC != null && superC!=Object.class) {
-			processAttr(obj, superC);
-		}
-
-		Method[] ms = obj.getClass().getDeclaredMethods();
-		try {
-			BeanInitHandler.getInstance().processMethod(obj, ms,superC);
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            log.error("processMethod=>{}+>{}",objClassOrSuper);
-            log.error("processMethod",e);
-        }
-		
-		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
-		if(proconfig!=null) {
-			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
-		}
+		processAttr(obj, objClassOrSuper, false);
 	}
     private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
@@ -310,32 +305,12 @@ public class LazyBean {
 			}
 		}
     }
-//	private static Class<?> getParamType(Method m, Type paramType) {
-//		if(paramType instanceof ParameterizedType) {
-//			ParameterizedType  pType = (ParameterizedType) paramType;
-//			Type[] item = pType.getActualTypeArguments();
-//			if(item.length == 1) {
-//				//处理一个集合注入
-//				try {
-//					log.debug("获取paramType泛型类型=>{}",paramType);
-//					return Class.forName(item[0].getTypeName());
-//				} catch (ClassNotFoundException e) {
-//					e.printStackTrace();
-//				}
-//			}else {
-//				log.info("其他特殊情况");
-//			}
-//		}else {
-//			return (Class<?>) paramType;
-//		}
-//		return null;
-//	}
 
 	public Object processStatic(Class<?> c) {
 		try {
 			Object obj = buildProxy(c);
 			if(obj!=null) {
-				processAttr(obj, c);
+				processAttr(obj, c , true);
 			}
 			return obj;
 		} catch (Exception e) {
@@ -345,11 +320,8 @@ public class LazyBean {
 	}
     private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
     private Map<Class<?>,Map<String,Method>> fieldsCache = Maps.newHashMap();
+
 	public boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
-//	        if(field.contains("interface")) {
-//	            log.info("断点");
-//	        }
-//			Object fv = value;
 			String mName = "set"+field.substring(0, 1).toUpperCase()+field.substring(1);
 			if(methodsCache.containsKey(superClass)) {
 			    Method tagM = methodsCache.get(superClass).get(mName);

@@ -4,13 +4,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.List;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
-import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,6 +21,8 @@ import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.ScanUtil;
 
+import lombok.Builder;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -33,49 +32,25 @@ public class BeanInitHandler {
 	public static BeanInitHandler getInstance() {
 		return lazyBean;
 	}
-	/**
-	 * 对目标对象方法进行处理
-	 * @param obj 目标对象
-	 * @param ms 方法组
-	 * @param sup 父类
-	 * 
-	 * 主要处理 
-	 * 【1】PostConstruct注解方法
-	 * 【2】setApplicationContext
-	 * 
-	 * 当目标对象存在父类时，遍历所有父类对相应方法进行处理
-	 * @throws InvocationTargetException 
-	 * @throws IllegalArgumentException 
-	 * @throws IllegalAccessException 
-	 */
-	public void processMethod(Object obj, Method[] ms,Class<?> sup) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(sup != null && sup!=Object.class) {
-			ms = sup.getDeclaredMethods();
-			processMethod(obj, ms, sup.getSuperclass());
-		}
-		if(ScanUtil.isImple(obj.getClass(), ApplicationContextAware.class)) {
-			for (Method m : ms) {
-				if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
-						&& (sup == null || !sup.getName().contains("AbstractJUnit4SpringContextTests"))) {
-					try {
-						if(m!=null) {
-							try {
-								m.invoke(obj,TestUtil.getInstance().getApplicationContext());
-							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-								log.error("不能注入applicationContext",e);
-							}
-						}
-					} catch (SecurityException e) {
-					}
-				}
-			}
-		}
-		processSpringAnnMethod(obj, ms);
+	@Builder
+	@Getter
+	public static class Param{
+		Object obj;
+		Method[] ms;
+		Class<?> sup;
+		boolean hasStatic;
 	}
-	protected void processSpringAnnMethod(Object obj, Method[] ms)
+	protected void processSpringAnnMethod(Param handlerParam)
 			throws IllegalAccessException, InvocationTargetException {
-		if(AbastractLazyProxy.isProxy(obj))
+		Object obj = handlerParam.getObj();
+		Method[] ms = handlerParam.getMs();
+		boolean isStatic = handlerParam.isHasStatic();
+		if(AbastractLazyProxy.isProxy(obj)) {
+			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
+				AbastractLazyProxy.instantiateProxy(obj);
+			}
 			return;
+		}
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
 			if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。
@@ -92,9 +67,6 @@ public class BeanInitHandler {
 			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
 			    Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    util.getApplicationContext().registBean(bName, tmp, tmp.getClass());
-//                }
 			}else if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
 			    if(paramTypes.length>0) {
@@ -188,4 +160,24 @@ public class BeanInitHandler {
 		}
     	return model;
     }
+	public void processMethod(Param param) throws IllegalAccessException, InvocationTargetException {
+		if(ScanUtil.isImple(param.getObj().getClass(), ApplicationContextAware.class)) {
+			for (Method m : param.getMs()) {
+				if(m.getName().equals("setApplicationContext")//当对象方法存是setApplicationContext
+						&& (param.getSup() == null || !param.getSup().getName().contains("AbstractJUnit4SpringContextTests"))) {
+					try {
+						if(m!=null) {
+							try {
+								m.invoke(param.getObj(),TestUtil.getInstance().getApplicationContext());
+							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+								log.error("不能注入applicationContext",e);
+							}
+						}
+					} catch (SecurityException e) {
+					}
+				}
+			}
+		}
+		processSpringAnnMethod(param);
+	}
 }

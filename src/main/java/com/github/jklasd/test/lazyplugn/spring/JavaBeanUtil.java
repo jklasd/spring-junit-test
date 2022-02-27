@@ -131,7 +131,7 @@ public class JavaBeanUtil {
         		return;
         	}
         	//如果存在参数
-        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getParameterTypes(),method.getParameterAnnotations());
+        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getGenericParameterTypes(),method.getParameterAnnotations());
         	if(!method.isAccessible()) {
         		method.setAccessible(true);
         	}
