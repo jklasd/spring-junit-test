@@ -506,4 +506,16 @@ public class TestApplicationContext implements ApplicationContext,BeanFactory{
 		// TODO Spring boot 2.0
 		return null;
 	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(Class<T> requiredType, boolean allowEagerInit) {
+		// TODO Spring boot 2.4
+		return null;
+	}
+
+	@Override
+	public <T> ObjectProvider<T> getBeanProvider(ResolvableType requiredType, boolean allowEagerInit) {
+		// TODO Spring boot 2.4
+		return null;
+	}
 }

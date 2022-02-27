@@ -63,6 +63,11 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	public Object getBeanByClassAndBeanName(String beanName, Class<?> tagClass) {
 		try {
 			return lazyBeanFactory.getBean(beanName, tagClass);
+		}catch(JunitException e){
+			if(e.isNeed_throw()) {
+				throw e;
+			}
+			return null;
 		}catch(Exception e) {
 			log.debug("getBeanByClassAndBeanName,beanName=>{},tagClass=>{}",beanName,tagClass);
 			return null;
