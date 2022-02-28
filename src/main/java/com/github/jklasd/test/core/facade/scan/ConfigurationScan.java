@@ -116,7 +116,7 @@ public class ConfigurationScan {
 		}
 		
 		ClassScan scaner = ClassScan.getInstance();
-		if(scaner.hasStaticMethod(configClass) && !configClass.getName().startsWith("org.springframework")) {
+		if(!configClass.getName().startsWith("org.springframework") && scaner.hasStaticMethod(configClass)) {
 			scaner.loadComponentClass(configClass);
 		}
 		
