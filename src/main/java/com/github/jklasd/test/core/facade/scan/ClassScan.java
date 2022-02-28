@@ -3,7 +3,6 @@ package com.github.jklasd.test.core.facade.scan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -18,12 +17,10 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
@@ -56,7 +53,7 @@ public class ClassScan implements Scan{
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
 	
-	private ClassLoader classLoader = JunitClassLoader.getInstance();
+	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -152,7 +149,7 @@ public class ClassScan implements Scan{
 				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.loadClass(p);
+					Class<?> c = classLoader.junitloadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
 					applicationAllClassMap.put(p,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -187,7 +184,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.loadClass(name);
+					Class<?> c = classLoader.junitloadClass(name);
 					try {
 						ConfigurationScan.getInstance().scanConfigClass(c);
 					} catch (IOException e) {
@@ -287,7 +284,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = Class.forName(name,false,classLoader);
+					Class<?> c = classLoader.junitloadClass(name);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {

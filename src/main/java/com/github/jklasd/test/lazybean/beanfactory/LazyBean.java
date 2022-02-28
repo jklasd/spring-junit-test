@@ -224,7 +224,8 @@ public class LazyBean {
 	 */
 	static Set<String> exist = Sets.newHashSet();
 	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
-		if(obj.getClass() == objClassOrSuper) {
+		Class<?> objClass = AbastractLazyProxy.isProxy(obj)? AbastractLazyProxy.getProxyTagClass(obj): obj.getClass();
+		if(objClass == objClassOrSuper) {
 			//跳过
 			String existKey = obj+"="+objClassOrSuper.getName();
 			if(exist.contains(existKey)) {
@@ -278,7 +279,7 @@ public class LazyBean {
 					if(item.length == 1) {
 						//处理一个集合注入
 						try {
-							Class<?> c = JunitClassLoader.getInstance().loadClass(item[0].getTypeName());
+							Class<?> c = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
 							List<?> list = findListBean(c);
 							setObj(f, obj, list);
 							log.info("{}注入集合=>{},{}个对象",obj.getClass(),f.getName(),list.size());

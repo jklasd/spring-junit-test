@@ -52,7 +52,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 					return (T) obj;
 				}
 				
-				Class<?> builderC = JunitClassLoader.getInstance().loadClass(tagC.getName()+"$Builder");
+				Class<?> builderC = JunitClassLoader.getInstance().junitloadClass(tagC.getName()+"$Builder");
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
 					if(m.getReturnType() == tagC) {

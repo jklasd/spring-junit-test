@@ -178,8 +178,8 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
             if(propConfig!=null && tagertObj!=null) {
             	LazyConfPropBind.processConfigurationProperties(tagertObj,propConfig);
             }
-            if(tagertObj!=null) {
-            	LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
+            if(tagertObj!=null) {//注入远程对象
+            	LazyDubboBean.getInstance().processAttr(tagertObj,tagertC);
             }
         }
         return tagertObj;
@@ -198,8 +198,8 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                  * //直接反射构建目标对象
                  */
                 tagertObj = constructor.newInstance();
-                LazyBean.getInstance().processAttr(tagertObj, tagertC);// 递归注入代理对象
             }
+            LazyBean.getInstance().processAttr(tagertObj, tagertC);// 递归注入代理对象
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
             | InvocationTargetException e) {
             log.error("带参构造对象异常", e);
