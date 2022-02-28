@@ -10,6 +10,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
@@ -160,7 +161,7 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                     tagertObj = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
                     if(tagertObj == null) {
                     	if(propConfig == null) {
-                    		throw new RuntimeException(tagertC.getName()+" Bean 不存在");
+                    		throw new JunitException(tagertC.getName()+" Bean 不存在", true);
                     	}
                     	tagertObj = LazyBean.findCreateByProp(tagertC);
                     }

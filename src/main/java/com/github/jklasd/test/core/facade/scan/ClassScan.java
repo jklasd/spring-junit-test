@@ -86,9 +86,9 @@ public class ClassScan implements Scan{
 							URLConnection connection = url.openConnection();
 							if (connection instanceof JarURLConnection) {
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
-								if(jFile.getName().contains("util")) {
-									log.debug("断点");
-								}
+//								if(jFile.getName().contains("util")) {
+//									log.debug("断点");
+//								}
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
 									if(name.contains(".class")) {
@@ -152,7 +152,7 @@ public class ClassScan implements Scan{
 				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = TestUtil.class.getClassLoader().loadClass(p);
+					Class<?> c = classLoader.loadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
 					applicationAllClassMap.put(p,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
@@ -187,7 +187,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = ScanUtil.class.getClassLoader().loadClass(name);
+					Class<?> c = classLoader.loadClass(name);
 					try {
 						ConfigurationScan.getInstance().scanConfigClass(c);
 					} catch (IOException e) {
@@ -212,51 +212,28 @@ public class ClassScan implements Scan{
 		}
 		return scaner;
 	}
-	/**
-	 * 个别自定义类
-	 * @param configClass
-	 */
-	public boolean hasStaticMethod(Class<?> configClass) {
-		try {
-			Method[] methods = configClass.getDeclaredMethods();
-			return Lists.newArrayList(methods).stream().anyMatch(m->{
-				if(Modifier.isStatic(m.getModifiers())
-						&& !m.getName().contains("lambda$")//非匿名方法
-						&& !m.getName().contains("access$")) {//非匿名方法
-					Class<?> returnType = m.getReturnType();
-					if(!returnType.getName().contains("void")) {
-						log.debug("method=>{}",m);
-						return true;
-					}
-				}
-				return false;
-			});
-		}catch(Exception e) {
-			log.error("hasStaticMethod",e);
-		}
-		return false;
-	}
-	public List<Class<?>> findStaticMethodClass() {
-		Set<Class<?>> list = Sets.newHashSet();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
-		.setException((name,e)->{
-		    log.error("遗漏#findStaticMethodClass#=>{}",name);
-		})
-		.runAndWait(name ->{
-			Class<?> c = componentClassPathMap.get(name);
-			if(c.getAnnotations().length>0) {
-				if(c.isAnnotationPresent(Configuration.class)
-						|| c.isAnnotationPresent(Service.class)
-						|| c.isAnnotationPresent(Component.class)
-						|| c.isAnnotationPresent(Repository.class)) {
-					if(hasStaticMethod(c)) {
-						list.add(c);
-					}
-				}
-			}
-		});
-		return Lists.newArrayList(list);
-	}
+	
+//	public List<Class<?>> findStaticMethodClass() {
+//		Set<Class<?>> list = Sets.newHashSet();
+//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
+//		.setException((name,e)->{
+//		    log.error("遗漏#findStaticMethodClass#=>{}",name);
+//		})
+//		.runAndWait(name ->{
+//			Class<?> c = componentClassPathMap.get(name);
+//			if(c.getAnnotations().length>0) {
+//				if(c.isAnnotationPresent(Configuration.class)
+//						|| c.isAnnotationPresent(Service.class)
+//						|| c.isAnnotationPresent(Component.class)
+//						|| c.isAnnotationPresent(Repository.class)) {
+//					if(hasStaticMethod(c)) {
+//						list.add(c);
+//					}
+//				}
+//			}
+//		});
+//		return Lists.newArrayList(list);
+//	}
 	
 	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
@@ -310,7 +287,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = Class.forName(name,false,ScanUtil.class.getClassLoader());
+					Class<?> c = Class.forName(name,false,classLoader);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {
@@ -342,8 +319,8 @@ public class ClassScan implements Scan{
 		return list;
 	}
 
-	public ClassLoader getClassLoader() {
-		return classLoader;
-	}
+//	public ClassLoader getClassLoader() {
+//		return classLoader;
+//	}
 
 }

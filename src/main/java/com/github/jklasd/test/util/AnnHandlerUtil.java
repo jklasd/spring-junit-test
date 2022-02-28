@@ -10,11 +10,13 @@ import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 
+import com.github.jklasd.test.core.facade.JunitClassLoader;
+
 public class AnnHandlerUtil {
 	private static AnnHandlerUtil bean = new AnnHandlerUtil();
 	private AnnHandlerUtil() {}
 	public static AnnHandlerUtil getInstance() {return bean;}
-	private CachingMetadataReaderFactory cachingmetadatareaderfactory = new CachingMetadataReaderFactory(this.getClass().getClassLoader());
+	private CachingMetadataReaderFactory cachingmetadatareaderfactory = new CachingMetadataReaderFactory(JunitClassLoader.getInstance());
 	
 	public MetadataReader getMetadataReader(String className) throws IOException {
 		return cachingmetadatareaderfactory.getMetadataReader(className);

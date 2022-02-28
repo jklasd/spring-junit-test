@@ -48,7 +48,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 		}
 		return null;
 	}
-	private AbstractRefHandler xmlRefHandler = new LazyDubboXmlRefHandler();
+	private AbstractRefHandler xmlRefHandler = LazyDubboXmlRefHandler.getInstance();
 	
 	public void handBeanDef(Element ele,BeanDefinition beanDef) {
 		xmlRefHandler.handBeanDef(ele, beanDef);

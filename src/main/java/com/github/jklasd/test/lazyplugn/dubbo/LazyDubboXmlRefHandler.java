@@ -15,6 +15,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 	private static LazyDubboXmlRefHandler bean = new LazyDubboXmlRefHandler();
+	private LazyDubboXmlRefHandler() {}
 	public static LazyDubboXmlRefHandler getInstance() {
 		return bean;
 	}
