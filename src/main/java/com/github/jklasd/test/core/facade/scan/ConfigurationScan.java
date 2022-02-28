@@ -15,6 +15,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.common.ClassUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
@@ -115,9 +116,8 @@ public class ConfigurationScan {
 			}
 		}
 		
-		ClassScan scaner = ClassScan.getInstance();
-		if(!configClass.getName().startsWith("org.springframework") && scaner.hasStaticMethod(configClass)) {
-			scaner.loadComponentClass(configClass);
+		if(!configClass.getName().startsWith("org.springframework") && ClassUtil.getInstance().hasStaticMethod(configClass)) {
+			ClassScan.getInstance().loadComponentClass(configClass);
 		}
 		
 		if(ScanUtil.isImple(configClass, BeanFactoryPostProcessor.class)) {

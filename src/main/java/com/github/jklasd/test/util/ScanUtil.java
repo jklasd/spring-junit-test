@@ -19,6 +19,7 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
@@ -202,7 +203,7 @@ public class ScanUtil {
 		if(notFundClassSet.contains(className))
 			return null;
 		try {
-			Class classObj = Class.forName(className, false, scaner.getClassLoader());
+			Class classObj = Class.forName(className, false, JunitClassLoader.getInstance());
 			return classObj;
 		} catch (NoClassDefFoundError e) {
 			log.debug("#NoClassDefFoundError=>{}",className);

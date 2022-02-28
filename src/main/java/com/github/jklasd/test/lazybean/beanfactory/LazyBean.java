@@ -30,6 +30,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
@@ -142,7 +143,7 @@ public class LazyBean {
         try {
             if (beanClass.isInterface()) {
                 LazyImple handler = new LazyImple(beanModel);
-                tag = Proxy.newProxyInstance(handler.getClass().getClassLoader(), new Class[] { beanClass }, handler);
+                tag = Proxy.newProxyInstance(JunitClassLoader.getInstance(), new Class[] { beanClass }, handler);
             } else {
                 LazyCglib handler = new LazyCglib(beanModel);
                 if(!handler.hasFinalMethod() && handler.findPublicConstrucors()) {
