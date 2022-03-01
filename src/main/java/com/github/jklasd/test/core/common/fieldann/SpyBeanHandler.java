@@ -4,9 +4,8 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.List;
 
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.ResolvableType;
 
@@ -51,6 +50,7 @@ public class SpyBeanHandler  implements FieldHandler{
 		Field attr = def.getField();
 		Object obj = def.getTagObj();
 		SpyBean spyAnn = attr.getAnnotation(SpyBean.class);
+		Qualifier qualifier = attr.getAnnotation(Qualifier.class);
 		try {
 			Object qualDef = qualDefStructor.newInstance(attr,Sets.newHashSet(spyAnn));
 			
@@ -59,8 +59,11 @@ public class SpyBeanHandler  implements FieldHandler{
 					ResolvableType.forClass(attr.getType()),
 					spyAnn.reset(),spyAnn.proxyTargetAware(),
 					qualDef);
-			
-			Object value = createSpy.invoke(spyDefObj, LazyBean.getInstance().buildProxy(attr.getType(),spyAnn.name()));
+			String beanName = spyAnn.name();
+			if(qualifier!=null) {
+				beanName = qualifier.value();
+			}
+			Object value = createSpy.invoke(spyDefObj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
 			FieldAnnUtil.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();

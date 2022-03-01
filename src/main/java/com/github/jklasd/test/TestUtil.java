@@ -3,9 +3,7 @@ package com.github.jklasd.test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -22,11 +20,11 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.core.common.fieldann.MockHandler;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
-import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
@@ -237,7 +235,12 @@ public class TestUtil{
 		resourcePreparation();
 		//注入当前执行对象
 		LazyBean.getInstance().processAttr(obj, obj.getClass());
+//		handlerFirstClass(obj);
 	}
+
+//	private static void handlerFirstClass(Object obj) {
+//		new MockHandler().handler(obj.getClass());
+//	}
 
 	public static void resourcePreparation() {
 		if(processInited) {

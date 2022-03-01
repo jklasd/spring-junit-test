@@ -25,10 +25,10 @@ public class FieldAnnUtil {
 	
 	private static Map<String,FieldHandler> handlerMap = Maps.newHashMap();
 	static{
-		List<FieldHandler> handlerList = Lists.newArrayList(new AutowiredHandler(),
-				new ResourceHandler(),
-				new ValueHandler(),
-				new SpyBeanHandler()
+		List<FieldHandler> handlerList = Lists.newArrayList(new AutowiredHandler()
+				,new ResourceHandler()
+				,new ValueHandler()
+				,new SpyBeanHandler()
 				);
 		
 		handlerList.forEach(handler->{
