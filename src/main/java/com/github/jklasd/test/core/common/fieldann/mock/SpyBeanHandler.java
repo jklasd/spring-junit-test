@@ -1,4 +1,4 @@
-package com.github.jklasd.test.core.common.fieldann;
+package com.github.jklasd.test.core.common.fieldann.mock;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -11,6 +11,7 @@ import org.springframework.core.ResolvableType;
 
 import com.github.jklasd.test.core.common.FieldAnnUtil;
 import com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler;
+import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
@@ -18,16 +19,10 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class SpyBeanHandler  implements FieldHandler{
-
-	String packagePath = "org.springframework.boot.test.mock.mockito";
+public class SpyBeanHandler extends MockHandler implements FieldHandler{
 	private Class<?> SpyDefinition = ScanUtil.loadClass(packagePath+".SpyDefinition");
-	private Class<?> QualifierDefinition = ScanUtil.loadClass(packagePath+".QualifierDefinition");
-//	Object definitionsParserObj;
 	Method createSpy;
 	Constructor<?> spyDefStructor;
-	Constructor<?> qualDefStructor;
-//	private MockitoPostProcessor MockitoPostProcessor = new MockitoPostProcessor();
 	{
 		try {
 			Constructor<?>[] structors = SpyDefinition.getDeclaredConstructors();
@@ -36,10 +31,6 @@ public class SpyBeanHandler  implements FieldHandler{
 			
 			createSpy = SpyDefinition.getDeclaredMethod("createSpy", Object.class);
 			createSpy.setAccessible(true);
-			
-			Constructor<?>[] qstructors = QualifierDefinition.getDeclaredConstructors();
-			qualDefStructor = qstructors[0];
-			qualDefStructor.setAccessible(true);
 		} catch (SecurityException | IllegalArgumentException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}

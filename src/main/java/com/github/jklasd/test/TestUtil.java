@@ -20,7 +20,7 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.core.common.fieldann.MockHandler;
+import com.github.jklasd.test.core.common.fieldann.mock.MockHandler;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;

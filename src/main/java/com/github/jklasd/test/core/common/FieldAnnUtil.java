@@ -8,8 +8,8 @@ import java.util.Map;
 import com.github.jklasd.test.core.common.fieldann.AutowiredHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.common.fieldann.ResourceHandler;
-import com.github.jklasd.test.core.common.fieldann.SpyBeanHandler;
 import com.github.jklasd.test.core.common.fieldann.ValueHandler;
+import com.github.jklasd.test.core.common.fieldann.mock.SpyBeanHandler;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
