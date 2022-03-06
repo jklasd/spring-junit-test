@@ -5,7 +5,7 @@
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test-2.4</artifactId>
-	<version>1.2.1-RELEASE</version>
+	<version>1.2.2-RELEASE</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
