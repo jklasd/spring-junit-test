@@ -21,7 +21,7 @@ public class ClassUtil {
 	 */
 	public boolean hasStaticMethod(Class<?> configClass) {
 		try {
-			Method[] methods = configClass.getDeclaredMethods();
+			Method[] methods = configClass.getMethods();
 			return Lists.newArrayList(methods).stream().anyMatch(m->{
 				if(Modifier.isStatic(m.getModifiers())
 						&& !m.getName().contains("lambda$")//非匿名方法

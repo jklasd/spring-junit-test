@@ -3,9 +3,7 @@ package com.github.jklasd.test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
@@ -22,10 +20,11 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.core.common.fieldann.mock.MockHandler;
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
-import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
@@ -101,30 +100,21 @@ public class TestUtil{
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
 	private volatile boolean processed;
+	@Getter
+	private volatile int stats;
 	private void processConfig() {
 	    if(processed) {
             return;
         }
 	    processed = true;
+	    stats = 1;
 	    log.debug("=========加载配置========");
 	    AnnotationResourceLoader.getInstance().initResource();
 	    XMLResourceLoader.getInstance().initResource();
 		JavaBeanUtil.process();
-
-//		List<Class<?>> list = ClassScan.getInstance().findStaticMethodClass();
-//		log.debug("static class =>{}", list.size());
-		/**
-		 * 不能是抽象类
-		 */
-//		list.stream().filter(classItem -> classItem != getClass() 
-//				&& !Modifier.isAbstract(classItem.getModifiers())
-//				&& BeanFactoryProcessor.getInstance().notBFProcessor(classItem))
-//				.forEach(classItem -> {
-//					log.debug("static class =>{}", classItem);
-//					LazyBean.getInstance().processStatic(classItem);
-//				});
-		
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
+		stats = 2;
+		JunitClassLoader.getInstance().processStatic();
 	}
 
 	public Object getExistBean(Class<?> classD) {
@@ -239,11 +229,18 @@ public class TestUtil{
 	 * @param obj 执行目标对象
 	 */
 	private static volatile boolean processInited;
+	public static int init = 1;
+	public static int inited = 2;
 	public static void startTestForNoContainer(Object obj) {
 		resourcePreparation();
 		//注入当前执行对象
 		LazyBean.getInstance().processAttr(obj, obj.getClass());
+//		handlerFirstClass(obj);
 	}
+
+//	private static void handlerFirstClass(Object obj) {
+//		new MockHandler().handler(obj.getClass());
+//	}
 
 	public static void resourcePreparation() {
 		if(processInited) {

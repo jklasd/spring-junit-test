@@ -60,6 +60,20 @@ public abstract class AbastractLazyProxy {
 		}
     }
     
+    public static Class<?> getProxyTagClass(Object obj){
+    	try {
+			if(isProxy(obj)) {
+				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
+				bound.setAccessible(true);
+				AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+				return proxy.getBeanModel().getTagClass();
+			}
+			return null;
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			return null;
+		}
+    }
+    
     protected void initLazyProxy() {
             try {
                 if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {

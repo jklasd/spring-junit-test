@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -17,9 +16,6 @@ import javax.sql.DataSource;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.context.ApplicationContext;
@@ -30,6 +26,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.core.common.FieldAnnUtil;
+import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
@@ -205,9 +203,9 @@ public class LazyBean {
 	 * 
 	 */
 	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
-		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
-//			util.loadLazyAttr(obj, f, proxyBeanName);
-		}
+//		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
+////			util.loadLazyAttr(obj, f, proxyBeanName);
+//		}
 		try {
 			if (!f.isAccessible()) {
 				f.setAccessible(true);
@@ -224,7 +222,8 @@ public class LazyBean {
 	 */
 	static Set<String> exist = Sets.newHashSet();
 	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
-		if(obj.getClass() == objClassOrSuper) {
+		Class<?> objClass = AbastractLazyProxy.isProxy(obj)? AbastractLazyProxy.getProxyTagClass(obj): obj.getClass();
+		if(objClass == objClassOrSuper) {
 			//跳过
 			String existKey = obj+"="+objClassOrSuper.getName();
 			if(exist.contains(existKey)) {
@@ -269,41 +268,7 @@ public class LazyBean {
 	}
     private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
-			Autowired aw = f.getAnnotation(Autowired.class);
-			if (aw != null) {
-				String bName = f.getAnnotation(Qualifier.class)!=null?f.getAnnotation(Qualifier.class).value():null;
-				if(f.getType() == List.class) {
-					ParameterizedType t = (ParameterizedType) f.getGenericType();
-					Type[] item = t.getActualTypeArguments();
-					if(item.length == 1) {
-						//处理一个集合注入
-						try {
-							Class<?> c = Class.forName(item[0].getTypeName());
-							List<?> list = findListBean(c);
-							setObj(f, obj, list);
-							log.info("{}注入集合=>{},{}个对象",obj.getClass(),f.getName(),list.size());
-						} catch (ClassNotFoundException e) {
-							e.printStackTrace();
-						}
-					}else {
-						log.info("其他特殊情况");
-					}
-				}else {
-				    setObj(f, obj, buildProxy(f.getType(),bName));
-				}
-			} else {
-				Value v = f.getAnnotation(Value.class);
-				if (v != null) {
-					setObj(f, obj, util.value(v.value().replace("${", "").replace("}", ""), f.getType()));
-				} else {
-					javax.annotation.Resource c = f.getAnnotation(javax.annotation.Resource.class);
-					if (c != null) {
-						setObj(f, obj, buildProxy(f.getType(),c.name()));
-					} else {
-						log.debug("不需要需要注入=>{}", f.getName());
-					}
-				}
-			}
+        	FieldAnnUtil.handlerField(new FieldDef(f,obj));
 		}
     }
 

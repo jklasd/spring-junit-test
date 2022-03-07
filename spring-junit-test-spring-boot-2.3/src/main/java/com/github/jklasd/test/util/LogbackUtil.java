@@ -61,7 +61,7 @@ public class LogbackUtil {
                 ConsoleAppender<ILoggingEvent> appender = new ConsoleAppender<ILoggingEvent>();
                 appender.setName("CONSOLE");
                 PatternLayoutEncoder encoder = new PatternLayoutEncoder();
-                encoder.setPattern("[%-5level][%contextName] %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%X{traceId}] %logger - %msg%n");
+                encoder.setPattern("[%-5level][%contextName] %d{yyyy-MM-dd HH:mm:ss.SSS} [%thread][%X{traceId}] %logger%line - %msg%n");
                 encoder.setCharset(Charset.forName("UTF-8"));
                 encoder.setContext(context);
                 
