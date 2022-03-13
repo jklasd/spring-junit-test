@@ -172,8 +172,9 @@ public class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
                     		if(tagertObj == null) {
                     			throw new JunitException(tagertC.getName()+" Bean 不存在", true);
                     		}
+                    	}else {
+                    		tagertObj = LazyBean.findCreateByProp(tagertC);
                     	}
-                    	tagertObj = LazyBean.findCreateByProp(tagertC);
                     }
                     
                 }
