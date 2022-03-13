@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.annotation.Nullable;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
@@ -16,7 +17,9 @@ import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,6 +38,31 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
         super.registerBeanDefinition(beanName, beanDefinition);
+	}
+	
+	Map<String,Object> cacheProxyBean = Maps.newHashMap();
+	
+	public Object getBean(String beanName) {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName);
+		}
+		return cacheProxyBean.get(beanName);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getBean(String beanName, Class<T> requiredType) throws BeansException {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName,requiredType);
+		}
+		return (T) cacheProxyBean.get(beanName);
+	}
+	
+	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		if(AbstractLazyProxy.isProxy(singletonObject)) {
+			cacheProxyBean.put(beanName, singletonObject);
+			return;
+		}
+		super.registerSingleton(beanName, singletonObject);
 	}
 
 //	private void registerAnnBean(String beanName, BeanDefinition beanDefinition) {

@@ -25,7 +25,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
+public class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
     @Getter
     private Constructor<?> constructor;
     public LazyCglib(BeanModel beanModel) {
@@ -161,7 +161,17 @@ public class LazyCglib extends AbastractLazyProxy implements MethodInterceptor {
                     tagertObj = LazyBean.findCreateBeanFromFactory(tagertC, beanName);
                     if(tagertObj == null) {
                     	if(propConfig == null) {
-                    		throw new JunitException(tagertC.getName()+" Bean 不存在", true);
+                    		
+                    		Object obj = applicationContext.getBean(beanName);
+                    		if(obj==null) {
+                    			obj = applicationContext.getBean(tagertC);
+                    		}
+                    		if(obj!=null && !AbstractLazyProxy.isProxy(obj)) {
+                				tagertObj = obj;
+                			}
+                    		if(tagertObj == null) {
+                    			throw new JunitException(tagertC.getName()+" Bean 不存在", true);
+                    		}
                     	}
                     	tagertObj = LazyBean.findCreateByProp(tagertC);
                     }

@@ -20,6 +20,7 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -32,14 +33,17 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbastractLazyProxy {
+public abstract class AbstractLazyProxy {
     @Getter
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
+    
+    protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
+    
     @Getter
     private Map<String,Object> attr;
-    public AbastractLazyProxy(BeanModel beanModel) {
+    public AbstractLazyProxy(BeanModel beanModel) {
         this.beanModel = beanModel;
         if(beanModel.getPropValue()!=null && beanModel.getPropValue().getPropertyValueList().size()>0) {
             attr = XmlBeanUtil.getInstance().handPropValue(beanModel.getPropValue().getPropertyValueList(), beanModel.getTagClass());
@@ -249,7 +253,7 @@ public abstract class AbastractLazyProxy {
 		try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 			bound.setAccessible(true);
-			AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
 			proxy.getTagertObjectCustom();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 		}

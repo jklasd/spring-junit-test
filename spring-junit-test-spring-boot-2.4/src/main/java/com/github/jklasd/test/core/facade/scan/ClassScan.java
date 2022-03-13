@@ -154,7 +154,9 @@ public class ClassScan implements Scan{
 				try {
 					Class<?> c = classLoader.loadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
-					applicationAllClassMap.put(p,c);
+					if(c!=null) {
+						applicationAllClassMap.put(p,c);
+					}
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
@@ -212,28 +214,6 @@ public class ClassScan implements Scan{
 		}
 		return scaner;
 	}
-	
-//	public List<Class<?>> findStaticMethodClass() {
-//		Set<Class<?>> list = Sets.newHashSet();
-//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
-//		.setException((name,e)->{
-//		    log.error("遗漏#findStaticMethodClass#=>{}",name);
-//		})
-//		.runAndWait(name ->{
-//			Class<?> c = componentClassPathMap.get(name);
-//			if(c.getAnnotations().length>0) {
-//				if(c.isAnnotationPresent(Configuration.class)
-//						|| c.isAnnotationPresent(Service.class)
-//						|| c.isAnnotationPresent(Component.class)
-//						|| c.isAnnotationPresent(Repository.class)) {
-//					if(hasStaticMethod(c)) {
-//						list.add(c);
-//					}
-//				}
-//			}
-//		});
-//		return Lists.newArrayList(list);
-//	}
 	
 	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {

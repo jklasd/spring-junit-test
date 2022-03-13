@@ -64,7 +64,7 @@ public class TestUtil{
 	    }
 	    bean = new TestUtil();
 //	    bean.setApplicationContext(null);
-	    bean.applicationContext = new LazyApplicationContext();
+	    bean.applicationContext = LazyApplicationContext.getInstance();
 	    bean.applicationContext.refresh();
 	    try {
             Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");
