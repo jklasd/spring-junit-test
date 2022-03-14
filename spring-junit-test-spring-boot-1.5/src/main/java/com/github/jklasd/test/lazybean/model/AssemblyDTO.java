@@ -19,7 +19,7 @@ public class AssemblyDTO {
 	 */
 	private Type[] classGeneric;
 	
-	private Map<String,Class<?>> nameMapTmp;
+	private String scanPath;
 	
 	public String toString(){
 	    return "tagClass=>"+tagClass+";beanName=>"+beanName+";classGeneric=>"+classGeneric;

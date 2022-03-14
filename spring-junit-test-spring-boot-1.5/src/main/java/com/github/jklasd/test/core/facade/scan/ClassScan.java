@@ -3,6 +3,7 @@ package com.github.jklasd.test.core.facade.scan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -17,10 +18,12 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
@@ -53,7 +56,7 @@ public class ClassScan implements Scan{
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
 	
-	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
+	private ClassLoader classLoader = JunitClassLoader.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -149,9 +152,11 @@ public class ClassScan implements Scan{
 				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(p);
+					Class<?> c = classLoader.loadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
-					applicationAllClassMap.put(p,c);
+					if(c!=null) {
+						applicationAllClassMap.put(p,c);
+					}
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
@@ -184,7 +189,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(name);
+					Class<?> c = classLoader.loadClass(name);
 					try {
 						ConfigurationScan.getInstance().scanConfigClass(c);
 					} catch (IOException e) {
@@ -210,28 +215,6 @@ public class ClassScan implements Scan{
 		return scaner;
 	}
 	
-//	public List<Class<?>> findStaticMethodClass() {
-//		Set<Class<?>> list = Sets.newHashSet();
-//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
-//		.setException((name,e)->{
-//		    log.error("遗漏#findStaticMethodClass#=>{}",name);
-//		})
-//		.runAndWait(name ->{
-//			Class<?> c = componentClassPathMap.get(name);
-//			if(c.getAnnotations().length>0) {
-//				if(c.isAnnotationPresent(Configuration.class)
-//						|| c.isAnnotationPresent(Service.class)
-//						|| c.isAnnotationPresent(Component.class)
-//						|| c.isAnnotationPresent(Repository.class)) {
-//					if(hasStaticMethod(c)) {
-//						list.add(c);
-//					}
-//				}
-//			}
-//		});
-//		return Lists.newArrayList(list);
-//	}
-	
 	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
 		if(!cacheBeanNameClass.isEmpty()) {
@@ -247,7 +230,7 @@ public class ClassScan implements Scan{
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
-					log.info("put beanClass=>{}",annValue);
+//					log.info("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
 						findClass.set(tagClass);
@@ -284,7 +267,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(name);
+					Class<?> c = Class.forName(name,false,classLoader);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {

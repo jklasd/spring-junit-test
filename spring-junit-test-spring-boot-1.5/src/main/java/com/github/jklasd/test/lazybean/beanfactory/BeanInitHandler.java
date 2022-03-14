@@ -44,11 +44,11 @@ public class BeanInitHandler {
 			throws IllegalAccessException, InvocationTargetException {
 		Object obj = handlerParam.getObj();
 		Method[] ms = handlerParam.getMs();
-//		boolean isStatic = handlerParam.isHasStatic();
-		if(AbastractLazyProxy.isProxy(obj)) {
-//			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
-//				AbastractLazyProxy.instantiateProxy(obj);
-//			}
+		boolean isStatic = handlerParam.isHasStatic();
+		if(AbstractLazyProxy.isProxy(obj)) {
+			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
+				AbstractLazyProxy.instantiateProxy(obj);
+			}
 			return;
 		}
 		for (Method m : ms) {

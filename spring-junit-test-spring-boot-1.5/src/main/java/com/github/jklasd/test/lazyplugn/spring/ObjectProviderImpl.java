@@ -14,7 +14,6 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.OrderComparator;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -52,7 +51,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 					return (T) obj;
 				}
 				
-				Class<?> builderC = JunitClassLoader.getInstance().junitloadClass(tagC.getName()+"$Builder");
+				Class<?> builderC = Class.forName(tagC.getName()+"$Builder");
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
 					if(m.getReturnType() == tagC) {
@@ -60,7 +59,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 					}
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-				log.warn("ObjectProvider#getIfAvailable##############{}##############",type);
+				log.error("ObjectProvider#getIfAvailable##############{}##############",type);
 			}
 		}
 		return null;

@@ -15,6 +15,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClas
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
 import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
+import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 
@@ -30,7 +31,8 @@ public class CheckUtil {
 	private static Map<String, SpringBootCondition> checkPropMap = Maps.newHashMap();
 	private static Map<String, SpringBootCondition> otherMap = Maps.newHashMap();
 	static {
-		loadCondition(checkClassMap,ConditionalOnClass.class,ConditionalOnBean.class,ConditionalOnMissingClass.class);
+		loadCondition(checkClassMap,ConditionalOnClass.class,ConditionalOnBean.class,ConditionalOnMissingClass.class,
+				ConditionalOnDefaultWebSecurity.class);
 		loadCondition(checkPropMap,ConditionalOnProperty.class,ConditionalOnResource.class);
 		loadCondition(otherMap, ConditionalOnCloudPlatform.class,ConditionalOnProperty.class,ConditionalOnResource.class);
 	}

@@ -1,5 +1,6 @@
 package com.github.jklasd.test.core.common;
 
+
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -9,7 +10,6 @@ import com.github.jklasd.test.core.common.fieldann.AutowiredHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.common.fieldann.ResourceHandler;
 import com.github.jklasd.test.core.common.fieldann.ValueHandler;
-import com.github.jklasd.test.core.common.fieldann.mock.SpyBeanHandler;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -28,7 +28,7 @@ public class FieldAnnUtil {
 		List<FieldHandler> handlerList = Lists.newArrayList(new AutowiredHandler()
 				,new ResourceHandler()
 				,new ValueHandler()
-				,new SpyBeanHandler()
+//				,new SpyBeanHandler()
 				);
 		
 		handlerList.forEach(handler->{

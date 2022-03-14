@@ -20,7 +20,6 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.core.common.fieldann.mock.MockHandler;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
@@ -65,7 +64,7 @@ public class TestUtil{
 	    }
 	    bean = new TestUtil();
 //	    bean.setApplicationContext(null);
-	    bean.applicationContext = new LazyApplicationContext();
+	    bean.applicationContext = LazyApplicationContext.getInstance();
 	    bean.applicationContext.refresh();
 	    try {
             Resource banner = ScanUtil.getRecourceAnyOne("testutil.txt");

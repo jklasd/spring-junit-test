@@ -1,9 +1,11 @@
 package com.github.jklasd.test;
 
+import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.internal.runners.model.ReflectiveCallable;
 import org.junit.internal.runners.statements.Fail;
+import org.junit.internal.runners.statements.RunBefores;
 import org.junit.rules.RunRules;
 import org.junit.rules.TestRule;
 import org.junit.runner.Description;
@@ -14,6 +16,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -53,16 +56,46 @@ public class RunSpringJunitTest extends BlockJUnit4ClassRunner{
         }
         log.debug("=======初始化=【{}】======",test.getClass());
         //注入当前执行对象
-  		LazyBean.getInstance().processAttr(test, test.getClass());
 
         Statement statement = methodInvoker(method, test);
         statement = possiblyExpectingExceptions(method, test, statement);
         statement = withPotentialTimeout(method, test, statement);
         statement = withBefores(method, test, statement);
+        try {
+        	//processAttr 比Before先执行
+        	statement = processAttr(method, test, statement);
+        } catch (NoSuchMethodException | SecurityException e) {
+        	e.printStackTrace();
+        }
+        
         statement = withAfters(method, test, statement);
         statement = withRules(method, test, statement);
         return statement;
     }
+	
+	public class ProcessTagretObj extends FrameworkMethod{
+
+		private Object targetObj;
+		
+		public ProcessTagretObj(Method method, Object target) {
+			super(method);
+			this.targetObj = target;
+		}
+
+		public void processAttr() {
+			LazyBean.getInstance().processAttr(targetObj, targetObj.getClass());
+		}
+		
+	}
+	
+	protected Statement processAttr(FrameworkMethod method, Object target,
+            Statement statement) throws NoSuchMethodException, SecurityException {
+		Method processAttr = ProcessTagretObj.class.getMethod("processAttr");
+		FrameworkMethod processAttrMethod = new ProcessTagretObj(processAttr,target);
+		
+        return new RunBefores(statement,Lists.newArrayList(processAttrMethod), processAttrMethod);
+    }
+	
 	private Statement withRules(FrameworkMethod method, Object target,
             Statement statement) {
         List<TestRule> testRules = getTestRules(target);

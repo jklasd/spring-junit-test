@@ -25,7 +25,12 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	
 	@Getter
 	private DefaultListableBeanFactory lazyBeanFactory;
-	public LazyApplicationContext() {
+	private static LazyApplicationContext context = new LazyApplicationContext();
+	
+	public static LazyApplicationContext getInstance() {
+		return context;
+	}
+	private LazyApplicationContext() {
 		super(LazyListableBeanFactory.getInstance());
 		lazyBeanFactory = getDefaultListableBeanFactory();
 	}
