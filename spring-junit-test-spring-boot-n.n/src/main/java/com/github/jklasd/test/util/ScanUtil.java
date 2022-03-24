@@ -157,14 +157,10 @@ public class ScanUtil {
 		.setException((name,e)->notFoundSet.add(name))
 		.runAndWait(name ->{
 			Class<?> c = nameMapTmp.get(name);
-//			try {
-				Annotation type = c.getDeclaredAnnotation(annotationType);
-				if(type != null) {
-					list.add(c);
-				}
-//			} catch (Exception e) {
-//				log.error("#findClassWithAnnotation ERROR",e);
-//			}
+			Annotation type = c.getDeclaredAnnotation(annotationType);
+			if(type != null) {
+				list.add(c);
+			}
 		});
 		return list;
 	}
@@ -203,7 +199,7 @@ public class ScanUtil {
 		if(notFundClassSet.contains(className))
 			return null;
 		try {
-			Class classObj = Class.forName(className, false, JunitClassLoader.getInstance());
+			Class classObj = JunitClassLoader.getInstance().junitloadClass(className);
 			return classObj;
 		} catch (NoClassDefFoundError e) {
 			log.debug("#NoClassDefFoundError=>{}",className);

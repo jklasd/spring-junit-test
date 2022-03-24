@@ -3,7 +3,6 @@ package com.github.jklasd.test.core.facade.scan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
@@ -18,12 +17,10 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
@@ -31,6 +28,7 @@ import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.Scan;
 import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
+import com.github.jklasd.test.core.facade.loader.JunitComponentResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -56,7 +54,7 @@ public class ClassScan implements Scan{
 	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
 	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
 	
-	private ClassLoader classLoader = JunitClassLoader.getInstance();
+	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -99,6 +97,8 @@ public class ClassScan implements Scan{
 												xmlResourceLoader.loadResource(jFile.getInputStream(JarEntry));
 											}else if(name.contains("spring.factories")) {
 												annoResourceLoader.loadResource(jFile.getInputStream(JarEntry));
+											}else if(name.contains("scan.comp")) {
+												JunitComponentResourceLoader.getInstance().loadResource(jFile.getInputStream(JarEntry));
 											}
 										} catch (IOException e) {
 											loadFaile.set(true);
@@ -152,11 +152,9 @@ public class ClassScan implements Scan{
 				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.loadClass(p);
+					Class<?> c = classLoader.junitloadClass(p);
 					classNames.add(p+CLASS_SUFFIX);
-					if(c!=null) {
-						applicationAllClassMap.put(p,c);
-					}
+					applicationAllClassMap.put(p,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
@@ -170,6 +168,8 @@ public class ClassScan implements Scan{
 						xmlResourceLoader.loadResource(new FileInputStream(f));
 					}else if(f.getName().contains("spring.factories")) {
 						annoResourceLoader.loadResource(new FileInputStream(f));
+					}else if(f.getName().contains("scan.comp")) {
+						JunitComponentResourceLoader.getInstance().loadResource(new FileInputStream(f));
 					}
 				} catch (IOException e) {
 					log.error("jFile.getInputStream(JarEntry)",e);
@@ -189,7 +189,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.loadClass(name);
+					Class<?> c = classLoader.junitloadClass(name);
 					try {
 						ConfigurationScan.getInstance().scanConfigClass(c);
 					} catch (IOException e) {
@@ -215,6 +215,28 @@ public class ClassScan implements Scan{
 		return scaner;
 	}
 	
+//	public List<Class<?>> findStaticMethodClass() {
+//		Set<Class<?>> list = Sets.newHashSet();
+//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
+//		.setException((name,e)->{
+//		    log.error("遗漏#findStaticMethodClass#=>{}",name);
+//		})
+//		.runAndWait(name ->{
+//			Class<?> c = componentClassPathMap.get(name);
+//			if(c.getAnnotations().length>0) {
+//				if(c.isAnnotationPresent(Configuration.class)
+//						|| c.isAnnotationPresent(Service.class)
+//						|| c.isAnnotationPresent(Component.class)
+//						|| c.isAnnotationPresent(Repository.class)) {
+//					if(hasStaticMethod(c)) {
+//						list.add(c);
+//					}
+//				}
+//			}
+//		});
+//		return Lists.newArrayList(list);
+//	}
+	
 	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
 		if(!cacheBeanNameClass.isEmpty()) {
@@ -230,7 +252,7 @@ public class ClassScan implements Scan{
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
-//					log.info("put beanClass=>{}",annValue);
+					log.info("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
 						findClass.set(tagClass);
@@ -267,7 +289,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = Class.forName(name,false,classLoader);
+					Class<?> c = classLoader.junitloadClass(name);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {

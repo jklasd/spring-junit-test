@@ -8,8 +8,8 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.github.jklasd.test.core.common.FieldAnnUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
+import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
@@ -31,7 +31,7 @@ public class AutowiredHandler implements FieldHandler{
 				try {
 					Class<?> c = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
 					List<?> list = LazyBean.findListBean(c);
-					FieldAnnUtil.setObj(attr, tagObj, list);
+					FieldAnnComponent.setObj(attr, tagObj, list);
 					log.info("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
 				} catch (ClassNotFoundException e) {
 					e.printStackTrace();
@@ -40,7 +40,7 @@ public class AutowiredHandler implements FieldHandler{
 				log.info("其他特殊情况");
 			}
 		}else {
-			FieldAnnUtil.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(attr.getType(),bName));
+			FieldAnnComponent.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(attr.getType(),bName));
 		}
 	}
 

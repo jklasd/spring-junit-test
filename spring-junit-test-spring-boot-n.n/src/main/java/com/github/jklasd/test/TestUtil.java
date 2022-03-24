@@ -91,10 +91,6 @@ public class TestUtil{
 		return applicationContext.getEnvironment();
 	}
 
-//	public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
-//		this.applicationContext = new TestApplicationContext(applicationContext);
-//	}
-
 	/**
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
@@ -106,13 +102,13 @@ public class TestUtil{
             return;
         }
 	    processed = true;
-	    stats = 1;
+	    stats = init;
 	    log.debug("=========加载配置========");
 	    AnnotationResourceLoader.getInstance().initResource();
 	    XMLResourceLoader.getInstance().initResource();
 		JavaBeanUtil.process();
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
-		stats = 2;
+		stats = inited;
 		JunitClassLoader.getInstance().processStatic();
 	}
 

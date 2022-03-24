@@ -35,7 +35,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class XMLResourceLoader implements JunitResourceLoader{
-	
+	private static XMLResourceLoader loader = new XMLResourceLoader();
+	private XMLResourceLoader() {}
+	public static XMLResourceLoader getInstance() {
+		return loader;
+	}
 	private DocumentLoader documentLoader = new DefaultDocumentLoader();
     private XmlBeanDefinitionReader xmlReader = new XmlBeanDefinitionReader(LazyXmlListableBeanFactory.getInstance());
     
@@ -103,11 +107,5 @@ public class XMLResourceLoader implements JunitResourceLoader{
 	public void loadResource(String... sourcePath) {
 		// TODO Auto-generated method stub
 		
-	}
-
-	private static XMLResourceLoader loader = new XMLResourceLoader();
-	private XMLResourceLoader() {}
-	public static XMLResourceLoader getInstance() {
-		return loader;
 	}
 }

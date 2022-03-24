@@ -79,7 +79,7 @@ public class JavaBeanUtil {
 		    /**
 		     * 先创建 configuration BEAN
 		     */
-            boolean buildConfigStatus = buildConfigObj(configClass,null);
+            boolean buildConfigStatus = buildConfigObj(configClass,assemblyData.getNameMapTmp());
             if(buildConfigStatus) {
                 log.warn("configClass=>{},method=>{},assemblyData=>{}",configClass.getSimpleName(),method.getName(),assemblyData);
             }
@@ -131,7 +131,7 @@ public class JavaBeanUtil {
         		return;
         	}
         	//如果存在参数
-        	Object[] args = buildParam(method.getGenericParameterTypes(),method.getParameterAnnotations());
+        	Object[] args = buildParam(assemblyData.getNameMapTmp(), method.getGenericParameterTypes(),method.getParameterAnnotations());
         	if(!method.isAccessible()) {
         		method.setAccessible(true);
         	}
@@ -186,14 +186,14 @@ public class JavaBeanUtil {
             }
             Constructor[] cons = configClass.getConstructors();
             if(cons.length>0) {
-                findAndCreateBean(configClass, cons);
+                findAndCreateBean(configClass, nameSpace, cons);
             }else {
                 cons = configClass.getDeclaredConstructors();
                 if(!Modifier.isPublic(configClass.getModifiers())) {
                     cons[0].setAccessible(true);
                 }
                 if(cons.length>0) {
-                    findAndCreateBean(configClass, cons);
+                    findAndCreateBean(configClass, nameSpace, cons);
                 }
             }
             if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
@@ -216,7 +216,7 @@ public class JavaBeanUtil {
      * @throws IllegalAccessException
      * @throws InvocationTargetException
      */
-    private void findAndCreateBean(Class<?> configClass, Constructor[] cons)
+    private void findAndCreateBean(Class<?> configClass, Map<String,Class<?>> nameSpace, Constructor[] cons)
         throws InstantiationException, IllegalAccessException, InvocationTargetException {
         int min = 10;
         Constructor minC = null;
@@ -227,7 +227,7 @@ public class JavaBeanUtil {
         	}
         }
         //构建参数
-        Object[] param = buildParam(minC.getGenericParameterTypes(),minC.getParameterAnnotations());
+        Object[] param = buildParam(nameSpace, minC.getGenericParameterTypes(),minC.getParameterAnnotations());
         //创建对象并缓存
         factory.put(configClass, minC.newInstance(param));
     }
@@ -238,7 +238,7 @@ public class JavaBeanUtil {
      * @param annotations 
      * @return  参数对象组
      */
-    private Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
+    private Object[] buildParam(Map<String,Class<?>> nameSpace, Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	AssemblyDTO tmp = new AssemblyDTO();
@@ -266,7 +266,7 @@ public class JavaBeanUtil {
         		    continue;
         		}
         	}
-//        	tmp.setNameMapTmp(nameSpace);
+        	tmp.setNameMapTmp(nameSpace);
         	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
         	if(ojb_meth[0]!=null && ojb_meth[1] != null) {
         		param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
@@ -294,12 +294,8 @@ public class JavaBeanUtil {
 		 */
 		if(LazyMybatisMapperBean.useMybatis()) {
 			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getApplicationAllClassMap());
-			Class<? extends Annotation> mybatisScanAnno = LazyMybatisMapperBean.getAnnotionClass();
-			log.info("configurableList=>{}",configurableList);
-			configurableList.stream()
-			.filter(configura ->configura!=null && configura.getAnnotation(mybatisScanAnno)!=null)
-			.forEach(configura ->{
-				Annotation scan = configura.getAnnotation(mybatisScanAnno);
+			configurableList.stream().filter(configura ->configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass())!=null).forEach(configura ->{
+				Annotation scan = configura.getAnnotation(LazyMybatisMapperBean.getAnnotionClass());
 				if(scan != null) {
 					String[] packagePath = (String[]) JunitInvokeUtil.invokeMethod(scan, "basePackages");
 					if(packagePath.length>0) {

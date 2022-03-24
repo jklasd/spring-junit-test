@@ -1,6 +1,8 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
+import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,12 +27,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	
 	@Getter
 	private DefaultListableBeanFactory lazyBeanFactory;
-	private static LazyApplicationContext context = new LazyApplicationContext();
-	
-	public static LazyApplicationContext getInstance() {
-		return context;
-	}
-	private LazyApplicationContext() {
+	public LazyApplicationContext() {
 		super(LazyListableBeanFactory.getInstance());
 		lazyBeanFactory = getDefaultListableBeanFactory();
 	}
@@ -78,7 +75,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 			return null;
 		}
 	}
-
+	
 	public void registBean(String beanName, Object tmp, Class<?> tagC) {
 //		regist
 		if(beanName!=null) {
@@ -144,4 +141,8 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		}
 	}
 
+	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
+			throws BeansException {
+		return LazyBean.findBeanWithAnnotation(annotationType);
+	}
 }

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.transaction.TransactionDefinition;
@@ -20,7 +19,6 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
-import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -38,11 +36,9 @@ public abstract class AbstractLazyProxy {
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
-    
-    protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
-    
     @Getter
     private Map<String,Object> attr;
+    
     public AbstractLazyProxy(BeanModel beanModel) {
         this.beanModel = beanModel;
         if(beanModel.getPropValue()!=null && beanModel.getPropValue().getPropertyValueList().size()>0) {
@@ -61,6 +57,20 @@ public abstract class AbstractLazyProxy {
 			return bound!=null;
 		} catch (NoSuchFieldException | SecurityException e) {
 			return false;
+		}
+    }
+    
+    public static Class<?> getProxyTagClass(Object obj){
+    	try {
+			if(isProxy(obj)) {
+				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
+				bound.setAccessible(true);
+				AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
+				return proxy.getBeanModel().getTagClass();
+			}
+			return null;
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			return null;
 		}
     }
     
@@ -112,11 +122,7 @@ public abstract class AbstractLazyProxy {
         	tmpInvokerInfo.put("class", beanModel.getTagClass());
         	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
-            Object oldObj = null;
-            try {
-                oldObj = AopContext.currentProxy();
-            } catch (IllegalStateException e) {
-            }
+            Object oldObj = AopContextSuppert.getProxyObject();
 
             Object newObj = getTagertObj();
 
@@ -249,13 +255,15 @@ public abstract class AbstractLazyProxy {
         }
     }
 
-	public static void instantiateProxy(Object obj) {
+	public static Object instantiateProxy(Object obj) {
 		try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 			bound.setAccessible(true);
 			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
-			proxy.getTagertObjectCustom();
+			return proxy.getTagertObj();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 		}
+		return obj;
 	}
+
 }

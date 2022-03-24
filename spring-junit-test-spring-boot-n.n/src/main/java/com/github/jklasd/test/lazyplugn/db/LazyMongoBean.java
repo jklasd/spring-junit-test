@@ -28,6 +28,7 @@ public class LazyMongoBean implements LazyPlugnBeanFactory{
 		AssemblyDTO asse = new AssemblyDTO();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
+		asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.BOOT_AUTO_CONFIG));
 		Object obj = LazyBean.findCreateBeanFromFactory(asse);
 //		log.info("obj=>{}",obj!=null);
 		/**

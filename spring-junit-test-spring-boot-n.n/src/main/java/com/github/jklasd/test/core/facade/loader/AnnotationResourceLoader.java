@@ -12,6 +12,7 @@ import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
+import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
@@ -71,6 +72,7 @@ public class AnnotationResourceLoader implements JunitResourceLoader{
 		});
 		thridAutoConfigClass.clear();
 		thridAutoConfigClass = null;
+		AopContextSuppert.registerObj();
 	}
 	@Override
 	public void loadResource(String... sourcePath) {
