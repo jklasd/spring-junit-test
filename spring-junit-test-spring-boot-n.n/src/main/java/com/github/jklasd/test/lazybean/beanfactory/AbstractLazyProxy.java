@@ -32,7 +32,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbastractLazyProxy {
+public abstract class AbstractLazyProxy {
     @Getter
     protected BeanModel beanModel;
     protected Object tagertObj;
@@ -40,7 +40,7 @@ public abstract class AbastractLazyProxy {
     @Getter
     private Map<String,Object> attr;
     
-    public AbastractLazyProxy(BeanModel beanModel) {
+    public AbstractLazyProxy(BeanModel beanModel) {
         this.beanModel = beanModel;
         if(beanModel.getPropValue()!=null && beanModel.getPropValue().getPropertyValueList().size()>0) {
             attr = XmlBeanUtil.getInstance().handPropValue(beanModel.getPropValue().getPropertyValueList(), beanModel.getTagClass());
@@ -66,7 +66,7 @@ public abstract class AbastractLazyProxy {
 			if(isProxy(obj)) {
 				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 				bound.setAccessible(true);
-				AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+				AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
 				return proxy.getBeanModel().getTagClass();
 			}
 			return null;
@@ -260,7 +260,7 @@ public abstract class AbastractLazyProxy {
 		try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 			bound.setAccessible(true);
-			AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
 			proxy.getTagertObjectCustom();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 		}

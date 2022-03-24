@@ -180,6 +180,10 @@ public class LazyBean {
 		try {
 			SignalNotificationUtil.put(beanModel.getTagClass().getName(), "true");
 			Class<?> tagClass = beanModel.getTagClass();
+			ObjenesisStd objenesis = new ObjenesisStd();
+			if(Modifier.isFinal(tagClass.getModifiers())) {
+				return objenesis.newInstance(tagClass);
+			}
 			
 //			if(tagClass.getName().contains("ReportMethodConfiguration")) {
 //				log.info("ReportMethodConfiguration");
@@ -213,7 +217,7 @@ public class LazyBean {
 	        enhancer.setSerialVersionUID(42L);
 	        
 			Class<?> proxyClass = enhancer.createClass();
-			ObjenesisStd objenesis = new ObjenesisStd();
+			
 			Factory factory = (Factory) objenesis.newInstance(proxyClass);
 			factory.setCallbacks(new Callback[]{new LazyCglib(beanModel),NoOp.INSTANCE});
 			
@@ -296,7 +300,7 @@ public class LazyBean {
 	 */
 	static Set<String> exist = Sets.newHashSet();
 	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
-		Class<?> objClass = AbastractLazyProxy.isProxy(obj)? AbastractLazyProxy.getProxyTagClass(obj): obj.getClass();
+		Class<?> objClass = AbstractLazyProxy.isProxy(obj)? AbstractLazyProxy.getProxyTagClass(obj): obj.getClass();
 		if(objClass == objClassOrSuper) {
 			//跳过
 			String existKey = obj+"="+objClassOrSuper.getName();

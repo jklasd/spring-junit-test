@@ -26,7 +26,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
@@ -121,11 +121,11 @@ public class JavaBeanUtil {
      */
     private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
         try {
-        	if(AbastractLazyProxy.isProxy(obj)) {//不能是代理对象
+        	if(AbstractLazyProxy.isProxy(obj)) {//不能是代理对象
         		return;
         	}
         	Object exitsBean = getExists(method);
-        	if(exitsBean != null && !AbastractLazyProxy.isProxy(exitsBean)) {//不能是代理对象
+        	if(exitsBean != null && !AbstractLazyProxy.isProxy(exitsBean)) {//不能是代理对象
         		log.info("---Bean 已构建,method:{}---",method);
         		cacheBean.put(key, exitsBean);
         		return;

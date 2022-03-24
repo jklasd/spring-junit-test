@@ -12,7 +12,7 @@ import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -117,7 +117,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             try {
             	String basePackage = null;
             	if(mybatisScan != null) {
-            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(AbastractLazyProxy.PROXY_CALLBACK_0);
+            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(AbstractLazyProxy.PROXY_CALLBACK_0);
             		cglibObjField.setAccessible(true);
             		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
             		if (obj.getAttr().containsKey("basePackage")) {
@@ -155,7 +155,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     @Override
-    public Object buildBean(AbastractLazyProxy model) {
+    public Object buildBean(AbstractLazyProxy model) {
         Class<?> tagC = model.getBeanModel().getTagClass();
         if(isMybatisBean(tagC)) {
             try {
