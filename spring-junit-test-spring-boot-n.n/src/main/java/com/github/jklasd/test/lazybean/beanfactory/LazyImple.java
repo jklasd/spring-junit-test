@@ -3,6 +3,7 @@ package com.github.jklasd.test.lazybean.beanfactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.exception.JunitException;

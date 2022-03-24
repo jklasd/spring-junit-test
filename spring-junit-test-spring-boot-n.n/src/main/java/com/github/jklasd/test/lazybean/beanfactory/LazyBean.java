@@ -548,6 +548,10 @@ public class LazyBean {
 //					return util.getApplicationContext().getDefaultListableBeanFactory();
 				}
 			}
+		}else if(interfaceClass == List.class) {
+			//
+			List<?> list = LazyBean.findListBean((Class<?>)classGeneric[0]);
+			return list;
 		}
 		return null;
 	}

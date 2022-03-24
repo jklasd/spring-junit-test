@@ -5,8 +5,10 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
+import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
 import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -55,13 +57,29 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
+	public <T> T getBean(String name, Class<T> requiredType) {
+		try {
+			return lazyBeanFactory.getBean(name,requiredType);
+		} catch (NoSuchBeanDefinitionException e) {
+			if(requiredType == EntityScanPackages.class) {
+				throw e;
+			}
+			return (T) LazyBean.getInstance().buildProxy(requiredType, name);
+		}
+	}
+	@SuppressWarnings("unchecked")
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
-		return lazyBeanFactory.getBean(requiredType);
+		try {
+			return lazyBeanFactory.getBean(requiredType);
+		} catch (NoSuchBeanDefinitionException e) {
+			return (T) LazyBean.getInstance().buildProxy(requiredType);
+		}
 	}
 	
 	public Object getBeanByClass(Class<?> factoryclass) {
 		try {
-			return getBean(factoryclass);
+			return lazyBeanFactory.getBean(factoryclass);
 		} catch (BeansException e) {
 		}
 		return null;
