@@ -10,7 +10,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -20,6 +19,7 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -37,6 +37,7 @@ public abstract class AbstractLazyProxy {
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
+    protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
     @Getter
     private Map<String,Object> attr;
     

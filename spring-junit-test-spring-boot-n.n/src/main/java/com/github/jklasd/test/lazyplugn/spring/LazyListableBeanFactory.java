@@ -18,6 +18,7 @@ import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.Assert;
 
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Maps;
 
@@ -56,6 +57,31 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		return super.getBean(requiredType);
 	}
 	
+	Map<String,Object> cacheProxyBean = Maps.newHashMap();
+	
+	public Object getBean(String beanName) {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName);
+		}
+		return cacheProxyBean.get(beanName);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getBean(String beanName, Class<T> requiredType) throws BeansException {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName,requiredType);
+		}
+		return (T) cacheProxyBean.get(beanName);
+	}
+	
+	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		if(AbstractLazyProxy.isProxy(singletonObject)) {
+			cacheProxyBean.put(beanName, singletonObject);
+			return;
+		}
+		super.registerSingleton(beanName, singletonObject);
+	}
+
 //	private void registerAnnBean(String beanName, BeanDefinition beanDefinition) {
 //		log.debug("registerAnnBean registerBeanDefinition===={}", beanName);
 //		super.registerBeanDefinition(beanName, beanDefinition);
