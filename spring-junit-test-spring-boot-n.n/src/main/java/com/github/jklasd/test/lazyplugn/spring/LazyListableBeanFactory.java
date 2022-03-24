@@ -16,8 +16,8 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
+import org.springframework.util.Assert;
 
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Maps;
 
@@ -39,32 +39,23 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 			throws BeanDefinitionStoreException {
         super.registerBeanDefinition(beanName, beanDefinition);
 	}
-	
-	Map<String,Object> cacheProxyBean = Maps.newHashMap();
-	
-	public Object getBean(String beanName) {
-		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
-			return super.getBean(beanName);
+	Map<Class<?>,Object> cacheClassMap = Maps.newConcurrentMap();
+	public void registerResolvableDependency(Class<?> dependencyType, Object autowiredValue) {
+		Assert.notNull(dependencyType, "Dependency type must not be null");
+		if(autowiredValue!=null) {
+			cacheClassMap.putIfAbsent(dependencyType, autowiredValue);
 		}
-		return cacheProxyBean.get(beanName);
+		super.registerResolvableDependency(dependencyType, autowiredValue);
+	}
+	public <T> T getBean(Class<T> requiredType) throws BeansException {
+		if(cacheClassMap.containsKey(requiredType)) {
+			return (T) cacheClassMap.get(requiredType);
+		}else if(requiredType.getName().startsWith("org.springframework")) {
+			return null;
+		}
+		return super.getBean(requiredType);
 	}
 	
-	@SuppressWarnings("unchecked")
-	public <T> T getBean(String beanName, Class<T> requiredType) throws BeansException {
-		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
-			return super.getBean(beanName,requiredType);
-		}
-		return (T) cacheProxyBean.get(beanName);
-	}
-	
-	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
-		if(AbstractLazyProxy.isProxy(singletonObject)) {
-			cacheProxyBean.put(beanName, singletonObject);
-			return;
-		}
-		super.registerSingleton(beanName, singletonObject);
-	}
-
 //	private void registerAnnBean(String beanName, BeanDefinition beanDefinition) {
 //		log.debug("registerAnnBean registerBeanDefinition===={}", beanName);
 //		super.registerBeanDefinition(beanName, beanDefinition);

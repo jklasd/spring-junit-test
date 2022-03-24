@@ -16,6 +16,7 @@ import org.springframework.core.io.Resource;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.util.StackOverCheckUtil;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -25,12 +26,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	
 	@Getter
 	private DefaultListableBeanFactory lazyBeanFactory;
-	private static LazyApplicationContext context = new LazyApplicationContext();
-	
-	public static LazyApplicationContext getInstance() {
-		return context;
-	}
-	private LazyApplicationContext() {
+	public LazyApplicationContext() {
 		super(LazyListableBeanFactory.getInstance());
 		lazyBeanFactory = getDefaultListableBeanFactory();
 	}
@@ -78,7 +74,7 @@ public class LazyApplicationContext extends GenericApplicationContext{
 			return null;
 		}
 	}
-
+	
 	public void registBean(String beanName, Object tmp, Class<?> tagC) {
 //		regist
 		if(beanName!=null) {

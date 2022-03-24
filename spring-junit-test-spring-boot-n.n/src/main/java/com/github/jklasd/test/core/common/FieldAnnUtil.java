@@ -1,6 +1,5 @@
 package com.github.jklasd.test.core.common;
 
-
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.List;
@@ -10,6 +9,7 @@ import com.github.jklasd.test.core.common.fieldann.AutowiredHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.common.fieldann.ResourceHandler;
 import com.github.jklasd.test.core.common.fieldann.ValueHandler;
+import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
@@ -22,19 +22,17 @@ public class FieldAnnUtil {
 		public String getType();
 		public void handler(FieldDef def);
 	}
-	
 	private static Map<String,FieldHandler> handlerMap = Maps.newHashMap();
-	static{
-		List<FieldHandler> handlerList = Lists.newArrayList(new AutowiredHandler()
-				,new ResourceHandler()
-				,new ValueHandler()
-//				,new SpyBeanHandler()
-				);
-		
-		handlerList.forEach(handler->{
-			handlerMap.put(handler.getType(), handler);
-		});
+	public static class HandlerLoader{
+		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
+			for(String hclass :handlerClasses) {
+				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
+				FieldHandler handler = (FieldHandler) handlerClass.newInstance();
+				handlerMap.put(handler.getType(), handler);
+			}
+		}
 	}
+	
 
 	public static void handlerField(FieldDef attr) {
 		Annotation[] anns = attr.getField().getAnnotations();

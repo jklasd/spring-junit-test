@@ -2,6 +2,8 @@ package com.github.jklasd.test.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.jklasd.test.exception.JunitException;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -52,7 +54,7 @@ public class StackOverCheckUtil {
         		log.error("------------异常查找--args[{}]-----------",args);
         	}
         	stackOverCheck.remove();
-//        	throw new JunitException("*************递归查找问题*************");
+        	throw new JunitException("*************递归查找问题*************");
         }
         Object result = execTrack.run();
         

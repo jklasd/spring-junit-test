@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -67,7 +67,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
     }
 
     @Override
-    public Object buildBean(AbstractLazyProxy model) {
+    public Object buildBean(AbastractLazyProxy model) {
         if (useDubbo()) {
             Class<?> dubboClass = model.getBeanModel().getTagClass();
             return buildBeanNew(dubboClass);

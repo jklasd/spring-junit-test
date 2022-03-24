@@ -15,6 +15,7 @@ import com.github.jklasd.test.core.common.ClassUtil;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.AnnHandlerUtil;
+import com.github.jklasd.test.util.SignalNotificationUtil;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -68,7 +69,12 @@ public class JunitClassLoader extends ClassLoader{
 						}else {
 							//预热静态方法的实例对象
 							if(BeanFactoryProcessor.getInstance().notBFProcessor(loadClass)) {
-								LazyBean.getInstance().processStatic(loadClass);
+								String value = SignalNotificationUtil.get(loadClass.getName());
+								if(value == null) {
+									LazyBean.getInstance().processStatic(loadClass);
+								}else {
+									SignalNotificationUtil.put(loadClass.getName(), "false");
+								}
 							}
 						}
 					}

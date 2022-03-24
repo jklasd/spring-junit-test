@@ -1,7 +1,7 @@
  package com.github.jklasd.test.lazyplugn;
 
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.AbastractLazyProxy;
 
 public interface LazyPlugnBeanFactory {
-     Object buildBean(AbstractLazyProxy model);
+     Object buildBean(AbastractLazyProxy model);
 }

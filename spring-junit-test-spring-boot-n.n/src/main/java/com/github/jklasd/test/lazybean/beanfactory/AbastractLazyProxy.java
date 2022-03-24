@@ -8,9 +8,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.springframework.aop.framework.AopContext;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -20,7 +20,6 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
-import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -33,17 +32,15 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractLazyProxy {
+public abstract class AbastractLazyProxy {
     @Getter
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
-    
-    protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
-    
     @Getter
     private Map<String,Object> attr;
-    public AbstractLazyProxy(BeanModel beanModel) {
+    
+    public AbastractLazyProxy(BeanModel beanModel) {
         this.beanModel = beanModel;
         if(beanModel.getPropValue()!=null && beanModel.getPropValue().getPropertyValueList().size()>0) {
             attr = XmlBeanUtil.getInstance().handPropValue(beanModel.getPropValue().getPropertyValueList(), beanModel.getTagClass());
@@ -61,6 +58,20 @@ public abstract class AbstractLazyProxy {
 			return bound!=null;
 		} catch (NoSuchFieldException | SecurityException e) {
 			return false;
+		}
+    }
+    
+    public static Class<?> getProxyTagClass(Object obj){
+    	try {
+			if(isProxy(obj)) {
+				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
+				bound.setAccessible(true);
+				AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
+				return proxy.getBeanModel().getTagClass();
+			}
+			return null;
+		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+			return null;
 		}
     }
     
@@ -112,11 +123,7 @@ public abstract class AbstractLazyProxy {
         	tmpInvokerInfo.put("class", beanModel.getTagClass());
         	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
-            Object oldObj = null;
-            try {
-                oldObj = AopContext.currentProxy();
-            } catch (IllegalStateException e) {
-            }
+            Object oldObj = AopContextSuppert.getProxyObject();
 
             Object newObj = getTagertObj();
 
@@ -253,7 +260,7 @@ public abstract class AbstractLazyProxy {
 		try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 			bound.setAccessible(true);
-			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
+			AbastractLazyProxy proxy = (AbastractLazyProxy) bound.get(obj);
 			proxy.getTagertObjectCustom();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 		}

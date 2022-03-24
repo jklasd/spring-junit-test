@@ -203,7 +203,7 @@ public class ScanUtil {
 		if(notFundClassSet.contains(className))
 			return null;
 		try {
-			Class classObj = Class.forName(className, false, JunitClassLoader.getInstance());
+			Class classObj = JunitClassLoader.getInstance().junitloadClass(className);
 			return classObj;
 		} catch (NoClassDefFoundError e) {
 			log.debug("#NoClassDefFoundError=>{}",className);
