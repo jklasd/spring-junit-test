@@ -48,12 +48,15 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		}
 		super.registerResolvableDependency(dependencyType, autowiredValue);
 	}
+	@SuppressWarnings("unchecked")
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(cacheClassMap.containsKey(requiredType)) {
 			return (T) cacheClassMap.get(requiredType);
-		}else if(requiredType.getName().startsWith("org.springframework")) {
-			return null;
 		}
+		//存在jdbcTemplate、 mongoTemplate等bean需要获取
+//		else if(requiredType.getName().startsWith("org.springframework")) {
+//			return null;
+//		}
 		return super.getBean(requiredType);
 	}
 	
