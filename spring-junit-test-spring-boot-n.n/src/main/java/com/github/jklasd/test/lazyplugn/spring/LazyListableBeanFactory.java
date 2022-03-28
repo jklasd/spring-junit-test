@@ -18,6 +18,7 @@ import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.Assert;
 
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Maps;
 
@@ -75,16 +76,16 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		}
 		return (T) cacheProxyBean.get(beanName);
 	}
-	public <T> T getBean(Class<T> requiredType) throws BeansException {
-		if(cacheClassMap.containsKey(requiredType)) {
-			return (T) cacheClassMap.get(requiredType);
-		}
-		Object obj = super.getBean(requiredType);
-		if(obj == null) {
-			obj = LazyBean.getInstance().findBean(requiredType); 
-		}
-		return (T) obj;
-	}
+//	public <T> T getBean(Class<T> requiredType) throws BeansException {
+//		if(cacheClassMap.containsKey(requiredType)) {
+//			return (T) cacheClassMap.get(requiredType);
+//		}
+//		Object obj = super.getBean(requiredType);
+//		if(obj == null) {
+//			obj = LazyBean.getInstance().findBean(requiredType); 
+//		}
+//		return (T) obj;
+//	}
 	
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		if(AbstractLazyProxy.isProxy(singletonObject)) {

@@ -43,7 +43,9 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         AbstractBeanDefinition beanDef = (AbstractBeanDefinition)holder.getBeanDefinition();
         String beanName = holder.getBeanName();
         Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
-        
+        if(beanDef.getBeanClassName().contains("SqlSessionFactoryBean")) {
+        	log.info("断点");
+        }
         log.info("xml build proxy bean=>{}",beanDef.getBeanClassName());
         BeanModel model = new BeanModel();
         model.setThrows(true);
