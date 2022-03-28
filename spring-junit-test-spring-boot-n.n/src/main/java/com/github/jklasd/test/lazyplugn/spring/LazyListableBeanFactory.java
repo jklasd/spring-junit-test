@@ -52,6 +52,33 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		if(cacheClassMap.containsKey(requiredType)) {
 			return (T) cacheClassMap.get(requiredType);
 		}
+		//存在jdbcTemplate、 mongoTemplate等bean需要获取
+//		else if(requiredType.getName().startsWith("org.springframework")) {
+//			return null;
+//		}
+		return super.getBean(requiredType);
+	}
+	
+	Map<String,Object> cacheProxyBean = Maps.newHashMap();
+	
+	public Object getBean(String beanName) {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName);
+		}
+		return cacheProxyBean.get(beanName);
+	}
+	
+	@SuppressWarnings("unchecked")
+	public <T> T getBean(String beanName, Class<T> requiredType) throws BeansException {
+		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+			return super.getBean(beanName,requiredType);
+		}
+		return (T) cacheProxyBean.get(beanName);
+	}
+	public <T> T getBean(Class<T> requiredType) throws BeansException {
+		if(cacheClassMap.containsKey(requiredType)) {
+			return (T) cacheClassMap.get(requiredType);
+		}
 		Object obj = super.getBean(requiredType);
 		if(obj == null) {
 			obj = LazyBean.getInstance().findBean(requiredType); 
@@ -59,6 +86,14 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		return (T) obj;
 	}
 	
+	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		if(AbstractLazyProxy.isProxy(singletonObject)) {
+			cacheProxyBean.put(beanName, singletonObject);
+			return;
+		}
+		super.registerSingleton(beanName, singletonObject);
+	}
+
 //	private void registerAnnBean(String beanName, BeanDefinition beanDefinition) {
 //		log.debug("registerAnnBean registerBeanDefinition===={}", beanName);
 //		super.registerBeanDefinition(beanName, beanDefinition);

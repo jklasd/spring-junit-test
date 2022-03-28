@@ -36,6 +36,7 @@ public abstract class AbstractLazyProxy {
     protected BeanModel beanModel;
     protected Object tagertObj;
     protected volatile boolean inited;
+    protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
     @Getter
     private Map<String,Object> attr;
     

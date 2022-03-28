@@ -180,14 +180,18 @@ public class LazyBean {
 		try {
 			SignalNotificationUtil.put(beanModel.getTagClass().getName(), "true");
 			Class<?> tagClass = beanModel.getTagClass();
+			ObjenesisStd objenesis = new ObjenesisStd();
+			if(Modifier.isFinal(tagClass.getModifiers())) {
+				return objenesis.newInstance(tagClass);
+			}
 			
-//			if(tagClass.getName().contains("DataSourceTransactionManager")) {
-//				log.info("DataSourceTransactionManager");
+//			if(tagClass.getName().contains("ReportMethodConfiguration")) {
+//				log.info("ReportMethodConfiguration");
 //			}
 			
 			Enhancer enhancer = new Enhancer() {
 	            @Override
-	            @SuppressWarnings({"rawtypes" })
+	            @SuppressWarnings("unchecked")
 	            protected void filterConstructors(Class sc, List constructors) {
 	                // Don't filter
 	            }
@@ -210,11 +214,10 @@ public class LazyBean {
 					return method.isBridge() ? 1 : 0;
 				}
 			});
-	        
 	        enhancer.setSerialVersionUID(42L);
 	        
 			Class<?> proxyClass = enhancer.createClass();
-			ObjenesisStd objenesis = new ObjenesisStd();
+			
 			Factory factory = (Factory) objenesis.newInstance(proxyClass);
 			factory.setCallbacks(new Callback[]{new LazyCglib(beanModel),NoOp.INSTANCE});
 			
@@ -266,6 +269,21 @@ public class LazyBean {
 	
 	public void setObj(Field f,Object obj,Object proxyObj) {
 		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
+		setObj(f, obj, proxyObj, null);
+	}
+	/**
+	 * 反射写入值。
+	 * @param f	属性
+	 * @param obj	属性所属目标对象
+	 * @param proxyObj 写入属性的代理对象
+	 * @param proxyBeanName 存在bean名称时，可传入。
+	 * 
+	 * 
+	 */
+	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
+//		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
+////			util.loadLazyAttr(obj, f, proxyBeanName);
+//		}
 		try {
 			if (!f.isAccessible()) {
 				f.setAccessible(true);
@@ -535,6 +553,10 @@ public class LazyBean {
 //					return util.getApplicationContext().getDefaultListableBeanFactory();
 				}
 			}
+		}else if(interfaceClass == List.class) {
+			//
+			List<?> list = LazyBean.findListBean((Class<?>)classGeneric[0]);
+			return list;
 		}
 		return null;
 	}
