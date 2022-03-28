@@ -1,5 +1,6 @@
 package com.github.jklasd.test.core.common.fieldann;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -17,7 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AutowiredHandler implements FieldHandler{
-	public void handler(FieldDef def){
+	public void handler(FieldDef def,Annotation ann){
 		Field attr = def.getField();
 		Object tagObj = def.getTagObj();
 		

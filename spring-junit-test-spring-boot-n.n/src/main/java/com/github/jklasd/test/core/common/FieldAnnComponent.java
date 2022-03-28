@@ -5,6 +5,8 @@ import java.lang.reflect.Field;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.github.jklasd.test.core.common.fieldann.AutowiredHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.common.fieldann.ResourceHandler;
@@ -20,7 +22,7 @@ public class FieldAnnComponent {
 	
 	public interface FieldHandler{
 		public String getType();
-		public void handler(FieldDef def);
+		public void handler(FieldDef def, Annotation ann);
 	}
 	private static Map<String,FieldHandler> handlerMap = Maps.newHashMap();
 	public static class HandlerLoader{
@@ -28,7 +30,9 @@ public class FieldAnnComponent {
 			for(String hclass :handlerClasses) {
 				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
 				FieldHandler handler = (FieldHandler) handlerClass.newInstance();
-				handlerMap.put(handler.getType(), handler);
+				if(StringUtils.isNotBlank(handler.getType())) {
+					handlerMap.put(handler.getType(), handler);
+				}
 			}
 		}
 	}
@@ -39,7 +43,7 @@ public class FieldAnnComponent {
 		for(Annotation ann : anns) {
 			FieldHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
-				handler.handler(attr);
+				handler.handler(attr,ann);
 				break;
 			}
 		}

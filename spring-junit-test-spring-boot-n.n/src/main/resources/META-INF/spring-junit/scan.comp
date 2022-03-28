@@ -1,3 +1,5 @@
 com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler=com.github.jklasd.test.core.common.fieldann.AutowiredHandler,\
 com.github.jklasd.test.core.common.fieldann.ResourceHandler,\
-com.github.jklasd.test.core.common.fieldann.ValueHandler
+com.github.jklasd.test.core.common.fieldann.ValueHandler,\
+com.github.jklasd.test.lazyplugn.dubbo.reference.AliDubboReferenceHandler,\
+com.github.jklasd.test.lazyplugn.dubbo.reference.ApacheDubboReferenceHandler

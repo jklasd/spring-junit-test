@@ -1,5 +1,6 @@
 package com.github.jklasd.test.core.common.fieldann;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 
 import javax.annotation.Resource;
@@ -12,10 +13,10 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class ResourceHandler  implements FieldHandler{
-	public void handler(FieldDef def){
+	public void handler(FieldDef def,Annotation ann){
 		Field attr = def.getField();
 		Object obj = def.getTagObj();
-		Resource c = attr.getAnnotation(Resource.class);
+		Resource c = (Resource) ann;
 		if (c != null) {
 			FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(attr.getType(),c.name()));
 		}

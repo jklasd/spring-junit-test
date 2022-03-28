@@ -75,9 +75,9 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         return null;
     }
 
-    public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
-    	LazyDubboAnnotationRefHandler.getInstance().processAttr(tagertObj, objClassOrSuper);
-    }
+//    public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
+//    	LazyDubboAnnotationRefHandler.getInstance().processAttr(tagertObj, objClassOrSuper);
+//    }
 	public void registerDubboService(Class<?> class1) {
 		xmlRefHandler.registerDubboService(class1);
 	}

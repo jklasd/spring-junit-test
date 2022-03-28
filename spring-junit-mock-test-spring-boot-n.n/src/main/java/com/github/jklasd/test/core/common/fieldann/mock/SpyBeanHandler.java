@@ -1,5 +1,6 @@
 package com.github.jklasd.test.core.common.fieldann.mock;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -37,10 +38,10 @@ public class SpyBeanHandler extends MockHandler implements FieldHandler{
 	}
 	
 	@Override
-	public void handler(FieldDef def) {
+	public void handler(FieldDef def ,Annotation ann) {
 		Field attr = def.getField();
 		Object obj = def.getTagObj();
-		SpyBean spyAnn = attr.getAnnotation(SpyBean.class);
+		SpyBean spyAnn = (SpyBean) ann;
 		Qualifier qualifier = attr.getAnnotation(Qualifier.class);
 		try {
 			Object qualDef = qualDefStructor.newInstance(attr,Sets.newHashSet(spyAnn));

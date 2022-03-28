@@ -77,9 +77,9 @@ public class LazyImple extends AbstractLazyProxy implements InvocationHandler {
                         tagertObj = tagImp;
                     }
                 }
-                if(tagertObj!=null) {
-                    LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
-                }
+//                if(tagertObj!=null) {
+//                    LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
+//                }
             }
         }
         return tagertObj;

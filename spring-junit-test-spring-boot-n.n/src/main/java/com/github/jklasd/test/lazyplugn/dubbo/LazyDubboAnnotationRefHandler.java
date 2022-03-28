@@ -20,45 +20,45 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
 	}
 	
 	private static List<Class<? extends Annotation>> referenceList = Lists.newArrayList();
-    static {
-    	Lists.newArrayList("org.apache.dubbo.config.annotation.Reference","com.alibaba.dubbo.config.annotation.Reference").forEach(className->{
-    		@SuppressWarnings("unchecked")
-			Class<? extends Annotation> refAnn = ScanUtil.loadClass(className);
-    		if(refAnn == null)
-    			return;
-    		referenceList.add(refAnn);
-    	});
-    }
+//    static {
+//    	Lists.newArrayList("org.apache.dubbo.config.annotation.Reference","com.alibaba.dubbo.config.annotation.Reference").forEach(className->{
+//    		@SuppressWarnings("unchecked")
+//			Class<? extends Annotation> refAnn = ScanUtil.loadClass(className);
+//    		if(refAnn == null)
+//    			return;
+//    		referenceList.add(refAnn);
+//    	});
+//    }
 	
-	public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
-		if(referenceList.isEmpty() || tagertObj == null) return;
-		
-        Field[] fields = objClassOrSuper.getDeclaredFields();
-        processField(tagertObj, fields);
-        
-        Class<?> superC = objClassOrSuper.getSuperclass();
-        if (superC != null) {
-            processAttr(tagertObj, superC);
-        }
-	}
+//	public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
+//		if(referenceList.isEmpty() || tagertObj == null) return;
+//		
+//        Field[] fields = objClassOrSuper.getDeclaredFields();
+//        processField(tagertObj, fields);
+//        
+//        Class<?> superC = objClassOrSuper.getSuperclass();
+//        if (superC != null) {
+//            processAttr(tagertObj, superC);
+//        }
+//	}
 	
-	private void processField(Object obj, Field[] fields) {
-        for(Field f : fields){
-        	
-        	for(Class<? extends Annotation> annRefC: referenceList) {
-        		Annotation annR = f.getAnnotation(annRefC);
-        		if(annR!=null) {
-        			Object ref = buildBeanRef(f.getType(),annR);
-        			if(ref!=null) {
-        				LazyBean.getInstance().setObj(f, obj, ref);
-        			}
-        			break;
-        		}
-        	}
-        }
-    }
+//	private void processField(Object obj, Field[] fields) {
+//        for(Field f : fields){
+//        	
+//        	for(Class<? extends Annotation> annRefC: referenceList) {
+//        		Annotation annR = f.getAnnotation(annRefC);
+//        		if(annR!=null) {
+//        			Object ref = buildBeanRef(f.getType(),annR);
+//        			if(ref!=null) {
+//        				LazyBean.getInstance().setObj(f, obj, ref);
+//        			}
+//        			break;
+//        		}
+//        	}
+//        }
+//    }
 	private Class<?> referenceConfigC = ScanUtil.loadClass("org.apache.dubbo.config.ReferenceConfig");
-	private Object buildBeanRef(Class<?> dubboClass, Annotation aliR) {
+	public Object buildBeanRef(Class<?> dubboClass, Annotation aliR) {
         if(dubboData.containsKey(dubboClass)) {
             return dubboData.get(dubboClass);
         }
