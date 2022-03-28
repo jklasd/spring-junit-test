@@ -4,8 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
-	<artifactId>spring-junit-test-2.4</artifactId>
-	<version>1.2.2-RELEASE</version>
+	<artifactId>spring-junit-test-1.5</artifactId>
+	<version>1.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -43,7 +43,7 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.0</version>
+		<version>1.5.11.RELEASE</version>
 		<relativePath></relativePath>
 	</parent>
 	<properties>
@@ -53,6 +53,11 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
+		<!-- 动态字节码 -->
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -122,6 +127,12 @@
 			<artifactId>junit</artifactId>
 			<scope>compile</scope>
 		</dependency>
+		<!-- <dependency>
+			<groupId>org.objenesis</groupId>
+			<artifactId>objenesis</artifactId>
+			<version>2.1</version>
+			<scope>provided</scope>
+		</dependency> -->
 	</dependencies>
 
 	<build>
