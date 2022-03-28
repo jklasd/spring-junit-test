@@ -104,16 +104,18 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	 * @param tmp
 	 * @param tagC
 	 */
-	public synchronized void registBean(String beanName, Object tmp, Class<?> tagC) {//synchronized去除多线程注册问题
-//		regist
-		if(beanName!=null) {
-			if(!lazyBeanFactory.containsBean(beanName)) {
-				lazyBeanFactory.registerSingleton(beanName, tmp);
+	public void registBean(String beanName, Object tmp, Class<?> tagC) {
+		synchronized(tagC) {//synchronized去除多线程注册问题
+	//		regist
+			if(beanName!=null) {//beanName不能直接作加锁条件
+				if(!lazyBeanFactory.containsBean(beanName)) {
+					lazyBeanFactory.registerSingleton(beanName, tmp);
+				}else {
+					log.debug("bean已存在");
+				}
 			}else {
-				log.debug("bean已存在");
+				lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 			}
-		}else {
-			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 		}
 	}
 	
