@@ -44,6 +44,11 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return null;
     }
 
+    // private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
+    private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
+//    private static final Class<?> factoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionFactoryBean");
+    private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
+
     @SuppressWarnings("unchecked")
     private static final Class<? extends Annotation> mapperScanClass
         = ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
@@ -56,13 +61,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         if (mapperScanClass != null) {
             return mapperScanClass;
         }
-        return null;
+        return ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
     }
-
-    // private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
-    private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
-//    private static final Class<?> factoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionFactoryBean");
-    private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
 
     private Object sqlSessionTemplate;
 

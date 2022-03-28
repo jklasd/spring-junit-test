@@ -621,18 +621,16 @@ public class LazyBean {
 	}
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		AssemblyDTO asse = new AssemblyDTO();
-		if(classBean!=null) {
-			asse.setTagClass(classBean);
-			if(classBean.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-				Object tmpObj = findCreateBeanFromFactory(asse);
-				if(tmpObj!=null) {
-					return tmpObj;
-				}
-				asse.setNameMapTmp(ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE));
-			}
-		}
 		asse.setBeanName(beanName);
-		return findCreateBeanFromFactory(asse);
+		asse.setTagClass(classBean);
+		/**
+		 * 优先用户自定义Bean
+		 */
+		Object tmpObj = findCreateBeanFromFactory(asse);
+		if(tmpObj!=null) {
+			return tmpObj;
+		}
+		return null;
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
 		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
