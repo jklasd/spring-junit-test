@@ -5,7 +5,7 @@
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test-2.4</artifactId>
-	<version>1.2.2-RELEASE</version>
+	<version>1.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -53,6 +53,11 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
+		<!-- 动态字节码 -->
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
@@ -70,11 +75,11 @@
 			<version>30.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
-		<dependency>
+		<!-- <dependency>
 		    <groupId>javax.annotation</groupId>
 		    <artifactId>javax.annotation-api</artifactId>
 		    <scope>provided</scope>
-	    </dependency>
+	    </dependency> -->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -98,6 +103,7 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
+			<version>3.3.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -122,6 +128,12 @@
 			<artifactId>junit</artifactId>
 			<scope>compile</scope>
 		</dependency>
+		<!-- <dependency>
+			<groupId>org.objenesis</groupId>
+			<artifactId>objenesis</artifactId>
+			<version>2.1</version>
+			<scope>provided</scope>
+		</dependency> -->
 	</dependencies>
 
 	<build>

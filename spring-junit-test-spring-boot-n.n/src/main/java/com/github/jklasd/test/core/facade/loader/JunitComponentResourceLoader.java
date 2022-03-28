@@ -7,7 +7,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.jklasd.test.core.common.FieldAnnUtil;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,7 +27,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 			prop.load(new InputStreamReader(jarFileIs));
 			String factoryClassNames = prop.getProperty("com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler");
 			if(StringUtils.isNotBlank(factoryClassNames)) {
-				FieldAnnUtil.HandlerLoader.load(factoryClassNames.split(","));
+				FieldAnnComponent.HandlerLoader.load(factoryClassNames.split(","));
 			}
 		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			log.error("=====================loadResource=====================",e);

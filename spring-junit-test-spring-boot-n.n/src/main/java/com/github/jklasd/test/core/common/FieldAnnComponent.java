@@ -16,7 +16,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FieldAnnUtil {
+public class FieldAnnComponent {
 	
 	public interface FieldHandler{
 		public String getType();

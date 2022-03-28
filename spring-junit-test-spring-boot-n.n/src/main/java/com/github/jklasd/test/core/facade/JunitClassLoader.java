@@ -11,10 +11,10 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.common.ClassUtil;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.AnnHandlerUtil;
+import com.github.jklasd.test.util.ClassUtil;
 import com.github.jklasd.test.util.SignalNotificationUtil;
 import com.google.common.collect.Lists;
 

@@ -31,7 +31,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.core.facade.JunitClassLoader;
 import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
@@ -346,7 +346,7 @@ public class LazyBean {
 	}
     private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
-        	FieldAnnUtil.handlerField(new FieldDef(f,obj));
+        	FieldAnnComponent.handlerField(new FieldDef(f,obj));
 		}
     }
 
@@ -523,13 +523,18 @@ public class LazyBean {
 	 * @param annotationType Annotation类型
 	 * @return 返回存在annotationType 的对象
 	 */
+	private static Map<Class<?>,Map<String,Object>> cacheMap = Maps.newConcurrentMap();
 	public static Map<String, Object> findBeanWithAnnotation(Class<? extends Annotation> annotationType) {
+		if(cacheMap.containsKey(annotationType)) {
+			return cacheMap.get(annotationType);
+		}
 		List<Class<?>> list = ScanUtil.findClassWithAnnotation(annotationType,ClassScan.getApplicationAllClassMap());
 		Map<String, Object> annoClass = Maps.newHashMap();
 		list.stream().forEach(c ->{
 //			String beanName = getBeanName(c);
 			annoClass.put(c.getSimpleName(), LazyBean.getInstance().buildProxy(c));
 		});
+		cacheMap.put(annotationType, annoClass);
 		return annoClass;
 	}
 	

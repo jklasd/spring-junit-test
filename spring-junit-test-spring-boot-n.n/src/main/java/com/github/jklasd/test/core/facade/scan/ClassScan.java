@@ -252,6 +252,9 @@ public class ClassScan implements Scan{
 				Class<?> tagClass = componentClassPathMap.get(name);
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
+					if(annValue == null) {
+						log.warn("{} beanName=>{}",tagClass,annValue);
+					}
 					log.info("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {

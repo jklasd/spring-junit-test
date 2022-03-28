@@ -9,8 +9,8 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.ResolvableType;
 
-import com.github.jklasd.test.core.common.FieldAnnUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
+import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.ScanUtil;
@@ -55,7 +55,7 @@ public class SpyBeanHandler extends MockHandler implements FieldHandler{
 				beanName = qualifier.value();
 			}
 			Object value = createSpy.invoke(spyDefObj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
-			FieldAnnUtil.setObj(attr, obj, value);
+			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
 		}

@@ -5,8 +5,8 @@ import java.lang.reflect.Field;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
+import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -18,7 +18,7 @@ public class ValueHandler  implements FieldHandler{
 		Object obj = def.getTagObj();
 		Value v = attr.getAnnotation(Value.class);
 		if (v != null) {
-			FieldAnnUtil.setObj(attr, obj, util.value(v.value().replace("${", "").replace("}", ""), attr.getType()));
+			FieldAnnComponent.setObj(attr, obj, util.value(v.value().replace("${", "").replace("}", ""), attr.getType()));
 		}
 	}
 	public String getType() {

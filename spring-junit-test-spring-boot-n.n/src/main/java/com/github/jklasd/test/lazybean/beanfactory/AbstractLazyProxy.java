@@ -257,13 +257,15 @@ public abstract class AbstractLazyProxy {
         }
     }
 
-	public static void instantiateProxy(Object obj) {
+	public static Object instantiateProxy(Object obj) {
 		try {
 			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 			bound.setAccessible(true);
 			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
-			proxy.getTagertObjectCustom();
+			return proxy.getTagertObj();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
 		}
+		return obj;
 	}
+
 }
