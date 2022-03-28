@@ -87,9 +87,20 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 //		return (T) obj;
 //	}
 	
+	public boolean containsBean(String name) {
+		if(cacheProxyBean.containsKey(name)) {
+			return true;
+		}
+		return super.containsBean(name);
+	}
+	
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		if(AbstractLazyProxy.isProxy(singletonObject)) {
 			cacheProxyBean.put(beanName, singletonObject);
+			
+			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
+			Class<?> proxyObjClass = AbstractLazyProxy.getProxyTagClass(singletonObject);
+			cacheClassMap.putIfAbsent(proxyObjClass, singletonObject);
 			return;
 		}
 		super.registerSingleton(beanName, singletonObject);
