@@ -98,7 +98,13 @@ public class LazyApplicationContext extends GenericApplicationContext{
 		}
 	}
 	
-	public void registBean(String beanName, Object tmp, Class<?> tagC) {
+	/**
+	 * bean 注册
+	 * @param beanName
+	 * @param tmp
+	 * @param tagC
+	 */
+	public synchronized void registBean(String beanName, Object tmp, Class<?> tagC) {//synchronized去除多线程注册问题
 //		regist
 		if(beanName!=null) {
 			if(!lazyBeanFactory.containsBean(beanName)) {

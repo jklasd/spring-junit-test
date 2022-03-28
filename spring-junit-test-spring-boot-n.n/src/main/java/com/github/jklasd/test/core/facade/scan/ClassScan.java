@@ -255,7 +255,7 @@ public class ClassScan implements Scan{
 					if(annValue == null) {
 						log.warn("{} beanName=>{}",tagClass,annValue);
 					}
-					log.info("put beanClass=>{}",annValue);
+					log.debug("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);
 					if (Objects.equals(annValue, beanName)) {
 						findClass.set(tagClass);

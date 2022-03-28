@@ -177,7 +177,7 @@ public abstract class AbstractLazyProxy {
     }
     
     protected Object getTagertObj() {
-        if (tagertObj != null) {
+        if (tagertObj != null && inited) {//需初始化完成，才返回，否则存在线程安全问题
             if (tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
                 log.warn("循环处理代理Bean问题=>{}", beanModel.getTagClass());
                 if (tagertObj.getClass().getSimpleName().contains(beanModel.getTagClass().getSimpleName())) {

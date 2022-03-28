@@ -32,7 +32,7 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
 	
 	public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
 		if(referenceList.isEmpty() || tagertObj == null) return;
-		objClassOrSuper.getDeclaredFields();
+		
         Field[] fields = objClassOrSuper.getDeclaredFields();
         processField(tagertObj, fields);
         
