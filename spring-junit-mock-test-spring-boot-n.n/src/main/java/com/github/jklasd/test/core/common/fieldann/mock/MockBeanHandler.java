@@ -5,12 +5,11 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ResolvableType;
 
-import com.github.jklasd.test.core.common.FieldAnnUtil;
-import com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler;
+import com.github.jklasd.test.core.common.FieldAnnComponent;
+import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
@@ -55,7 +54,7 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 					mockAnn.serializable(), mockAnn.reset(),
 					qualDef);
 			Object value = createMock.invoke(spyDefObj);
-			FieldAnnUtil.setObj(attr, obj, value);
+			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();
 		}
