@@ -6,15 +6,20 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ResolvableType;
 
 import com.github.jklasd.test.core.common.FieldAnnComponent;
 import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
 import com.github.jklasd.test.core.common.fieldann.FieldDef;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MockBeanHandler extends MockHandler implements FieldHandler{
 
 	String packagePath = "org.springframework.boot.test.mock.mockito";
@@ -55,9 +60,17 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 					mockAnn.serializable(), mockAnn.reset(),
 					qualDef);
 			Object value = createMock.invoke(spyDefObj);
+			
+			String beanName = mockAnn.name();
+			if(StringUtils.isBlank(beanName)) {
+				beanName = attr.getName();
+			}
+			//mockBean需要注册
+			LazyApplicationContext.getInstance().registBean(beanName, value, attr.getType());
+			
 			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			e.printStackTrace();
+			log.error("MockBeanHandler#handler",e);
 		}
 	}
 
