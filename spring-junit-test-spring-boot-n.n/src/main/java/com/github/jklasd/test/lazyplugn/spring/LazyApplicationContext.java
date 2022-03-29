@@ -18,6 +18,7 @@ import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.exception.JunitException;
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.ScanUtil;
 
@@ -113,9 +114,9 @@ public class LazyApplicationContext extends GenericApplicationContext{
 				}else {
 					log.debug("bean已存在");
 				}
-			}else {
-				lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 			}
+			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
+			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 		}
 	}
 	

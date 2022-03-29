@@ -45,6 +45,9 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		Assert.notNull(dependencyType, "Dependency type must not be null");
 		if(autowiredValue!=null) {
 			cacheClassMap.putIfAbsent(dependencyType, autowiredValue);
+			if(AbstractLazyProxy.isProxy(autowiredValue)) {//代理bean不注册到spring容器中
+				return;
+			}
 		}
 		super.registerResolvableDependency(dependencyType, autowiredValue);
 	}
@@ -97,10 +100,6 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		if(AbstractLazyProxy.isProxy(singletonObject)) {
 			cacheProxyBean.put(beanName, singletonObject);
-			
-			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
-			Class<?> proxyObjClass = AbstractLazyProxy.getProxyTagClass(singletonObject);
-			cacheClassMap.putIfAbsent(proxyObjClass, singletonObject);
 			return;
 		}
 		super.registerSingleton(beanName, singletonObject);
