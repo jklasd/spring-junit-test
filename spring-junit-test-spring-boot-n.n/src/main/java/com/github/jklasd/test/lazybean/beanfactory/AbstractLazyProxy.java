@@ -67,8 +67,11 @@ public abstract class AbstractLazyProxy {
 			if(isProxy(obj)) {
 				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
 				bound.setAccessible(true);
-				AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
-				return proxy.getBeanModel().getTagClass();
+				Object proxyBean = bound.get(obj);
+				if(proxyBean instanceof AbstractLazyProxy) {
+					AbstractLazyProxy proxy = (AbstractLazyProxy) proxyBean;
+					return proxy.getBeanModel().getTagClass();
+				}
 			}
 			return null;
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
