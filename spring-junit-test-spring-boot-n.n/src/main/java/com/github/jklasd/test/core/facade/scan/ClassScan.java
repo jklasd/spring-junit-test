@@ -66,7 +66,7 @@ public class ClassScan implements Scan{
 			return;
 		}
 		init = true;
-		log.debug("=========加载class========");
+		log.info("=========加载class========");
 		AtomicBoolean loadFaile = new AtomicBoolean();
 		try {
 			Resource[] resources = ScanUtil.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
@@ -84,9 +84,6 @@ public class ClassScan implements Scan{
 							URLConnection connection = url.openConnection();
 							if (connection instanceof JarURLConnection) {
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
-//								if(jFile.getName().contains("util")) {
-//									log.debug("断点");
-//								}
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
 									if(name.contains(".class")) {
@@ -123,7 +120,7 @@ public class ClassScan implements Scan{
 		if(loadFaile.get()) {
 			throw new JunitException();
 		}
-		log.debug("=============加载class结束=============");
+		log.info("=============加载class结束=============");
 		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
 		springBoot.forEach(startClass ->{
 			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
