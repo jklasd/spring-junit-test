@@ -37,7 +37,7 @@ public class AopContextSuppert{
     	if(AopContextClass == null) {
     		return;
     	}
-    	aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
+//    	aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
     }
     public static void setProxyObj(Object obj) {
     	if(AopContextClass == null) {
@@ -51,7 +51,7 @@ public class AopContextSuppert{
                 if(Modifier.isAbstract(AopContextClass.getModifiers())
                 		&& !Modifier.isFinal(AopContextClass.getModifiers())) {
                     //抽象类处理
-                    aopContext = LazyBean.getInstance().buildProxy(AopContext.class);
+                    aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
                 }else {
                     //非抽象类处理
                     aopContext = LazyBean.getInstance().invokeBuildObject(AopContextClass);
