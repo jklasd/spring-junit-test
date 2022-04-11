@@ -122,6 +122,9 @@ public class ClassScan implements Scan{
 		}
 		log.info("=============加载class结束=============");
 		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
+		if(springBoot.isEmpty()) {
+			throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
+		}
 		springBoot.forEach(startClass ->{
 			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
 			/**
