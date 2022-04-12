@@ -4,8 +4,8 @@
 	<modelVersion>4.0.0</modelVersion>
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
-	<artifactId>spring-junit-mock-test-spring-boot-1.5</artifactId>
-	<version>1.2.2-SNAPSHOT</version>
+	<artifactId>spring-junit-mock-test-spring</artifactId>
+	<version>1.2.2-boot-1.5-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -55,8 +55,8 @@
 	<dependencies>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-junit-test-1.5</artifactId>
-			<version>1.2.2-SNAPSHOT</version>
+			<artifactId>spring-junit-test</artifactId>
+			<version>1.2.1-SNAPSHOT</version>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
