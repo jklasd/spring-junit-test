@@ -8,8 +8,8 @@ import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;

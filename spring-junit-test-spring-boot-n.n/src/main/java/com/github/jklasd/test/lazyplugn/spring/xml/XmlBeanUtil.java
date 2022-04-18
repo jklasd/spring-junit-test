@@ -26,8 +26,8 @@ import org.springframework.core.io.ResourceLoader;
 import org.xml.sax.EntityResolver;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter.LazyBeanInitProcessImpl;
 import com.google.common.base.Objects;

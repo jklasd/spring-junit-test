@@ -6,7 +6,7 @@ import java.util.Map;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;

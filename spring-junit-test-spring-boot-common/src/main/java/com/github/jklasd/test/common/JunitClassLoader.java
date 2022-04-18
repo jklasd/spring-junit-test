@@ -12,6 +12,9 @@ import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.github.jklasd.test.common.util.AnnHandlerUtil;
+import com.github.jklasd.test.common.util.ClassUtil;
+import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;

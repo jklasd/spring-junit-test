@@ -2,7 +2,7 @@ package com.github.jklasd.test.core.facade;
 
 import java.util.Map;
 
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.google.common.collect.Maps;
 
 public class FacadeLoader {

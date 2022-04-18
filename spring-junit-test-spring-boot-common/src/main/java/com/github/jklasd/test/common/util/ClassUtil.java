@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;

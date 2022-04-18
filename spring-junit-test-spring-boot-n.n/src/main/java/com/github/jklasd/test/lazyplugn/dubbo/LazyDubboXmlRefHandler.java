@@ -5,7 +5,7 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;

@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import org.slf4j.MDC;
 

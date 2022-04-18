@@ -80,6 +80,11 @@
 		    <artifactId>javax.annotation-api</artifactId>
 		    <scope>provided</scope>
 	    </dependency> -->
+	    <dependency>
+	    	<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-common</artifactId>
+			<version>1.0.0.RELEASE</version>
+	    </dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>

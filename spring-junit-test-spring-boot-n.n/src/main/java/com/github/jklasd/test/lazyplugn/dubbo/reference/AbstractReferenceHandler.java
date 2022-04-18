@@ -2,7 +2,7 @@ package com.github.jklasd.test.lazyplugn.dubbo.reference;
 
 import java.lang.annotation.Annotation;
 
-import com.github.jklasd.test.common.FieldAnnComponent;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboAnnotationRefHandler;

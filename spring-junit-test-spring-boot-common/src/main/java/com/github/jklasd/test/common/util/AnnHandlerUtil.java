@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -9,6 +9,8 @@ import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
+
+import com.github.jklasd.test.common.JunitClassLoader;
 
 public class AnnHandlerUtil {
 	private static AnnHandlerUtil bean = new AnnHandlerUtil();

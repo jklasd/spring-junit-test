@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.component;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.google.common.collect.Maps;

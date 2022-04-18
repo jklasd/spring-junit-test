@@ -6,7 +6,7 @@ import java.lang.reflect.Modifier;
 
 import org.springframework.aop.framework.AopContext;
 
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
 import lombok.extern.slf4j.Slf4j;

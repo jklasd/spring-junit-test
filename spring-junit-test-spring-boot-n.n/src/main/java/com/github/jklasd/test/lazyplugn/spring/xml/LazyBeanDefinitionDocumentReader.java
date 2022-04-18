@@ -7,8 +7,8 @@ import org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader
 import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
-import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 

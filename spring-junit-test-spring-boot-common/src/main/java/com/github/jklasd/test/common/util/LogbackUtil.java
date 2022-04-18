@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
@@ -18,6 +18,9 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.LogbackLoggingSystemExt;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 
 import ch.qos.logback.classic.Level;

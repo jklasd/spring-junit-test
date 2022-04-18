@@ -1,2 +1,2 @@
-com.github.jklasd.test.core.common.FieldAnnUtil.FieldHandler=com.github.jklasd.test.core.common.fieldann.mock.MockBeanHandler,\
+com.github.jklasd.test.common.interf.handler.FieldHandler=com.github.jklasd.test.core.common.fieldann.mock.MockBeanHandler,\
 com.github.jklasd.test.core.common.fieldann.mock.SpyBeanHandler\

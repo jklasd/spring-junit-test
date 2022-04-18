@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
@@ -15,11 +15,12 @@ import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.model.AssemblyDTO;
-import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;

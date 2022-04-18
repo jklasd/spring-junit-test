@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.common.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 

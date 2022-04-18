@@ -32,14 +32,14 @@ import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.ContainerManager;
-import com.github.jklasd.test.common.FieldAnnComponent;
 import com.github.jklasd.test.common.JunitClassLoader;
-import com.github.jklasd.test.common.ScanUtil;
-import com.github.jklasd.test.common.SignalNotificationUtil;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.exception.JunitException;

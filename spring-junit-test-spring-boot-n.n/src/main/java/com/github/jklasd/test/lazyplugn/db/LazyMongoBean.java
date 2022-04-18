@@ -2,8 +2,8 @@ package com.github.jklasd.test.lazyplugn.db;
 
 import java.util.Map;
 
-import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;

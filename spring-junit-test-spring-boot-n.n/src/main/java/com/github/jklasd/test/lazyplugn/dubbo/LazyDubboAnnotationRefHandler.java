@@ -3,7 +3,7 @@ package com.github.jklasd.test.lazyplugn.dubbo;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
 
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 

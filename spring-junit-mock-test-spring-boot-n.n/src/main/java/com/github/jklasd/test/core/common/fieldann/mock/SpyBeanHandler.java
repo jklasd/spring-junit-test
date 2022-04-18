@@ -11,11 +11,11 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.ResolvableType;
 
 import com.github.jklasd.test.common.ContainerManager;
-import com.github.jklasd.test.common.FieldAnnComponent;
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;

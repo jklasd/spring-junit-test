@@ -8,7 +8,7 @@ import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.w3c.dom.Element;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;

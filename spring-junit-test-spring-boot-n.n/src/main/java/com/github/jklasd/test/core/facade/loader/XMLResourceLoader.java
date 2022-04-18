@@ -23,7 +23,7 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyBeanDefinitionDocumentReader;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyXmlListableBeanFactory;
