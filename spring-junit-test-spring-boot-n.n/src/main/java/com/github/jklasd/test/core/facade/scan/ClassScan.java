@@ -24,17 +24,16 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
-import com.github.jklasd.test.core.facade.Scan;
-import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
-import com.github.jklasd.test.core.facade.loader.JunitComponentResourceLoader;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.interf.register.Scan;
+import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
+import com.github.jklasd.test.core.facade.ResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.CheckUtil;
-import com.github.jklasd.test.util.JunitCountDownLatchUtils;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -51,10 +50,8 @@ public class ClassScan implements Scan{
 	Map<String,Class<?>> componentClassPathMap = Maps.newConcurrentMap();
 	private static String CLASS_SUFFIX = ".class";
 	
-	private JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
-	private JunitResourceLoader annoResourceLoader = AnnotationResourceLoader.getInstance();
-	
 	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
+	private ResourceLoader resourceLoader = ResourceLoader.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
@@ -70,7 +67,7 @@ public class ClassScan implements Scan{
 		AtomicBoolean loadFaile = new AtomicBoolean();
 		try {
 			Resource[] resources = ScanUtil.getResources(ResourcePatternResolver.CLASSPATH_ALL_URL_PREFIX + "/" );
-			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(resources)).forEach(r->{
+			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(resources)).setExecutorService(1).forEach(r->{
 				try {
 					URL url = r.getURL();
 					if("file".equals(url.getProtocol())) {
@@ -84,28 +81,21 @@ public class ClassScan implements Scan{
 							URLConnection connection = url.openConnection();
 							if (connection instanceof JarURLConnection) {
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
-								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).runAndWait(JarEntry->{
+								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).setExecutorService(2).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
 									if(name.contains(".class")) {
 										classNames.add(name.replace("/", ".").replace("\\", "."));
 									}else {
 										try {
-											if(name.contains("spring.handlers")) {
-												xmlResourceLoader.loadResource(jFile.getInputStream(JarEntry));
-											}else if(name.contains("spring.factories")) {
-												annoResourceLoader.loadResource(jFile.getInputStream(JarEntry));
-											}else if(name.contains("scan.comp")) {
-												JunitComponentResourceLoader.getInstance().loadResource(jFile.getInputStream(JarEntry));
-											}
+											resourceLoader.loadResource(name,jFile.getInputStream(JarEntry));
 										} catch (IOException e) {
-											loadFaile.set(true);
-											log.error("jFile.getInputStream(JarEntry)",e);
+											log.error("加载资源{}异常",name,e);
 										}
 									}
 								});
 							}
 						} catch (Exception e) {
-							log.error("不能加载class文件=>{}",url.getPath());
+							log.error("不能加载jar文件=>{}",url.getPath());
 						}
 					}
 				} catch (IOException e1) {
@@ -132,7 +122,7 @@ public class ClassScan implements Scan{
 			 */
 			ImportResource resource = startClass.getAnnotation(ImportResource.class);
 			if(resource != null) {
-				XMLResourceLoader.getInstance().loadXmlPath(resource.value());
+				XMLResourceLoader.getInstance().loadResource(resource.value());
 			}
 		});
 		loadContextPathClass();
@@ -164,15 +154,9 @@ public class ClassScan implements Scan{
 				}
 			}else {
 				try {
-					if(f.getName().contains("spring.handlers")) {
-						xmlResourceLoader.loadResource(new FileInputStream(f));
-					}else if(f.getName().contains("spring.factories")) {
-						annoResourceLoader.loadResource(new FileInputStream(f));
-					}else if(f.getName().contains("scan.comp")) {
-						JunitComponentResourceLoader.getInstance().loadResource(new FileInputStream(f));
-					}
+					resourceLoader.loadResource(f.getName(),new FileInputStream(f));
 				} catch (IOException e) {
-					log.error("jFile.getInputStream(JarEntry)",e);
+					log.error("加载资源{}异常",f.getName(),e);
 				}
 //				log.debug("=============其他文件=={}===========",file);
 			}
@@ -324,8 +308,12 @@ public class ClassScan implements Scan{
 		return list;
 	}
 
-//	public ClassLoader getClassLoader() {
-//		return classLoader;
-//	}
-
+	@Override
+	public void register() {
+		ContainerManager.registComponent( this);
+	}
+	@Override
+	public String getBeanKey() {
+		return Scan.class.getSimpleName();
+	}
 }

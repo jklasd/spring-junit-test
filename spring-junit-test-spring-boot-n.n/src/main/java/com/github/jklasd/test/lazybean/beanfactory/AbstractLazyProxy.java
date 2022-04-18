@@ -15,16 +15,16 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
-import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
@@ -122,12 +122,12 @@ public abstract class AbstractLazyProxy {
     		}
     	}
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
+    	Object oldObj = AopContextSuppert.getProxyObject();
         try {
         	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
         	tmpInvokerInfo.put("class", beanModel.getTagClass());
         	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
-            Object oldObj = AopContextSuppert.getProxyObject();
 
             Object newObj = getTagertObj();
 
@@ -161,7 +161,6 @@ public abstract class AbstractLazyProxy {
             
             errorTimes.set(0);
             
-            AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
             return result;
         }catch (JunitException e) {
@@ -176,7 +175,9 @@ public abstract class AbstractLazyProxy {
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
                 e.getMessage());
             throw e;
-        }
+        }finally {
+        	AopContextSuppert.setProxyObj(oldObj);
+		}
     }
     
     protected Object getTagertObj() {

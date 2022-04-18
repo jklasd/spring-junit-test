@@ -18,6 +18,8 @@ import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.Assert;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Maps;
@@ -25,7 +27,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyListableBeanFactory extends DefaultListableBeanFactory {
+public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	protected LazyListableBeanFactory() {}
 	private static LazyListableBeanFactory beanFactory = new LazyListableBeanFactory();
 	public static LazyListableBeanFactory getInstance() {
@@ -131,5 +133,15 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 			createFactoryAwareOrderSourceProvider.setAccessible(true);
 		}
 		return (OrderSourceProvider) createFactoryAwareOrderSourceProvider.invoke(this,beans);
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent( this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return JunitListableBeanFactory.class.getSimpleName();
 	}
 }

@@ -7,7 +7,7 @@ import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
+import com.github.jklasd.test.common.FieldAnnComponent;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 
 import lombok.extern.slf4j.Slf4j;
@@ -41,8 +41,11 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 
 	@Override
 	public void initResource() {
-		// TODO Auto-generated method stub
 		
+	}
+	@Override
+	public JunitResourceLoaderEnum key() {
+		return JunitResourceLoaderEnum.JUNIT;
 	}
 
 }

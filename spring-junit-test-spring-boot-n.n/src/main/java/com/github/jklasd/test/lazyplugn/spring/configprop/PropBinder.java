@@ -12,9 +12,10 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.EnvironmentAware;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ class PropBinder implements BinderHandler{
 	private Class<?> BindableC = ScanUtil.loadClass("org.springframework.boot.context.properties.bind.Bindable");
 	private Map<String,Constructor<?>> cacheConstructor = Maps.newHashMap();
 	private Object processObj;
-	private LazyApplicationContext applicationContext;
+	private JunitApplicationContext applicationContext;
 	public static BinderHandler getBinderHandler() {
 		if(ConfigurationPropertiesBean!=null) {
 			PropBinder signBean = new PropBinder();

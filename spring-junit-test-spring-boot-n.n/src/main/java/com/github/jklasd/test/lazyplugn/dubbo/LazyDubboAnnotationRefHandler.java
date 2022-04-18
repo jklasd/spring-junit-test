@@ -1,14 +1,11 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.List;
 
+import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
-import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 

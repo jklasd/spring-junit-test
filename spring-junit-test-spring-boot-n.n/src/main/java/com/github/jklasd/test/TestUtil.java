@@ -20,16 +20,22 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.core.facade.JunitClassLoader;
-import com.github.jklasd.test.core.facade.loader.AnnotationResourceLoader;
-import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.LogbackUtil;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
+import com.github.jklasd.test.core.facade.ResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
+import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
-import com.github.jklasd.test.util.LogbackUtil;
-import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.google.common.collect.Sets;
 
 import lombok.Getter;
@@ -39,7 +45,7 @@ import lombok.extern.slf4j.Slf4j;
  * @author jubin.zhang 2020-11-19 工具入口类
  */
 @Slf4j
-public class TestUtil{
+public class TestUtil implements JunitCoreComponentI{
 	@Getter
 	private Set<String> scanClassPath = Sets.newHashSet();
 	private Set<String> scanPropertiesList = Sets.newHashSet();
@@ -63,6 +69,7 @@ public class TestUtil{
 	        return bean;
 	    }
 	    bean = new TestUtil();
+	    bean.register();
 //	    bean.setApplicationContext(null);
 	    bean.applicationContext = LazyApplicationContext.getInstance();
 	    bean.applicationContext.refresh();
@@ -83,7 +90,7 @@ public class TestUtil{
 	
     private LazyApplicationContext applicationContext;
 
-	public LazyApplicationContext getApplicationContext() {
+	public JunitApplicationContext getApplicationContext() {
 		return applicationContext;
 	}
 	
@@ -95,20 +102,18 @@ public class TestUtil{
 	 * 处理配置 如：XML配置，java代码 Bean配置 静态工具类bean处理
 	 */
 	private volatile boolean processed;
-	@Getter
-	private volatile int stats;
+	
 	private void processConfig() {
 	    if(processed) {
             return;
         }
 	    processed = true;
-	    stats = init;
+	    ContainerManager.stats = ContainerManager.init;
 	    log.debug("=========加载配置========");
-	    AnnotationResourceLoader.getInstance().initResource();
-	    XMLResourceLoader.getInstance().initResource();
+	    ResourceLoader.getInstance().init();
 		JavaBeanUtil.process();
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
-		stats = inited;
+		ContainerManager.stats = ContainerManager.inited;
 		JunitClassLoader.getInstance().processStatic();
 	}
 
@@ -224,8 +229,7 @@ public class TestUtil{
 	 * @param obj 执行目标对象
 	 */
 	private static volatile boolean processInited;
-	public static int init = 1;
-	public static int inited = 2;
+	
 	public static void startTestForNoContainer(Object obj) {
 		resourcePreparation();
 		//注入当前执行对象
@@ -243,16 +247,26 @@ public class TestUtil{
 	    }
 		processInited = true;
 		try {
+			registerComponent();
 			TestUtil launch = getInstance();
 			launch.loadProp();
 			LogbackUtil.resetLog();
-			
 			ScanUtil.loadAllClass();
 			launch.processConfig();
 		}catch(Error e) {
 			log.error("resourcePreparation 异常",e);
 			throw new JunitException(e);
 		}
+	}
+
+	private static void registerComponent() {
+		ClassScan.getInstance().register();
+		PropResourceManager.getInstance().register();
+		LazyBean.getInstance().register();
+		BeanCreaterScan.getInstance().register();
+		BeanFactoryProcessor.getInstance().register();
+		LazyListableBeanFactory.getInstance().register();
+		LazyApplicationContext.getInstance().register();
 	}
 
 	private void loadProp() {
@@ -286,6 +300,16 @@ public class TestUtil{
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent(this);
+	}
+
+	@Override
+	public String getBeanKey() {
+		return JunitCoreComponentI.class.getSimpleName();
 	}
 
 }

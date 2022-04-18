@@ -6,8 +6,9 @@ import java.lang.reflect.Field;
 import org.springframework.beans.factory.annotation.Value;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
+import com.github.jklasd.test.common.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.FieldDef;
 
 import lombok.extern.slf4j.Slf4j;
 

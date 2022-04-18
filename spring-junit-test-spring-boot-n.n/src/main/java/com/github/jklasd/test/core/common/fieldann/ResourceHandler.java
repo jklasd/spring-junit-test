@@ -5,8 +5,9 @@ import java.lang.reflect.Field;
 
 import javax.annotation.Resource;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
+import com.github.jklasd.test.common.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
 import lombok.extern.slf4j.Slf4j;

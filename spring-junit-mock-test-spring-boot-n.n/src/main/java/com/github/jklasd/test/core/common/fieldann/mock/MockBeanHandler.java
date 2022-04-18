@@ -10,11 +10,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ResolvableType;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
-import com.github.jklasd.test.core.common.fieldann.FieldDef;
-import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
-import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.FieldAnnComponent;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
+import com.github.jklasd.test.common.model.FieldDef;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,6 +28,7 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 	private Class<?> MockDefinition = ScanUtil.loadClass(packagePath+".MockDefinition");
 	Method createMock;
 	Constructor<?> mockDefStructor;
+	private JunitApplicationContext junitApplicationContext;
 	{
 		try {
 			Constructor<?>[] structors = MockDefinition.getDeclaredConstructors();
@@ -38,6 +41,7 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 		} catch (SecurityException | IllegalArgumentException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
+		junitApplicationContext = ContainerManager.getComponent(JunitApplicationContext.class.getSimpleName());
 	}
 	
 	@Override
@@ -66,12 +70,11 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 				beanName = attr.getName();
 			}
 			//mockBean需要注册
-			LazyApplicationContext.getInstance().registBean(beanName, value, attr.getType());
+			junitApplicationContext.registBean(beanName, value, attr.getType());
 			
 			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			log.error("MockBeanHandler#handler",e);
 		}
 	}
-
 }

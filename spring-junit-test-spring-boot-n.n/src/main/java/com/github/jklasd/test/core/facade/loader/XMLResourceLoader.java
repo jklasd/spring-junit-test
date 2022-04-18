@@ -1,9 +1,9 @@
 package com.github.jklasd.test.core.facade.loader;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.logging.Log;
@@ -23,12 +23,12 @@ import org.xml.sax.ErrorHandler;
 import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyBeanDefinitionDocumentReader;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyXmlListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -50,27 +50,20 @@ public class XMLResourceLoader implements JunitResourceLoader{
 	@Override
 	public void loadResource(InputStream jarFileIs) {
 		try {
-			BufferedReader br = new BufferedReader(new InputStreamReader(jarFileIs));
-			String line = null;
-			while ((line = br.readLine()) != null) {
-				String[] url_handler = line.split("=");
-				Class<?> nameSpaceHandlerC = ScanUtil.loadClass(url_handler[1]);
+			Properties prop = new Properties();
+			prop.load(new InputStreamReader(jarFileIs));
+			prop.entrySet().forEach(entry->{
+				Class<?> nameSpaceHandlerC = ScanUtil.loadClass(entry.getValue().toString());
 				if (nameSpaceHandlerC != null) {
 					XmlBeanUtil.getInstance().putNameSpace(
-							url_handler[0].replace("\\", ""), nameSpaceHandlerC);
+							entry.getKey().toString(), nameSpaceHandlerC);
 				}
-			}
+			});
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public void loadXmlPath(String... xmlPath) {
-		for (String path : xmlPath) {
-			xmlpathlist.add(path);
-		}
-	}
-
 	@Override
 	public void initResource() {
 		xmlpathlist.forEach(xml -> readNode(xml));
@@ -105,7 +98,12 @@ public class XMLResourceLoader implements JunitResourceLoader{
 
 	@Override
 	public void loadResource(String... sourcePath) {
-		// TODO Auto-generated method stub
-		
+		for (String path : sourcePath) {
+			xmlpathlist.add(path);
+		}
+	}
+	@Override
+	public JunitResourceLoaderEnum key() {
+		return JunitResourceLoaderEnum.XML;
 	}
 }

@@ -11,22 +11,23 @@ import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyApplicationContext extends GenericApplicationContext{
+public class LazyApplicationContext extends JunitApplicationContext{
 	
 	@Getter
 	private DefaultListableBeanFactory lazyBeanFactory;
@@ -174,5 +175,15 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 			throws BeansException {
 		return LazyBean.findBeanWithAnnotation(annotationType);
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent(this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return JunitApplicationContext.class.getSimpleName();
 	}
 }

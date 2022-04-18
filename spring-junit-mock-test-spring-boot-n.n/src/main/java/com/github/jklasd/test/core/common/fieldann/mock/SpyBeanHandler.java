@@ -10,11 +10,12 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.core.ResolvableType;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
-import com.github.jklasd.test.core.common.fieldann.FieldDef;
-import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.FieldAnnComponent;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.github.jklasd.test.common.model.FieldDef;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class SpyBeanHandler extends MockHandler implements FieldHandler{
 	private Class<?> SpyDefinition = ScanUtil.loadClass(packagePath+".SpyDefinition");
 	Method createSpy;
 	Constructor<?> spyDefStructor;
+	private LazyBeanI lazyBean;
 	{
 		try {
 			Constructor<?>[] structors = SpyDefinition.getDeclaredConstructors();
@@ -35,6 +37,7 @@ public class SpyBeanHandler extends MockHandler implements FieldHandler{
 		} catch (SecurityException | IllegalArgumentException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
+		lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	}
 	
 	@Override
@@ -55,7 +58,7 @@ public class SpyBeanHandler extends MockHandler implements FieldHandler{
 			if(qualifier!=null) {
 				beanName = qualifier.value();
 			}
-			Object value = createSpy.invoke(spyDefObj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
+			Object value = createSpy.invoke(spyDefObj, lazyBean.buildProxy(attr.getType(),beanName));
 			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			e.printStackTrace();

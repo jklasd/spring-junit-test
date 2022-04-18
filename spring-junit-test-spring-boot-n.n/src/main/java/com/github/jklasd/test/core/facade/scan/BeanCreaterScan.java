@@ -7,23 +7,21 @@ import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Bean;
 
-import com.github.jklasd.test.core.facade.Scan;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
+import com.github.jklasd.test.common.interf.register.BeanScanI;
+import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.util.CheckUtil;
-import com.github.jklasd.test.util.JunitCountDownLatchUtils;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BeanCreaterScan implements Scan{
+public class BeanCreaterScan implements BeanScanI{
 	private BeanCreaterScan() {}
-	@Override
-	public void scan() {
-		
-	}
 //	private ApplicationContext coreComponent = TestUtil.getInstance().getApplicationContext();
 //	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	
@@ -167,6 +165,16 @@ private void matchByBeanName(Object[] address, Object[] tmp, final String beanNa
 		AssemblyDTO assemblyData = new AssemblyDTO();
 		assemblyData.setTagClass(tagC);
 		return findClassMethodByResultType(assemblyData);
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent( this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return BeanScanI.class.getSimpleName();
 	}
 
 }

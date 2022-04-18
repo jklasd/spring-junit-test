@@ -24,18 +24,18 @@ import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
 

@@ -5,7 +5,7 @@
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test</artifactId>
-	<version>1.2.2-boot-1.5-SNAPSHOT</version>
+	<version>1.2.1-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -128,12 +128,16 @@
 			<artifactId>junit</artifactId>
 			<scope>compile</scope>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.objenesis</groupId>
-			<artifactId>objenesis</artifactId>
-			<version>2.1</version>
-			<scope>provided</scope>
-		</dependency> -->
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-common</artifactId>
+			<version>1.0.0.RELEASE</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-boot-version-controller</artifactId>
+			<version>1.5.0.RELEASE</version>
+		</dependency>
 	</dependencies>
 
 	<build>

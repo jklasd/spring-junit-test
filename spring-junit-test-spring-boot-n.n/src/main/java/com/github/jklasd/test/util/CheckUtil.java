@@ -18,6 +18,7 @@ import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 
+import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.lazyplugn.spring.ConditionContextImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;

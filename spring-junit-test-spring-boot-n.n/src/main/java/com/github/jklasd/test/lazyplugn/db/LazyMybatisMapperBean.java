@@ -6,13 +6,13 @@ import java.lang.reflect.Field;
 import java.util.List;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
+import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;

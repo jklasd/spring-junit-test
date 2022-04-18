@@ -1,15 +1,13 @@
 package com.github.jklasd.test.spring.suppert;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.springframework.aop.framework.AopContext;
 
-import com.github.jklasd.test.core.facade.JunitClassLoader;
+import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -79,5 +77,13 @@ public class AopContextSuppert{
 		} catch (Exception e) {
 		}
 		return null;
+	}
+	public static void clear() {
+		if(AopContextClass == null) {
+    		return ;
+    	}
+		try {
+		} catch (Exception e) {
+		}
 	}
 }

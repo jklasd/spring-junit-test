@@ -8,8 +8,8 @@ import org.springframework.core.env.PropertySources;
 import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
