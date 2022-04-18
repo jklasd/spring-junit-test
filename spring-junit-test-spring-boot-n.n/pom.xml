@@ -136,7 +136,7 @@
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-boot-version-controller</artifactId>
-			<version>1.5.0.RELEASE</version>
+			<version>[1.5.0,2.4.0]</version>
 		</dependency>
 	</dependencies>
 
