@@ -73,9 +73,9 @@ public abstract class AbstractLazyProxy {
 					return proxy.getBeanModel().getTagClass();
 				}
 			}
-			return null;
+			return obj.getClass();
 		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			return null;
+			return obj.getClass();
 		}
     }
     

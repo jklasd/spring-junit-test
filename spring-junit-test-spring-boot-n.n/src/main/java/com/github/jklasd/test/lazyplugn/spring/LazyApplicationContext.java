@@ -5,6 +5,8 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -18,7 +20,6 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
-import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -38,6 +39,9 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	private static LazyApplicationContext signBean = new LazyApplicationContext();
 	public static LazyApplicationContext getInstance() {
 		return signBean;
+	}
+	public <T> Map<String, T> getBeansOfType(@Nullable Class<T> type){
+		return lazyBeanFactory.getBeansOfType(type);
 	}
 	
 	public Object getBean(String beanName) {
