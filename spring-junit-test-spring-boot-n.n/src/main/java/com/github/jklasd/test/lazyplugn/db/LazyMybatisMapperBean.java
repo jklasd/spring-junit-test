@@ -116,10 +116,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;
-            	if(mybatisScan != null) {
-            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(AbstractLazyProxy.PROXY_CALLBACK_0);
-            		cglibObjField.setAccessible(true);
-            		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
+            	if(mybatisScan != null && AbstractLazyProxy.isProxy(mybatisScan)) {
+        			AbstractLazyProxy obj = AbstractLazyProxy.getProxy(mybatisScan);
             		if (obj.getAttr().containsKey("basePackage")) {
             			basePackage = obj.getAttr().get("basePackage").toString();
             		}
@@ -128,7 +126,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             		mybatisScanPathList.add(basePackage);
             		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
             	}
-            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+            } catch (IllegalArgumentException | SecurityException e) {
                 e.printStackTrace();
             }
             loadScaned = true;
