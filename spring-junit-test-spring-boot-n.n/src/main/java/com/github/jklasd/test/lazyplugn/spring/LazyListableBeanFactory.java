@@ -44,6 +44,9 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //        super(arg0);
 //    }
 	
+	/**
+	 * TODO 待优化
+	 */
 	@Override
 	public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
 		Map<String, T> result = super.getBeansOfType(type);

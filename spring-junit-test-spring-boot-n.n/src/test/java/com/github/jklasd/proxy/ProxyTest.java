@@ -1,4 +1,4 @@
-package com.github.jklasd.test;
+package com.github.jklasd.proxy;
 
 public class ProxyTest {
 	public static class Test1{

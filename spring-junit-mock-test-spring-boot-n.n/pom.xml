@@ -140,8 +140,8 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-junit-test</artifactId>
-			<version>1.2.1-SNAPSHOT</version>
+			<artifactId>spring-junit-test-common</artifactId>
+			<version>1.0.0.RELEASE</version>
 		</dependency>
 	</dependencies>
 

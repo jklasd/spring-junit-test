@@ -1,17 +1,16 @@
-package com.github.jklasd.test;
+package com.github.jklasd.proxy;
 
 import java.lang.reflect.Method;
 import java.util.List;
 
 import org.junit.Test;
-import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.CallbackFilter;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.Factory;
 import org.springframework.objenesis.ObjenesisStd;
 
-import com.github.jklasd.test.ProxyTest.Test1;
+import com.github.jklasd.proxy.ProxyTest.Test1;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
@@ -69,10 +68,4 @@ public class JunitClassGeneratorTest {
         System.arraycopy(rest, 0, all, 1, rest.length);
         return all;
     }
-	@MockBean
-	private TestMockBean test1;
-	@Test
-	public void test2() {
-		test1.exec();
-	}
 }
