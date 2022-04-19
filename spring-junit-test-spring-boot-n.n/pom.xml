@@ -66,14 +66,11 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.35</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>30.0-jre</version>
-			<scope>provided</scope>
 		</dependency>
 		<!-- <dependency>
 		    <groupId>javax.annotation</groupId>
@@ -103,19 +100,16 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.3.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -131,12 +125,10 @@
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-common</artifactId>
-			<version>1.0.0.RELEASE</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-boot-version-controller</artifactId>
-			<version>[1.5.0,2.4.0]</version>
 		</dependency>
 	</dependencies>
 
