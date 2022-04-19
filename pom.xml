@@ -27,6 +27,12 @@
 		</repository>
 	</distributionManagement>
 
+	<modules>
+		<module>spring-junit-test-spring-boot-common</module>
+		<module>spring-junit-test-spring-boot-n.n</module>
+		<module>spring-junit-mock-test-spring-boot-n.n</module>
+	</modules>
+
 	<licenses>
 		<license>
 			<name>The MIT License (MIT)</name>
