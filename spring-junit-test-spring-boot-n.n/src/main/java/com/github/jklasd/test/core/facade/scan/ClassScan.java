@@ -3,10 +3,13 @@ package com.github.jklasd.test.core.facade.scan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Modifier;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -130,7 +133,7 @@ public class ClassScan implements Scan{
 	}
 	@Getter
 	static Map<String,Class<?>> applicationAllClassMap = Maps.newConcurrentMap();
-	public void loadClass(File file,String rootPath){
+	public void loadClass(File file,String rootPath) throws UnsupportedEncodingException{
 		File[] files = file.listFiles();
 		for (File f : files) {
 			if (f.isDirectory()) {
@@ -139,7 +142,7 @@ public class ClassScan implements Scan{
 			} else if (f.getName().endsWith(CLASS_SUFFIX)) {
 				String p = f.getPath();
 				File tmp = new File(rootPath);
-				p = p.replace(tmp.getPath()+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
+				p = p.replace(URLDecoder.decode(tmp.getPath(),"UTF-8")+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
 					Class<?> c = classLoader.junitloadClass(p);
