@@ -13,7 +13,7 @@ import org.springframework.objenesis.ObjenesisStd;
 import com.github.jklasd.proxy.ProxyTest.Test1;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.model.BeanModel;
-import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
+import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
 public class JunitClassGeneratorTest {
 	@Test
@@ -39,7 +39,10 @@ public class JunitClassGeneratorTest {
 	            enhancer.setSuperclass(mockedType);
 	            enhancer.setInterfaces(interfaces);
 	        }
-	        enhancer.setCallbackTypes(new Class[]{LazyCglib.class});
+	        BeanModel model = new BeanModel();
+			model.setTagClass(mockedType);
+			Callback callback = LazyBean.createLazyCglib(model);
+	        enhancer.setCallbackTypes(new Class[]{callback.getClass()});
 	        enhancer.setCallbackFilter(new CallbackFilter() {
 				@Override
 				public int accept(Method method) {
@@ -50,11 +53,10 @@ public class JunitClassGeneratorTest {
 	        enhancer.setSerialVersionUID(42L);
 	        
 			Class<?> proxyClass = enhancer.createClass();
-			BeanModel model = new BeanModel();
-			model.setTagClass(mockedType);
+			
 			ObjenesisStd objenesis = new ObjenesisStd();
 			Factory factory = (Factory) objenesis.newInstance(proxyClass);
-			factory.setCallbacks(new Callback[]{new LazyCglib(model)});
+			factory.setCallbacks(new Callback[]{callback});
 			Test1 test = (Test1) factory;
 			test.exec();
 		} catch (SecurityException

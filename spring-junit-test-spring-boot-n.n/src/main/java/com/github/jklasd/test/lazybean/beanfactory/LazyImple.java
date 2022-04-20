@@ -13,7 +13,7 @@ import com.github.jklasd.test.util.StackOverCheckUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyImple extends AbstractLazyProxy implements InvocationHandler {
+class LazyImple extends AbstractLazyProxy implements InvocationHandler {
 
     public LazyImple(BeanModel beanModel) {
         super(beanModel);

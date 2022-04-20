@@ -26,7 +26,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BeanInitHandler {
+class BeanInitHandler {
 	private static BeanInitHandler lazyBean = new BeanInitHandler();
 	private BeanInitHandler() {}
 	public static BeanInitHandler getInstance() {

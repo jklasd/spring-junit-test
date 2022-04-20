@@ -720,5 +720,8 @@ public class LazyBean implements LazyBeanI{
 	public String getBeanKey() {
 		return LazyBeanI.class.getSimpleName();
 	}
+	public static Callback createLazyCglib(BeanModel model) {
+		return new LazyCglib(model);
+	}
 }
 

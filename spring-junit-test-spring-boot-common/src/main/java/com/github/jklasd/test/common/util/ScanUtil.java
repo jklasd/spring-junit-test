@@ -165,6 +165,10 @@ public class ScanUtil {
 	public /* synchronized */static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
 		if(beanFactoryScaner == null) {
 			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
+			if(beanFactoryScaner == null) {
+				log.warn("beanFactoryScaner 未加载到");
+				return new Object[1];
+			}
 		}
 		return beanFactoryScaner.findCreateBeanFactoryClass(assemblyData);
 	}

@@ -24,7 +24,7 @@ import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
+class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
     @Getter
     private Constructor<?> constructor;
     public LazyCglib(BeanModel beanModel) {

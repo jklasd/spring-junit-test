@@ -46,6 +46,9 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	
 	public Object getBean(String beanName) {
 		try {
+			if(StringUtils.isBlank(beanName)) {
+				return null;
+			}
 			if(lazyBeanFactory.containsBean(beanName)) {
 				return lazyBeanFactory.getBean(beanName);
 			}
@@ -152,10 +155,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 							}
 						}
 					}else {
-						YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
 //						Object yml = Class.forName("Ymal").newInstance();
 						Resource ymlRes = ScanUtil.getRecourceAnyOne("application.yml","config/application.yml");
 						if(ymlRes!=null && ymlRes.exists()) {
+							YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
 							ymlToProp.setResources(ymlRes);
 							properties.putAll(ymlToProp.getObject());
 							String active = null;

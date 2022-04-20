@@ -2,7 +2,6 @@ package com.github.jklasd.test.lazyplugn.db;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.List;
 
 import com.github.jklasd.test.TestUtil;
@@ -10,7 +9,6 @@ import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
