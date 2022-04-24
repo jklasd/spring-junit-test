@@ -2,10 +2,9 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<name>spring-junit-test</name>
-	<groupId>com.github.jklasd</groupId>
-	<artifactId>spring-junit-mock-test-spring-boot-1.5</artifactId>
-	<version>1.2.2-SNAPSHOT</version>
+	<name>spring-junit-mock-test-spring</name>
+	<artifactId>spring-junit-mock-test-spring</artifactId>
+	<version>1.2.2.SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -41,10 +40,9 @@
 		</developer>
 	</developers>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.11.RELEASE</version>
-		<relativePath></relativePath>
+		<groupId>com.github.jklasd</groupId>
+		<artifactId>spring-junit-test-parent</artifactId>
+		<version>1.2.2-SNAPSHOT</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -53,10 +51,10 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<dependencies>
+		<!-- 动态字节码 -->
 		<dependency>
-			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-junit-test-1.5</artifactId>
-			<version>1.2.2-SNAPSHOT</version>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -85,6 +83,11 @@
 			<version>30.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
+		<!-- <dependency>
+		    <groupId>javax.annotation</groupId>
+		    <artifactId>javax.annotation-api</artifactId>
+		    <scope>provided</scope>
+	    </dependency> -->
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -132,6 +135,10 @@
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
 			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test</artifactId>
 		</dependency>
 	</dependencies>
 

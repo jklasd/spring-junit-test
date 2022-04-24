@@ -7,10 +7,10 @@ import org.springframework.beans.factory.xml.DefaultBeanDefinitionDocumentReader
 import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.model.BeanModel;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +44,7 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         String beanName = holder.getBeanName();
         Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
         
-        log.info("xml build proxy bean=>{}",beanDef.getBeanClassName());
+        log.debug("xml build proxy bean=>{}",beanDef.getBeanClassName());
         BeanModel model = new BeanModel();
         model.setThrows(true);
 //        model.setBeanClassName(beanDef.getBeanClassName());

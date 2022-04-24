@@ -4,27 +4,30 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.cglib.proxy.Callback;
+import org.springframework.cglib.proxy.Factory;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
-import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Maps;
 
@@ -54,25 +57,39 @@ public abstract class AbstractLazyProxy {
     public static final String PROXY_BOUND = "CGLIB$BOUND";
     public static final String PROXY_CALLBACK_0 = "CGLIB$CALLBACK_0";
     public static boolean isProxy(Object obj){
-    	try {
-			Field bound = obj.getClass().getDeclaredField(PROXY_BOUND);
-			return bound!=null;
-		} catch (NoSuchFieldException | SecurityException e) {
-			return false;
-		}
+		return obj instanceof Proxy || obj instanceof Factory;
     }
-    
+    public static Object getProxyTagObj(Object obj){
+    	if(isProxy(obj)) {
+			
+			if(obj instanceof Proxy) {
+				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
+    			return imple.getTagertObj();
+    		}else {
+    			Factory fa = (Factory) obj;
+    			Callback[] cbs = fa.getCallbacks();
+    			LazyCglib cglib = (LazyCglib) cbs[0];
+    			return cglib.getTagertObj();
+    		}
+		}
+    	return obj;
+    }
     public static Class<?> getProxyTagClass(Object obj){
     	try {
-			if(isProxy(obj)) {
-				Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
-				bound.setAccessible(true);
-				AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
-				return proxy.getBeanModel().getTagClass();
-			}
-			return null;
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
-			return null;
+    		if(isProxy(obj)) {
+    			if(obj instanceof Proxy) {
+    				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
+        			return imple.getBeanModel().getTagClass();
+        		}else {
+        			Factory fa = (Factory) obj;
+        			Callback[] cbs = fa.getCallbacks();
+        			LazyCglib cglib = (LazyCglib) cbs[0];
+        			return cglib.getBeanModel().getTagClass();
+        		}
+    		}
+			return obj.getClass();
+		} catch (SecurityException | IllegalArgumentException e) {
+			return obj.getClass();
 		}
     }
     
@@ -119,12 +136,12 @@ public abstract class AbstractLazyProxy {
     		}
     	}
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
+    	Object oldObj = AopContextSuppert.getProxyObject();
         try {
         	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
         	tmpInvokerInfo.put("class", beanModel.getTagClass());
         	tmpInvokerInfo.put("method", method.getName());
         	lastInvoker.set(tmpInvokerInfo);
-            Object oldObj = AopContextSuppert.getProxyObject();
 
             Object newObj = getTagertObj();
 
@@ -158,7 +175,6 @@ public abstract class AbstractLazyProxy {
             
             errorTimes.set(0);
             
-            AopContextSuppert.setProxyObj(oldObj);
             lastInvoker.set(lastInvokerInfo);
             return result;
         }catch (JunitException e) {
@@ -173,7 +189,9 @@ public abstract class AbstractLazyProxy {
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
                 e.getMessage());
             throw e;
-        }
+        }finally {
+        	AopContextSuppert.setProxyObj(oldObj);
+		}
     }
     
     protected Object getTagertObj() {
@@ -258,14 +276,21 @@ public abstract class AbstractLazyProxy {
     }
 
 	public static Object instantiateProxy(Object obj) {
-		try {
-			Field bound = obj.getClass().getDeclaredField(PROXY_CALLBACK_0);
-			bound.setAccessible(true);
-			AbstractLazyProxy proxy = (AbstractLazyProxy) bound.get(obj);
-			return proxy.getTagertObj();
-		} catch (NoSuchFieldException | SecurityException | IllegalArgumentException | IllegalAccessException e) {
+		return getProxyTagObj(obj);
+	}
+	public static AbstractLazyProxy getProxy(Object obj) {
+		if(isProxy(obj)) {
+			if(obj instanceof Proxy) {
+				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
+    			return imple;
+    		}else {
+    			Factory fa = (Factory) obj;
+    			Callback[] cbs = fa.getCallbacks();
+    			LazyCglib cglib = (LazyCglib) cbs[0];
+    			return cglib;
+    		}
 		}
-		return obj;
+		return null;
 	}
 
 }

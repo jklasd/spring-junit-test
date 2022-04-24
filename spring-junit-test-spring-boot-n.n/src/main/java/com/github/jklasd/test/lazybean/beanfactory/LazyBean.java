@@ -31,21 +31,23 @@ import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.fieldann.FieldDef;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
-import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
-import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.DebugObjectView;
-import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.util.SignalNotificationUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
@@ -60,7 +62,7 @@ import lombok.extern.slf4j.Slf4j;
  * 2020-11-19
  */
 @Slf4j
-public class LazyBean {
+public class LazyBean implements LazyBeanI{
 //	public static Map<Class<?>, List<Object>> singleton = Maps.newHashMap();
 //	public static Map<String, Object> singletonname = Maps.newHashMap();
 	private static ObjenesisStd objenesis = new ObjenesisStd();
@@ -704,10 +706,22 @@ public class LazyBean {
 	}
 	public static Object findCreateByProp(Class<?> tagertC) {
 		try {
-			return PropResourceLoader.getInstance().findCreateByProp(tagertC);
+			return PropResourceManager.getInstance().findCreateByProp(tagertC);
 		} catch (InstantiationException | IllegalAccessException e) {
 			return null;
 		}
+	}
+	@Override
+	public void register() {
+		ContainerManager.registComponent( this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return LazyBeanI.class.getSimpleName();
+	}
+	public static Callback createLazyCglib(BeanModel model) {
+		return new LazyCglib(model);
 	}
 }
 

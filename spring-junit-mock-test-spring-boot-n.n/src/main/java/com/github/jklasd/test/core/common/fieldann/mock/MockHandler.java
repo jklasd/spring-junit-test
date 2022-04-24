@@ -2,7 +2,7 @@ package com.github.jklasd.test.core.common.fieldann.mock;
 
 import java.lang.reflect.Constructor;
 
-import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 
 public abstract class MockHandler{
 	String packagePath = "org.springframework.boot.test.mock.mockito";

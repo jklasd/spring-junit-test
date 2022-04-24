@@ -7,7 +7,7 @@ import org.springframework.core.env.Environment;
 import org.springframework.core.io.ResourceLoader;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
+import com.github.jklasd.test.common.JunitClassLoader;
 
 public class ConditionContextImpl implements ConditionContext{
 

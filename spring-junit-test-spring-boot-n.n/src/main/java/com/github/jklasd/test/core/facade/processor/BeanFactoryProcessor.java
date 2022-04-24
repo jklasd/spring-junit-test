@@ -1,6 +1,5 @@
 package com.github.jklasd.test.core.facade.processor;
 
-import java.util.List;
 import java.util.Set;
 
 import org.springframework.beans.BeansException;
@@ -8,15 +7,15 @@ import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
-import com.github.jklasd.test.util.BeanNameUtil;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BeanFactoryProcessor {
+public class BeanFactoryProcessor implements BeanFactoryProcessorI{
 	private static BeanFactoryProcessor processor;
 	public static BeanFactoryProcessor getInstance() {
 		if(processor==null) {
@@ -27,11 +26,12 @@ public class BeanFactoryProcessor {
 	private synchronized static void buildBean() {
 		if(processor==null) {
 			processor = new BeanFactoryProcessor();
+			processor.register();
 		}
 	}
 //	List<BeanFactoryPostProcessor> processorList = Lists.newArrayList();
 	Set<Class<?>> filter = Sets.newConcurrentHashSet();
-	LazyApplicationContext lazyApplicationContext = TestUtil.getInstance().getApplicationContext();
+	LazyApplicationContext lazyApplicationContext = (LazyApplicationContext) TestUtil.getInstance().getApplicationContext();
 	public void loadProcessor(Class<?> configClass) {
 		synchronized(lazyApplicationContext.getBeanFactoryPostProcessors()) {
 			try {
@@ -54,5 +54,13 @@ public class BeanFactoryProcessor {
 	}
 	public boolean notBFProcessor(Class<?> classItem) {
 		return !filter.contains(classItem);
+	}
+	@Override
+	public void register() {
+		ContainerManager.registComponent(this);
+	}
+	@Override
+	public String getBeanKey() {
+		return BeanFactoryProcessorI.class.getSimpleName();
 	}
 }

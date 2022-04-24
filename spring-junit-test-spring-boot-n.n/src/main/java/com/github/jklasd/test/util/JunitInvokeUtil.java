@@ -7,6 +7,7 @@ import java.lang.reflect.Method;
 
 import org.springframework.util.ReflectionUtils;
 
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 
 public class JunitInvokeUtil extends ReflectionUtils{

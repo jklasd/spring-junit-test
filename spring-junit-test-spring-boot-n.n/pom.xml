@@ -4,7 +4,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
-	<artifactId>spring-junit-test-2.4</artifactId>
+	<artifactId>spring-junit-test</artifactId>
 	<version>1.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
@@ -41,10 +41,9 @@
 		</developer>
 	</developers>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.4.0</version>
-		<relativePath></relativePath>
+		<groupId>com.github.jklasd</groupId>
+		<artifactId>spring-junit-test-parent</artifactId>
+		<version>1.2.2-SNAPSHOT</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -57,6 +56,7 @@
 		<dependency>
 			<groupId>org.javassist</groupId>
 			<artifactId>javassist</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>org.projectlombok</groupId>
@@ -66,14 +66,11 @@
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>fastjson</artifactId>
-			<version>1.2.35</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
-			<version>30.0-jre</version>
-			<scope>provided</scope>
 		</dependency>
 		<!-- <dependency>
 		    <groupId>javax.annotation</groupId>
@@ -103,19 +100,16 @@
 		<dependency>
 			<groupId>org.apache.commons</groupId>
 			<artifactId>commons-lang3</artifactId>
-			<version>3.3.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>commons-logging</groupId>
 			<artifactId>commons-logging</artifactId>
-			<version>1.2</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>log4j</groupId>
 			<artifactId>log4j</artifactId>
-			<version>1.2.17</version>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -128,12 +122,14 @@
 			<artifactId>junit</artifactId>
 			<scope>compile</scope>
 		</dependency>
-		<!-- <dependency>
-			<groupId>org.objenesis</groupId>
-			<artifactId>objenesis</artifactId>
-			<version>2.1</version>
-			<scope>provided</scope>
-		</dependency> -->
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-boot-version-controller</artifactId>
+		</dependency>
 	</dependencies>
 
 	<build>
@@ -180,6 +176,14 @@
 						</execution>
 					</executions>
 				</plugin>
+				<plugin>
+	                <groupId>org.apache.maven.plugins</groupId>
+	                <artifactId>maven-surefire-plugin</artifactId>
+	                <version>2.22.2</version>
+	                <configuration>
+	                    <skipTests>true</skipTests>
+	                </configuration>
+	            </plugin>
 			</plugins>
 		</pluginManagement>
 

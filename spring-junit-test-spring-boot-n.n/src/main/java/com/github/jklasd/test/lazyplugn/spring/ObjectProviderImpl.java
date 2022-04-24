@@ -13,8 +13,9 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.OrderComparator;
 
-import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
@@ -71,7 +72,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 		return null;
 	}
 	
-	private LazyApplicationContext applicationContext = TestUtil.getInstance().getApplicationContext();
+	private LazyApplicationContext applicationContext = ContainerManager.getComponent(JunitApplicationContext.class.getSimpleName());
 	private LazyListableBeanFactory lazyBeanFactory = (LazyListableBeanFactory) applicationContext.getDefaultListableBeanFactory();
 	private BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	/**

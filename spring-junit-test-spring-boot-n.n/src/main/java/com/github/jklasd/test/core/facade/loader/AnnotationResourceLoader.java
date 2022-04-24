@@ -3,20 +3,17 @@ package com.github.jklasd.test.core.facade.loader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 
+import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
-import com.github.jklasd.test.util.JunitCountDownLatchUtils;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +27,8 @@ public class AnnotationResourceLoader implements JunitResourceLoader{
 	}
 	
 	private Set<Class<?>> thridAutoConfigClass = Sets.newConcurrentHashSet();
-	private Map<String,Class<?>> thridAutoConfigMap = Maps.newConcurrentMap();
-	private Map<String,Class<?>> thridAutoPropMap = Maps.newConcurrentMap();
+//	private Map<String,Class<?>> thridAutoConfigMap = Maps.newConcurrentMap();
+//	private Map<String,Class<?>> thridAutoPropMap = Maps.newConcurrentMap();
 	
 	private ConfigurationScan configurationScan = ConfigurationScan.getInstance();
 	
@@ -77,6 +74,10 @@ public class AnnotationResourceLoader implements JunitResourceLoader{
 	@Override
 	public void loadResource(String... sourcePath) {
 		
+	}
+	@Override
+	public JunitResourceLoaderEnum key() {
+		return JunitResourceLoaderEnum.ANN;
 	}
 
 }

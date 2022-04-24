@@ -1,5 +1,6 @@
 package com.github.jklasd.test.core.common.fieldann;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -8,16 +9,17 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
-import com.github.jklasd.test.core.facade.JunitClassLoader;
+import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class AutowiredHandler implements FieldHandler{
-	public void handler(FieldDef def){
+	public void handler(FieldDef def,Annotation ann){
 		Field attr = def.getField();
 		Object tagObj = def.getTagObj();
 		

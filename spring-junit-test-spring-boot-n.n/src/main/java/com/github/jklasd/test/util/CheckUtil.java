@@ -10,15 +10,14 @@ import java.util.Set;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnCloudPlatform;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingClass;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnResource;
 import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
 import org.springframework.boot.autoconfigure.security.ConditionalOnDefaultWebSecurity;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.register.ConditionClassManagerI;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazyplugn.spring.ConditionContextImpl;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,9 +30,11 @@ public class CheckUtil {
 	private static Map<String, SpringBootCondition> checkPropMap = Maps.newHashMap();
 	private static Map<String, SpringBootCondition> otherMap = Maps.newHashMap();
 	static {
-		loadCondition(checkClassMap,ConditionalOnClass.class,ConditionalOnBean.class,ConditionalOnMissingClass.class,ConditionalOnDefaultWebSecurity.class);
-		loadCondition(checkPropMap,ConditionalOnProperty.class,ConditionalOnResource.class);
-		loadCondition(otherMap, ConditionalOnCloudPlatform.class,ConditionalOnProperty.class,ConditionalOnResource.class);
+		ConditionClassManagerI mananger = ContainerManager.getComponent(ConditionClassManagerI.class.getSimpleName());
+		
+		loadCondition(checkClassMap, mananger.getCheckClassArr());
+		loadCondition(checkPropMap,mananger.getCheckPropArr());
+		loadCondition(otherMap, mananger.getOtherCheckArr());
 	}
 
 	protected static void loadCondition(Map<String, SpringBootCondition> checkClassMap, Class<?>... classes) {

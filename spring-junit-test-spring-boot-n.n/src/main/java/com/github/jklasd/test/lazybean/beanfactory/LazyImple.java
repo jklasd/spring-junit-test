@@ -3,11 +3,8 @@ package com.github.jklasd.test.lazybean.beanfactory;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.List;
 
-import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.model.BeanModel;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
@@ -16,7 +13,7 @@ import com.github.jklasd.test.util.StackOverCheckUtil;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyImple extends AbstractLazyProxy implements InvocationHandler {
+class LazyImple extends AbstractLazyProxy implements InvocationHandler {
 
     public LazyImple(BeanModel beanModel) {
         super(beanModel);
@@ -77,9 +74,9 @@ public class LazyImple extends AbstractLazyProxy implements InvocationHandler {
                         tagertObj = tagImp;
                     }
                 }
-                if(tagertObj!=null) {
-                    LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
-                }
+//                if(tagertObj!=null) {
+//                    LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
+//                }
             }
         }
         return tagertObj;

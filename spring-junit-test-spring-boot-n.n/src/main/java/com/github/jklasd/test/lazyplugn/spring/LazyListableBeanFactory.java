@@ -3,7 +3,9 @@ package com.github.jklasd.test.lazyplugn.spring;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
@@ -17,15 +19,21 @@ import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyListableBeanFactory extends DefaultListableBeanFactory {
+public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	protected LazyListableBeanFactory() {}
 	private static LazyListableBeanFactory beanFactory = new LazyListableBeanFactory();
 	public static LazyListableBeanFactory getInstance() {
@@ -35,6 +43,35 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 //    public LazyListableBeanFactory(BeanFactory arg0) {
 //        super(arg0);
 //    }
+	
+	/**
+	 * TODO 待优化
+	 */
+	@Override
+	public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
+		Map<String, T> result = super.getBeansOfType(type);
+		
+		//获取名字
+		String[] beanNameArr = StringUtils.toStringArray(beanNameSet);
+		for(String beanName:beanNameArr) {
+			Object bean = getBean(beanName);
+			if(type.isAssignableFrom(AbstractLazyProxy.getProxyTagClass(bean))) {
+				result.put(beanName, (T) bean);
+			}
+		}
+		
+		if(result.isEmpty()) {
+			//获取子类
+			List<Class<?>> subClass = ScanUtil.findClassExtendAbstract(type);
+			subClass.forEach(subC ->{
+				Object bean = LazyBean.getInstance().buildProxy(subC);
+				result.put(BeanNameUtil.getBeanName(subC), (T) bean);
+			});
+		}
+		
+		return result;
+	}
+	
 	@Override
 	public void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
@@ -45,6 +82,9 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		Assert.notNull(dependencyType, "Dependency type must not be null");
 		if(autowiredValue!=null) {
 			cacheClassMap.putIfAbsent(dependencyType, autowiredValue);
+			if(AbstractLazyProxy.isProxy(autowiredValue)) {//代理bean不注册到spring容器中
+				return;
+			}
 		}
 		super.registerResolvableDependency(dependencyType, autowiredValue);
 	}
@@ -94,13 +134,12 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 		return super.containsBean(name);
 	}
 	
+	Set<String> beanNameSet = Sets.newHashSet();
+	
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		beanNameSet.add(beanName);
 		if(AbstractLazyProxy.isProxy(singletonObject)) {
 			cacheProxyBean.put(beanName, singletonObject);
-			
-			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
-			Class<?> proxyObjClass = AbstractLazyProxy.getProxyTagClass(singletonObject);
-			cacheClassMap.putIfAbsent(proxyObjClass, singletonObject);
 			return;
 		}
 		super.registerSingleton(beanName, singletonObject);
@@ -132,5 +171,15 @@ public class LazyListableBeanFactory extends DefaultListableBeanFactory {
 			createFactoryAwareOrderSourceProvider.setAccessible(true);
 		}
 		return (OrderSourceProvider) createFactoryAwareOrderSourceProvider.invoke(this,beans);
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent( this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return JunitListableBeanFactory.class.getSimpleName();
 	}
 }

@@ -1,15 +1,13 @@
 package com.github.jklasd.test.spring.suppert;
 
-import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import org.springframework.aop.framework.AopContext;
 
-import com.github.jklasd.test.core.facade.JunitClassLoader;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -37,7 +35,7 @@ public class AopContextSuppert{
     	if(AopContextClass == null) {
     		return;
     	}
-    	aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
+//    	aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
     }
     public static void setProxyObj(Object obj) {
     	if(AopContextClass == null) {
@@ -51,7 +49,7 @@ public class AopContextSuppert{
                 if(Modifier.isAbstract(AopContextClass.getModifiers())
                 		&& !Modifier.isFinal(AopContextClass.getModifiers())) {
                     //抽象类处理
-                    aopContext = LazyBean.getInstance().buildProxy(AopContext.class);
+                    aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
                 }else {
                     //非抽象类处理
                     aopContext = LazyBean.getInstance().invokeBuildObject(AopContextClass);
@@ -79,5 +77,13 @@ public class AopContextSuppert{
 		} catch (Exception e) {
 		}
 		return null;
+	}
+	public static void clear() {
+		if(AopContextClass == null) {
+    		return ;
+    	}
+		try {
+		} catch (Exception e) {
+		}
 	}
 }

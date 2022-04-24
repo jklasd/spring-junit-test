@@ -5,27 +5,30 @@ import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Properties;
 
+import javax.annotation.Nullable;
+
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
-import org.springframework.context.support.GenericApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.ScanUtil;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyApplicationContext extends GenericApplicationContext{
+public class LazyApplicationContext extends JunitApplicationContext{
 	
 	@Getter
 	private DefaultListableBeanFactory lazyBeanFactory;
@@ -37,9 +40,15 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	public static LazyApplicationContext getInstance() {
 		return signBean;
 	}
+	public <T> Map<String, T> getBeansOfType(@Nullable Class<T> type){
+		return lazyBeanFactory.getBeansOfType(type);
+	}
 	
 	public Object getBean(String beanName) {
 		try {
+			if(StringUtils.isBlank(beanName)) {
+				return null;
+			}
 			if(lazyBeanFactory.containsBean(beanName)) {
 				return lazyBeanFactory.getBean(beanName);
 			}
@@ -104,15 +113,17 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	 * @param tmp
 	 * @param tagC
 	 */
-	public synchronized void registBean(String beanName, Object tmp, Class<?> tagC) {//synchronized去除多线程注册问题
-//		regist
-		if(beanName!=null) {
-			if(!lazyBeanFactory.containsBean(beanName)) {
-				lazyBeanFactory.registerSingleton(beanName, tmp);
-			}else {
-				log.debug("bean已存在");
+	public void registBean(String beanName, Object tmp, Class<?> tagC) {
+		synchronized(tagC) {//synchronized去除多线程注册问题
+	//		regist
+			if(beanName!=null) {//beanName不能直接作加锁条件
+				if(!lazyBeanFactory.containsBean(beanName)) {
+					lazyBeanFactory.registerSingleton(beanName, tmp);
+				}else {
+					log.debug("bean已存在");
+				}
 			}
-		}else {
+			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
 			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 		}
 	}
@@ -144,10 +155,10 @@ public class LazyApplicationContext extends GenericApplicationContext{
 							}
 						}
 					}else {
-						YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
 //						Object yml = Class.forName("Ymal").newInstance();
 						Resource ymlRes = ScanUtil.getRecourceAnyOne("application.yml","config/application.yml");
 						if(ymlRes!=null && ymlRes.exists()) {
+							YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
 							ymlToProp.setResources(ymlRes);
 							properties.putAll(ymlToProp.getObject());
 							String active = null;
@@ -171,5 +182,15 @@ public class LazyApplicationContext extends GenericApplicationContext{
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 			throws BeansException {
 		return LazyBean.findBeanWithAnnotation(annotationType);
+	}
+
+	@Override
+	public void register() {
+		ContainerManager.registComponent(this);
+	}
+	
+	@Override
+	public String getBeanKey() {
+		return JunitApplicationContext.class.getSimpleName();
 	}
 }

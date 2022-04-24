@@ -9,12 +9,12 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.model.BeanModel;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.util.BeanNameUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -61,6 +61,10 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
                 Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
                 String beanName = ele.hasAttribute("id") ?ele.getAttribute("id"):BeanNameUtil.getBeanName(beanC);
                 log.info("beanName=>{};beanDef=>{},=>{},pv=>{};",beanName,ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
+                
+                if(beanName.equals("serviceBean")) {
+                	log.info("");
+                }
                 
                 BeanModel beanModel = new BeanModel();
                 beanModel.setXmlBean(true);

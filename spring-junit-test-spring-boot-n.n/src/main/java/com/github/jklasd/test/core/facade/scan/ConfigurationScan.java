@@ -15,14 +15,13 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
-import com.github.jklasd.test.core.facade.loader.PropResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.ClassUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -35,7 +34,7 @@ public class ConfigurationScan {
 	public static ConfigurationScan getInstance() {return scaner;};
 	
 	JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
-	PropResourceLoader propLoader = PropResourceLoader.getInstance();
+	PropResourceManager propLoader = PropResourceManager.getInstance();
 	BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	
 	private void scanConfigClasses(String... classNames) throws IOException {

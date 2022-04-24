@@ -2,17 +2,15 @@ package com.github.jklasd.test.lazyplugn.db;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
-import java.lang.reflect.Field;
 import java.util.List;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.beanfactory.LazyCglib;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -116,10 +114,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;
-            	if(mybatisScan != null) {
-            		Field cglibObjField = mybatisScan.getClass().getDeclaredField(AbstractLazyProxy.PROXY_CALLBACK_0);
-            		cglibObjField.setAccessible(true);
-            		LazyCglib obj = (LazyCglib)cglibObjField.get(mybatisScan);
+            	if(mybatisScan != null && AbstractLazyProxy.isProxy(mybatisScan)) {
+        			AbstractLazyProxy obj = AbstractLazyProxy.getProxy(mybatisScan);
             		if (obj.getAttr().containsKey("basePackage")) {
             			basePackage = obj.getAttr().get("basePackage").toString();
             		}
@@ -128,7 +124,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             		mybatisScanPathList.add(basePackage);
             		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
             	}
-            } catch (IllegalArgumentException | IllegalAccessException | NoSuchFieldException | SecurityException e) {
+            } catch (IllegalArgumentException | SecurityException e) {
                 e.printStackTrace();
             }
             loadScaned = true;

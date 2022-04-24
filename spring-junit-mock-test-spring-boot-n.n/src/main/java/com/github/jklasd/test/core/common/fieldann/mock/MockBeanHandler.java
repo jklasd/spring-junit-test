@@ -1,25 +1,33 @@
 package com.github.jklasd.test.core.common.fieldann.mock;
 
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.core.ResolvableType;
 
-import com.github.jklasd.test.core.common.FieldAnnComponent;
-import com.github.jklasd.test.core.common.FieldAnnComponent.FieldHandler;
-import com.github.jklasd.test.core.common.fieldann.FieldDef;
-import com.github.jklasd.test.util.ScanUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.google.common.collect.Sets;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public class MockBeanHandler extends MockHandler implements FieldHandler{
 
 	String packagePath = "org.springframework.boot.test.mock.mockito";
 	private Class<?> MockDefinition = ScanUtil.loadClass(packagePath+".MockDefinition");
 	Method createMock;
 	Constructor<?> mockDefStructor;
+	private JunitApplicationContext junitApplicationContext;
 	{
 		try {
 			Constructor<?>[] structors = MockDefinition.getDeclaredConstructors();
@@ -32,6 +40,7 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 		} catch (SecurityException | IllegalArgumentException | NoSuchMethodException e) {
 			e.printStackTrace();
 		}
+		junitApplicationContext = ContainerManager.getComponent(JunitApplicationContext.class.getSimpleName());
 	}
 	
 	@Override
@@ -40,10 +49,10 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 	}
 
 	@Override
-	public void handler(FieldDef def) {
+	public void handler(FieldDef def,Annotation ann) {
 		Field attr = def.getField();
 		Object obj = def.getTagObj();
-		MockBean mockAnn = attr.getAnnotation(MockBean.class);
+		MockBean mockAnn = (MockBean) ann;
 //		Qualifier qualifier = attr.getAnnotation(Qualifier.class);
 		try {
 			Object qualDef = qualDefStructor.newInstance(attr,Sets.newHashSet(mockAnn));
@@ -54,10 +63,17 @@ public class MockBeanHandler extends MockHandler implements FieldHandler{
 					mockAnn.serializable(), mockAnn.reset(),
 					qualDef);
 			Object value = createMock.invoke(spyDefObj);
+			
+			String beanName = mockAnn.name();
+			if(StringUtils.isBlank(beanName)) {
+				beanName = attr.getName();
+			}
+			//mockBean需要注册
+			junitApplicationContext.registBean(beanName, value, attr.getType());
+			
 			FieldAnnComponent.setObj(attr, obj, value);
 		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-			e.printStackTrace();
+			log.error("MockBeanHandler#handler",e);
 		}
 	}
-
 }

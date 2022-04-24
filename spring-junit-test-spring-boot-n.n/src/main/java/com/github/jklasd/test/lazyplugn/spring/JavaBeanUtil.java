@@ -7,6 +7,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
@@ -24,18 +25,18 @@ import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazybean.model.AssemblyDTO;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
-import com.github.jklasd.test.util.ScanUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
 
@@ -137,6 +138,15 @@ public class JavaBeanUtil {
         	}
         	Object tagObj = null;
         	try {
+        		/*
+        		 * 注入对象尽量采用真实对象，防止个别特殊设计问题
+        		 * 比如强转类型，如果是代理对象强转成个别设计的类型，会导致异常
+        		 */
+        		for(int i=0;i<args.length;i++) {
+        			if(args[i] instanceof Proxy) {
+        				args[i] = AbstractLazyProxy.getProxyTagObj(args[i]);
+        			}
+        		}
         		tagObj = method.invoke(obj,args);
         	}catch(Exception e) {
         		log.error("方法调用异常=>{}",method);
