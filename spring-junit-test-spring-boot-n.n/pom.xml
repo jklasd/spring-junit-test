@@ -123,6 +123,11 @@
 			<scope>compile</scope>
 		</dependency>
 		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-common</artifactId>
 		</dependency>

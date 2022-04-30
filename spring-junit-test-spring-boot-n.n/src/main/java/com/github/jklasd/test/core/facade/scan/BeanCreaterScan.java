@@ -5,14 +5,15 @@ import java.util.Objects;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.context.annotation.Bean;
 
 import com.github.jklasd.test.common.ContainerManager;
-import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.CheckUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -123,6 +124,18 @@ private void matchByBeanName(Object[] address, Object[] tmp, final String beanNa
 						tmp[0] = c;
 						tmp[1] = m;
 						break;
+					}
+					if(ScanUtil.isImple(m.getReturnType(), FactoryBean.class)) {
+						Class<?> resultType =  m.getReturnType();
+						try {
+							if(resultType.getMethod("getObject").getReturnType() == tagC) {
+								tmp[0] = c;
+								tmp[1] = m;
+								break;
+							}
+						} catch (NoSuchMethodException | SecurityException e) {
+							throw new JunitException(e);
+						}
 					}
 				}
 			}

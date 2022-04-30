@@ -4,6 +4,7 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -19,6 +20,7 @@ import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
+import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -103,7 +105,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 				return stream;
 			}
 		}else {
-			return null;
+			return new ArrayList<T>().stream();
 		}
 	}
 

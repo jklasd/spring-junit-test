@@ -14,6 +14,8 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
@@ -36,6 +38,7 @@ import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.AnnHandlerUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
+import com.github.jklasd.test.util.CheckUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
@@ -157,17 +160,31 @@ public class JavaBeanUtil {
         	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
         		LazyConfPropBind.processConfigurationProperties(tagObj, prop);
         	}
-        	cacheBean.put(key, tagObj);
+        	
         	if(assemblyData.getTagClass() == null) {
         		assemblyData.setTagClass(tagObj.getClass());
         	}
-        	TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
-        } catch (IllegalArgumentException e) {
+        	if(tagObj instanceof FactoryBean) {
+        		FactoryBean fb = (FactoryBean) tagObj;
+        		((InitializingBean) tagObj).afterPropertiesSet();
+        		tagObj = fb.getObject();
+        		cacheBean.put(key, tagObj);
+        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        	}else {
+        		cacheBean.put(key, tagObj);
+        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        	}
+        } catch (Exception e) {
         	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
         	throw new JunitException(e);
         }
     }
     private boolean buildConfigObj(Class<?> configClass, Map<String,Class<?>> nameSpace) {
+    	
+    	if(!CheckUtil.checkClassExists(configClass)) {
+    		return false;
+    	}
+    	
         try {
         	Map<String, Object> annoData = AnnHandlerUtil.getInstance().getAnnotationValue(configClass,AutoConfigureAfter.class);
             if(annoData!=null && !annoData.isEmpty()) {//先加载另外一个类

@@ -20,6 +20,11 @@ import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * JUNIT 4
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class RunSpringJunitTest extends BlockJUnit4ClassRunner{
 	public Class<?> runClass;
