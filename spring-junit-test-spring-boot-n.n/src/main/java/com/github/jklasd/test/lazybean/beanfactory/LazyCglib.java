@@ -116,15 +116,12 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
             			ConstructorArgumentValues args = beanModel.getConstructorArgs();
             			objes[i] = XmlBeanUtil.getInstance().conversionValue(args.getIndexedArgumentValues().get(i).getValue());
             		}else {
-            			log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+            			objes[i] = LazyBean.getInstance().buildProxy(getArgumentTypes()[i]);
+            			if(objes[i]==null) {
+                    		log.warn("==============未知构造参数==>>{}============",constructor.getParameters()[i].getName());
+                    	}
             		}
             	}
-//            	Class<?> argT = getArgumentTypes()[i];
-//            	if(argT.isInterface()) {
-//            		objes[i] = LazyBean.getInstance().buildProxy(argT);
-//            	}else {
-//            		objes[i] = objenesis.newInstance(argT);
-//            	}
             }
         }
         return objes;
