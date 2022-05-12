@@ -11,11 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.CallbackFilter;
@@ -722,6 +724,25 @@ public class LazyBean implements LazyBeanI{
 	}
 	public static Callback createLazyCglib(BeanModel model) {
 		return new LazyCglib(model);
+	}
+	
+	public static BeanModel buildBeanModel(Annotation[] annotations,Class<?> tagClass) {
+		BeanModel model = new BeanModel();
+		model.setTagClass(tagClass);
+		for(Annotation annotation : annotations) {
+			Class<?> annClass = annotation.annotationType();
+			if(annClass == Resource.class) {
+				model.setBeanName(((Resource)annotation).name());
+				break;
+			}else if(annClass == Qualifier.class) {
+				model.setBeanName(((Qualifier)annotation).value());
+				break;
+			}
+		}
+		if(model.getBeanName() == null) {
+			model.setBeanName(BeanNameUtil.getBeanNameFormAnno(tagClass));
+		}
+		return model;
 	}
 }
 
