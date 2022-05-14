@@ -7,6 +7,7 @@ import java.lang.reflect.Parameter;
 
 import javax.annotation.Nullable;
 
+import org.junit.jupiter.api.TestInstance.Lifecycle;
 import org.junit.jupiter.api.extension.AfterAllCallback;
 import org.junit.jupiter.api.extension.AfterEachCallback;
 import org.junit.jupiter.api.extension.AfterTestExecutionCallback;
@@ -14,7 +15,6 @@ import org.junit.jupiter.api.extension.BeforeAllCallback;
 import org.junit.jupiter.api.extension.BeforeEachCallback;
 import org.junit.jupiter.api.extension.BeforeTestExecutionCallback;
 import org.junit.jupiter.api.extension.ExtensionContext;
-import org.junit.jupiter.api.extension.ExtensionContext.Namespace;
 import org.junit.jupiter.api.extension.ParameterContext;
 import org.junit.jupiter.api.extension.ParameterResolver;
 import org.junit.jupiter.api.extension.TestInstancePostProcessor;
@@ -52,6 +52,10 @@ public class FlowerManager
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~~~初始化环境~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		TestUtil.resourcePreparation();
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~初始化环境完毕~~~~~~~~~~~~~~~~~~~~~~~~~~");
+		Lifecycle testLif =	context.getTestInstanceLifecycle().get();
+		if(testLif == Lifecycle.PER_CLASS) {//构造一遍，执行完所有测试方法
+			LazyBean.getInstance().processAttr(testInstance, testInstance.getClass());
+		}
 	}
 
 	/**
@@ -68,6 +72,8 @@ public class FlowerManager
 		log.info("afterAll");
 	}
 
+	private Object testInstance;
+	
 	/**
 	 * Delegates to {@link TestContextManager#prepareTestInstance}.
 	 */
@@ -75,7 +81,12 @@ public class FlowerManager
 	public void postProcessTestInstance(Object testInstance, ExtensionContext context) throws Exception {
 //		getTestContextManager(context).prepareTestInstance(testInstance);
 		log.info("-postProcessTestInstance-");
-		LazyBean.getInstance().processAttr(testInstance, testInstance.getClass());
+		Lifecycle testLif =	context.getTestInstanceLifecycle().get();
+		if(testLif == Lifecycle.PER_CLASS) {//构造一遍，执行完所有测试方法
+			this.testInstance = testInstance;
+		}else if(testLif == Lifecycle.PER_METHOD) {//每个方法构造一遍
+			LazyBean.getInstance().processAttr(testInstance, testInstance.getClass());
+		}
 	}
 
 	/**

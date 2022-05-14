@@ -57,7 +57,7 @@ public class ScanUtil {
 	}
 	
 	public static Map<String, Class<?>> findClassMap(String scanPath) {
-		return scaner.findClassMap(scanPath);
+		return getScanner().findClassMap(scanPath);
 	}
 	
 	private static boolean init = false;
@@ -65,27 +65,35 @@ public class ScanUtil {
 	 * 加载所有class，缓存起来
 	 * 类似加载 AbstractEmbeddedServletContainerFactory
 	 */
-	private static Scan scaner= ContainerManager.getComponent(Scan.class.getSimpleName());
+	private static Scan scaner;
+	
+	public static Scan getScanner() {
+		if(scaner == null) {
+			scaner= ContainerManager.getComponent(Scan.class.getSimpleName());
+		}
+		return scaner;
+	}
+	
 	public static void loadAllClass() {
 		if(init) {
 			return;
 		}
 		init = true;
-		scaner.scan();
+		getScanner().scan();
 	}
 //	private static Set<String> autoConfigClass = Sets.newConcurrentHashSet();
 //	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
 	public static void loadContextPathClass() {
-		scaner.loadContextPathClass();
+		getScanner().loadContextPathClass();
 	}
 	
 	public static Class findClassByName(String beanName) {
-		return scaner.findClassByName(beanName);
+		return getScanner().findClassByName(beanName);
 	}
 	
 	
 	public static Boolean isInScanPath(Class<?> requiredType) {
-		return scaner.isInScanPath(requiredType);
+		return getScanner().isInScanPath(requiredType);
 	}
 	/**
 	 * 扫描继承abstractClass 的类
@@ -93,7 +101,7 @@ public class ScanUtil {
 	 * @return 返回继承abstractClass 的类
 	 */
 	public static List<Class<?>> findClassExtendAbstract(Class abstractClass){
-		return scaner.findClassExtendAbstract(abstractClass);
+		return getScanner().findClassExtendAbstract(abstractClass);
 	}
 	
 	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class<?>> classMap,String ClassName){
@@ -124,7 +132,7 @@ public class ScanUtil {
 	 * @return 返回实现 interfaceClass 的类
 	 */
 	public static List<Class<?>> findClassImplInterface(Class interfaceClass){
-		return scaner.findClassImplInterface(interfaceClass);
+		return getScanner().findClassImplInterface(interfaceClass);
 	}
 	/**
 	 * 判断 c 是否是interfaceC的实现类
@@ -190,8 +198,11 @@ public class ScanUtil {
 		}
 		return null;
 	}
-	private static PropResourceManagerI propLoader = ContainerManager.getComponent(PropResourceManagerI.class.getSimpleName());
+	private static PropResourceManagerI propLoader;
 	public static boolean findCreateBeanForConfigurationProperties(Class tag) {
+		if(propLoader == null) {
+			propLoader = ContainerManager.getComponent(PropResourceManagerI.class.getSimpleName());
+		}
 		return propLoader.contains(tag);
 	}
 	private static Set<String> notFundClassSet = Sets.newConcurrentHashSet();
