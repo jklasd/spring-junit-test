@@ -4,3 +4,5 @@ com.github.jklasd.test.core.common.fieldann.ValueHandler,\
 com.github.jklasd.test.lazyplugn.dubbo.reference.AliDubboReferenceHandler,\
 com.github.jklasd.test.lazyplugn.dubbo.reference.ApacheDubboReferenceHandler
 
+
+com.github.jklasd.test.common.interf.register.ScannerRegistrarI=com.github.jklasd.test.lazyplugn.db.LazyMybatisScannerRegistrar

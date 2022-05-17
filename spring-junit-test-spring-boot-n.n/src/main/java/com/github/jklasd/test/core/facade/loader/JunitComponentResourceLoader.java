@@ -9,8 +9,10 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.github.jklasd.test.common.VersionController;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.component.VersionControlComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +37,11 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 			String versionControllerClass = prop.getProperty(VersionController.class.getName());
 			if(StringUtils.isNotBlank(versionControllerClass)) {
 				VersionControlComponent.load(versionControllerClass.split(","));
+			}
+			
+			String scannerRegistrarClass = prop.getProperty(ScannerRegistrarI.class.getName());
+			if(StringUtils.isNotBlank(scannerRegistrarClass)) {
+				ScannerRegistrarComponent.load(scannerRegistrarClass.split(","));
 			}
 		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
 			log.error("=====================loadResource=====================",e);

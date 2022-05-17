@@ -34,6 +34,7 @@ import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
+import com.github.jklasd.test.lazyplugn.db.LazyMybatisScannerRegistrar;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.AnnHandlerUtil;
@@ -310,39 +311,4 @@ public class JavaBeanUtil {
         }
         return param;
     }
-	/**
-	 * 扫描java代码相关配置
-	 * 
-	 * 待支持 spring.factories
-	 */
-	public static void process() {
-		/**
-		 * 处理数据库
-		 */
-		if(LazyMybatisMapperBean.useMybatis()) {
-			List<Class<?>> configurableList = ScanUtil.findClassWithAnnotation(Configuration.class,ClassScan.getApplicationAllClassMap());
-			Class<? extends Annotation> mybatisScanAnno = LazyMybatisMapperBean.getAnnotionClass();
-			log.info("configurableList=>{}",configurableList);
-			configurableList.stream()
-			.filter(configura ->configura!=null && configura.getAnnotation(mybatisScanAnno)!=null)
-			.forEach(configura ->{
-				Annotation scan = configura.getAnnotation(mybatisScanAnno);
-				if(scan != null) {
-					String[] packagePath = (String[]) JunitInvokeUtil.invokeMethod(scan, "basePackages");
-					if(packagePath.length>0) {
-						LazyMybatisMapperBean.getInstance().processConfig(configura,packagePath);
-					}
-				}
-			});
-		}
-		/**
-		 * 处理dubbo服务类
-		 */
-		if(LazyDubboBean.useDubbo()) {//加载到com.alibaba.dubbo.config.annotation.Service
-			List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getApplicationAllClassMap());
-//			dubboServiceList.stream().forEach(dubboServiceClass ->{
-//				LazyDubboBean.putAnnService(dubboServiceClass);
-//			});
-		}
-	}
 }

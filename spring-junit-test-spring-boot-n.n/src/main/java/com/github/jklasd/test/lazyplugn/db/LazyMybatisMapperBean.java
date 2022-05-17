@@ -55,13 +55,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return factoryClass != null;
     }
 
-    public static final Class<? extends Annotation> getAnnotionClass() {
-        if (mapperScanClass != null) {
-            return mapperScanClass;
-        }
-        return ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
-    }
-
     private Object sqlSessionTemplate;
 
     public Object getSqlSessionTemplate() throws Exception {
@@ -139,8 +132,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             .anyMatch(mybatisScanPath -> c.getPackage().getName().contains(mybatisScanPath));
     }
 
-    public synchronized void processConfig(Class<?> configura, String[] packagePath) {
-        mybatisScanPathList.addAll(Lists.newArrayList(packagePath));
+    public synchronized void processConfig(Class<?> configura, List<String> basePackages) {
+        mybatisScanPathList.addAll(basePackages);
     }
 
     public void configure() {
