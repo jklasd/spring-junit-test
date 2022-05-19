@@ -112,13 +112,16 @@ private void matchByBeanName(Object[] address, Object[] tmp, final String beanNa
 		return tmp;
 	}
 	private void matchByClass(Object[] tmp, final Class<?> tagC, Class<?> c) {
+//		if(c.getName().contains("ElasticSearchClientConfiguration")) {
+//			log.info("断点");
+//		}
 		Method[] methods = c.getDeclaredMethods();
 		for(Method m : methods) {
 			Bean beanA = m.getAnnotation(Bean.class);
 			if(beanA != null) {
 				if(tagC!=null) {
 					if(!tagC.isInterface() && m.getReturnType().isInterface()) {
-						break;
+						continue;
 					}
 					if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
 						tmp[0] = c;
