@@ -2,6 +2,7 @@ com.github.jklasd.test.common.interf.handler.FieldHandler=com.github.jklasd.test
 com.github.jklasd.test.core.common.fieldann.ResourceHandler,\
 com.github.jklasd.test.core.common.fieldann.ValueHandler,\
 com.github.jklasd.test.lazyplugn.dubbo.reference.AliDubboReferenceHandler,\
+com.github.jklasd.test.lazyplugn.dubbo.reference.ApacheReferenceHandler,\
 com.github.jklasd.test.lazyplugn.dubbo.reference.ApacheDubboReferenceHandler
 
 

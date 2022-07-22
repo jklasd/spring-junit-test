@@ -14,6 +14,7 @@ import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,7 +33,13 @@ public class AutowiredHandler implements FieldHandler{
 				//处理一个集合注入
 				try {
 					Class<?> c = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
-					List<?> list = LazyBean.findListBean(c);
+					List list = LazyBean.findListBean(c);
+					if(list.isEmpty()) {
+						String[] beanNames = LazyApplicationContext.getInstance().getBeanNamesForType(c);
+						for(String beanName : beanNames) {
+							list.add(LazyApplicationContext.getInstance().getBean(beanName));
+						}
+					}
 					FieldAnnComponent.setObj(attr, tagObj, list);
 					log.info("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
 				} catch (ClassNotFoundException e) {

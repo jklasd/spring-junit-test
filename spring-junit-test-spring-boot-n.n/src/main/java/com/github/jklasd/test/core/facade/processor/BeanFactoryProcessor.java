@@ -9,6 +9,7 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
+import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.google.common.collect.Sets;
 
@@ -39,6 +40,10 @@ public class BeanFactoryProcessor implements BeanFactoryProcessorI{
 					return;
 				}
 				BeanFactoryPostProcessor newProcessor = (BeanFactoryPostProcessor) configClass.newInstance();
+				
+				//注入相关
+//				LazyBean.getInstance().processAttr(newProcessor, configClass);
+				
 				lazyApplicationContext.addBeanFactoryPostProcessor(newProcessor);
 				filter.add(configClass);
 			} catch (InstantiationException | IllegalAccessException e) {

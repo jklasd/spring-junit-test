@@ -59,7 +59,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			if(beanClass!=null) {
 				return LazyBean.getInstance().buildProxy(beanClass,beanName);
 			}
-			return null;
+			
+			Object obj = LazyBean.getInstance().findCreateBeanFromFactory(null, beanName);
+			
+			return obj;
 		}catch(Exception e){
 			throw new JunitException("Bean 未找到");
 		}

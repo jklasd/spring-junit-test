@@ -92,5 +92,6 @@ public class LazyMybatisScannerRegistrar implements ScannerRegistrarI {
 			
 		    LazyMybatisMapperBean.getInstance().processConfig(configura,basePackages);
 		});
+		LazyMybatisMapperBean.getInstance().processScannerConfig();
 	}
 }

@@ -173,7 +173,15 @@ public class TestUtil implements JunitCoreComponentI{
 			if (value != null) {
 				return value;
 			} else {
-				return keys.length > 1 ? keys[1] : (defaultStr == null ? key : defaultStr);
+				if(keys.length > 1) {
+					return keys[1];
+				}else {
+					if(key.contains(":")) {
+						return "";
+					}else {
+						return defaultStr == null ? key : defaultStr;
+					}
+				}
 			}
 		}
 		return key;

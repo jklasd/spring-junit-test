@@ -2,7 +2,13 @@ package com.github.jklasd.test.lazyplugn.db;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.Field;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
+
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.model.AssemblyDTO;
@@ -12,6 +18,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,7 +38,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return bean;
     }
 
-    private static Object factory;
+    private static Object defaultFactory;
 
     public synchronized Object buildBean(Class<?> classBean) {
         try {
@@ -56,16 +63,23 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     private Object sqlSessionTemplate;
+    private Map<String,Object> sqlSessionTemplateMaps = Maps.newHashMap();
 
     public Object getSqlSessionTemplate() throws Exception {
-        if (factory == null) {
+        if (defaultFactory == null) {
             buildMybatisFactory();
         }
+        if(sqlSessionTemplateMaps.containsKey(mappingPath.get())) {
+        	return sqlSessionTemplateMaps.get(mappingPath.get());
+        }
+        
         if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
             Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
-            sqlSessionTemplate = structor.newInstance(factory);
+            Object factory = mappingSession.get(mappingPath.get());
+            factory = factory==null?defaultFactory:factory;
+            sqlSessionTemplateMaps.put(mappingPath.get(), structor.newInstance(factory));
         }
-        return sqlSessionTemplate;
+        return sqlSessionTemplateMaps.get(mappingPath.get());
     }
 
     private Object getMapper(Class<?> classBean) throws Exception {
@@ -74,13 +88,12 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     private void buildMybatisFactory() {
-        if (factory == null) {
+        if (defaultFactory == null) {
             Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
-                if (obj != null) {
-                    factory = obj;
-                    return;
-                }
-//            }
+            if (obj != null) {
+                defaultFactory = obj;
+                return;
+            }
             processAnnaForFactory();
         } else {
             log.debug("factory已存在");
@@ -88,10 +101,10 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     private void processAnnaForFactory() {
-        if (factory == null) {
+        if (defaultFactory == null) {
             AssemblyDTO param = new AssemblyDTO();
             param.setTagClass(factoryClass);
-            factory = LazyBean.findCreateBeanFromFactory(param);
+            defaultFactory = LazyBean.findCreateBeanFromFactory(param);
         }
     }
 
@@ -100,6 +113,10 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     private static Class<?> mapperScannerConfigurer
         = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperScannerConfigurer");
     private static boolean loadScaned;
+    
+    private static Map<String,Object> mappingSession = Maps.newHashMap();
+    
+    private static ThreadLocal<String> mappingPath = new ThreadLocal<String>();
 
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
@@ -112,12 +129,24 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             		if (obj.getAttr().containsKey("basePackage")) {
             			basePackage = obj.getAttr().get("basePackage").toString();
             		}
+//            		if(obj.getAttr().containsKey("sqlSessionFactoryBeanName")) {
+//            			String beanName = obj.getAttr().get("sqlSessionFactoryBeanName").toString();
+//            			Object bean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
+//            			
+//            			if(bean instanceof FactoryBean) {
+//                    		FactoryBean fb = (FactoryBean) bean;
+//                    		((InitializingBean) bean).afterPropertiesSet();
+//                    		mappingSession.put(basePackage,fb.getObject());
+//            			}else {
+//            				mappingSession.put(basePackage,bean);
+//            			}
+//            		}
             	}
             	if(basePackage!=null) {
             		mybatisScanPathList.add(basePackage);
             		log.info("mybatisScanPathList=>{}", mybatisScanPathList);
             	}
-            } catch (IllegalArgumentException | SecurityException e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
             loadScaned = true;
@@ -128,8 +157,20 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
                 return true;
             }
         }
-        return !mybatisScanPathList.isEmpty() && mybatisScanPathList.stream()
-            .anyMatch(mybatisScanPath -> c.getPackage().getName().contains(mybatisScanPath));
+        
+        AtomicReference<String> scanPath = new AtomicReference<String>();
+        boolean finded = !mybatisScanPathList.isEmpty() && mybatisScanPathList.stream()
+        .anyMatch(mybatisScanPath -> {
+        	boolean tmp = c.getPackage().getName().contains(mybatisScanPath);
+        	if(tmp) {
+        		scanPath.set(mybatisScanPath);
+        	}
+        	return tmp;
+        });
+        if(finded) {
+        	mappingPath.set(scanPath.get());
+        }
+        return finded;
     }
 
     public synchronized void processConfig(Class<?> configura, List<String> basePackages) {
@@ -155,5 +196,35 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         }
         return null;
     }
+
+	public void processScannerConfig() {
+		Object obj = LazyBean.findCreateBeanFromFactory(mapperScannerConfigurer, null);
+		if(obj!=null) {
+			try {
+				register(obj);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+	}
+
+	private void register(Object obj) throws NoSuchFieldException, SecurityException, IllegalArgumentException, IllegalAccessException, InterruptedException {//MapperScannerConfigurer
+		//强行拿取数据
+		Field tmp = mapperScannerConfigurer.getDeclaredField("basePackage");
+		if(!tmp.isAccessible()) {
+			tmp.setAccessible(true);
+		}
+//		Thread.sleep(3000l);
+		//basePackage
+		String basePackageValue = JunitInvokeUtil.getField(tmp, obj).toString();
+		//sqlSessionFactoryBeanName
+		tmp = mapperScannerConfigurer.getDeclaredField("sqlSessionFactoryBeanName");
+		if(!tmp.isAccessible()) {
+			tmp.setAccessible(true);
+		}
+		String sqlSessionFactoryBeanName = JunitInvokeUtil.getField(tmp, obj).toString();
+		mybatisScanPathList.add(basePackageValue);
+		mappingSession.put(basePackageValue,LazyBean.findCreateBeanFromFactory(factoryClass, sqlSessionFactoryBeanName));
+	}
 
 }
