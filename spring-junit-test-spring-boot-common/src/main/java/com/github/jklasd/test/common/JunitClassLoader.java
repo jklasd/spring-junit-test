@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
+import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.google.common.collect.Lists;
@@ -49,7 +50,7 @@ public class JunitClassLoader extends ClassLoader{
 		if(!staticClassHandled) {
 			staticClassHandled = true;
 			staticComponentClass.forEach(staticClass->{
-				if(beanFactoryProcessor.notBFProcessor(staticClass)) {
+				if(beanFactoryProcessor.notBFProcessor(staticClass) && CheckUtil.checkProp(staticClass)) {
 					lazyBean.processStatic(staticClass);
 				}
 			});

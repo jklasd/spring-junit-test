@@ -25,10 +25,11 @@ public class ClassUtil {
 			return Lists.newArrayList(methods).stream().anyMatch(m->{
 				if(Modifier.isStatic(m.getModifiers())
 						&& !m.getName().contains("lambda$")//非匿名方法
-						&& !m.getName().contains("access$")) {//非匿名方法
+						&& !m.getName().contains("access$")//非匿名方法
+						&& !m.getName().startsWith("$")) {//非匿名方法
 					Class<?> returnType = m.getReturnType();
 					if(!returnType.getName().contains("void")) {
-						log.debug("method=>{}",m);
+						log.info("class=>{},method=>{}",configClass,m);
 						return true;
 					}
 				}

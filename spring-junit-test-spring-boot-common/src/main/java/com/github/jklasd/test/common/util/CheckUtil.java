@@ -1,4 +1,4 @@
-package com.github.jklasd.test.util;
+package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.lang.reflect.Constructor;
@@ -7,22 +7,31 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
+import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
+import org.springframework.core.env.Environment;
+import org.springframework.core.io.ResourceLoader;
 
 import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.register.ConditionClassManagerI;
-import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazyplugn.spring.ConditionContextImpl;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
+/**
+ * 需要加載完处理
+ * @author jubin.zhang
+ *
+ */
 @Slf4j
 public class CheckUtil {
 	private static Map<String, SpringBootCondition> checkClassMap = Maps.newHashMap();
@@ -52,6 +61,38 @@ public class CheckUtil {
 				}
 			}
 		});
+	}
+	public static class ConditionContextImpl implements ConditionContext{
+
+		private JunitCoreComponentI bean = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
+		
+		@Override
+		public BeanDefinitionRegistry getRegistry() {
+			// TODO Auto-generated method stub
+			return null;
+		}
+
+		@Override
+		public ConfigurableListableBeanFactory getBeanFactory() {
+			return bean.getApplicationContext().getBeanFactory();
+		}
+
+		@Override
+		public Environment getEnvironment() {
+			return bean.getApplicationContext().getEnvironment();
+		}
+
+		@Override
+		public ResourceLoader getResourceLoader() {
+			// TODO Auto-generated method stub
+			return bean.getApplicationContext();
+		}
+
+		@Override
+		public ClassLoader getClassLoader() {
+			return JunitClassLoader.getInstance();
+		}
+
 	}
 
 	private static ConditionContext context = new ConditionContextImpl();

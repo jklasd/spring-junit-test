@@ -36,7 +36,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 			}
 			String versionControllerClass = prop.getProperty(VersionController.class.getName());
 			if(StringUtils.isNotBlank(versionControllerClass)) {
-				VersionControlComponent.load(versionControllerClass.split(","));
+ 				VersionControlComponent.load(versionControllerClass.split(","));
 			}
 			
 			String scannerRegistrarClass = prop.getProperty(ScannerRegistrarI.class.getName());

@@ -11,10 +11,10 @@ import org.springframework.context.annotation.Bean;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.util.CheckUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
