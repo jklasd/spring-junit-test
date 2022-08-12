@@ -55,7 +55,7 @@ public class TranstionalManager {
         return atas.getTransactionAttribute(method, tagClass);
     }
     public TransactionStatus beginTx(TransactionAttribute txInfo) {
-        log.debug("开启事务=>{}",txInfo);
+        log.info("开启事务=>{}",txInfo);
         if(txManager == null) {
             txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
             txManager = (DataSourceTransactionManager) AbstractLazyProxy.instantiateProxy(txManager);
@@ -70,5 +70,6 @@ public class TranstionalManager {
     
     public void commitTx(TransactionStatus txStatus) {
         txManager.commit(txStatus);
+        log.info("提交事务=>{}",txStatus);
     }
 }

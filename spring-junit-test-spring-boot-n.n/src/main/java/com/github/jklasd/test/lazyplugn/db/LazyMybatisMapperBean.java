@@ -7,12 +7,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.springframework.beans.factory.FactoryBean;
-import org.springframework.beans.factory.InitializingBean;
+import org.apache.commons.lang3.StringUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
@@ -129,18 +129,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             		if (obj.getAttr().containsKey("basePackage")) {
             			basePackage = obj.getAttr().get("basePackage").toString();
             		}
-//            		if(obj.getAttr().containsKey("sqlSessionFactoryBeanName")) {
-//            			String beanName = obj.getAttr().get("sqlSessionFactoryBeanName").toString();
-//            			Object bean = TestUtil.getInstance().getApplicationContext().getBean(beanName);
-//            			
-//            			if(bean instanceof FactoryBean) {
-//                    		FactoryBean fb = (FactoryBean) bean;
-//                    		((InitializingBean) bean).afterPropertiesSet();
-//                    		mappingSession.put(basePackage,fb.getObject());
-//            			}else {
-//            				mappingSession.put(basePackage,bean);
-//            			}
-//            		}
             	}
             	if(basePackage!=null) {
             		mybatisScanPathList.add(basePackage);
@@ -214,7 +202,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 		if(!tmp.isAccessible()) {
 			tmp.setAccessible(true);
 		}
-//		Thread.sleep(3000l);
 		//basePackage
 		String basePackageValue = JunitInvokeUtil.getField(tmp, obj).toString();
 		//sqlSessionFactoryBeanName
@@ -226,5 +213,4 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 		mybatisScanPathList.add(basePackageValue);
 		mappingSession.put(basePackageValue,LazyBean.findCreateBeanFromFactory(factoryClass, sqlSessionFactoryBeanName));
 	}
-
 }

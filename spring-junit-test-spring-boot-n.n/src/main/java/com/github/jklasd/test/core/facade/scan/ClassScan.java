@@ -240,7 +240,8 @@ public class ClassScan implements Scan{
 				try {
 					String annValue = BeanNameUtil.getBeanName(tagClass);
 					if(annValue == null) {
-						log.warn("{} beanName=>{}",tagClass,annValue);
+//						log.warn("{} beanName=>{}",tagClass,annValue);
+						return;
 					}
 					log.debug("put beanClass=>{}",annValue);
 					cacheBeanNameClass.put(annValue, tagClass);

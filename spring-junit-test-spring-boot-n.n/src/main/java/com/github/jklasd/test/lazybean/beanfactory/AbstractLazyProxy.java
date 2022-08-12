@@ -1,6 +1,5 @@
  package com.github.jklasd.test.lazybean.beanfactory;
 
-import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -52,7 +51,6 @@ public abstract class AbstractLazyProxy {
             beanModel.setPropValue(null);
         }
     }
-    
     protected List factoryList;
     public static final String PROXY_BOUND = "CGLIB$BOUND";
     public static final String PROXY_CALLBACK_0 = "CGLIB$CALLBACK_0";
@@ -117,24 +115,44 @@ public abstract class AbstractLazyProxy {
 //    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
-    	if(errorTimes.get()>3) {
-    		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
-    		throw new JunitException("----------异常代理方式--------",true);
-    	}
-    	if(method.getName().equals("toString")) {
-    		if(tagertObj!=null) {
-    			return tagertObj.toString();
-    		}else {
-    			return this.toString();
-    		}
-    	}else if(method.getName().equals("hashCode")) {
-    		if(tagertObj!=null) {
-    			return tagertObj.hashCode();
-    		}else {
-    			return this.hashCode();
-    		}
-    	}
+    
+    private Object transtionalHandler(Object poxy, Method method, Object[] param) throws Throwable{
+    	TransactionAttribute oldTxInfo = null;
+    	TransactionStatus txStatus = null;
+        try {
+            Object newObj = getTagertObj();
+            Object result = null;
+            if(TranstionalManager.isFindTranstional()) {
+            	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+            	
+            	txStatus = openTransation(oldTxInfo, txInfo);
+            	
+            	result = method.invoke(newObj, param);
+            	
+            }else {
+            	result = method.invoke(newObj, param);
+            }
+            
+            errorTimes.set(0);
+            
+            return result;
+        }catch (JunitException e) {
+        	throw e;
+        }catch (InvocationTargetException e) {
+        	throw e.getTargetException();
+		}catch (Exception e) {
+            throw e;
+        }finally {
+        	/**
+    		 * 抛出异常，一定要关闭事务
+    		 * 否则在批量测试中，会导致其他单元测试，进入事务。
+    		 */
+    		closeTransation(oldTxInfo, txStatus,method);
+		}
+    }
+    
+    private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
     	Object oldObj = AopContextSuppert.getProxyObject();
         try {
@@ -159,19 +177,7 @@ public abstract class AbstractLazyProxy {
 
             LazyBeanFilter.processLazyConfig(newObj, method, param);
             
-            Object result = null;
-            if(TranstionalManager.isFindTranstional()) {
-            	TransactionAttribute oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            	
-            	TransactionStatus txStatus = openTransation(oldTxInfo, txInfo);
-            	
-            	result = method.invoke(newObj, param);
-            	
-            	closeTransation(oldTxInfo, txStatus);
-            }else {
-            	result = method.invoke(newObj, param);
-            }
+            Object result = transtionalHandler(poxy, method, param);
             
             errorTimes.set(0);
             
@@ -192,6 +198,28 @@ public abstract class AbstractLazyProxy {
         }finally {
         	AopContextSuppert.setProxyObj(oldObj);
 		}
+    }
+    
+    protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
+    	if(errorTimes.get()>3) {
+    		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
+    		throw new JunitException("----------异常代理方式--------",true);
+    	}
+    	if(method.getName().equals("toString")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.toString();
+    		}else {
+    			return this.toString();
+    		}
+    	}else if(method.getName().equals("hashCode")) {
+    		if(tagertObj!=null) {
+    			return tagertObj.hashCode();
+    		}else {
+    			return this.hashCode();
+    		}
+    	}
+    	log.debug("exec stack=>{}",method);
+    	return aopHandler(poxy, method, param);
     }
     
     protected Object getTagertObj() {
@@ -264,8 +292,9 @@ public abstract class AbstractLazyProxy {
      * 关闭事务
      * @param oldTxInfo 旧事务信息
      * @param txStatus 当前事务
+     * @param method 
      */
-    protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus) {
+    protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
         if (txStatus != null) {
             TranstionalManager.getInstance().commitTx(txStatus);
             TranstionalManager.getInstance().clearThradLocal();
@@ -273,6 +302,7 @@ public abstract class AbstractLazyProxy {
         if (oldTxInfo != null) {
             TranstionalManager.getInstance().setTxInfo(oldTxInfo);
         }
+        
     }
 
 	public static Object instantiateProxy(Object obj) {

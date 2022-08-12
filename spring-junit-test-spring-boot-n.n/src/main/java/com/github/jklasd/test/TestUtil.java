@@ -200,7 +200,9 @@ public class TestUtil implements JunitCoreComponentI{
 			if (StringUtils.isNotBlank(value)) {
 				if (type == null || type == String.class) {
 					return value;
-				} else if (type == Integer.class || type == int.class) {
+				}else if (type == Byte.class || type == byte.class) {
+					return Byte.valueOf(value);
+				}else if (type == Integer.class || type == int.class) {
 					return Integer.valueOf(value);
 				} else if (type == Long.class || type == long.class) {
 					return Long.valueOf(value);
@@ -210,6 +212,8 @@ public class TestUtil implements JunitCoreComponentI{
 					return new BigDecimal(value);
 				} else if (type == Boolean.class || type == boolean.class) {
 					return new Boolean(value);
+				} else if (type == char.class) {
+					return value.charAt(0);
 				} else if (type == Class.class) {
                     return ScanUtil.loadClass(value);
                 }else{
@@ -238,6 +242,7 @@ public class TestUtil implements JunitCoreComponentI{
 	 */
 	private static volatile boolean processInited;
 	
+	@Deprecated
 	public static void startTestForNoContainer(Object obj) {
 		resourcePreparation();
 		//注入当前执行对象

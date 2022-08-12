@@ -4,6 +4,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 
 import com.google.common.collect.Lists;
+
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -29,7 +30,7 @@ public class ClassUtil {
 						&& !m.getName().startsWith("$")) {//非匿名方法
 					Class<?> returnType = m.getReturnType();
 					if(!returnType.getName().contains("void")) {
-						log.info("class=>{},method=>{}",configClass,m);
+						log.debug("class=>{},method=>{}",configClass,m);
 						return true;
 					}
 				}
