@@ -64,8 +64,9 @@ public class TranstionalManager {
         return txManager.getTransaction(txInfo);//不能是代理类
     }
     
-    public void hangTx() {
-//        txManager.
+    public void rollbackTx(TransactionStatus txStatus) {
+    	txManager.rollback(txStatus);
+    	log.info("回滚事务=>{}",txStatus);
     }
     
     public void commitTx(TransactionStatus txStatus) {

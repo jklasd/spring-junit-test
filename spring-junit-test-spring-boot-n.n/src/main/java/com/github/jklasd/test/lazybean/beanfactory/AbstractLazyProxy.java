@@ -129,7 +129,7 @@ public abstract class AbstractLazyProxy {
             	txStatus = openTransation(oldTxInfo, txInfo);
             	
             	result = method.invoke(newObj, param);
-            	
+            	closeTransation(oldTxInfo, txStatus,method);
             }else {
             	result = method.invoke(newObj, param);
             }
@@ -138,21 +138,23 @@ public abstract class AbstractLazyProxy {
             
             return result;
         }catch (JunitException e) {
+        	rollback(oldTxInfo, txStatus,e);
         	throw e;
         }catch (InvocationTargetException e) {
+        	rollback(oldTxInfo, txStatus,e);
         	throw e.getTargetException();
 		}catch (Exception e) {
+			/**
+			 * 抛出异常，一定要关闭事务
+			 * 否则在批量测试中，会导致其他单元测试，进入事务。
+			 */
+			rollback(oldTxInfo, txStatus,e);
             throw e;
-        }finally {
-        	/**
-    		 * 抛出异常，一定要关闭事务
-    		 * 否则在批量测试中，会导致其他单元测试，进入事务。
-    		 */
-    		closeTransation(oldTxInfo, txStatus,method);
-		}
+        }
     }
     
-    private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
+    
+	private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
     	Map<String,Object> lastInvokerInfo = lastInvoker.get();
     	Object oldObj = AopContextSuppert.getProxyObject();
         try {
@@ -303,6 +305,20 @@ public abstract class AbstractLazyProxy {
             TranstionalManager.getInstance().setTxInfo(oldTxInfo);
         }
         
+    }
+    protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
+    	if(txStatus!=null) {
+    		TransactionAttribute currentTxInfo = TranstionalManager.getInstance().getTxInfo();
+    		if(currentTxInfo.rollbackOn(e)) {
+    			TranstionalManager.getInstance().rollbackTx(txStatus);
+    		}else {
+    			TranstionalManager.getInstance().commitTx(txStatus);
+    		}
+    		TranstionalManager.getInstance().clearThradLocal();
+    	}
+    	if (oldTxInfo != null) {
+            TranstionalManager.getInstance().setTxInfo(oldTxInfo);
+        }
     }
 
 	public static Object instantiateProxy(Object obj) {

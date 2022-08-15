@@ -83,11 +83,11 @@
 			<version>30.0-jre</version>
 			<scope>provided</scope>
 		</dependency>
-		<!-- <dependency>
-		    <groupId>javax.annotation</groupId>
-		    <artifactId>javax.annotation-api</artifactId>
-		    <scope>provided</scope>
-	    </dependency> -->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>
@@ -139,6 +139,10 @@
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test</artifactId>
+		</dependency>
+		<dependency>
+		  <groupId>com.h2database</groupId>
+		  <artifactId>h2</artifactId>
 		</dependency>
 	</dependencies>
 

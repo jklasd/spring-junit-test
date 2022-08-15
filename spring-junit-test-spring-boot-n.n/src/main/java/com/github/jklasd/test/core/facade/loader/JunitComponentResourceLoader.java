@@ -8,10 +8,14 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 
 import com.github.jklasd.test.common.VersionController;
+import com.github.jklasd.test.common.component.BootedHandlerComponent;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.component.VersionControlComponent;
+import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 
@@ -30,10 +34,22 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 		try {
 			Properties prop = new Properties();
 			prop.load(new InputStreamReader(jarFileIs));
+			
+			String bootHandlerClassName = prop.getProperty(BootHandler.class.getName());
+			if(StringUtils.isNotBlank(bootHandlerClassName)) {
+				BootedHandlerComponent.HandlerLoader.load(bootHandlerClassName.split(","));
+			}
+			
 			String factoryClassNames = prop.getProperty(FieldHandler.class.getName());
 			if(StringUtils.isNotBlank(factoryClassNames)) {
 				FieldAnnComponent.HandlerLoader.load(factoryClassNames.split(","));
 			}
+			
+			String junitMockAnnClassName = prop.getProperty(MockAnnHandler.class.getName());
+			if(StringUtils.isNotBlank(junitMockAnnClassName)) {
+				MockAnnHandlerComponent.HandlerLoader.load(junitMockAnnClassName.split(","));
+			}
+			
 			String versionControllerClass = prop.getProperty(VersionController.class.getName());
 			if(StringUtils.isNotBlank(versionControllerClass)) {
  				VersionControlComponent.load(versionControllerClass.split(","));
@@ -55,7 +71,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 
 	@Override
 	public void initResource() {
-		
+		BootedHandlerComponent.init();
 	}
 	@Override
 	public JunitResourceLoaderEnum key() {

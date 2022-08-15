@@ -3,16 +3,18 @@ package com.github.jklasd.test.lazyplugn.db;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.commons.lang3.StringUtils;
+import javax.sql.DataSource;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.DatabaseInitialization;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
@@ -68,6 +70,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     public Object getSqlSessionTemplate() throws Exception {
         if (defaultFactory == null) {
             buildMybatisFactory();
+            restDataSource();
         }
         if(sqlSessionTemplateMaps.containsKey(mappingPath.get())) {
         	return sqlSessionTemplateMaps.get(mappingPath.get());
@@ -82,13 +85,39 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return sqlSessionTemplateMaps.get(mappingPath.get());
     }
 
-    private Object getMapper(Class<?> classBean) throws Exception {
+    private void restDataSource() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{
+    	DatabaseInitialization dataInitia = ContainerManager.getComponent(DatabaseInitialization.class.getName());
+    	if(dataInitia!=null) {
+	    	Object configuration = JunitInvokeUtil.invokeMethod(defaultFactory, "getConfiguration");
+	    	Object dataBaseEnv = JunitInvokeUtil.invokeMethod(configuration, "getEnvironment");
+	    	if(dataBaseEnv!=null) {
+//	    		System.out.println(dataBaseEnv);
+	    		DataSource dataSource = (DataSource) JunitInvokeUtil.invokeMethod(dataBaseEnv, "getDataSource");
+	    		
+	    		Object newDataSource = dataInitia.build(dataSource);
+	    		if(newDataSource != null) {
+	    			Class<?> EnvironmentClass = ScanUtil.loadClass("org.apache.ibatis.mapping.Environment");
+	    			Class<?> TransactionFactory = ScanUtil.loadClass("org.apache.ibatis.transaction.TransactionFactory");
+	    			Object newDataBaseEnv = EnvironmentClass.getConstructor(String.class,TransactionFactory,DataSource.class)
+	    			.newInstance(JunitInvokeUtil.invokeMethod(dataBaseEnv,"getId"),
+	    					JunitInvokeUtil.invokeMethod(dataBaseEnv,"getTransactionFactory"),
+	    					newDataSource);
+	    			JunitInvokeUtil.invokeMethod(configuration, "setEnvironment",newDataBaseEnv);
+	    		}
+	    	}
+    	}
+	}
+
+	private Object getMapper(Class<?> classBean) throws Exception {
         Object tag = JunitInvokeUtil.invokeMethod(getSqlSessionTemplate(), "getMapper", classBean);
         return tag;
     }
 
     private void buildMybatisFactory() {
         if (defaultFactory == null) {
+        	
+        	DatabaseInitialization dataBase = ContainerManager.getComponent(DatabaseInitialization.class.getName());
+        	
             Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
             if (obj != null) {
                 defaultFactory = obj;

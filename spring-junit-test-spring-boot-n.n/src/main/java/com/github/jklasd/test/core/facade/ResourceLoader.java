@@ -20,9 +20,11 @@ public class ResourceLoader {
 	private final static ResourceLoader resourceLoader = new ResourceLoader();
 	
 	private ResourceLoader() {
-		Lists.newArrayList(AnnotationResourceLoader.getInstance(),
-				JunitComponentResourceLoader.getInstance(),
-				XMLResourceLoader.getInstance()).forEach(loaderClass->regist(loaderClass));
+		Lists.newArrayList(
+				XMLResourceLoader.getInstance(),//xml顺序第一位
+				AnnotationResourceLoader.getInstance(),
+				JunitComponentResourceLoader.getInstance()
+				).forEach(loaderClass->regist(loaderClass));
 	}
 	
 	public static ResourceLoader getInstance() {

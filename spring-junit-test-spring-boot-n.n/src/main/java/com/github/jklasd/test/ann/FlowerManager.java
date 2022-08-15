@@ -21,13 +21,14 @@ import org.junit.jupiter.api.extension.TestInstancePostProcessor;
 import org.springframework.context.ApplicationContext;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * JUNIT 5
- * 
+ * 参考SpringExtension
  * @author jubin.zhang
  *
  */
@@ -41,8 +42,6 @@ public class FlowerManager
 	 * keyed by test class.
 	 */
 //	private static final Namespace NAMESPACE = Namespace.create(FlowerManager.class);
-
-
 	/**
 	 * Delegates to {@link TestContextManager#beforeTestClass}.
 	 */
@@ -97,7 +96,7 @@ public class FlowerManager
 		Object testInstance = context.getRequiredTestInstance();
 		Method testMethod = context.getRequiredTestMethod();
 //		getTestContextManager(context).beforeTestMethod(testInstance, testMethod);
-		log.info("-beforeEach-");
+		log.info("-----------------------------beforeEach-{}-{}---------------------------",testInstance.getClass().getSimpleName(),testMethod.getName());
 	}
 
 	/**
@@ -108,8 +107,8 @@ public class FlowerManager
 		Object testInstance = context.getRequiredTestInstance();
 		Method testMethod = context.getRequiredTestMethod();
 //		getTestContextManager(context).beforeTestExecution(testInstance, testMethod);
-		
-		log.info("-beforeTestExecution-");
+		MockAnnHandlerComponent.handlerMethod(testMethod);
+		log.info("-----------------------------beforeTestExecution-{}-{}---------------------------",testInstance.getClass().getSimpleName(),testMethod.getName());
 	}
 
 	/**
@@ -122,7 +121,7 @@ public class FlowerManager
 		Throwable testException = context.getExecutionException().orElse(null);
 //		getTestContextManager(context).afterTestExecution(testInstance, testMethod, testException);
 		
-		log.info("-afterTestExecution-");
+		log.info("-----------------------------afterTestExecution-{}-{}---------------------------",testInstance.getClass().getSimpleName(),testMethod.getName());
 	}
 
 	/**
@@ -136,7 +135,7 @@ public class FlowerManager
 //		getTestContextManager(context).afterTestMethod(testInstance, testMethod, testException);
 		
 		
-		log.info("-afterEach-");
+		log.info("-----------------------------afterEach-{}-{}---------------------------",testInstance.getClass().getSimpleName(),testMethod.getName());
 	}
 
 	/**

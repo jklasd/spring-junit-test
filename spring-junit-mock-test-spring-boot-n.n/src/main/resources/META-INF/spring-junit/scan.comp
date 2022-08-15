@@ -1,2 +1,8 @@
 com.github.jklasd.test.common.interf.handler.FieldHandler=com.github.jklasd.test.core.common.fieldann.mock.MockBeanHandler,\
 com.github.jklasd.test.core.common.fieldann.mock.SpyBeanHandler\
+
+com.github.jklasd.test.common.interf.handler.MockAnnHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2SelectHandler,\
+com.github.jklasd.test.core.common.methodann.mock.DubboMockHandler
+
+
+com.github.jklasd.test.common.interf.handler.BootHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2DatabaseInitialization

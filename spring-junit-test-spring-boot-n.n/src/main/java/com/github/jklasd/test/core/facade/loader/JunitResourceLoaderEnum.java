@@ -7,9 +7,9 @@ import lombok.Getter;
 @Getter
 public enum JunitResourceLoaderEnum {
 
-	ANN("spring.factories",1),
-	JUNIT("scan.comp",2),
-	XML("spring.handlers",3)
+	XML("spring.handlers",1),
+	ANN("spring.factories",2),
+	JUNIT("scan.comp",3),
 	;
 	
 	private String fileName;
