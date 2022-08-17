@@ -31,7 +31,7 @@ public class ClassUtil {
 						&& !m.getName().startsWith("$")) {//非代理类的方法
 					Class<?> returnType = m.getReturnType();
 					if(!returnType.getName().contains("void")) {
-						log.info("class=>{},method=>{}",configClass,m);
+						log.debug("class=>{},method=>{}",configClass,m);
 						return true;
 					}
 				}

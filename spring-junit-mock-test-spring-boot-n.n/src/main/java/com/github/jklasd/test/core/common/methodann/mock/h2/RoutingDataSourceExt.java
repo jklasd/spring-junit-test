@@ -53,6 +53,9 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 		if(superSource != null) {
 			return routingDataSourceExt;
 		}
+		if(h2Source == null) {
+			return dataSource;
+		}
 		
 		Map<Object,Object> cache = Maps.newHashMap();
 		cache.put(defaultKey, dataSource);

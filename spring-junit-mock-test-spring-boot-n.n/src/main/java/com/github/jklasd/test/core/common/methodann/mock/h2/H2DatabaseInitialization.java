@@ -24,6 +24,9 @@ public class H2DatabaseInitialization implements BootHandler{
 			DatabasePopulatorExt tmp = new DatabasePopulatorExt();
 			
 			Resource[] schema = ScanUtil.getResources("classpath:/"+findPath+"/schema/*");
+			if(schema.length == 0) {
+				return;
+			}
 			tmp.addSchema(schema);
 			String databaseName = findDataBaseName(schema);
 			findOtherSchema(schema,tmp);

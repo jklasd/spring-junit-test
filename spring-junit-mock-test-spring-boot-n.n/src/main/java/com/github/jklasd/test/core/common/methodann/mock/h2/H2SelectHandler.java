@@ -21,11 +21,23 @@ public class H2SelectHandler extends AbstractMockHandler implements MockAnnHandl
 
 	@Override
 	public void hand(Method testMethod) {
-		useMock.set(true);
+		H2Select selected = testMethod.getAnnotation(H2Select.class);
+		useMethodMock.set(selected.value());
 	}
 
 	@Override
 	public void releaseMethod(Method testMethod) {
-		useMock.remove();
+		useMethodMock.remove();
+	}
+
+	@Override
+	public void hand(Class<?> testClass) {
+		H2Select selected = testClass.getAnnotation(H2Select.class);
+		useClassMock.set(selected.value());
+	}
+
+	@Override
+	public void releaseClass(Class<?> testClass) {
+		useClassMock.remove();
 	}
 }

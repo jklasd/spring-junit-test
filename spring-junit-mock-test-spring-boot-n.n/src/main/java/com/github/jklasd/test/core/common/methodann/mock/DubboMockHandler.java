@@ -16,14 +16,24 @@ public class DubboMockHandler extends AbstractMockHandler implements MockAnnHand
 	@Override
 	public void hand(Method testMethod) {
 		DubboMock mockAnn = testMethod.getAnnotation(DubboMock.class);
-		useMock.set(true);
+		useMethodMock.set(true);
 		exclusions.set(mockAnn.exclusions());
 	}
 
 	@Override
 	public void releaseMethod(Method testMethod) {
-		useMock.remove();
+		useMethodMock.remove();
 		exclusions.remove();
+	}
+
+	@Override
+	public void hand(Class<?> testClass) {
+		
+	}
+
+	@Override
+	public void releaseClass(Class<?> testClass) {
+		
 	}
 
 }

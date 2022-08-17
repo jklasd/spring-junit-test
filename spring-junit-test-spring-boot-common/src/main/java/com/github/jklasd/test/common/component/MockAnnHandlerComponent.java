@@ -46,4 +46,30 @@ public class MockAnnHandlerComponent {
 	public static Boolean isMock(String handlerKey) {
 		return handlerMap.containsKey(handlerKey) && handlerMap.get(handlerKey).isMock();
 	}
+
+	public static void handlerClass(Class<?> testClass) {
+		Annotation[] anns = testClass.getAnnotations();
+		for(Annotation ann : anns) {
+			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			if(handler!=null) {
+				handler.hand(testClass);
+			}
+		}
+		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
+			handlerClass(testClass.getSuperclass());
+		}
+	}
+
+	public static void releaseClass(Class<?> testClass) {
+		Annotation[] anns = testClass.getAnnotations();
+		for(Annotation ann : anns) {
+			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			if(handler!=null) {
+				handler.releaseClass(testClass);
+			}
+		}
+		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
+			releaseClass(testClass.getSuperclass());
+		}
+	}
 }

@@ -15,6 +15,7 @@ import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
+import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Lists;
 
@@ -60,8 +61,10 @@ public class RunSpringJunitTest extends BlockJUnit4ClassRunner{
             return new Fail(e);
         }
         log.debug("=======初始化=【{}】======",test.getClass());
-        //注入当前执行对象
-
+        //H2使用判断
+        MockAnnHandlerComponent.handlerClass(test.getClass());
+        MockAnnHandlerComponent.handlerMethod(method.getMethod());
+        
         Statement statement = methodInvoker(method, test);
         statement = possiblyExpectingExceptions(method, test, statement);
         statement = withPotentialTimeout(method, test, statement);

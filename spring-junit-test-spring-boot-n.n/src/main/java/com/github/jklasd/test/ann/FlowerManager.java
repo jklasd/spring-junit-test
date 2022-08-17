@@ -50,6 +50,7 @@ public class FlowerManager
 //		getTestContextManager(context).beforeTestClass();
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~~~初始化环境~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		TestUtil.resourcePreparation();
+		MockAnnHandlerComponent.handlerClass(context.getTestClass().get());
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~初始化环境完毕~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		Lifecycle testLif =	context.getTestInstanceLifecycle().get();
 		if(testLif == Lifecycle.PER_CLASS) {//构造一遍，执行完所有测试方法
@@ -62,13 +63,8 @@ public class FlowerManager
 	 */
 	@Override
 	public void afterAll(ExtensionContext context) throws Exception {
-//		try {
-//			getTestContextManager(context).afterTestClass();
-//		}
-//		finally {
-//			getStore(context).remove(context.getRequiredTestClass());
-//		}
 		log.info("afterAll");
+		MockAnnHandlerComponent.releaseClass(context.getTestClass().get());
 	}
 
 	private Object testInstance;
