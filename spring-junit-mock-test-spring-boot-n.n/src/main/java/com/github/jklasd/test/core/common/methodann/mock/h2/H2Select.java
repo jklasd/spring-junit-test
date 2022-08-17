@@ -13,7 +13,7 @@ import java.lang.annotation.Target;
  * @author jubin.zhang
  *
  */
-@Target(ElementType.METHOD)//指定位置
+@Target({ElementType.METHOD,ElementType.TYPE})//指定位置
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface H2Select {

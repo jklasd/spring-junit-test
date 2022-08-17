@@ -5,6 +5,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
 import com.github.jklasd.test.common.ContainerManager;
@@ -41,6 +42,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	
 	Map<Object,DataSource> superSource;
 	private DataSource h2Source;
+	private Map<String,DataSource> h2SourceMap = Maps.newHashMap();
 	void setDataSource(DataSource h2Source) {
 		this.h2Source = h2Source;
 	}
@@ -81,6 +83,9 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	@Override
 	public String getBeanKey() {
 		return DatabaseInitialization.class.getName();
+	}
+	public void putDataSource(String dbName, EmbeddedDatabase database) {
+		h2SourceMap.put(dbName, database);
 	}
 
 }

@@ -25,12 +25,13 @@ public class ClassUtil {
 			Method[] methods = configClass.getDeclaredMethods();
 			return Lists.newArrayList(methods).stream().anyMatch(m->{
 				if(Modifier.isStatic(m.getModifiers())
+						&& !m.getName().equals("main")//非main方法
 						&& !m.getName().contains("lambda$")//非匿名方法
 						&& !m.getName().contains("access$")//非匿名方法
-						&& !m.getName().startsWith("$")) {//非匿名方法
+						&& !m.getName().startsWith("$")) {//非代理类的方法
 					Class<?> returnType = m.getReturnType();
 					if(!returnType.getName().contains("void")) {
-						log.debug("class=>{},method=>{}",configClass,m);
+						log.info("class=>{},method=>{}",configClass,m);
 						return true;
 					}
 				}

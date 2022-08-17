@@ -77,9 +77,9 @@ public class JunitClassLoader extends ClassLoader{
 					log.debug("查看{}是否是静态类",loadClass);
 					if(scan.hasStaticMethod(loadClass)) {
 //						scan.hasStaticMethod(loadClass);
-						if(loadClass.getName().contains("CostConfiguration")) {
-							log.debug("断点");
-						}
+//						if(loadClass.getName().contains("CostConfiguration")) {
+//							log.debug("断点");
+//						}
 						int process = ContainerManager.stats;
 						if(process < ContainerManager.inited) {
 							staticComponentClass.add(loadClass);
