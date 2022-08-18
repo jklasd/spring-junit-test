@@ -112,7 +112,6 @@ public abstract class AbstractLazyProxy {
     
     private ThreadLocal<Map<String,Object>> lastInvoker = new ThreadLocal<Map<String,Object>>();
     
-//    private AtomicInteger buildObjTimes = new AtomicInteger();
     private AtomicInteger errorTimes = new AtomicInteger();
     
     
@@ -189,7 +188,6 @@ public abstract class AbstractLazyProxy {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
         	throw e;
         }catch (InvocationTargetException e) {
-//        	log.warn("===================InvocationTargetException处理===================");
         	throw e.getTargetException();
 		}catch (Exception e) {
         	errorTimes.incrementAndGet();
@@ -236,9 +234,6 @@ public abstract class AbstractLazyProxy {
             }
         }
         log.debug("开始实例化:{}",beanModel);
-//        if(beanModel.getTagClass().getName().contains("mongodb.MongoClient")) {
-//        	log.debug("断点");
-//        }
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
             inited = true;
