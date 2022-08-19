@@ -103,6 +103,14 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 	    					JunitInvokeUtil.invokeMethod(dataBaseEnv,"getTransactionFactory"),
 	    					newDataSource);
 	    			JunitInvokeUtil.invokeMethod(configuration, "setEnvironment",newDataBaseEnv);
+	    			
+	    			Object SqlInterceptor = ContainerManager.getComponent(ContainerManager.NameConstants.SqlInterceptor);
+	    			if(SqlInterceptor!=null) {
+	    				Object plugn = JunitInvokeUtil.invokeMethod(SqlInterceptor, "buildInterceptor");
+	    				if(plugn!=null) {
+	    					JunitInvokeUtil.invokeMethod(configuration, "setEnvironment",plugn);
+	    				}
+	    			}
 	    		}
 	    	}
     	}
@@ -115,9 +123,6 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     private void buildMybatisFactory() {
         if (defaultFactory == null) {
-        	
-        	DatabaseInitialization dataBase = ContainerManager.getComponent(DatabaseInitialization.class.getName());
-        	
             Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
             if (obj != null) {
                 defaultFactory = obj;

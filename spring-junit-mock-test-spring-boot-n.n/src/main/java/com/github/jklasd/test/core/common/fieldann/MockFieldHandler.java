@@ -58,9 +58,12 @@ public class MockFieldHandler implements ContainerRegister,MockFieldHandlerI{
 
 	@Override
 	public void releaseClass(Class<?> testClass) {
-		injectMocksObject.remove(testClass).entrySet().forEach(entry->{
-			LazyApplicationContext.getInstance().releaseBean(entry.getKey(), entry.getValue());
-		});
+		Map<Object, Class<?>> removeCache = injectMocksObject.remove(testClass);
+		if(removeCache!=null) {
+			removeCache.entrySet().forEach(entry->{
+				LazyApplicationContext.getInstance().releaseBean(entry.getKey(), entry.getValue());
+			});
+		}
 		cacheMockObject.remove(testClass);
 	}
 

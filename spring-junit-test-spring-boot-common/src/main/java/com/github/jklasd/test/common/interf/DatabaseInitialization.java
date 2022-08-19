@@ -4,6 +4,7 @@ import javax.sql.DataSource;
 
 public interface DatabaseInitialization {
 
+	boolean isInitDataSource();
 	DataSource build(DataSource dataSource);
 
 }

@@ -42,6 +42,9 @@ public class InjectMocksHandler extends AbstractMockHandler implements FieldHand
 		try {
 			//如果存在spring 注解
 			Object obj = null;
+			if(!attr.isAccessible()) {
+				attr.setAccessible(true);
+			}
 			//则注入，在类结束后释放掉对象
 			if(attr.get(tagObject)!=null) {
 				obj = attr.get(tagObject);

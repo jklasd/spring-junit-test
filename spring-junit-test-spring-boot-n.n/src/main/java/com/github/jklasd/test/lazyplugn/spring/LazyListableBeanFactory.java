@@ -23,6 +23,7 @@ import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -96,7 +97,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		}else {
 			List<T> list = Lists.newArrayList();
 			cacheClassMap.entrySet().forEach(entry->{
-				if(entry.getKey().isAssignableFrom(requiredType)) {
+				// 父类 isAssignableFrom 子类
+				if(requiredType.isAssignableFrom(entry.getKey())) {
 					list.add((T) entry.getValue());
 				}
 			});
@@ -196,7 +198,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	}
 
 	protected void releaseBean(Class<?> tagC, Object tmp) {
-		cacheProxyBean.entrySet().removeIf(entry->entry.getValue()==tmp);
+		cacheProxyBean.entrySet().stream().filter(entry->entry.getValue()==tmp).forEach(entry->{
+			BeanModel model = new BeanModel();
+			model.setBeanName(entry.getKey());
+			model.setTagClass(tagC);
+			entry.setValue(LazyBean.createLazyCglib(model));//重新构建一个
+		});
 		
 		cacheClassMap.remove(tagC);
 	}

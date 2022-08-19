@@ -8,9 +8,13 @@ import java.util.List;
 
 import javax.annotation.Resource;
 
+import org.apache.commons.lang3.StringUtils;
+
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
@@ -40,16 +44,22 @@ public class ResourceHandler  implements FieldHandler{
 					log.info("其他特殊情况");
 				}
 			}else {
-				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(attr.getType(),c.name()));
+				String beanName = c.name();
+				if(StringUtils.isBlank(beanName)) {
+					beanName = attr.getName();
+				}
+				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
 			}
 		}
 	}
 	public String getType() {
 		return Resource.class.getName();
 	}
+	
+	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {
-		// TODO Auto-generated method stub
-		
+		handler.injeckMock(fieldDef);
 	}
 }

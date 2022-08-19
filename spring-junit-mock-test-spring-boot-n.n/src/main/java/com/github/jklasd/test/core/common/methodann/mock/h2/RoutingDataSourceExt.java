@@ -90,5 +90,9 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	public void putDataSource(String dbName, EmbeddedDatabase database) {
 		h2SourceMap.put(dbName, database);
 	}
+	@Override
+	public boolean isInitDataSource() {
+		return h2Source!=null;
+	}
 
 }
