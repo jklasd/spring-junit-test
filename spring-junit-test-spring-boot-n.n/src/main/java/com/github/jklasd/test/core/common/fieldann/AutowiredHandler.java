@@ -9,9 +9,11 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
@@ -56,5 +58,12 @@ public class AutowiredHandler implements FieldHandler{
 	@Override
 	public String getType() {
 		return Autowired.class.getName();
+	}
+	
+	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+
+	@Override
+	public void injeckMock(FieldDef fieldDef, Annotation ann) {
+		handler.injeckMock(fieldDef);
 	}
 }

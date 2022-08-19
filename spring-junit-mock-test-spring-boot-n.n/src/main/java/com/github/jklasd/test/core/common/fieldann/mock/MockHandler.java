@@ -1,20 +1,39 @@
 package com.github.jklasd.test.core.common.fieldann.mock;
 
-import java.lang.reflect.Constructor;
+import java.lang.annotation.Annotation;
+import java.lang.reflect.Field;
 
-import com.github.jklasd.test.common.util.ScanUtil;
+import org.mockito.Mock;
+import org.mockito.internal.configuration.MockAnnotationProcessor;
 
-public abstract class MockHandler{
-	String packagePath = "org.springframework.boot.test.mock.mockito";
-	protected Class<?> QualifierDefinition = ScanUtil.loadClass(packagePath+".QualifierDefinition");
-	Constructor<?> qualDefStructor;
-	{
+import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.core.common.fieldann.AbstractMockHandler;
+import com.github.jklasd.test.core.common.fieldann.MockFieldHandler;
+
+public class MockHandler extends AbstractMockHandler implements FieldHandler{
+
+	@Override
+	public String getType() {
+		return Mock.class.getName();
+	}
+	
+	private MockAnnotationProcessor mockAnnotationProcessor = new MockAnnotationProcessor();
+
+	@Override
+	public void handler(FieldDef def, Annotation ann) {
+		Field attr = def.getField();
+		Object tagObject = def.getTagObj();
+		Mock mockAnn = (Mock) ann;
+		Object obj = mockAnnotationProcessor.process(mockAnn, def.getField());
 		try {
-			Constructor<?>[] qstructors = QualifierDefinition.getDeclaredConstructors();
-			qualDefStructor = qstructors[0];
-			qualDefStructor.setAccessible(true);
-		} catch (SecurityException | IllegalArgumentException e) {
+			FieldAnnComponent.setObj(attr, tagObject, obj);
+			
+			MockFieldHandler.getInstance().registBean(attr.getName(), obj, attr.getType(),tagObject.getClass());
+		} catch (IllegalArgumentException e) {
 			e.printStackTrace();
 		}
 	}
+
 }

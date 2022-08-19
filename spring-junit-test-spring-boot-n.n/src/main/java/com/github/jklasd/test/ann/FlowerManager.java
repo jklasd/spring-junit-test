@@ -50,12 +50,13 @@ public class FlowerManager
 //		getTestContextManager(context).beforeTestClass();
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~~~初始化环境~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		TestUtil.resourcePreparation();
-		MockAnnHandlerComponent.handlerClass(context.getTestClass().get());
 		log.info("~~~~~~~~~~~~~~~~~~~~~~~~初始化环境完毕~~~~~~~~~~~~~~~~~~~~~~~~~~");
 		Lifecycle testLif =	context.getTestInstanceLifecycle().get();
 		if(testLif == Lifecycle.PER_CLASS) {//构造一遍，执行完所有测试方法
 			LazyBean.getInstance().processAttr(testInstance, testInstance.getClass());
+			MockAnnHandlerComponent.handlerClass(testInstance.getClass());
 		}
+		
 	}
 
 	/**
@@ -81,6 +82,7 @@ public class FlowerManager
 			this.testInstance = testInstance;
 		}else if(testLif == Lifecycle.PER_METHOD) {//每个方法构造一遍
 			LazyBean.getInstance().processAttr(testInstance, testInstance.getClass());
+			MockAnnHandlerComponent.handlerClass(testInstance.getClass());
 		}
 	}
 

@@ -31,10 +31,10 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyApplicationContext extends JunitApplicationContext{
 	
 	@Getter
-	private DefaultListableBeanFactory lazyBeanFactory;
+	private LazyListableBeanFactory lazyBeanFactory;
 	private LazyApplicationContext() {
 		super(LazyListableBeanFactory.getInstance());
-		lazyBeanFactory = getDefaultListableBeanFactory();
+		lazyBeanFactory = (LazyListableBeanFactory) getDefaultListableBeanFactory();
 	}
 	private static LazyApplicationContext signBean = new LazyApplicationContext();
 	public static LazyApplicationContext getInstance() {
@@ -129,6 +129,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
 			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
 		}
+	}
+	
+	public void releaseBean(Object tmp, Class<?> tagC) {
+		lazyBeanFactory.releaseBean(tagC, tmp);
 	}
 	
 	private Properties properties;

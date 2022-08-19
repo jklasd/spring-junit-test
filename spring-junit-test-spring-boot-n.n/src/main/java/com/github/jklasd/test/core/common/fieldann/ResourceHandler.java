@@ -47,4 +47,9 @@ public class ResourceHandler  implements FieldHandler{
 	public String getType() {
 		return Resource.class.getName();
 	}
+	@Override
+	public void injeckMock(FieldDef fieldDef, Annotation ann) {
+		// TODO Auto-generated method stub
+		
+	}
 }

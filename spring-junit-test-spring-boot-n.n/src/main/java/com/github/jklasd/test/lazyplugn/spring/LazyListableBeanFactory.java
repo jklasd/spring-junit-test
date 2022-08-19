@@ -27,6 +27,7 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -92,6 +93,17 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(cacheClassMap.containsKey(requiredType)) {
 			return (T) cacheClassMap.get(requiredType);
+		}else {
+			List<T> list = Lists.newArrayList();
+			cacheClassMap.entrySet().forEach(entry->{
+				if(entry.getKey().isAssignableFrom(requiredType)) {
+					list.add((T) entry.getValue());
+				}
+			});
+			if(list.size()>1) {
+				log.warn("{}=>找到两个对象",requiredType);
+				return list.get(0);
+			}
 		}
 		//存在jdbcTemplate、 mongoTemplate等bean需要获取
 //		else if(requiredType.getName().startsWith("org.springframework")) {
@@ -181,5 +193,11 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	@Override
 	public String getBeanKey() {
 		return JunitListableBeanFactory.class.getSimpleName();
+	}
+
+	protected void releaseBean(Class<?> tagC, Object tmp) {
+		cacheProxyBean.entrySet().removeIf(entry->entry.getValue()==tmp);
+		
+		cacheClassMap.remove(tagC);
 	}
 }

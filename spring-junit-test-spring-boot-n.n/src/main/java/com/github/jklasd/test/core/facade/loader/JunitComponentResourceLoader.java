@@ -3,19 +3,22 @@ package com.github.jklasd.test.core.facade.loader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Properties;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.VersionController;
 import com.github.jklasd.test.common.component.BootedHandlerComponent;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.component.VersionControlComponent;
+import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
-import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
+import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.core.facade.JunitResourceLoader;
 
@@ -40,12 +43,17 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 				BootedHandlerComponent.HandlerLoader.load(bootHandlerClassName.split(","));
 			}
 			
+			String containerName = prop.getProperty(ContainerRegister.class.getName());
+			if(StringUtils.isNotBlank(containerName)) {
+				ContainerManager.HandlerLoader.load(containerName.split(","));
+			}
+			
 			String factoryClassNames = prop.getProperty(FieldHandler.class.getName());
 			if(StringUtils.isNotBlank(factoryClassNames)) {
 				FieldAnnComponent.HandlerLoader.load(factoryClassNames.split(","));
 			}
 			
-			String junitMockAnnClassName = prop.getProperty(MockAnnHandler.class.getName());
+			String junitMockAnnClassName = prop.getProperty(MockClassHandler.class.getName());
 			if(StringUtils.isNotBlank(junitMockAnnClassName)) {
 				MockAnnHandlerComponent.HandlerLoader.load(junitMockAnnClassName.split(","));
 			}
@@ -59,7 +67,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoader{
 			if(StringUtils.isNotBlank(scannerRegistrarClass)) {
 				ScannerRegistrarComponent.load(scannerRegistrarClass.split(","));
 			}
-		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 			log.error("=====================loadResource=====================",e);
 		}
 	}

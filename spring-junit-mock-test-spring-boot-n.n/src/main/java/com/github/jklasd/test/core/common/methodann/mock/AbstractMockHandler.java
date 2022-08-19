@@ -1,8 +1,8 @@
 package com.github.jklasd.test.core.common.methodann.mock;
 
-import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
+import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 
-public abstract class AbstractMockHandler implements MockAnnHandler{
+public abstract class AbstractMockHandler implements MockClassHandler{
 	
 	protected ThreadLocal<Boolean> useClassMock = new ThreadLocal<Boolean>();
 	protected ThreadLocal<Boolean> useMethodMock = new ThreadLocal<Boolean>();

@@ -2,7 +2,7 @@ package com.github.jklasd.test.core.common.methodann.mock.h2;
 
 import java.lang.reflect.Method;
 
-import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
+import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.core.common.methodann.mock.AbstractMockHandler;
 
 /**
@@ -12,7 +12,7 @@ import com.github.jklasd.test.core.common.methodann.mock.AbstractMockHandler;
  * @author jubin.zhang
  *
  */
-public class H2SelectHandler extends AbstractMockHandler implements MockAnnHandler{
+public class H2SelectHandler extends AbstractMockHandler implements MockClassHandler{
 
 	@Override
 	public String getType() {

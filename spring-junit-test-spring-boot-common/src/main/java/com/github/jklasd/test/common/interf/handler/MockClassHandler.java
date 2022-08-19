@@ -2,7 +2,7 @@ package com.github.jklasd.test.common.interf.handler;
 
 import java.lang.reflect.Method;
 
-public interface MockAnnHandler {
+public interface MockClassHandler {
 	public String getType();
 	public void hand(Class<?> testClass);
 	public void releaseClass(Class<?> testClass);

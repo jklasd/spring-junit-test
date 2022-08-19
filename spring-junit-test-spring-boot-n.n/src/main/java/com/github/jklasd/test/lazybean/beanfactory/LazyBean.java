@@ -233,25 +233,6 @@ public class LazyBean implements LazyBeanI{
 		}finally {
 			SignalNotificationUtil.remove(beanModel.getTagClass().getName());
 		}
-//		Class<?> tagClass = beanModel.getTagClass();
-//		Object tag;
-//		LazyCglib handler = new LazyCglib(beanModel);
-//		if(!handler.hasFinalMethod() && handler.findPublicConstrucors()) {
-//		    if(handler.getArgumentTypes().length>0) {
-//		        Enhancer enhancer = new Enhancer();
-//		        enhancer.setSuperclass(tagClass);
-//		        enhancer.setCallback(handler);
-//		        tag = enhancer.create(handler.getArgumentTypes(), handler.getArguments());
-//		    }else {
-//		        tag = Enhancer.create(tagClass, handler);
-//		    }
-//		}else {
-//		    tag = handler.getTagertObj();
-//		}
-//		if(tag == null) {
-//		    log.error("不存在公开无参构造函数");
-//		}
-//		return tag;
 	}
 	private static Class<?>[] prepend(Class<?> first, Class<?>... rest) {
         Class<?>[] all = new Class<?>[rest.length+1];

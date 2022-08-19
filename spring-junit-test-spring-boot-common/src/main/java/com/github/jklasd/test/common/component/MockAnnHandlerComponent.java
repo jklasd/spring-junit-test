@@ -6,17 +6,19 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
-import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
+import com.github.jklasd.test.common.interf.handler.MockClassHandler;
+import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.google.common.collect.Maps;
 
 public class MockAnnHandlerComponent {
-	private static Map<String,MockAnnHandler> handlerMap = Maps.newHashMap();
+	private static Map<String,MockClassHandler> handlerMap = Maps.newHashMap();
 	public static class HandlerLoader{
 		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
 			for(String hclass :handlerClasses) {
 				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
-				MockAnnHandler handler = (MockAnnHandler) handlerClass.newInstance();
+				MockClassHandler handler = (MockClassHandler) handlerClass.newInstance();
 				if(StringUtils.isNotBlank(handler.getType())) {
 					handlerMap.put(handler.getType(), handler);
 				}
@@ -26,7 +28,7 @@ public class MockAnnHandlerComponent {
 	public static void handlerMethod(Method method) {
 		Annotation[] anns = method.getAnnotations();
 		for(Annotation ann : anns) {
-			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
 				handler.hand(method);
 			}
@@ -36,7 +38,7 @@ public class MockAnnHandlerComponent {
 	public static void releaseMethod(Method method) {
 		Annotation[] anns = method.getAnnotations();
 		for(Annotation ann : anns) {
-			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
 				handler.releaseMethod(method);
 			}
@@ -50,7 +52,7 @@ public class MockAnnHandlerComponent {
 	public static void handlerClass(Class<?> testClass) {
 		Annotation[] anns = testClass.getAnnotations();
 		for(Annotation ann : anns) {
-			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
 				handler.hand(testClass);
 			}
@@ -58,12 +60,14 @@ public class MockAnnHandlerComponent {
 		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
 			handlerClass(testClass.getSuperclass());
 		}
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		injectMocksHandler.hand(testClass);
 	}
 
 	public static void releaseClass(Class<?> testClass) {
 		Annotation[] anns = testClass.getAnnotations();
 		for(Annotation ann : anns) {
-			MockAnnHandler handler = handlerMap.get(ann.annotationType().getName());
+			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
 				handler.releaseClass(testClass);
 			}
@@ -71,5 +75,7 @@ public class MockAnnHandlerComponent {
 		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
 			releaseClass(testClass.getSuperclass());
 		}
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		injectMocksHandler.releaseClass(testClass);
 	}
 }

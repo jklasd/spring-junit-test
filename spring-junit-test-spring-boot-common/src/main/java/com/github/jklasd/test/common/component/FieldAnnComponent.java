@@ -2,7 +2,9 @@ package com.github.jklasd.test.common.component;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.util.Comparator;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -32,13 +34,26 @@ public class FieldAnnComponent {
 
 	public static void handlerField(FieldDef attr) {
 		Annotation[] anns = attr.getField().getAnnotations();
+		TreeMap<FieldHandler,Annotation> hitHandlerMap = Maps.newTreeMap(new Comparator<FieldHandler>() {
+			@Override
+			public int compare(FieldHandler o1, FieldHandler o2) {
+				return o1.order() - o2.order();
+			}
+		});
 		for(Annotation ann : anns) {
 			FieldHandler handler = handlerMap.get(ann.annotationType().getName());
 			if(handler!=null) {
-				handler.handler(attr,ann);
-				break;
+				hitHandlerMap.put(handler, ann);
 			}
 		}
+		if(hitHandlerMap.isEmpty()) {
+			return;
+		}
+		hitHandlerMap.entrySet().forEach(entry->{
+			entry.getKey().handler(attr, entry.getValue());
+		});
+//		FieldHandler handler = hitHandlerMap.firstKey();
+//		handler.handler(attr, hitHandlerMap.get(handler));
 	}
 	
 	public static void setObj(Field attr,Object obj,Object proxyObj) {
@@ -52,6 +67,17 @@ public class FieldAnnComponent {
 			attr.set(obj, proxyObj);
 		} catch (Exception e) {
 			log.error("注入对象异常",e);
+		}
+	}
+
+	public static void injeckMock(FieldDef fieldDef) {
+		Annotation[] anns = fieldDef.getField().getAnnotations();
+		for(Annotation ann : anns) {
+			FieldHandler handler = handlerMap.get(ann.annotationType().getName());
+			if(handler!=null) {
+				handler.injeckMock(fieldDef,ann);
+				break;
+			}
 		}
 	}
 }

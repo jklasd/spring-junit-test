@@ -2,9 +2,9 @@ package com.github.jklasd.test.core.common.methodann.mock;
 
 import java.lang.reflect.Method;
 
-import com.github.jklasd.test.common.interf.handler.MockAnnHandler;
+import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 
-public class DubboMockHandler extends AbstractMockHandler implements MockAnnHandler{
+public class DubboMockHandler extends AbstractMockHandler implements MockClassHandler{
 	
 	private ThreadLocal<Class<?>[]> exclusions = new ThreadLocal<Class<?>[]>();
 	
