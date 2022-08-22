@@ -3,6 +3,7 @@ package com.github.jklasd.test.util;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 
 import org.springframework.util.ReflectionUtils;
@@ -11,6 +12,14 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 
 public class JunitInvokeUtil extends ReflectionUtils{
+	public static Object invokeMethodSignParam(Object obj,String methodStr,Class<?> argClasses ,Object arg) {
+        Class<?> tagClass = obj.getClass();
+        Method method = findMethod(tagClass, methodStr, argClasses);
+        if(!method.isAccessible()) {
+            method.setAccessible(true);
+        }
+        return invokeMethod(method, obj, arg);
+    }
     public static Object invokeMethodByParamClass(Object obj,String methodStr,Class<?>[] argClasses ,Object[] arg) {
         Class<?> tagClass = obj.getClass();
         Method method = getMethodByParamClass(tagClass,methodStr, argClasses);
@@ -73,4 +82,28 @@ public class JunitInvokeUtil extends ReflectionUtils{
              throw new JunitException(e);
         }
     }
+	public static Object invokeReadField(String fieldName,Object source) {
+		Class<?> tagClass = source.getClass();
+		try {
+			Field tmpField = tagClass.getDeclaredField(fieldName);
+			if(!tmpField.isAccessible()) {
+				tmpField.setAccessible(true);
+			}
+			return tmpField.get(source);
+		} catch (Exception e) {
+			throw new JunitException(e); 
+		}
+	}
+	public static void invokeWriteField(String fieldName,Object source,Object value) {
+		Class<?> tagClass = source.getClass();
+		try {
+			Field tmpField = tagClass.getDeclaredField(fieldName);
+			if(!tmpField.isAccessible()) {
+				tmpField.setAccessible(true);
+			}
+			tmpField.set(source,value);
+		} catch (Exception e) {
+			throw new JunitException(e); 
+		}
+	}
 }

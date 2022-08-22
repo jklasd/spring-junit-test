@@ -1,24 +1,60 @@
 package com.github.jklasd.test.core.common.methodann.mock.h2;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.sql.SQLException;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.util.JunitInvokeUtil;
+import com.google.common.base.Objects;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
+
+import lombok.AllArgsConstructor;
 
 public class SqlInterceptor implements ContainerRegister{
 
-	private String ibatisInterceptor = "org.apache.ibatis.plugin.Interceptor";
+	private Class<?> interceptorClass;
+	private Class<?> executorClass;
+	private Class<?> pluginClass;
+//	private Class<?> boundSqlClass;
+	private Class<?> sqlSourceClass;
+//	private Method wrap;
 	
-	public Object buildInterceptor() {
-		Class<?> interceptor = ScanUtil.loadClass(ibatisInterceptor);
-		if(interceptor!=null) {
-			return Proxy.newProxyInstance(JunitClassLoader.getInstance(), new Class[] { interceptor }, new IbatisSqlInterceptor());
+	Map<Class<?>, Set<Method>> signatureMap;
+	
+	{
+		interceptorClass = ScanUtil.loadClass("org.apache.ibatis.plugin.Interceptor");
+		executorClass = ScanUtil.loadClass("org.apache.ibatis.executor.Executor");
+		pluginClass = ScanUtil.loadClass("org.apache.ibatis.plugin.Plugin");
+		sqlSourceClass = ScanUtil.loadClass("org.apache.ibatis.mapping.SqlSource");
+//		boundSqlClass = ScanUtil.loadClass("org.apache.ibatis.mapping.BoundSql");
+		
+		
+		signatureMap = Maps.newHashMap();
+		signatureMap.put(executorClass, Sets.newHashSet());
+		Method[] ms = executorClass.getMethods();
+		for (Method m : ms) {
+			if (Objects.equal(m.getName(), "query")) {
+				signatureMap.get(executorClass).add(m);
+			}
 		}
-		return null;
+	}
+	private Object ibatisSqlInterceptor;
+	public synchronized Object buildInterceptor() {
+		if(ibatisSqlInterceptor==null) {
+			ibatisSqlInterceptor = Proxy.newProxyInstance(JunitClassLoader.getInstance(), new Class[] { interceptorClass }, new IbatisSqlInterceptor());
+		}
+		return ibatisSqlInterceptor;
 	}
 	
 	public class IbatisSqlInterceptor implements InvocationHandler{
@@ -26,9 +62,34 @@ public class SqlInterceptor implements ContainerRegister{
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			switch (method.getName()) {
 			case "intercept":
-				break;
+				if(MockAnnHandlerComponent.isMock(H2Select.class.getName())) {
+					resetSql2Invocation(args[0]);
+				}
+		        return JunitInvokeUtil.invokeMethod(args[0], "proceed");
 			case "plugin":
-				break;
+				Object target = args[0];
+				if(MockAnnHandlerComponent.isMock(H2Select.class.getName())) {
+					/**
+					 * @Intercepts(
+				        {
+				                @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class}),
+				                @Signature(type = Executor.class, method = "query", args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class, CacheKey.class, BoundSql.class}),
+				        }
+				)
+					 * 
+					 */
+					Class<?> type = target.getClass();
+					Class<?>[] interfaces = getAllInterfaces(target.getClass(), signatureMap);
+					if (interfaces.length > 0) {
+						Constructor<?> c = pluginClass.getDeclaredConstructors()[0];
+						if (!c.isAccessible()) {
+							c.setAccessible(true);
+						}
+						return Proxy.newProxyInstance(type.getClassLoader(), interfaces,
+								(InvocationHandler) c.newInstance(target, buildInterceptor(), signatureMap));
+					}
+				}
+				return target;
 			case "setProperties":
 				break;
 			default:
@@ -37,6 +98,46 @@ public class SqlInterceptor implements ContainerRegister{
 			return null;
 		}
 	}
+	
+	@AllArgsConstructor
+	public class IbatisSqlSourceInterceptor implements InvocationHandler{
+		
+		private Object boundSql;
+		
+		@Override
+		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+			return boundSql;
+		}
+	}
+	private String getSqlByInvocation(Object invocation) {
+        final Object[] args = (Object[]) JunitInvokeUtil.invokeMethod(invocation, "getArgs");
+        Object ms = args[0];
+        Object parameterObject = args[1];
+        Object boundSql = JunitInvokeUtil.invokeMethodSignParam(ms, "getBoundSql",Object.class, parameterObject); // ms.getBoundSql(parameterObject);//(MappedStatement) 
+        return JunitInvokeUtil.invokeMethod(boundSql,"getSql").toString();
+    }
+	/**
+	 * 只做关键字替换，不做参数替换
+	 * @param invocation
+	 * @throws SQLException
+	 */
+	private void resetSql2Invocation(Object invocation) throws SQLException {
+		final Object[] args = (Object[]) JunitInvokeUtil.invokeMethod(invocation, "getArgs");
+        Object statement = args[0];
+        Object parameterObject = args[1];
+        Object boundSql = JunitInvokeUtil.invokeMethodSignParam(statement, "getBoundSql",Object.class,parameterObject);
+        
+//        Object sqlSource = JunitInvokeUtil.invokeMethod(statement, "getSqlSource");
+        
+        String sql = JunitInvokeUtil.invokeMethod(boundSql,"getSql").toString();
+//        sql = sql.replace("DATE_ADD", "DATEADD");
+//        sql = sql.replace("CURDATE", "CURRENT_DATE");
+        
+        JunitInvokeUtil.invokeWriteField("sql", boundSql, sql);
+        //生成新的代理sqlSource 存入里面
+        JunitInvokeUtil.invokeWriteField("sqlSource", statement, Proxy.newProxyInstance(JunitClassLoader.getInstance(), new Class[] { sqlSourceClass }, 
+        		new IbatisSqlSourceInterceptor(boundSql)));
+    }
 
 	@Override
 	public void register() {
@@ -47,5 +148,18 @@ public class SqlInterceptor implements ContainerRegister{
 	public String getBeanKey() {
 		return ContainerManager.NameConstants.SqlInterceptor;
 	}
+	
+	private static Class<?>[] getAllInterfaces(Class<?> type, Map<Class<?>, Set<Method>> signatureMap) {
+	    Set<Class<?>> interfaces = new HashSet<>();
+	    while (type != null) {
+	      for (Class<?> c : type.getInterfaces()) {
+	        if (signatureMap.containsKey(c)) {
+	          interfaces.add(c);
+	        }
+	      }
+	      type = type.getSuperclass();
+	    }
+	    return interfaces.toArray(new Class<?>[0]);
+	  }
 
 }

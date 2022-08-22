@@ -1,5 +1,6 @@
  package com.github.jklasd.test.lazybean.beanfactory;
 
+import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -76,8 +77,13 @@ public abstract class AbstractLazyProxy {
     	try {
     		if(isProxy(obj)) {
     			if(obj instanceof Proxy) {
-    				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
-        			return imple.getBeanModel().getTagClass();
+    				InvocationHandler ih = Proxy.getInvocationHandler(obj);
+    				if(ih instanceof LazyImple) {
+    					LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
+    					return imple.getBeanModel().getTagClass();
+    				}else {
+    					return null;
+    				}
         		}else {
         			Factory fa = (Factory) obj;
         			Callback[] cbs = fa.getCallbacks();

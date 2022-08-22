@@ -104,13 +104,13 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 	    					newDataSource);
 	    			JunitInvokeUtil.invokeMethod(configuration, "setEnvironment",newDataBaseEnv);
 	    			
-	    			Object SqlInterceptor = ContainerManager.getComponent(ContainerManager.NameConstants.SqlInterceptor);
-	    			if(SqlInterceptor!=null) {
-	    				Object plugn = JunitInvokeUtil.invokeMethod(SqlInterceptor, "buildInterceptor");
-	    				if(plugn!=null) {
-	    					JunitInvokeUtil.invokeMethod(configuration, "setEnvironment",plugn);
-	    				}
-	    			}
+//	    			Object SqlInterceptor = ContainerManager.getComponent(ContainerManager.NameConstants.SqlInterceptor);
+//	    			if(SqlInterceptor!=null) {
+//	    				Object plugn = JunitInvokeUtil.invokeMethod(SqlInterceptor, "buildInterceptor");
+//	    				if(plugn!=null) {
+//	    					JunitInvokeUtil.invokeMethodByParamClass(configuration, "addInterceptor",new Class<?>[] {ScanUtil.loadClass("org.apache.ibatis.plugin.Interceptor")},new Object[] {plugn});
+//	    				}
+//	    			}
 	    		}
 	    	}
     	}

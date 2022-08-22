@@ -1,6 +1,7 @@
 package com.github.jklasd.test.core.common.methodann.mock.h2;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.Map;
 
 import javax.sql.DataSource;
@@ -45,6 +46,15 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	private Map<String,DataSource> h2SourceMap = Maps.newHashMap();
 	void setDataSource(DataSource h2Source) {
 		this.h2Source = h2Source;
+	}
+	
+	void initFunction(DataSource h2Source) {
+		try {
+			h2Source.getConnection().createStatement().execute("CREATE ALIAS IF NOT EXISTS \"DATE_ADD\" FOR \"com.github.jklasd.test.core.common.methodann.mock.h2.MysqlToH2Functions.DATEADD\";");
+			h2Source.getConnection().createStatement().execute("CREATE ALIAS IF NOT EXISTS \"CURDATE\" FOR \"com.github.jklasd.test.core.common.methodann.mock.h2.MysqlToH2Functions.CURDATE\";");
+		} catch (SQLException e) {
+			log.error("initFunction",e);
+		}
 	}
 	
 	

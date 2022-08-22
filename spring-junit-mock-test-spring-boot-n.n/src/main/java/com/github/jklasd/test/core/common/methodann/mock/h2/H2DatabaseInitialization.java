@@ -4,6 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.springframework.core.io.Resource;
+import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
@@ -40,7 +41,9 @@ public class H2DatabaseInitialization implements BootHandler{
 			defaultFactory.setDatabasePopulator(tmp);
 			defaultFactory.setDatabaseName(databaseName);
 			
-			RoutingDataSourceExt.getInstance().setDataSource(defaultFactory.getDatabase());
+			EmbeddedDatabase source = defaultFactory.getDatabase();
+//			RoutingDataSourceExt.getInstance().initFunction(source);
+			RoutingDataSourceExt.getInstance().setDataSource(source);
 			
 		} catch (IOException e) {
 			if(e instanceof FileNotFoundException) {
