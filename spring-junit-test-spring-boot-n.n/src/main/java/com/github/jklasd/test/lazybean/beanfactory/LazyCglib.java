@@ -13,6 +13,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
@@ -172,7 +173,17 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
                     		}
                     		if(obj!=null && !AbstractLazyProxy.isProxy(obj)) {
                 				tagertObj = obj;
+                			}else {
+                				Class<?> tmpC = ClassScan.getInstance().findClassByName(beanName);
+                				if(tmpC!=null) {
+                					beanModel.setTagClass(tmpC);
+                					setConstructor();
+                					buildObject();
+                				}
                 			}
+                    		
+                    		
+                    		
                     		if(tagertObj == null) {
                     			throw new JunitException(tagertC.getName()+" Bean 不存在", true);
                     		}

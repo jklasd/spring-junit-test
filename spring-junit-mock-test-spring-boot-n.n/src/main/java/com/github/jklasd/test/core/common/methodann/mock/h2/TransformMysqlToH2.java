@@ -39,7 +39,14 @@ public class TransformMysqlToH2 {
     public static String transformCreateTable(String content) {
         content = "SET MODE MYSQL;\n\n" + content;
 
+        content = content.replaceAll("`key`", "key_expression_junit1");
+        content = content.replaceAll("`value`", "key_expression_junit2");
+        
         content = content.replaceAll("`", "");
+        
+        content = content.replaceAll("key_expression_junit1","`key`");
+        content = content.replaceAll("key_expression_junit2", "`value`");
+        
         content = content.replaceAll("COLLATE.*(?=D)", "");
         content = content.replaceAll("COMMENT.*'(?=,)", "");
         content = content.replaceAll("\\).*ENGINE.*(?=;)", ")");

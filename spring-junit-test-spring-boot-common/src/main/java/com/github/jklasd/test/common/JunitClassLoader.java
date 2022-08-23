@@ -10,6 +10,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
@@ -24,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 public class JunitClassLoader extends ClassLoader{
 	private JunitClassLoader() {}
 	static JunitClassLoader demo = new JunitClassLoader();
+	String version = System.getProperty("java.version");
 	public static JunitClassLoader getInstance() {
 		return demo;
 	}
@@ -63,6 +65,11 @@ public class JunitClassLoader extends ClassLoader{
 		Class<?> loadClass = findLoadedClass(name);
 		if(loadClass!=null) {
 			return loadClass;
+		}
+		if(name.equals("module-info")
+				&& version.startsWith("1.8")) {
+			log.warn("module-info 版本不支持");
+			return null;
 		}
 		loadClass = loadClass(name, false);
 		try {

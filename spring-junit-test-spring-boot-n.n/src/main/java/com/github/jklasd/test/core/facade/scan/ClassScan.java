@@ -9,7 +9,6 @@ import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.net.URLDecoder;
-import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -146,14 +145,18 @@ public class ClassScan implements Scan{
 				// 查看是否class
 				try {
 					Class<?> c = classLoader.junitloadClass(p);
-					classNames.add(p+CLASS_SUFFIX);
-					applicationAllClassMap.put(p,c);
+					if(c!=null) {
+						classNames.add(p+CLASS_SUFFIX);
+						applicationAllClassMap.put(p,c);
+					}
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
 				}catch(Exception e) {
 					log.error("加载类异常",e);
 				}catch (VerifyError e) {
 					log.error("加载类校验异常>{}=>{}",p,e.getMessage());
+				}catch (Error e) {
+					log.error("加载类异常>{}",p,e);
 				}
 			}else {
 				try {

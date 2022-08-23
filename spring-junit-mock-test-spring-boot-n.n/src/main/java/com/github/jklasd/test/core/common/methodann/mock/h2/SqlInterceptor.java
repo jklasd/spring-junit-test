@@ -124,9 +124,7 @@ public class SqlInterceptor implements ContainerRegister{
 	private void resetSql2Invocation(Object invocation) throws SQLException {
 		SqlReplaceMysqlToH2Handler handler = (SqlReplaceMysqlToH2Handler) MockAnnHandlerComponent.getHandler(MysqlToH2.class.getName());
 		MysqlToH2 sqlData = handler.getData();
-		if(sqlData == null) {
-			return;
-		}
+		
 		final Object[] args = (Object[]) JunitInvokeUtil.invokeMethod(invocation, "getArgs");
         Object statement = args[0];
         Object parameterObject = args[1];
@@ -135,11 +133,14 @@ public class SqlInterceptor implements ContainerRegister{
 //        Object sqlSource = JunitInvokeUtil.invokeMethod(statement, "getSqlSource");
         
         String sql = JunitInvokeUtil.invokeMethod(boundSql,"getSql").toString();
-        String[] replaceSql = handler.getData().from();
-        String[] toSql = handler.getData().to();
-        for(int i=0;i<replaceSql.length;i++) {
-        	sql = sql.replace(replaceSql[i], toSql[i]);
-        }
+        if(sqlData != null) {
+        	String[] replaceSql = handler.getData().from();
+        	String[] toSql = handler.getData().to();
+        	for(int i=0;i<replaceSql.length;i++) {
+        		sql = sql.replace(replaceSql[i], toSql[i]);
+        	}
+		}
+        sql = sql.replace("IF(","IF_(");
         
         JunitInvokeUtil.invokeWriteField("sql", boundSql, sql);
         //生成新的代理sqlSource 存入里面
