@@ -45,6 +45,10 @@ public class MockAnnHandlerComponent {
 		}
 	}
 	
+	public static MockClassHandler getHandler(String handlerKey) {
+		return handlerMap.get(handlerKey);
+	}
+	
 	public static Boolean isMock(String handlerKey) {
 		return handlerMap.containsKey(handlerKey) && handlerMap.get(handlerKey).isMock();
 	}

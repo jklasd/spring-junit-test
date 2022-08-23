@@ -6,7 +6,6 @@ import java.io.IOException;
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -37,12 +36,14 @@ public class H2DatabaseInitialization implements BootHandler{
 			
 			
 			EmbeddedDatabaseFactory defaultFactory = new EmbeddedDatabaseFactory();
-			defaultFactory.setDatabaseType(EmbeddedDatabaseType.H2);
+			
+			
+			defaultFactory.setDatabaseConfigurer(new H2Config());
 			defaultFactory.setDatabasePopulator(tmp);
 			defaultFactory.setDatabaseName(databaseName);
 			
 			EmbeddedDatabase source = defaultFactory.getDatabase();
-//			RoutingDataSourceExt.getInstance().initFunction(source);
+			RoutingDataSourceExt.getInstance().initFunction(source);
 			RoutingDataSourceExt.getInstance().setDataSource(source);
 			
 		} catch (IOException e) {

@@ -1,14 +1,16 @@
 package com.github.jklasd.test.core.common.methodann.mock.h2;
 
-import java.util.Date;
+import java.sql.Date;
+import java.util.Calendar;
 
 public class MysqlToH2Functions {
 
-	public static Date DATEADD(Date date,Object type) {
-		return date;
+	public static Boolean ISNULL(Object a) {
+		return a == null;
 	}
 	
-	public static Date CURDATE() {
-		return new Date();
+	public static Object IF_(Boolean pass,Object a,Object b) {
+		return pass?a:b;
 	}
+	
 }
