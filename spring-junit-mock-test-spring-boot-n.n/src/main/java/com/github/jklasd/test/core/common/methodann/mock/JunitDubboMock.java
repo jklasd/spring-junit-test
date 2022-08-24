@@ -14,7 +14,7 @@ import java.lang.annotation.Target;
 @Target(ElementType.METHOD)//指定位置
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface DubboMock {
+public @interface JunitDubboMock {
 	/**
 	 * 排除某写接口，不走mock，走集成方式
 	 * @return

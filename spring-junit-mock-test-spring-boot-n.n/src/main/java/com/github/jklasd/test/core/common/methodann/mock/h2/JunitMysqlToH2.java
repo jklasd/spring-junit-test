@@ -9,7 +9,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD,ElementType.TYPE})//指定位置
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface MysqlToH2 {
+public @interface JunitMysqlToH2 {
 
 	String[] from();
 	

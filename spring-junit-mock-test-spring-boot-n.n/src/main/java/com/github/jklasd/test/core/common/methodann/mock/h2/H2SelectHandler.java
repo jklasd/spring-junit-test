@@ -16,12 +16,12 @@ public class H2SelectHandler extends AbstractMockHandler implements MockClassHan
 
 	@Override
 	public String getType() {
-		return H2Select.class.getName();
+		return JunitH2Select.class.getName();
 	}
 
 	@Override
 	public void hand(Method testMethod) {
-		H2Select selected = testMethod.getAnnotation(H2Select.class);
+		JunitH2Select selected = testMethod.getAnnotation(JunitH2Select.class);
 		useMethodMock.set(selected.value());
 	}
 
@@ -32,7 +32,7 @@ public class H2SelectHandler extends AbstractMockHandler implements MockClassHan
 
 	@Override
 	public void hand(Class<?> testClass) {
-		H2Select selected = testClass.getAnnotation(H2Select.class);
+		JunitH2Select selected = testClass.getAnnotation(JunitH2Select.class);
 		useClassMock.set(selected.value());
 	}
 

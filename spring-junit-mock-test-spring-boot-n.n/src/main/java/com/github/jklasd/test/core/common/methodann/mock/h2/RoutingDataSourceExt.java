@@ -26,7 +26,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	
 	@Override
 	protected Object determineCurrentLookupKey() {
-		if(MockAnnHandlerComponent.isMock(H2Select.class.getName())) {
+		if(MockAnnHandlerComponent.isMock(JunitH2Select.class.getName())) {
 			return junitH2Key;
 		}
 		return defaultKey;

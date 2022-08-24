@@ -12,6 +12,7 @@ import javax.annotation.Nullable;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.BeanFactoryUtils;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.RootBeanDefinition;
@@ -46,6 +47,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //        super(arg0);
 //    }
 	
+	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
+		if(cacheProxyBean.containsKey(name)){
+			return AbstractLazyProxy.getProxyTagClass(cacheProxyBean.get(name));
+		}
+		return super.getType(name);
+	}
 	/**
 	 * TODO 待优化
 	 */

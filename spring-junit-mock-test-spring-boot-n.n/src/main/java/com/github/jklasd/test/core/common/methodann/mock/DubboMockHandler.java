@@ -10,12 +10,12 @@ public class DubboMockHandler extends AbstractMockHandler implements MockClassHa
 	
 	@Override
 	public String getType() {
-		return DubboMock.class.getName();
+		return JunitDubboMock.class.getName();
 	}
 
 	@Override
 	public void hand(Method testMethod) {
-		DubboMock mockAnn = testMethod.getAnnotation(DubboMock.class);
+		JunitDubboMock mockAnn = testMethod.getAnnotation(JunitDubboMock.class);
 		useMethodMock.set(true);
 		exclusions.set(mockAnn.exclusions());
 	}
