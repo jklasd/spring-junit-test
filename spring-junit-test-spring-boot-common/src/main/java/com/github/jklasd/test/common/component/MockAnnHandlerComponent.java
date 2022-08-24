@@ -65,7 +65,9 @@ public class MockAnnHandlerComponent {
 			handlerClass(testClass.getSuperclass());
 		}
 		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
-		injectMocksHandler.hand(testClass);
+		if(injectMocksHandler!=null) {
+			injectMocksHandler.hand(testClass);
+		}
 	}
 
 	public static void releaseClass(Class<?> testClass) {
@@ -80,11 +82,15 @@ public class MockAnnHandlerComponent {
 			releaseClass(testClass.getSuperclass());
 		}
 		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
-		injectMocksHandler.releaseClass(testClass);
+		if(injectMocksHandler!=null) {
+			injectMocksHandler.releaseClass(testClass);
+		}
 	}
 
 	public static void beforeAll(Class<?> testClass) {
 		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
-		injectMocksHandler.registId();
+		if(injectMocksHandler!=null) {
+			injectMocksHandler.registId();
+		}
 	}
 }

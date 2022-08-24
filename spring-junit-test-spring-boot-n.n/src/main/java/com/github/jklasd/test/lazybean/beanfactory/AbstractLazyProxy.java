@@ -232,7 +232,7 @@ public abstract class AbstractLazyProxy {
     	log.debug("exec stack=>{}",method);
     	
     	//    	injeckMock拦截
-    	if(handler.finded(beanModel)) {
+    	if(handler!= null && handler.finded(beanModel)) {
     		return handler.invoke(poxy, method, param,beanModel);
     	}else {
     		return aopHandler(poxy, method, param);
