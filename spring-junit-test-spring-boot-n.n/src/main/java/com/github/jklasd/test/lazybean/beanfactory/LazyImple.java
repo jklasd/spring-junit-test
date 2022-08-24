@@ -33,7 +33,7 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
         Class<?> tagertC = beanModel.getTagClass();
         String beanName = beanModel.getBeanName();
         if(LazyDubboBean.getInstance().isDubboNew(tagertC)) {//，判断是否是Dubbo服务
-            tagertObj = LazyDubboBean.getInstance().buildBeanNew(tagertC);
+            tagertObj = LazyDubboBean.getInstance().buildBeanNew(tagertC,beanName);
         }else if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
             tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
         } else {

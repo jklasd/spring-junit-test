@@ -18,6 +18,8 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
@@ -55,6 +57,9 @@ public abstract class AbstractLazyProxy {
     protected List factoryList;
     public static final String PROXY_BOUND = "CGLIB$BOUND";
     public static final String PROXY_CALLBACK_0 = "CGLIB$CALLBACK_0";
+    
+    private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+    
     public static boolean isProxy(Object obj){
 		return obj instanceof Proxy || obj instanceof Factory;
     }
@@ -225,10 +230,16 @@ public abstract class AbstractLazyProxy {
     		}
     	}
     	log.debug("exec stack=>{}",method);
-    	return aopHandler(poxy, method, param);
+    	
+    	//    	injeckMock拦截
+    	if(handler.finded(beanModel)) {
+    		return handler.invoke(poxy, method, param,beanModel);
+    	}else {
+    		return aopHandler(poxy, method, param);
+    	}
     }
     
-    protected Object getTagertObj() {
+	protected Object getTagertObj() {
         if (tagertObj != null && inited) {//需初始化完成，才返回，否则存在线程安全问题
             if (tagertObj.getClass().getSimpleName().contains("com.sun.proxy")) {
                 log.warn("循环处理代理Bean问题=>{}", beanModel.getTagClass());

@@ -9,11 +9,14 @@ import lombok.Getter;
 public class MockFieldDef extends FieldDef{
 
 	@Getter
-	private Class<?> tetClass;
+	private Class<?> testClass;
+	@Getter
+	private String beanName;
 	
-	public MockFieldDef(Field field, Object tagObj,Class<?> testClass) {
+	public MockFieldDef(Field field, Object tagObj,Class<?> testClass,String beanName) {
 		super(field, tagObj);
-		this.tetClass = testClass;
+		this.testClass = testClass;
+		this.beanName = beanName;
 	}
 
 }

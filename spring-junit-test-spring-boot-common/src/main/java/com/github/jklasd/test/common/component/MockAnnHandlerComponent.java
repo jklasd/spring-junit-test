@@ -82,4 +82,9 @@ public class MockAnnHandlerComponent {
 		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
 		injectMocksHandler.releaseClass(testClass);
 	}
+
+	public static void beforeAll(Class<?> testClass) {
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		injectMocksHandler.registId();
+	}
 }
