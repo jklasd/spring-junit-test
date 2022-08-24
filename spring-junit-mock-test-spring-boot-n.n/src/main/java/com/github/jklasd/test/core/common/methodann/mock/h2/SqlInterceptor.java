@@ -141,6 +141,7 @@ public class SqlInterceptor implements ContainerRegister{
         	}
 		}
         sql = sql.replace("IF(","IF_(");
+        sql = sql.replace("ISNULL(","ISNULL_(");
         
         JunitInvokeUtil.invokeWriteField("sql", boundSql, sql);
         //生成新的代理sqlSource 存入里面

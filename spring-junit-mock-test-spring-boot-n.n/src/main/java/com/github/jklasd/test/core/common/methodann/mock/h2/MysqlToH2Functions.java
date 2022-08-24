@@ -1,11 +1,8 @@
 package com.github.jklasd.test.core.common.methodann.mock.h2;
 
-import java.sql.Date;
-import java.util.Calendar;
-
 public class MysqlToH2Functions {
 
-	public static Boolean ISNULL(Object a) {
+	public static Boolean ISNULL_(Object a) {
 		return a == null;
 	}
 	

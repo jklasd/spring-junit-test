@@ -48,11 +48,15 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	void setDataSource(DataSource h2Source) {
 		this.h2Source = h2Source;
 	}
-	
+	boolean inited;
 	void initFunction(DataSource h2Source) {
+		if(inited) {
+			return;
+		}
 		try {
+			inited = true;
 			Statement statement = h2Source.getConnection().createStatement();
-			statement.execute("CREATE ALIAS IF NOT EXISTS \"ISNULL\" FOR \"com.github.jklasd.test.core.common.methodann.mock.h2.MysqlToH2Functions.ISNULL\";");
+			statement.execute("CREATE ALIAS IF NOT EXISTS \"ISNULL_\" FOR \"com.github.jklasd.test.core.common.methodann.mock.h2.MysqlToH2Functions.ISNULL_\";");
 			statement.execute("CREATE ALIAS IF NOT EXISTS \"IF_\" FOR \"com.github.jklasd.test.core.common.methodann.mock.h2.MysqlToH2Functions.IF_\";");
 		} catch (SQLException e) {
 			log.error("initFunction",e);

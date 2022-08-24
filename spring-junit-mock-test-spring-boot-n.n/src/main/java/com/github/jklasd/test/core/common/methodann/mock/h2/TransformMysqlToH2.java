@@ -1,8 +1,13 @@
 package com.github.jklasd.test.core.common.methodann.mock.h2;
 
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import com.google.common.collect.Maps;
 
 /**
  * @author one.xu
@@ -39,17 +44,34 @@ public class TransformMysqlToH2 {
     public static String transformCreateTable(String content) {
         content = "SET MODE MYSQL;\n\n" + content;
 
-        content = content.replaceAll("`key`", "key_expression_junit1");
-        content = content.replaceAll("`value`", "key_expression_junit2");
+        String[] keys = "`key`,`value`,`group`".split(",");
+        Map<String,String> replaceKeyMap = Maps.newHashMap();
+        String keywords = "key_expression_junit";
+        int i=1;
+        for(String key:keys) {
+        	String replaceKey = keywords+i++;
+        	content = content.replace(key, replaceKey);
+        	replaceKeyMap.put(replaceKey, key);
+        	
+        }
         
         content = content.replaceAll("`", "");
         
-        content = content.replaceAll("key_expression_junit1","`key`");
-        content = content.replaceAll("key_expression_junit2", "`value`");
+        Iterator<Entry<String,String>> ite = replaceKeyMap.entrySet().iterator();
+        while(ite.hasNext()) {
+        	Entry<String,String> tmp = ite.next();
+        	content = content.replace(tmp.getKey(), tmp.getValue());
+        }
         
         content = content.replaceAll("COLLATE.*(?=D)", "");
         content = content.replaceAll("COMMENT.*'(?=,)", "");
+        content = content.replaceAll("COMMENT.*'(?=)", "");
         content = content.replaceAll("\\).*ENGINE.*(?=;)", ")");
+        content = content.replace("USING BTREE", "");
+        content = content.replace("DEFAULT b", "DEFAULT ");
+        content = content.replace("CHARACTER SET utf8mb4", " ");
+        content = content.replace("CHARACTER SET utf8", " ");
+        
         /*
          * 对修改时间插入值有问题
          */
