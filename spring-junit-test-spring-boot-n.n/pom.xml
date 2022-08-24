@@ -4,9 +4,9 @@
 	<modelVersion>4.0.0</modelVersion>
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
-	<artifactId>spring-junit-test-parent</artifactId>
+	<artifactId>spring-junit-test</artifactId>
 	<version>1.2.2-SNAPSHOT</version>
-	<packaging>pom</packaging>
+	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
 		<url>https://github.com/jklasd/spring-junit-test</url>
@@ -27,12 +27,6 @@
 		</repository>
 	</distributionManagement>
 
-	<modules>
-		<module>spring-junit-test-spring-boot-common</module>
-		<module>spring-junit-test-spring-boot-n.n</module>
-		<module>spring-junit-mock-test-spring-boot-n.n</module>
-	</modules>
-
 	<licenses>
 		<license>
 			<name>The MIT License (MIT)</name>
@@ -47,10 +41,9 @@
 		</developer>
 	</developers>
 	<parent>
-		<groupId>org.springframework.boot</groupId>
-		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>1.5.11.RELEASE</version>
-		<relativePath></relativePath>
+		<groupId>com.github.jklasd</groupId>
+		<artifactId>spring-junit-test-parent</artifactId>
+		<version>1.2.2-SNAPSHOT</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -58,66 +51,91 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
-	
-	<dependencyManagement>
-		<dependencies>
-			<dependency>
-				<groupId>org.junit.jupiter</groupId>
-				<artifactId>junit-jupiter-api</artifactId>
-				<version>5.5.2</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.jklasd</groupId>
-				<artifactId>spring-junit-test</artifactId>
-				<version>1.2.2-SNAPSHOT</version>
-			</dependency>
-			<dependency>
-		    	<groupId>com.github.jklasd</groupId>
-				<artifactId>spring-junit-test-common</artifactId>
-				<version>1.0.0.SNAPSHOT</version>
-		    </dependency>
-		    <dependency>
-				<groupId>com.alibaba</groupId>
-				<artifactId>fastjson</artifactId>
-				<version>1.2.35</version>
-			</dependency>
-			<dependency>
-				<groupId>commons-logging</groupId>
-				<artifactId>commons-logging</artifactId>
-				<version>1.2</version>
-			</dependency>
-			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
-			</dependency>
-			<dependency>
-				<groupId>com.google.guava</groupId>
-				<artifactId>guava</artifactId>
-				<version>30.0-jre</version>
-			</dependency>
-			<dependency>
-				<groupId>org.apache.commons</groupId>
-				<artifactId>commons-lang3</artifactId>
-				<version>3.3.2</version>
-			</dependency>
-			<dependency>
-				<groupId>com.github.jklasd</groupId>
-				<artifactId>spring-junit-test-boot-version-controller</artifactId>
-				<version>[1.5.0,2.4.0]</version>
-			</dependency>
-			<dependency>
-				<groupId>org.javassist</groupId>
-				<artifactId>javassist</artifactId>
-				<version>3.21.0-GA</version>
-			</dependency>
-			<dependency>
-			  <groupId>com.h2database</groupId>
-			  <artifactId>h2</artifactId>
-			  <version>2.1.214</version>
-			</dependency>
-		</dependencies>
-	</dependencyManagement>
+	<dependencies>
+		<!-- 动态字节码 -->
+		<dependency>
+			<groupId>org.javassist</groupId>
+			<artifactId>javassist</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.alibaba</groupId>
+			<artifactId>fastjson</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+		</dependency>
+		<!-- <dependency>
+		    <groupId>javax.annotation</groupId>
+		    <artifactId>javax.annotation-api</artifactId>
+		    <scope>provided</scope>
+	    </dependency> -->
+		<dependency>
+			<groupId>ch.qos.logback</groupId>
+			<artifactId>logback-classic</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-autoconfigure</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-jdbc</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.commons</groupId>
+			<artifactId>commons-lang3</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>commons-logging</groupId>
+			<artifactId>commons-logging</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>log4j</groupId>
+			<artifactId>log4j</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.slf4j</groupId>
+			<artifactId>slf4j-api</artifactId>
+			<scope>provided</scope>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<scope>compile</scope>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-boot-version-controller</artifactId>
+		</dependency>
+	</dependencies>
 
 	<build>
 		<finalName>${project.artifactId}-${project.version}</finalName>
@@ -163,6 +181,14 @@
 						</execution>
 					</executions>
 				</plugin>
+				<plugin>
+	                <groupId>org.apache.maven.plugins</groupId>
+	                <artifactId>maven-surefire-plugin</artifactId>
+	                <version>2.22.2</version>
+	                <configuration>
+	                    <skipTests>true</skipTests>
+	                </configuration>
+	            </plugin>
 			</plugins>
 		</pluginManagement>
 
