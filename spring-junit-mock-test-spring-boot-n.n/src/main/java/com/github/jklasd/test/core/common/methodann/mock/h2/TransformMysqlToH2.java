@@ -67,10 +67,14 @@ public class TransformMysqlToH2 {
         content = content.replaceAll("COMMENT.*'(?=,)", "");
         content = content.replaceAll("COMMENT.*'(?=)", "");
         content = content.replaceAll("\\).*ENGINE.*(?=;)", ")");
-        content = content.replace("USING BTREE", "");
         content = content.replace("DEFAULT b", "DEFAULT ");
-        content = content.replace("CHARACTER SET utf8mb4", " ");
-        content = content.replace("CHARACTER SET utf8", " ");
+
+        String[] cullStr = {"USING BTREE","CHARACTER SET utf8mb4","CHARACTER SET utf8","COLLATE utf8_bin","COLLATE utf8mb4_bin"};
+        
+        for(String str : cullStr) {
+        	content = content.replace(str, "");
+        }
+        
         
         /*
          * 对修改时间插入值有问题
