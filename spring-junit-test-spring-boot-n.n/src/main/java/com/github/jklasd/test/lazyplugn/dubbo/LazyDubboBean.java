@@ -49,9 +49,25 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 		return null;
 	}
 	private AbstractRefHandler xmlRefHandler = LazyDubboXmlRefHandler.getInstance();
+	private AbstractRefHandler annRefHandler = LazyDubboAnnotationRefHandler.getInstance();
 	
 	public void handBeanDef(Element ele,BeanDefinition beanDef) {
-		xmlRefHandler.handBeanDef(ele, beanDef);
+		String beanName = null;
+        switch (ele.getTagName()) {
+            case "dubbo:reference":
+            	beanName = beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString();
+            	xmlRefHandler.refType.put(beanName, xmlRefHandler.TypeXml);
+            	xmlRefHandler.dubboRefferCacheDef.put(beanName, beanDef);
+                break;
+            case "dubbo:service":
+            	beanName = beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString();
+            	xmlRefHandler.dubboServiceCacheDef.put(beanName, beanDef);
+                break;
+            default:
+            	beanName = beanDef.getBeanClassName();
+            	xmlRefHandler.dubboConfigCacheDef.put(beanName, beanDef);
+                break;
+        }
     }
     public void load(Map<String, BeanDefParser> parser) {
         XmlBeanUtil.getInstance().getNamespaceURIList().stream().filter(url->url.contains("dubbo")).forEach(url->{
@@ -59,18 +75,24 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         });
     }
     public boolean isDubboNew(Class<?> classBean) {
-        return xmlRefHandler.isDubboNew(classBean);
+        return xmlRefHandler.isDubboNew(classBean)
+        		|| annRefHandler.isDubboNew(classBean);
     }
     
-    public Object buildBeanNew(Class<?> dubboClass) {
-        return xmlRefHandler.buildBeanNew(dubboClass);
+    public Object buildBeanNew(Class<?> dubboClass, String beanName) {
+    	if(xmlRefHandler.refType.containsKey(dubboClass.getName())) {
+    		return xmlRefHandler.buildBeanNew(dubboClass,beanName);
+    	}else if(annRefHandler.refType.containsKey(dubboClass.getName())) {
+    		return annRefHandler.buildBeanNew(dubboClass,beanName);
+    	}
+    	return null;
     }
 
     @Override
     public Object buildBean(AbstractLazyProxy model) {
         if (useDubbo()) {
             Class<?> dubboClass = model.getBeanModel().getTagClass();
-            return buildBeanNew(dubboClass);
+            return buildBeanNew(dubboClass,model.getBeanModel().getBeanName());
         }
         return null;
     }

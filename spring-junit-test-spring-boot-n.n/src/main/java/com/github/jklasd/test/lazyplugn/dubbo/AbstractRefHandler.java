@@ -19,22 +19,16 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class AbstractRefHandler implements DubboHandler{
 	protected static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	public static void putAnnService(Class<?> dubboServiceClass) {}
+	
+	protected final static Integer TypeXml = 1;
+	protected final static Integer TypeAnn = 2;
+	
+	protected Map<String,Integer> refType = Maps.newHashMap();
+	
 	protected Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
 	protected Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
 	protected Map<String,BeanDefinition> dubboConfigCacheDef = Maps.newHashMap();
-	public void handBeanDef(Element ele,BeanDefinition beanDef) {
-        switch (ele.getTagName()) {
-            case "dubbo:reference":
-                dubboRefferCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
-                break;
-            case "dubbo:service":
-                dubboServiceCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
-                break;
-            default:
-                dubboConfigCacheDef.put(beanDef.getBeanClassName(), beanDef);
-                break;
-        }
-    }
+	
 	private static DubboConfig dubboConfiguration;
 	{
 		if(dubboConfiguration==null)

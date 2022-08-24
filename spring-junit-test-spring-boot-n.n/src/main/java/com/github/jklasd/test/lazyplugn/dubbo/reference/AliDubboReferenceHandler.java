@@ -10,4 +10,5 @@ public class AliDubboReferenceHandler extends AbstractReferenceHandler{
 	public String getType() {
 		return "com.alibaba.dubbo.config.annotation.Reference";
 	}
+	
 }

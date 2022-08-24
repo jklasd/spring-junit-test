@@ -1,5 +1,8 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
+import java.util.Map;
+
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationEventPublisher;
@@ -9,18 +12,22 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class LazyDubboXmlRefHandler extends AbstractRefHandler{
+	protected Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
+	protected Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
+	protected Map<String,BeanDefinition> dubboConfigCacheDef = Maps.newHashMap();
 	private static LazyDubboXmlRefHandler bean = new LazyDubboXmlRefHandler();
 	private LazyDubboXmlRefHandler() {}
 	public static LazyDubboXmlRefHandler getInstance() {
 		return bean;
 	}
 	@Override
-	public Object buildBeanNew(Class<?> dubboClass) {
+	public Object buildBeanNew(Class<?> dubboClass,String beanName) {
 		if(dubboData.containsKey(dubboClass)) {
             return dubboData.get(dubboClass);
         }
