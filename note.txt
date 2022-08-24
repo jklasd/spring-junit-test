@@ -1,2 +1,0 @@
-#bean管理
-#bean加载 Configuration # @AutoConfigureAfter 注解处理

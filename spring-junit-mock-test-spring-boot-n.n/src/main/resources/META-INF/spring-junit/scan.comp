@@ -1,0 +1,14 @@
+com.github.jklasd.test.common.interf.handler.FieldHandler=com.github.jklasd.test.core.common.fieldann.mock.MockBeanHandler,\
+com.github.jklasd.test.core.common.fieldann.mock.SpyBeanHandler,\
+com.github.jklasd.test.core.common.fieldann.mock.MockHandler,\
+com.github.jklasd.test.core.common.fieldann.mock.InjectMocksHandler\
+
+com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2SelectHandler,\
+com.github.jklasd.test.core.common.methodann.mock.DubboMockHandler,\
+com.github.jklasd.test.core.common.methodann.mock.h2.SqlReplaceMysqlToH2Handler
+
+
+com.github.jklasd.test.common.interf.handler.BootHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2DatabaseInitialization
+
+com.github.jklasd.test.common.interf.ContainerRegister=com.github.jklasd.test.core.common.fieldann.MockFieldHandler,\
+com.github.jklasd.test.core.common.methodann.mock.h2.SqlInterceptor
