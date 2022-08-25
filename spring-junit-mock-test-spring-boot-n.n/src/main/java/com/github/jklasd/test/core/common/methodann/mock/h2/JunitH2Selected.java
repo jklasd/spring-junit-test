@@ -16,6 +16,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD,ElementType.TYPE})//指定位置
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface JunitH2Select {
+public @interface JunitH2Selected {
 	boolean value() default true; 
 }
