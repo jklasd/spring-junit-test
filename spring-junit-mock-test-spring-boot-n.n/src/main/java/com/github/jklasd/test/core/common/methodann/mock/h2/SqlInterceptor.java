@@ -62,13 +62,13 @@ public class SqlInterceptor implements ContainerRegister{
 		public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 			switch (method.getName()) {
 			case "intercept":
-				if(MockAnnHandlerComponent.isMock(JunitH2Select.class.getName())) {
+				if(MockAnnHandlerComponent.isMock(JunitH2Selected.class.getName())) {
 					resetSql2Invocation(args[0]);
 				}
 		        return JunitInvokeUtil.invokeMethod(args[0], "proceed");
 			case "plugin":
 				Object target = args[0];
-				if(MockAnnHandlerComponent.isMock(JunitH2Select.class.getName())) {
+				if(MockAnnHandlerComponent.isMock(JunitH2Selected.class.getName())) {
 					/**
 					 * @Intercepts(
 				        {

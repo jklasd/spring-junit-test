@@ -212,7 +212,7 @@ public abstract class AbstractLazyProxy {
     }
     
     protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
-    	if(errorTimes.get()>3) {
+    	if(errorTimes.get()>6) {
     		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
     		throw new JunitException("----------异常代理方式--------",true);
     	}

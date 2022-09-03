@@ -44,7 +44,7 @@ public class TransformMysqlToH2 {
     public static String transformCreateTable(String content) {
         content = "SET MODE MYSQL;\n\n" + content;
 
-        String[] keys = "`key`,`value`,`group`".split(",");
+        String[] keys = "`key`,`value`,`group`,`day`".split(",");
         Map<String,String> replaceKeyMap = Maps.newHashMap();
         String keywords = "key_expression_junit";
         int i=1;
