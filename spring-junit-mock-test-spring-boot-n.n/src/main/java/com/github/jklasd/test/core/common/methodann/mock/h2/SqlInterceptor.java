@@ -20,7 +20,9 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 public class SqlInterceptor implements ContainerRegister{
 
 	private Class<?> interceptorClass;
@@ -123,7 +125,7 @@ public class SqlInterceptor implements ContainerRegister{
 	 */
 	private void resetSql2Invocation(Object invocation) throws SQLException {
 		SqlReplaceMysqlToH2Handler handler = (SqlReplaceMysqlToH2Handler) MockAnnHandlerComponent.getHandler(JunitMysqlToH2.class.getName());
-		JunitMysqlToH2 sqlData = handler.getData();
+		JunitMysqlToH2 sqlData = handler.getData();//存在父子线程消息传递问题
 		
 		final Object[] args = (Object[]) JunitInvokeUtil.invokeMethod(invocation, "getArgs");
         Object statement = args[0];
@@ -134,14 +136,18 @@ public class SqlInterceptor implements ContainerRegister{
         
         String sql = JunitInvokeUtil.invokeMethod(boundSql,"getSql").toString();
         if(sqlData != null) {
+        	log.info("sql:{}",sql);
+        	log.info("存在sql替换:{}",sqlData);
         	String[] replaceSql = handler.getData().from();
         	String[] toSql = handler.getData().to();
         	for(int i=0;i<replaceSql.length;i++) {
         		sql = sql.replace(replaceSql[i], toSql[i]);
         	}
+//        	log.debug("sql替换后:{}",sql);
 		}
-        sql = sql.replace("IF(","IF_(");
+        sql = sql.replace("IF(","IF_(").replace("if(", "IF_(").replace("If(", "IF_(");
         sql = sql.replace("ISNULL(","ISNULL_(");
+//        sql = sql.replace("NOW(","NOW_(");
         
         JunitInvokeUtil.invokeWriteField("sql", boundSql, sql);
         //生成新的代理sqlSource 存入里面

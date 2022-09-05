@@ -134,8 +134,8 @@ public class FlowerManager
 		Throwable testException = context.getExecutionException().orElse(null);
 //		getTestContextManager(context).afterTestMethod(testInstance, testMethod, testException);
 		
-		MockAnnHandlerComponent.releaseMethod(testMethod);
 		log.info("-----------------------------afterEach-{}-{}---------------------------",testInstance.getClass().getSimpleName(),testMethod.getName());
+		MockAnnHandlerComponent.releaseMethod(testMethod);
 	}
 
 	/**
