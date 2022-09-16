@@ -107,7 +107,9 @@ public class LazyProxyManager {
 
 	private synchronized static ProxyInvoker bruildInvokerList() {
         if(proxyInvoker == null) {
-        	List<ProxyInvoker> pis = Lists.newArrayList(LazyAopInvoker.getInstance(),TransferInvoker.getInstance());
+        	List<ProxyInvoker> pis = Lists.newArrayList(
+        			LazyAopInvoker.getInstance(),
+        			TransferInvoker.getInstance());
         	proxyInvoker = pis.get(0);
         	ProxyInvoker point = proxyInvoker;
         	for(int i=1;i<pis.size();i++) {
