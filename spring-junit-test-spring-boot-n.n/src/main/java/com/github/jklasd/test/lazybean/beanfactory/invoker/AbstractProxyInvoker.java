@@ -44,8 +44,7 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
         	 */
         	beforeInvoke(dto,context);
         	
-        	Object obj = nextInvoker!=null ? nextInvoker.invoke(poxy, method, param, beanModel, realObj)
-        			: method.invoke(realObj, param);
+        	Object obj = roundInvoke(poxy, method, param, beanModel, realObj);
         	/**
         	 * 执行后处理
         	 */
@@ -80,6 +79,11 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
 
 	protected abstract void afterInvoke(InvokeDTO dto, Map<String, Object> context);
 
+	protected Object roundInvoke(Object poxy, Method method, Object[] param,BeanModel beanModel,Object realObj) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, Throwable {
+		return nextInvoker!=null ? nextInvoker.invoke(poxy, method, param, beanModel, realObj)
+    			: method.invoke(realObj, param);
+	}
+	
 	protected abstract void finallyInvoke(InvokeDTO dto, Map<String, Object> context);
 
 	protected abstract boolean beforeInvoke(InvokeDTO dto,Map<String,Object> context) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException;
