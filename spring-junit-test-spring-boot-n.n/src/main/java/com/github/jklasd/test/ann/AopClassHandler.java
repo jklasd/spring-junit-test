@@ -4,7 +4,10 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
+import org.aopalliance.aop.Advice;
 import org.springframework.aop.Advisor;
+import org.springframework.aop.Pointcut;
+import org.springframework.aop.aspectj.AbstractAspectJAdvice;
 import org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory;
 import org.springframework.aop.aspectj.annotation.BeanFactoryAspectInstanceFactory;
 import org.springframework.aop.aspectj.annotation.MetadataAwareAspectInstanceFactory;
@@ -12,6 +15,7 @@ import org.springframework.aop.aspectj.annotation.ReflectiveAspectJAdvisorFactor
 
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazybean.beanfactory.invoker.LazyAopInvoker;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Sets;
@@ -54,6 +58,11 @@ public class AopClassHandler implements MockClassHandler{
 			LazyBean.getInstance().createBeanForProxy(beanName, aopClass);
 			MetadataAwareAspectInstanceFactory factory =
 					new BeanFactoryAspectInstanceFactory(LazyListableBeanFactory.getInstance(), beanName);
+			
+			
+			/**
+			 * 获取环绕方法
+			 */
 			List<Advisor> classAdvisors = aspectJAdvisorFactory.getAdvisors(factory);
 			
 			advisorsHand(classAdvisors);
@@ -64,6 +73,16 @@ public class AopClassHandler implements MockClassHandler{
 		/**
 		 * @TODO 待处理
 		 */
+		Set<Pointcut> pointc = Sets.newHashSet();
+		classAdvisors.forEach(adv->{
+			Advice advice = adv.getAdvice();
+			if(advice instanceof AbstractAspectJAdvice) {
+				AbstractAspectJAdvice padv = (AbstractAspectJAdvice)advice;
+				Pointcut point = padv.getPointcut();
+				pointc.add(point);
+			}
+		});
+		LazyAopInvoker.getInstance().regist(pointc);
 	}
 
 	@Override

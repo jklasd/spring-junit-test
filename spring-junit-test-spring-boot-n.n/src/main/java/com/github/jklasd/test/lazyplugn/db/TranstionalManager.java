@@ -44,7 +44,7 @@ public class TranstionalManager {
     }
     
     private AnnotationTransactionAttributeSource atas = new AnnotationTransactionAttributeSource();
-    public TransactionAttribute processAnnoInfo(Method method,Object obj) throws Exception {
+    public TransactionAttribute processAnnoInfo(Method method,Object obj){
         if(obj == null) {
             return null;
         }

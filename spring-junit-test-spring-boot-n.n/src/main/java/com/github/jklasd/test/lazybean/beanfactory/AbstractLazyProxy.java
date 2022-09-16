@@ -1,11 +1,9 @@
  package com.github.jklasd.test.lazybean.beanfactory;
 
-import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.lang.reflect.Proxy;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -31,7 +29,6 @@ import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.base.Objects;
-import com.google.common.collect.Maps;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -54,52 +51,17 @@ public abstract class AbstractLazyProxy {
             beanModel.setPropValue(null);
         }
     }
-    protected List factoryList;
-    public static final String PROXY_BOUND = "CGLIB$BOUND";
-    public static final String PROXY_CALLBACK_0 = "CGLIB$CALLBACK_0";
     
     private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
     
     public static boolean isProxy(Object obj){
-		return obj instanceof Proxy || obj instanceof Factory;
+		return LazyProxyManager.isProxy(obj);
     }
     public static Object getProxyTagObj(Object obj){
-    	if(isProxy(obj)) {
-			
-			if(obj instanceof Proxy) {
-				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
-    			return imple.getTagertObj();
-    		}else {
-    			Factory fa = (Factory) obj;
-    			Callback[] cbs = fa.getCallbacks();
-    			LazyCglib cglib = (LazyCglib) cbs[0];
-    			return cglib.getTagertObj();
-    		}
-		}
-    	return obj;
+    	return LazyProxyManager.getProxyTagObj(obj);
     }
     public static Class<?> getProxyTagClass(Object obj){
-    	try {
-    		if(isProxy(obj)) {
-    			if(obj instanceof Proxy) {
-    				InvocationHandler ih = Proxy.getInvocationHandler(obj);
-    				if(ih instanceof LazyImple) {
-    					LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
-    					return imple.getBeanModel().getTagClass();
-    				}else {
-    					return null;
-    				}
-        		}else {
-        			Factory fa = (Factory) obj;
-        			Callback[] cbs = fa.getCallbacks();
-        			LazyCglib cglib = (LazyCglib) cbs[0];
-        			return cglib.getBeanModel().getTagClass();
-        		}
-    		}
-			return obj.getClass();
-		} catch (SecurityException | IllegalArgumentException e) {
-			return obj.getClass();
-		}
+    	return LazyProxyManager.getProxyTagClass(obj);
     }
     
     protected void initLazyProxy() {
@@ -121,11 +83,9 @@ public abstract class AbstractLazyProxy {
             }
     }
     
-    private ThreadLocal<Map<String,Object>> lastInvoker = new ThreadLocal<Map<String,Object>>();
-    
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    
+    @Deprecated
     private Object transtionalHandler(Object poxy, Method method, Object[] param) throws Throwable{
     	TransactionAttribute oldTxInfo = null;
     	TransactionStatus txStatus = null;
@@ -144,8 +104,6 @@ public abstract class AbstractLazyProxy {
             	result = method.invoke(newObj, param);
             }
             
-            errorTimes.set(0);
-            
             return result;
         }catch (JunitException e) {
         	rollback(oldTxInfo, txStatus,e);
@@ -163,37 +121,23 @@ public abstract class AbstractLazyProxy {
         }
     }
     
-    
+    @Deprecated
 	private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
-    	Map<String,Object> lastInvokerInfo = lastInvoker.get();
+    	Map<String,Object> lastInvokerInfo = LazyProxyManager.getLastInvoker();
     	Object oldObj = AopContextSuppert.getProxyObject();
         try {
-        	Map<String,Object> tmpInvokerInfo = Maps.newHashMap();
-        	tmpInvokerInfo.put("class", beanModel.getTagClass());
-        	tmpInvokerInfo.put("method", method.getName());
-        	lastInvoker.set(tmpInvokerInfo);
+        	
+        	LazyProxyManager.setLastInvoker(beanModel.getTagClass(), method);
 
             Object newObj = getTagertObj();
 
-            if (!Modifier.isPublic(method.getModifiers())) {
-                // log.warn("非公共方法 class:{},method:{}",tag,method.getName());
-                if (!method.isAccessible()) {
-                    method.setAccessible(true);
-                }
-                if (newObj != null) {
-                    return method.invoke(newObj, param);
-                }
-                return null;
-            }
             AopContextSuppert.setProxyObj(poxy);
 
             LazyBeanFilter.processLazyConfig(newObj, method, param);
             
             Object result = transtionalHandler(poxy, method, param);
             
-            errorTimes.set(0);
-            
-            lastInvoker.set(lastInvokerInfo);
+            LazyProxyManager.setLastInvoker(lastInvokerInfo);
             return result;
         }catch (JunitException e) {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
@@ -201,7 +145,6 @@ public abstract class AbstractLazyProxy {
         }catch (InvocationTargetException e) {
         	throw e.getTargetException();
 		}catch (Exception e) {
-        	errorTimes.incrementAndGet();
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
                 e.getMessage());
@@ -230,13 +173,33 @@ public abstract class AbstractLazyProxy {
     		}
     	}
     	log.debug("exec stack=>{}",method);
-    	
-    	//    	injeckMock拦截
-    	if(handler!= null && handler.finded(beanModel)) {
-    		return handler.invoke(poxy, method, param,beanModel);
-    	}else {
-    		return aopHandler(poxy, method, param);
-    	}
+		try {
+			if (!Modifier.isPublic(method.getModifiers())) {
+                // log.warn("非公共方法 class:{},method:{}",tag,method.getName());
+                if (!method.isAccessible()) {
+                    method.setAccessible(true);
+                }
+            }
+		//	injeckMock拦截
+			Object obj = null;
+			if(handler!= null && handler.finded(beanModel)) {
+				obj = handler.invoke(poxy, method, param,beanModel);
+			}else {
+//				obj = aopHandler(poxy, method, param);
+				obj = LazyProxyManager.getProxyInvoker().invoke(poxy, method, param, beanModel, getTagertObj());
+			}
+			errorTimes.set(0);
+			return obj;
+        }catch (JunitException e) {
+        	errorTimes.incrementAndGet();
+        	throw e;
+        }catch (InvocationTargetException e) {
+        	errorTimes.incrementAndGet();
+        	throw e.getTargetException();
+		}catch (Exception e) {
+        	errorTimes.incrementAndGet();
+            throw e;
+        }
     }
     
 	protected Object getTagertObj() {
@@ -285,6 +248,7 @@ public abstract class AbstractLazyProxy {
      * @param txInfo 新事务信息
      * @return 事务状态信息
      */
+    @Deprecated
     protected TransactionStatus openTransation(TransactionAttribute oldTxInfo, TransactionAttribute txInfo) {
         TransactionStatus txStatus = null;
         if (txInfo != null) {
@@ -308,6 +272,7 @@ public abstract class AbstractLazyProxy {
      * @param txStatus 当前事务
      * @param method 
      */
+    @Deprecated
     protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
         if (txStatus != null) {
             TranstionalManager.getInstance().commitTx(txStatus);
@@ -318,6 +283,7 @@ public abstract class AbstractLazyProxy {
         }
         
     }
+    @Deprecated
     protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
     	if(txStatus!=null) {
     		TransactionAttribute currentTxInfo = TranstionalManager.getInstance().getTxInfo();
