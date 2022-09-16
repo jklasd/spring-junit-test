@@ -16,7 +16,7 @@ import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -143,8 +143,8 @@ public class MockFieldHandler implements ContainerRegister, MockFieldHandlerI {
 		cacheMockObject.get(testClassId.get()).entrySet().forEach(entry -> {
 			if (field.getType() == entry.getValue()) {
 				Object tmp = fieldDef.getTagObj();
-				if (AbstractLazyProxy.isProxy(tmp)) {
-					tmp = AbstractLazyProxy.getProxyTagObj(tmp);
+				if (LazyProxyManager.isProxy(tmp)) {
+					tmp = LazyProxyManager.getProxyTagObj(tmp);
 				}
 				FieldAnnComponent.setObj(field, tmp, entry.getKey());
 			}

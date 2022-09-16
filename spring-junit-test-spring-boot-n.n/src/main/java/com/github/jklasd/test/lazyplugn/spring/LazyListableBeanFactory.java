@@ -26,8 +26,8 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -49,7 +49,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
 		if(cacheProxyBean.containsKey(name)){
-			return AbstractLazyProxy.getProxyTagClass(cacheProxyBean.get(name));
+			return LazyProxyManager.getProxyTagClass(cacheProxyBean.get(name));
 		}
 		return super.getType(name);
 	}
@@ -64,7 +64,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		String[] beanNameArr = StringUtils.toStringArray(beanNameSet);
 		for(String beanName:beanNameArr) {
 			Object bean = getBean(beanName);
-			if(type.isAssignableFrom(AbstractLazyProxy.getProxyTagClass(bean))) {
+			if(type.isAssignableFrom(LazyProxyManager.getProxyTagClass(bean))) {
 				result.put(beanName, (T) bean);
 			}
 		}
@@ -91,7 +91,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		Assert.notNull(dependencyType, "Dependency type must not be null");
 		if(autowiredValue!=null) {
 			cacheClassMap.putIfAbsent(dependencyType, autowiredValue);
-			if(AbstractLazyProxy.isProxy(autowiredValue)) {//代理bean不注册到spring容器中
+			if(LazyProxyManager.isProxy(autowiredValue)) {//代理bean不注册到spring容器中
 				return;
 			}
 		}
@@ -159,7 +159,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		beanNameSet.add(beanName);
-		if(AbstractLazyProxy.isProxy(singletonObject)) {
+		if(LazyProxyManager.isProxy(singletonObject)) {
 			cacheProxyBean.put(beanName, singletonObject);
 			return;
 		}

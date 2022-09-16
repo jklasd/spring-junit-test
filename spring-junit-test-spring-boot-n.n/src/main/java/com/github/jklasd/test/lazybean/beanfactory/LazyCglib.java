@@ -171,7 +171,7 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
                     		if(obj==null) {
                     			obj = applicationContext.getBean(tagertC);
                     		}
-                    		if(obj!=null && !AbstractLazyProxy.isProxy(obj)) {
+                    		if(obj!=null && !LazyProxyManager.isProxy(obj)) {
                 				tagertObj = obj;
                 			}else {
                 				Class<?> tmpC = ClassScan.getInstance().findClassByName(beanName);
@@ -204,9 +204,6 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
             if(propConfig!=null && tagertObj!=null) {
             	LazyConfPropBind.processConfigurationProperties(tagertObj,propConfig);
             }
-//            if(tagertObj!=null) {//注入远程对象
-//            	LazyDubboBean.getInstance().processAttr(tagertObj,tagertC);
-//            }
         }
         return tagertObj;
     }

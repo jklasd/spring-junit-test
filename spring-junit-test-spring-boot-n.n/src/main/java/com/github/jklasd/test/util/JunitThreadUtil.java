@@ -2,10 +2,9 @@ package com.github.jklasd.test.util;
 
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.LockSupport;
 
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 
 import lombok.extern.slf4j.Slf4j;
@@ -15,13 +14,13 @@ public class JunitThreadUtil{
 	public static void wait(Class<?> executorOf ,String fieldName ) {
 		Object bean = LazyApplicationContext.getInstance().getBeanByClass(executorOf);
 		ThreadPoolExecutor executor = (ThreadPoolExecutor) JunitInvokeUtil.invokeReadField(fieldName,
-				AbstractLazyProxy.isProxy(bean)?AbstractLazyProxy.getProxyTagObj(bean):bean);
+				LazyProxyManager.isProxy(bean)?LazyProxyManager.getProxyTagObj(bean):bean);
 		wait(executor);
 	}
 	public static void wait(String fieldName ,String beanName) {
 		Object bean = LazyApplicationContext.getInstance().getBean(beanName);
 		ThreadPoolExecutor executor = (ThreadPoolExecutor) JunitInvokeUtil.invokeReadField(fieldName,
-				AbstractLazyProxy.isProxy(bean)?AbstractLazyProxy.getProxyTagObj(bean):bean);
+				LazyProxyManager.isProxy(bean)?LazyProxyManager.getProxyTagObj(bean):bean);
 		wait(executor);
 	}
 	public static void wait(ThreadPoolExecutor executor) {

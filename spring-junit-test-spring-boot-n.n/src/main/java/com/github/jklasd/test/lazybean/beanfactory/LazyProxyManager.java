@@ -81,7 +81,7 @@ public class LazyProxyManager {
     public static Object instantiateProxy(Object obj) {
 		return getProxyTagObj(obj);
 	}
-	public static AbstractLazyProxy getProxy(Object obj) {
+	public static BaseAbstractLazyProxy getProxy(Object obj) {
 		if(isProxy(obj)) {
 			if(obj instanceof Proxy) {
 				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);

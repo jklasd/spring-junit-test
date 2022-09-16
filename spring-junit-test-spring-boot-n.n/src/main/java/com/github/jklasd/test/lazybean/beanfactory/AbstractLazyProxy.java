@@ -3,14 +3,11 @@
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
-import java.lang.reflect.Proxy;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
-import org.springframework.cglib.proxy.Callback;
-import org.springframework.cglib.proxy.Factory;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
@@ -30,18 +27,15 @@ import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.base.Objects;
 
-import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public abstract class AbstractLazyProxy {
-    @Getter
-    protected BeanModel beanModel;
+abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
+    
     protected Object tagertObj;
     protected volatile boolean inited;
     protected LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
-    @Getter
-    private Map<String,Object> attr;
+    
     
     public AbstractLazyProxy(BeanModel beanModel) {
         this.beanModel = beanModel;
@@ -54,15 +48,18 @@ public abstract class AbstractLazyProxy {
     
     private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
     
-    public static boolean isProxy(Object obj){
-		return LazyProxyManager.isProxy(obj);
-    }
-    public static Object getProxyTagObj(Object obj){
-    	return LazyProxyManager.getProxyTagObj(obj);
-    }
-    public static Class<?> getProxyTagClass(Object obj){
-    	return LazyProxyManager.getProxyTagClass(obj);
-    }
+//    @Deprecated
+//    public static boolean isProxy(Object obj){
+//		return LazyProxyManager.isProxy(obj);
+//    }
+//    @Deprecated
+//    public static Object getProxyTagObj(Object obj){
+//    	return LazyProxyManager.getProxyTagObj(obj);
+//    }
+//    @Deprecated
+//    public static Class<?> getProxyTagClass(Object obj){
+//    	return LazyProxyManager.getProxyTagClass(obj);
+//    }
     
     protected void initLazyProxy() {
             try {
@@ -85,75 +82,75 @@ public abstract class AbstractLazyProxy {
     
     private AtomicInteger errorTimes = new AtomicInteger();
     
-    @Deprecated
-    private Object transtionalHandler(Object poxy, Method method, Object[] param) throws Throwable{
-    	TransactionAttribute oldTxInfo = null;
-    	TransactionStatus txStatus = null;
-        try {
-            Object newObj = getTagertObj();
-            Object result = null;
-            if(TranstionalManager.isFindTranstional()) {
-            	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            	
-            	txStatus = openTransation(oldTxInfo, txInfo);
-            	
-            	result = method.invoke(newObj, param);
-            	closeTransation(oldTxInfo, txStatus,method);
-            }else {
-            	result = method.invoke(newObj, param);
-            }
-            
-            return result;
-        }catch (JunitException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e;
-        }catch (InvocationTargetException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e.getTargetException();
-		}catch (Exception e) {
-			/**
-			 * 抛出异常，一定要关闭事务
-			 * 否则在批量测试中，会导致其他单元测试，进入事务。
-			 */
-			rollback(oldTxInfo, txStatus,e);
-            throw e;
-        }
-    }
-    
-    @Deprecated
-	private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
-    	Map<String,Object> lastInvokerInfo = LazyProxyManager.getLastInvoker();
-    	Object oldObj = AopContextSuppert.getProxyObject();
-        try {
-        	
-        	LazyProxyManager.setLastInvoker(beanModel.getTagClass(), method);
-
-            Object newObj = getTagertObj();
-
-            AopContextSuppert.setProxyObj(poxy);
-
-            LazyBeanFilter.processLazyConfig(newObj, method, param);
-            
-            Object result = transtionalHandler(poxy, method, param);
-            
-            LazyProxyManager.setLastInvoker(lastInvokerInfo);
-            return result;
-        }catch (JunitException e) {
-        	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
-        	throw e;
-        }catch (InvocationTargetException e) {
-        	throw e.getTargetException();
-		}catch (Exception e) {
-        	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
-            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
-                e.getMessage());
-            throw e;
-        }finally {
-        	AopContextSuppert.setProxyObj(oldObj);
-		}
-    }
-    
+//    @Deprecated
+//    private Object transtionalHandler(Object poxy, Method method, Object[] param) throws Throwable{
+//    	TransactionAttribute oldTxInfo = null;
+//    	TransactionStatus txStatus = null;
+//        try {
+//            Object newObj = getTagertObj();
+//            Object result = null;
+//            if(TranstionalManager.isFindTranstional()) {
+//            	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+//            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
+//            	
+//            	txStatus = openTransation(oldTxInfo, txInfo);
+//            	
+//            	result = method.invoke(newObj, param);
+//            	closeTransation(oldTxInfo, txStatus,method);
+//            }else {
+//            	result = method.invoke(newObj, param);
+//            }
+//            
+//            return result;
+//        }catch (JunitException e) {
+//        	rollback(oldTxInfo, txStatus,e);
+//        	throw e;
+//        }catch (InvocationTargetException e) {
+//        	rollback(oldTxInfo, txStatus,e);
+//        	throw e.getTargetException();
+//		}catch (Exception e) {
+//			/**
+//			 * 抛出异常，一定要关闭事务
+//			 * 否则在批量测试中，会导致其他单元测试，进入事务。
+//			 */
+//			rollback(oldTxInfo, txStatus,e);
+//            throw e;
+//        }
+//    }
+//    
+//    @Deprecated
+//	private Object aopHandler(Object poxy, Method method, Object[] param) throws Throwable{
+//    	Map<String,Object> lastInvokerInfo = LazyProxyManager.getLastInvoker();
+//    	Object oldObj = AopContextSuppert.getProxyObject();
+//        try {
+//        	
+//        	LazyProxyManager.setLastInvoker(beanModel.getTagClass(), method);
+//
+//            Object newObj = getTagertObj();
+//
+//            AopContextSuppert.setProxyObj(poxy);
+//
+//            LazyBeanFilter.processLazyConfig(newObj, method, param);
+//            
+//            Object result = transtionalHandler(poxy, method, param);
+//            
+//            LazyProxyManager.setLastInvoker(lastInvokerInfo);
+//            return result;
+//        }catch (JunitException e) {
+//        	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
+//        	throw e;
+//        }catch (InvocationTargetException e) {
+//        	throw e.getTargetException();
+//		}catch (Exception e) {
+//        	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
+//            log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),
+//                e.getMessage());
+//            throw e;
+//        }finally {
+//        	AopContextSuppert.setProxyObj(oldObj);
+//		}
+//    }
+//    
     protected  Object commonIntercept(Object poxy, Method method, Object[] param) throws Throwable {
     	if(errorTimes.get()>6) {
     		log.error("Class=>{},method=>{}",tagertObj.getClass(),method.getName());
@@ -242,79 +239,69 @@ public abstract class AbstractLazyProxy {
     }
     
     protected abstract Object getTagertObjectCustom();
-    /**
-     * 开启事务
-     * @param oldTxInfo 旧事务信息
-     * @param txInfo 新事务信息
-     * @return 事务状态信息
-     */
-    @Deprecated
-    protected TransactionStatus openTransation(TransactionAttribute oldTxInfo, TransactionAttribute txInfo) {
-        TransactionStatus txStatus = null;
-        if (txInfo != null) {
-            TranstionalManager.getInstance().setTxInfo(txInfo);
-            if (oldTxInfo != null) {
-                // 看情况开启新事务
-                if (txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED
-                    || txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {
-                    txStatus = TranstionalManager.getInstance().beginTx(txInfo);
-                }
-            } else {
-                // 开启事务
-                txStatus = TranstionalManager.getInstance().beginTx(txInfo);
-            }
-        }
-        return txStatus;
-    }
-    /**
-     * 关闭事务
-     * @param oldTxInfo 旧事务信息
-     * @param txStatus 当前事务
-     * @param method 
-     */
-    @Deprecated
-    protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
-        if (txStatus != null) {
-            TranstionalManager.getInstance().commitTx(txStatus);
-            TranstionalManager.getInstance().clearThradLocal();
-        }
-        if (oldTxInfo != null) {
-            TranstionalManager.getInstance().setTxInfo(oldTxInfo);
-        }
-        
-    }
-    @Deprecated
-    protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
-    	if(txStatus!=null) {
-    		TransactionAttribute currentTxInfo = TranstionalManager.getInstance().getTxInfo();
-    		if(currentTxInfo.rollbackOn(e)) {
-    			TranstionalManager.getInstance().rollbackTx(txStatus);
-    		}else {
-    			TranstionalManager.getInstance().commitTx(txStatus);
-    		}
-    		TranstionalManager.getInstance().clearThradLocal();
-    	}
-    	if (oldTxInfo != null) {
-            TranstionalManager.getInstance().setTxInfo(oldTxInfo);
-        }
-    }
-
-	public static Object instantiateProxy(Object obj) {
-		return getProxyTagObj(obj);
-	}
-	public static AbstractLazyProxy getProxy(Object obj) {
-		if(isProxy(obj)) {
-			if(obj instanceof Proxy) {
-				LazyImple imple = (LazyImple) Proxy.getInvocationHandler(obj);
-    			return imple;
-    		}else {
-    			Factory fa = (Factory) obj;
-    			Callback[] cbs = fa.getCallbacks();
-    			LazyCglib cglib = (LazyCglib) cbs[0];
-    			return cglib;
-    		}
-		}
-		return null;
-	}
+//    /**
+//     * 开启事务
+//     * @param oldTxInfo 旧事务信息
+//     * @param txInfo 新事务信息
+//     * @return 事务状态信息
+//     */
+//    @Deprecated
+//    protected TransactionStatus openTransation(TransactionAttribute oldTxInfo, TransactionAttribute txInfo) {
+//        TransactionStatus txStatus = null;
+//        if (txInfo != null) {
+//            TranstionalManager.getInstance().setTxInfo(txInfo);
+//            if (oldTxInfo != null) {
+//                // 看情况开启新事务
+//                if (txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED
+//                    || txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {
+//                    txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+//                }
+//            } else {
+//                // 开启事务
+//                txStatus = TranstionalManager.getInstance().beginTx(txInfo);
+//            }
+//        }
+//        return txStatus;
+//    }
+//    /**
+//     * 关闭事务
+//     * @param oldTxInfo 旧事务信息
+//     * @param txStatus 当前事务
+//     * @param method 
+//     */
+//    @Deprecated
+//    protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
+//        if (txStatus != null) {
+//            TranstionalManager.getInstance().commitTx(txStatus);
+//            TranstionalManager.getInstance().clearThradLocal();
+//        }
+//        if (oldTxInfo != null) {
+//            TranstionalManager.getInstance().setTxInfo(oldTxInfo);
+//        }
+//        
+//    }
+//    @Deprecated
+//    protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
+//    	if(txStatus!=null) {
+//    		TransactionAttribute currentTxInfo = TranstionalManager.getInstance().getTxInfo();
+//    		if(currentTxInfo.rollbackOn(e)) {
+//    			TranstionalManager.getInstance().rollbackTx(txStatus);
+//    		}else {
+//    			TranstionalManager.getInstance().commitTx(txStatus);
+//    		}
+//    		TranstionalManager.getInstance().clearThradLocal();
+//    	}
+//    	if (oldTxInfo != null) {
+//            TranstionalManager.getInstance().setTxInfo(oldTxInfo);
+//        }
+//    }
+//    @Deprecated
+//	public static Object instantiateProxy(Object obj) {
+//		return LazyProxyManager.instantiateProxy(obj);
+//	}
+//    @Deprecated
+//	public static BaseAbstractLazyProxy getProxy(Object obj) {
+//		return LazyProxyManager.getProxy(obj);
+//	}
 
 }

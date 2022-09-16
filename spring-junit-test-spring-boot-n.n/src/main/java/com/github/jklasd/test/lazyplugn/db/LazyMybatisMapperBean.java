@@ -15,8 +15,9 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.BaseAbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
@@ -158,8 +159,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
             Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;
-            	if(mybatisScan != null && AbstractLazyProxy.isProxy(mybatisScan)) {
-        			AbstractLazyProxy obj = AbstractLazyProxy.getProxy(mybatisScan);
+            	if(mybatisScan != null && LazyProxyManager.isProxy(mybatisScan)) {
+            		BaseAbstractLazyProxy obj = LazyProxyManager.getProxy(mybatisScan);
             		if (obj.getAttr().containsKey("basePackage")) {
             			basePackage = obj.getAttr().get("basePackage").toString();
             		}
@@ -207,7 +208,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     @Override
-    public Object buildBean(AbstractLazyProxy model) {
+    public Object buildBean(BaseAbstractLazyProxy model) {
         Class<?> tagC = model.getBeanModel().getTagClass();
         if(isMybatisBean(tagC)) {
             try {

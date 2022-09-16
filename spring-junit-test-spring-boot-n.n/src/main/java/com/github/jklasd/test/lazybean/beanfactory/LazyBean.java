@@ -285,7 +285,7 @@ public class LazyBean implements LazyBeanI{
 	 */
 	static Set<String> exist = Sets.newHashSet();
 	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
-		Class<?> objClass = AbstractLazyProxy.isProxy(obj)? AbstractLazyProxy.getProxyTagClass(obj): obj.getClass();
+		Class<?> objClass = LazyProxyManager.isProxy(obj)? LazyProxyManager.getProxyTagClass(obj): obj.getClass();
 		if(objClass == objClassOrSuper) {
 			//跳过
 			String existKey = obj+"="+objClassOrSuper.getName();

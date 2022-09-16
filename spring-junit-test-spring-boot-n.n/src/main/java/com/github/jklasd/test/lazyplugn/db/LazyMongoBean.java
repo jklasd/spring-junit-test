@@ -4,7 +4,7 @@ import java.util.Map;
 
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.BaseAbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.google.common.collect.Maps;
@@ -40,7 +40,7 @@ public class LazyMongoBean implements LazyPlugnBeanFactory{
 	}
 
     @Override
-    public Object buildBean(AbstractLazyProxy model) {
+    public Object buildBean(BaseAbstractLazyProxy model) {
         Class tagC = model.getBeanModel().getTagClass();
         if(isMongo(tagC)) {
             return buildBean(tagC, model.getBeanModel().getBeanName());
