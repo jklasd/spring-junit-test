@@ -4,14 +4,12 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
-import org.aopalliance.aop.Advice;
 import org.springframework.aop.Advisor;
-import org.springframework.aop.Pointcut;
-import org.springframework.aop.aspectj.AbstractAspectJAdvice;
 import org.springframework.aop.aspectj.annotation.AspectJAdvisorFactory;
 import org.springframework.aop.aspectj.annotation.BeanFactoryAspectInstanceFactory;
 import org.springframework.aop.aspectj.annotation.MetadataAwareAspectInstanceFactory;
 import org.springframework.aop.aspectj.annotation.ReflectiveAspectJAdvisorFactory;
+import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -47,6 +45,8 @@ public class AopClassHandler implements MockClassHandler{
 			if(!aspectJAdvisorFactory.isAspect(aopClass)) {
 				continue;
 			}
+			//控制重复
+			existsAop.add(aopClass);
 			
 			/**
 			 * 参考 BeanFactoryAspectJAdvisorsBuilder # buildAspectJAdvisors
@@ -65,26 +65,25 @@ public class AopClassHandler implements MockClassHandler{
 			 */
 			List<Advisor> classAdvisors = aspectJAdvisorFactory.getAdvisors(factory);
 			
-			advisorsHand(classAdvisors);
+			//不需要排序
+//			aspectJAwareAdvisorAutoProxyCreatorExt.sortAdvisors(classAdvisors);
+			
+			LazyAopInvoker.getInstance().regist(classAdvisors);
 		}
 	}
-
-	private void advisorsHand(List<Advisor> classAdvisors) {
-		/**
-		 * @TODO 待处理
-		 */
-		Set<Pointcut> pointc = Sets.newHashSet();
-		classAdvisors.forEach(adv->{
-			Advice advice = adv.getAdvice();
-			if(advice instanceof AbstractAspectJAdvice) {
-				AbstractAspectJAdvice padv = (AbstractAspectJAdvice)advice;
-				Pointcut point = padv.getPointcut();
-				pointc.add(point);
-			}
-		});
-//		LazyAopInvoker.getInstance().regist(pointc);
-		LazyAopInvoker.getInstance().regist(classAdvisors);
-	}
+//	class AspectJAwareAdvisorAutoProxyCreatorExt extends AspectJAwareAdvisorAutoProxyCreator{
+//
+//		/**
+//		 * 
+//		 */
+//		private static final long serialVersionUID = -3341013845208327389L;
+//		
+//		@Override
+//		protected List<Advisor> sortAdvisors(List<Advisor> advisors) {
+//			return super.sortAdvisors(advisors);
+//		}
+//		
+//	}
 
 	@Override
 	public void releaseClass(Class<?> testClass) {

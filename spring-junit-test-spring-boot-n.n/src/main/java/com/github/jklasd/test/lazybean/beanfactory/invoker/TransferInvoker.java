@@ -60,8 +60,14 @@ public class TransferInvoker extends AbstractProxyInvoker{
 //            throw e;
 //        }
 	
+	/**
+	 * 正常关闭事务
+	 */
 	@Override
 	protected void afterInvoke(InvokeDTO dto, Map<String, Object> context) {
+		if(!TranstionalManager.isFindTranstional()) {
+			return ;
+		}
 		TransactionAttribute oldTxInfo = (TransactionAttribute) context.get(context_oldTxInfo);	
 		TransactionStatus txStatus = (TransactionStatus) context.get(context_txStatus);
 		closeTransation(oldTxInfo, txStatus,dto.getMethod());		
@@ -72,28 +78,36 @@ public class TransferInvoker extends AbstractProxyInvoker{
 		
 	}
 
+	/**
+	 * 开启事务
+	 * 新旧事务交替
+	 */
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		if(!TranstionalManager.isFindTranstional()) {
+			return true;
+		}
 		TransactionAttribute oldTxInfo = null;
 		TransactionStatus txStatus = null;
 		
 		Object newObj = dto.getRealObj();
-        if(TranstionalManager.isFindTranstional()) {
-        	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-        	context.put(context_oldTxInfo,oldTxInfo);	
-        	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(dto.getMethod(), newObj);
-        	txStatus = openTransation(oldTxInfo, txInfo);
-        	context.put(context_txStatus,txStatus);	
-        	return true;
-        }else {
-        }
-		
-		return false;
+    	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
+    	context.put(context_oldTxInfo,oldTxInfo);	
+    	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(dto.getMethod(), newObj);
+    	txStatus = openTransation(oldTxInfo, txInfo);
+    	context.put(context_txStatus,txStatus);	
+    	return true;
 	}
 
+	/**
+	 * 异常回滚
+	 */
 	@Override
 	protected void exceptionInvoke(InvokeDTO dto, Map<String, Object> context, Exception e) {
+		if(!TranstionalManager.isFindTranstional()) {
+			return ;
+		}
 		TransactionAttribute oldTxInfo = (TransactionAttribute) context.get(context_oldTxInfo);	
 		TransactionStatus txStatus = (TransactionStatus) context.get(context_txStatus);
 		rollback(oldTxInfo, txStatus, e);
@@ -107,6 +121,7 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	 */
 	
 	protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
+		
     	if(txStatus!=null) {
     		TransactionAttribute currentTxInfo = TranstionalManager.getInstance().getTxInfo();
     		if(currentTxInfo.rollbackOn(e)) {
