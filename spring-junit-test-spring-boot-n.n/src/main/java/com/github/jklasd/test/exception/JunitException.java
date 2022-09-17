@@ -32,4 +32,12 @@ public class JunitException extends RuntimeException {
 		super(message);
 		this.need_throw = need_throw;
 	}
+	
+	public JunitException(String message,Throwable e) {
+		super(message,e);
+	}
+	public JunitException(String message,Throwable e, boolean need_throw) {
+		super(message,e);
+		this.need_throw = need_throw;
+	}
 }

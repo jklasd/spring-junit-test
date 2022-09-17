@@ -59,7 +59,7 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
         }catch (InvocationTargetException e) {
         	//异常处理
         	exceptionInvoke(dto,context,e);
-        	throw e.getTargetException();
+        	throw e;
 		}catch (Exception e) {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
             log.error("LazyCglib#intercept ERROR=>{}#{}==>message:{},params:{}", beanModel.getTagClass(), method.getName(),e.getMessage());
@@ -79,7 +79,7 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
 
 	protected abstract void afterInvoke(InvokeDTO dto, Map<String, Object> context);
 
-	protected Object roundInvoke(Object poxy, Method method, Object[] param,BeanModel beanModel,Object realObj) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, Throwable {
+	protected Object roundInvoke(Object poxy, Method method, Object[] param,BeanModel beanModel,Object realObj) throws Exception, Throwable {
 		return nextInvoker!=null ? nextInvoker.invoke(poxy, method, param, beanModel, realObj)
     			: method.invoke(realObj, param);
 	}

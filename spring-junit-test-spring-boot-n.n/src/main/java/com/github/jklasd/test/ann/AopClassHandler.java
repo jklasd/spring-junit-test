@@ -82,7 +82,7 @@ public class AopClassHandler implements MockClassHandler{
 				pointc.add(point);
 			}
 		});
-		LazyAopInvoker.getInstance().regist(pointc);
+//		LazyAopInvoker.getInstance().regist(pointc);
 		LazyAopInvoker.getInstance().regist(classAdvisors);
 	}
 
