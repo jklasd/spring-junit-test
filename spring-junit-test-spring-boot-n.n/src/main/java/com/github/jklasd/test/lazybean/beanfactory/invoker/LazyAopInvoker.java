@@ -4,19 +4,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 import org.springframework.aop.Advisor;
-import org.springframework.aop.Pointcut;
-import org.springframework.aop.aspectj.AspectJAfterAdvice;
-import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 import org.springframework.aop.framework.AdvisedSupport;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -33,21 +27,6 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 		}
 		return instance;
 	}
-//	private List<Pointcut> allPoint = Lists.newArrayList();
-//	
-//	private Set<Pointcut> cachePoint = Sets.newHashSet();
-	
-//	public void regist(Set<Pointcut> pointc) {
-//		pointc.stream().forEach(item->{
-//			if(cachePoint.contains(item)) {//AspectJExpressionPointcut hashcode 已被重写
-//				return;
-//			}
-//			cachePoint.add(item);
-//			allPoint.add(item);
-//		});
-//	}
-	
-//	private List<AspectJMethodBeforeAdvice> beforeAdv = Lists.newArrayList();
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -59,8 +38,15 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 	}
 	
 	protected Object roundInvoke(Object poxy, Method method, Object[] param,BeanModel beanModel,Object realObj) throws  Throwable {
+		List<Object> advList = advised.getInterceptorsAndDynamicInterceptionAdvice(method, beanModel.getTagClass());
+		
+		if(advList.isEmpty()) {
+			return super.roundInvoke(poxy, method, param, beanModel, realObj);
+		}
+		
+		
 		return new MethodInvocationImpl(poxy, realObj, method, param, beanModel.getTagClass(), 
-				advised.getInterceptorsAndDynamicInterceptionAdvice(method, beanModel.getTagClass())
+				advList
 				, new Callable() {
 						@Override
 						public Object call() throws Throwable {

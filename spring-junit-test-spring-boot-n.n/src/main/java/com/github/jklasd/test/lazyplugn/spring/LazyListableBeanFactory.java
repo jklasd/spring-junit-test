@@ -214,4 +214,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		
 		cacheClassMap.remove(tagC);
 	}
+	
+	@Override
+	public boolean isSingleton(String name) throws NoSuchBeanDefinitionException {
+		if(cacheProxyBean.containsKey(name)) {
+			return true;
+		}
+		return super.isSingleton(name);
+	}
 }

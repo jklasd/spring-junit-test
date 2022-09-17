@@ -67,6 +67,10 @@ public class AopClassHandler implements MockClassHandler{
 			
 			//不需要排序
 //			aspectJAwareAdvisorAutoProxyCreatorExt.sortAdvisors(classAdvisors);
+			/**
+			 * 需要提前注册
+			 */
+			LazyBean.getInstance().buildProxy(aopClass);
 			
 			LazyAopInvoker.getInstance().regist(classAdvisors);
 		}
