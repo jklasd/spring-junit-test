@@ -85,7 +85,7 @@ public class ClassScan implements Scan{
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).setExecutorService(2).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
-									if(name.contains(".class")) {
+									if(name.endsWith(".class")) {
 										classNames.add(name.replace("/", ".").replace("\\", "."));
 									}else {
 										try {
