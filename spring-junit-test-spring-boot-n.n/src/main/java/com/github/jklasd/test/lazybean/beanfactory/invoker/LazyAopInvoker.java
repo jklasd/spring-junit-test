@@ -10,6 +10,7 @@ import org.springframework.aop.framework.AdvisedSupport;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
 
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,13 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		
+		Object newObj = dto.getRealObj();
+		Object oldObj = AopContextSuppert.getProxyObject();
+		context.put("oldObj", oldObj);
+        AopContextSuppert.setProxyObj(dto.getPoxy());
+        LazyBeanFilter.processLazyConfig(newObj, dto.getMethod(), dto.getParam());
+		
 		return false;
 	}
 	

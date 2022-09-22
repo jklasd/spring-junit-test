@@ -230,7 +230,7 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
         }
     }
 
-    public boolean findPublicConstrucors() {
-         return constructor!=null && Modifier.isPublic(constructor.getModifiers());
-    }
+//    public boolean findPublicConstrucors() {
+//         return constructor!=null && Modifier.isPublic(constructor.getModifiers());
+//    }
 }
