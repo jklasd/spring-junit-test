@@ -193,13 +193,7 @@ public class LazyBean implements LazyBeanI{
 //				log.info("ReportMethodConfiguration");
 //			}
 			
-			Enhancer enhancer = new Enhancer() {
-	            @Override
-	            @SuppressWarnings("unchecked")
-	            protected void filterConstructors(Class sc, List constructors) {
-	                // Don't filter
-	            }
-	        };
+			Enhancer enhancer = new EnhancerExt();
 	        Class<?>[] interfaces = tagClass.getInterfaces();
 	        Class<?>[] allMockedTypes = prepend(tagClass, interfaces);
 			enhancer.setClassLoader(JunitClassLoader.getInstance());
@@ -233,6 +227,11 @@ public class LazyBean implements LazyBeanI{
 		}finally {
 			SignalNotificationUtil.remove(beanModel.getTagClass().getName());
 		}
+	}
+	private static class EnhancerExt extends Enhancer{
+		protected void filterConstructors(Class sc, List constructors) {
+            // Don't filter
+        }
 	}
 	private static Class<?>[] prepend(Class<?> first, Class<?>... rest) {
         Class<?>[] all = new Class<?>[rest.length+1];
