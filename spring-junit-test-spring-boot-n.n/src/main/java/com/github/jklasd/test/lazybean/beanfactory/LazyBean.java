@@ -40,6 +40,7 @@ import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
@@ -333,9 +334,13 @@ public class LazyBean implements LazyBeanI{
         	FieldAnnComponent.handlerField(new FieldDef(f,obj));
 		}
     }
-
+    Set<Class<?>> processed = Sets.newHashSet();
 	public Object processStatic(Class<?> c) {
+		if(processed.contains(c)) {
+			return null;
+		}
 		try {
+			processed.add(c);
 			Object obj = buildProxy(c);
 			if(obj!=null) {
 				processAttr(obj, c , true);
@@ -354,7 +359,10 @@ public class LazyBean implements LazyBeanI{
 			if(methodsCache.containsKey(superClass)) {
 			    Method tagM = methodsCache.get(superClass).get(mName);
 			    if(tagM!=null) {
-			        invokeSet(field, obj, value, tagM);
+			    	boolean success = invokeSet(field, obj, value, tagM);
+			    	if(success) {
+			    		return success;
+			    	}
 			    }
 			}else {
 			    methodsCache.put(superClass, Maps.newHashMap());
@@ -593,14 +601,14 @@ public class LazyBean implements LazyBeanI{
 		AssemblyDTO asse = new AssemblyDTO();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
-		Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
-		if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+		JunitMethodDefinition ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
+		if(ojb_meth==null) {
 			DebugObjectView.readView(()->{
 				log.debug("=================重试查找bean失败2=={}===============",asse);
 			});
 			return null;
 		}
-		Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],asse);
+		Object tagObj = JavaBeanUtil.getInstance().buildBean(ojb_meth.getConfigurationClass(),ojb_meth.getMethod(),asse);
 		return tagObj;
 	}
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
@@ -618,11 +626,11 @@ public class LazyBean implements LazyBeanI{
 	}
 	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
 		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
-			Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(assemblyData);
-			if(ojb_meth[0] ==null || ojb_meth[1]==null) {
+			JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(assemblyData);
+			if(jmd==null) {
 				return null;
 			}
-			Object tagObj = JavaBeanUtil.getInstance().buildBean((Class<?>)ojb_meth[0],(Method)ojb_meth[1],assemblyData);
+			Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),assemblyData);
 			return tagObj;
 		}, assemblyData));
 	}

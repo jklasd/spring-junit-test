@@ -5,21 +5,18 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 
-import javax.annotation.PostConstruct;
 import javax.annotation.Resource;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.ApplicationContextAware;
-import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.CommonAnnotationBeanPostProcessor;
+import org.springframework.util.ReflectionUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -32,6 +29,7 @@ class BeanInitHandler {
 	public static BeanInitHandler getInstance() {
 		return lazyBean;
 	}
+	private CommonAnnotationBeanPostProcessor commonAnnotationBeanPostProcessor = new CommonAnnotationBeanPostProcessor();
 	@Builder
 	@Getter
 	public static class Param{
@@ -40,8 +38,7 @@ class BeanInitHandler {
 		Class<?> sup;
 		boolean hasStatic;
 	}
-	protected void processSpringAnnMethod(Param handlerParam)
-			throws IllegalAccessException, InvocationTargetException {
+	protected void processSpringAnnMethod(Param handlerParam) throws IllegalAccessException, InvocationTargetException {
 		Object obj = handlerParam.getObj();
 		Method[] ms = handlerParam.getMs();
 		boolean isStatic = handlerParam.isHasStatic();
@@ -51,23 +48,25 @@ class BeanInitHandler {
 			}
 			return;
 		}
+		commonAnnotationBeanPostProcessor.postProcessBeforeInitialization(obj, null);
+//		ReflectionUtils.doWithLocalMethods(obj.getClass(), method -> {
+//			
+//		});
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
-			if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。
-				try {
-					if (!m.isAccessible()) {
-						m.setAccessible(true);
-					}
-					m.invoke(obj, null);
-				} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-					log.error("初始化方法执行异常{}#{}",obj,m);
-					log.error("初始化方法执行异常",e);
-				}
-			}else if(m.getAnnotation(Autowired.class) != null) {
-			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
-			    Object[] param = processParam(m, paramTypes);
-                Object tmp = m.invoke(obj, param);
-			}else if(m.getAnnotation(Value.class) != null) {
+			/*
+			 * if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。 try { if
+			 * (!m.isAccessible()) { m.setAccessible(true); } m.invoke(obj, null); } catch
+			 * (IllegalAccessException | IllegalArgumentException |
+			 * InvocationTargetException e) { log.error("初始化方法执行异常{}#{}",obj,m);
+			 * log.error("初始化方法执行异常",e); } }else
+			 */
+//		    if(m.getAnnotation(Autowired.class) != null) {
+//			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
+//			    Object[] param = processParam(m, paramTypes);
+//                Object tmp = m.invoke(obj, param);
+//			}else 
+			if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
 			    if(paramTypes.length>0) {
 			        Type type = paramTypes[0];
@@ -86,40 +85,41 @@ class BeanInitHandler {
                 String beanName = aw.name();
                 Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
-                if(tmp!=null) {
+//                if(tmp!=null) {
 //                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
-                }
-            }else if(m.getAnnotation(Bean.class) != null) {
-            	if(m.getReturnType() != Void.class
-            			&& m.getReturnType() != void.class) {
-            		return;
-            	}
-                Bean aw = m.getAnnotation(Bean.class);
-                String beanName = null;
-                if(aw.value().length>0) {
-                	beanName = aw.value()[0];
-                }else if(aw.name().length>0){
-                	beanName = aw.name()[0];
-                }else {
-                	beanName = m.getName();
-                }
-                boolean exitBean = TestUtil.getInstance().getApplicationContext().containsBean(beanName);
-                if(exitBean) {
-                	return;
-                }
-                if (!m.isAccessible()) {
-					m.setAccessible(true);
-				}
-                Object[] param = processParam(m, paramTypes);
-                Object tmp = m.invoke(obj, param);
-                if(tmp!=null) {
-                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
-                    if(confPro!=null) {
-                    	LazyConfPropBind.processConfigurationProperties(tmp,confPro);
-                    }
-                    TestUtil.getInstance().getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
-                }
+//                }
             }
+//            else if(m.getAnnotation(Bean.class) != null) {
+//            	if(m.getReturnType() != Void.class
+//            			&& m.getReturnType() != void.class) {
+//            		return;
+//            	}
+//                Bean aw = m.getAnnotation(Bean.class);
+//                String beanName = null;
+//                if(aw.value().length>0) {
+//                	beanName = aw.value()[0];
+//                }else if(aw.name().length>0){
+//                	beanName = aw.name()[0];
+//                }else {
+//                	beanName = m.getName();
+//                }
+//                boolean exitBean = TestUtil.getInstance().getApplicationContext().containsBean(beanName);
+//                if(exitBean) {
+//                	return;
+//                }
+//                if (!m.isAccessible()) {
+//					m.setAccessible(true);
+//				}
+//                Object[] param = processParam(m, paramTypes);
+//                Object tmp = m.invoke(obj, param);
+//                if(tmp!=null) {
+//                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
+//                    if(confPro!=null) {
+//                    	LazyConfPropBind.processConfigurationProperties(tmp,confPro);
+//                    }
+//                    TestUtil.getInstance().getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
+//                }
+//            }
 		}
 	}
 	
@@ -165,7 +165,7 @@ class BeanInitHandler {
 					try {
 						if(m!=null) {
 							try {
-								m.invoke(param.getObj(),TestUtil.getInstance().getApplicationContext());
+								m.invoke(param.getObj(),LazyApplicationContext.getInstance());
 							} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 								log.error("不能注入applicationContext",e);
 							}

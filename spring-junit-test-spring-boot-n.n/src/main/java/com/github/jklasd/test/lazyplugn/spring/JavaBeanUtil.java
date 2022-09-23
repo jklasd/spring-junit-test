@@ -26,6 +26,7 @@ import org.springframework.core.io.Resource;
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -288,9 +289,9 @@ public class JavaBeanUtil {
         		}
         	}
 //        	tmp.setNameMapTmp(nameSpace);
-        	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-        	if(ojb_meth[0]!=null && ojb_meth[1] != null) {
-        		param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
+        	JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(tmp);
+        	if(jmd!=null) {
+        		param[i] = buildBean(jmd.getConfigurationClass(),jmd.getMethod(), tmp);
         		if(param[i] == null) {
         		    log.warn("arg 为空，警告");
         		}

@@ -19,6 +19,7 @@ import com.github.jklasd.test.lazybean.beanfactory.BaseAbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -124,7 +125,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     private void buildMybatisFactory() {
         if (defaultFactory == null) {
-            Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
+        	Object obj = LazyListableBeanFactory.getInstance().getBean(factoryClass);
+//            Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
             if (obj != null) {
                 defaultFactory = obj;
                 return;

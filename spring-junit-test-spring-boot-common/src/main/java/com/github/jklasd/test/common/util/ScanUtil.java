@@ -21,6 +21,7 @@ import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -170,12 +171,12 @@ public class ScanUtil {
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	private static volatile BeanScanI beanFactoryScaner;
 
-	public /* synchronized */static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
+	public /* synchronized */static JunitMethodDefinition findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
 		if(beanFactoryScaner == null) {
 			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
 			if(beanFactoryScaner == null) {
 				log.warn("beanFactoryScaner 未加载到");
-				return new Object[1];
+				return null;
 			}
 		}
 		return beanFactoryScaner.findCreateBeanFactoryClass(assemblyData);

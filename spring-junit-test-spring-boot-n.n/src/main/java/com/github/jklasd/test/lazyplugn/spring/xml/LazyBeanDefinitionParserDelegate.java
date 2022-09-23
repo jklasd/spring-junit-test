@@ -2,6 +2,7 @@
 
 import java.util.Map;
 
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.xml.BeanDefinitionParserDelegate;
 import org.springframework.beans.factory.xml.NamespaceHandler;
@@ -42,11 +43,13 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
         this.readerContext = readerContext;
 //        this.documentReader = documentReader;
     }
-
+    
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
-        if(filter.containsKey(ele.getTagName())) {
-            return filter.get(ele.getTagName()).parse(ele);
-        }
+//        if(filter.containsKey(ele.getTagName())) {
+//            return filter.get(ele.getTagName()).parse(ele);
+//        }
+    	
+    	
         String namespaceUri = getNamespaceURI(ele);
         NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
         if (handler == null) {
@@ -57,27 +60,28 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
         if(beanDef != null) {
             if(parser.containsKey(namespaceUri)) {
                 parser.get(namespaceUri).handBeanDef(ele,beanDef);
-            }else {
-                Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
-                String beanName = ele.hasAttribute("id") ?ele.getAttribute("id"):BeanNameUtil.getBeanName(beanC);
-                log.info("beanName=>{};beanDef=>{},=>{},pv=>{};",beanName,ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
-                
-                if(beanName.equals("serviceBean")) {
-                	log.info("");
-                }
-                
-                BeanModel beanModel = new BeanModel();
-                beanModel.setXmlBean(true);
-                beanModel.setTagClass(beanC);
-//                beanModel.setBeanClassName(beanDef.getBeanClassName());
-                beanModel.setBeanName(beanName);
-                beanModel.setPropValue(beanDef.getPropertyValues());
-                beanModel.setConstructorArgs(beanDef.getConstructorArgumentValues());
-                LazyBean.getInstance().buildProxy(beanModel);
-//                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
-                
-//                documentReader.attrs.put(key, beanDef.getPropertyValues());
             }
+//        	else {
+//                Class<?> beanC = ScanUtil.loadClass(beanDef.getBeanClassName());
+//                String beanName = ele.hasAttribute("id") ?ele.getAttribute("id"):BeanNameUtil.getBeanName(beanC);
+//                log.info("beanName=>{};beanDef=>{},=>{},pv=>{};",beanName,ele.getTagName(),beanDef.getBeanClassName(),beanDef.getPropertyValues());
+//                
+//                if(beanName.equals("serviceBean")) {
+//                	log.info("");
+//                }
+//                
+//                BeanModel beanModel = new BeanModel();
+//                beanModel.setXmlBean(true);
+//                beanModel.setTagClass(beanC);
+////                beanModel.setBeanClassName(beanDef.getBeanClassName());
+//                beanModel.setBeanName(beanName);
+//                beanModel.setPropValue(beanDef.getPropertyValues());
+//                beanModel.setConstructorArgs(beanDef.getConstructorArgumentValues());
+//                LazyBean.getInstance().buildProxy(beanModel);
+////                TestUtil.getApplicationContext().registBean(beanName, obj, beanC);
+//                
+////                documentReader.attrs.put(key, beanDef.getPropertyValues());
+//            }
         }
         return beanDef;
     }
