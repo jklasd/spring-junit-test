@@ -13,6 +13,7 @@ import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -20,13 +21,17 @@ public abstract class AbstractRefHandler implements DubboHandler{
 	protected static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	public static void putAnnService(Class<?> dubboServiceClass) {}
 	
-	protected final static Integer TypeXml = 1;
-	protected final static Integer TypeAnn = 2;
+	public final static Integer TypeXml = 1;
+	public final static Integer TypeAnn = 2;
 	
+	@Getter
 	protected Map<String,Integer> refType = Maps.newHashMap();
 	
+	@Getter
 	protected Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
+	@Getter
 	protected Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
+	@Getter
 	protected Map<String,BeanDefinition> dubboConfigCacheDef = Maps.newHashMap();
 	
 	private static DubboConfig dubboConfiguration;

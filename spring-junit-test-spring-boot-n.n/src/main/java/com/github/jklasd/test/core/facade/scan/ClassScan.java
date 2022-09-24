@@ -257,7 +257,13 @@ public class ClassScan implements Scan{
 			return findClass.get();
 		}
 	}
+	Map<Class<?>,List<Class<?>>> cacheInterfaceImpls = Maps.newConcurrentMap();
 	public List<Class<?>> findClassImplInterface(Class<?> interfaceClass) {
+		
+		if(cacheInterfaceImpls.containsKey(interfaceClass)) {
+			return cacheInterfaceImpls.get(interfaceClass);
+		}
+		
 		List<Class<?>> list = Lists.newArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
@@ -269,6 +275,9 @@ public class ClassScan implements Scan{
 				}
 			}
 		});
+		if(!list.isEmpty()) {
+			cacheInterfaceImpls.put(interfaceClass, list);
+		}
 		return list;
 	}
 	public static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();

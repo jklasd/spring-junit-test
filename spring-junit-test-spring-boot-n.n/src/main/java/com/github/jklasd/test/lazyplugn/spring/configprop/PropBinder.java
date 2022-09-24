@@ -92,7 +92,7 @@ class PropBinder implements BinderHandler{
 			aware.setEnvironment(applicationContext.getEnvironment());
 			postProcessor.postProcessBeanFactory(applicationContext.getBeanFactory());
 			
-			applicationContext.registBean("propertySourcesPlaceholderConfigurer", postProcessor, PropertySourcesPlaceholderConfigurer);
+			applicationContext.registProxyBean("propertySourcesPlaceholderConfigurer", postProcessor, PropertySourcesPlaceholderConfigurer);
 			processObj = con.newInstance(applicationContext);
 		}
 	}

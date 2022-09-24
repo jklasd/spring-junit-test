@@ -12,7 +12,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class JunitThreadUtil{
 	public static void wait(Class<?> executorOf ,String fieldName ) {
-		Object bean = LazyApplicationContext.getInstance().getBeanByClass(executorOf);
+		Object bean = LazyApplicationContext.getInstance().getProxyBeanByClass(executorOf);
 		ThreadPoolExecutor executor = (ThreadPoolExecutor) JunitInvokeUtil.invokeReadField(fieldName,
 				LazyProxyManager.isProxy(bean)?LazyProxyManager.getProxyTagObj(bean):bean);
 		wait(executor);

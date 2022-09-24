@@ -4,15 +4,13 @@ import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.Map;
 import java.util.Properties;
+import java.util.Set;
 
 import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.boot.autoconfigure.domain.EntityScanPackages;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
@@ -23,6 +21,10 @@ import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
+import com.github.jklasd.test.util.BeanNameUtil;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -44,91 +46,59 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		return lazyBeanFactory.getBeansOfType(type);
 	}
 	
+	Map<String,Object> cacheProxyBean = Maps.newHashMap();
+	
 	public Object getBean(String beanName) {
-		try {
-			if(StringUtils.isBlank(beanName)) {
-				return null;
-			}
-			if(lazyBeanFactory.containsBean(beanName)) {
-				return lazyBeanFactory.getBean(beanName);
-			}
-			/**
-			 * 尝试筛选域中，查看bean是否存在
-			 */
-			Class<?> beanClass = ScanUtil.findClassByName(beanName);
-			if(beanClass!=null) {
-				return LazyBean.getInstance().buildProxy(beanClass,beanName);
-			}
-			
-			Object obj = LazyBean.getInstance().findCreateBeanFromFactory(null, beanName);
-			
-			return obj;
-		}catch(Exception e){
-			throw new JunitException("Bean 未找到");
-		}
+		return lazyBeanFactory.getBean(beanName);
 	}
 	
-	@SuppressWarnings("unchecked")
+	
 	public <T> T getBean(String name, Class<T> requiredType) {
-		try {
-			return lazyBeanFactory.getBean(name,requiredType);
-		} catch (NoSuchBeanDefinitionException e) {
-			if(requiredType == EntityScanPackages.class) {
-				throw e;
-			}
-			return (T) LazyBean.getInstance().buildProxy(requiredType, name);
-		}
-	}
-	@SuppressWarnings("unchecked")
-	public <T> T getBean(Class<T> requiredType) throws BeansException {
-		try {
-			return lazyBeanFactory.getBean(requiredType);
-		} catch (NoSuchBeanDefinitionException e) {
-			return (T) LazyBean.getInstance().buildProxy(requiredType);
-		}
+		return lazyBeanFactory.getBean(name, requiredType);
 	}
 	
-	public Object getBeanByClass(Class<?> factoryclass) {
-		try {
-			return lazyBeanFactory.getBean(factoryclass);
-		} catch (BeansException e) {
-		}
-		return null;
+	public <T> T getBean(Class<T> requiredType) throws BeansException {
+		return lazyBeanFactory.getBean(requiredType);
+	}
+	
+	public Object getProxyBeanByClass(Class<?> tagClass) {
+		String beanName = BeanNameUtil.getBeanName(tagClass);
+		return cacheProxyBean.get(beanName);
 	}
 
-	public Object getBeanByClassAndBeanName(String beanName, Class<?> tagClass) {
-		try {
-			return lazyBeanFactory.getBean(beanName, tagClass);
-		}catch(JunitException e){
-			if(e.isNeed_throw()) {
-				throw e;
-			}
-			return null;
-		}catch(Exception e) {
-			log.debug("getBeanByClassAndBeanName,beanName=>{},tagClass=>{}",beanName,tagClass);
-			return null;
+	public Object getProxyBeanByClassAndBeanName(String beanName, Class<?> tagClass) {
+		Object proxyBean = cacheProxyBean.get(beanName);
+		if(tagClass.isInstance(proxyBean)) {//如果不是，则有可能重名
+			return proxyBean;
 		}
+		return getProxyBeanByClass(tagClass);
 	}
 	
+	private Map<Class<?>,Set<String>> classMapName = Maps.newHashMap();
 	/**
 	 * bean 注册
 	 * @param beanName
 	 * @param tmp
 	 * @param tagC
 	 */
-	public void registBean(String beanName, Object tmp, Class<?> tagC) {
-		synchronized(tagC) {//synchronized去除多线程注册问题
-	//		regist
-			if(beanName!=null) {//beanName不能直接作加锁条件
-				if(!lazyBeanFactory.containsBean(beanName)) {
-					lazyBeanFactory.registerSingleton(beanName, tmp);
-				}else {
-					log.debug("bean已存在");
-				}
-			}
-			//处理注册bean之后，通过getBean(Class<?>)获取bean问题
-			lazyBeanFactory.registerResolvableDependency(tagC, tmp);
+	public void registProxyBean(String beanName, Object proxyBean, Class<?> tagC) {
+		if(StringUtils.isBlank(beanName)) {
+			throw new JunitException("注册bean，beanName不能为空",true);
 		}
+		if(cacheProxyBean.containsKey(beanName)) {
+			log.warn("{}=>已存在",beanName);
+			return;
+		}
+		
+		if(!LazyProxyManager.isProxy(proxyBean)) {
+			throw new JunitException("注册bean非代理bean，不能在这里处理",true);
+		}
+		
+		cacheProxyBean.put(beanName, proxyBean);
+		if(!classMapName.containsKey(tagC)) {
+			classMapName.put(tagC, Sets.newHashSet());
+		}
+		classMapName.get(tagC).add(beanName);
 	}
 	
 	public void releaseBean(Object tmp, Class<?> tagC) {

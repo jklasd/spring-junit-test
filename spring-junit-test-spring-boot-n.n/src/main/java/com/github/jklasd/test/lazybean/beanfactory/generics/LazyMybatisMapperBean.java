@@ -1,4 +1,4 @@
-package com.github.jklasd.test.lazyplugn.db;
+package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
@@ -14,6 +14,7 @@ import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.BaseAbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -158,7 +159,7 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     @SuppressWarnings({"rawtypes", "unchecked"})
     public static boolean isMybatisBean(Class c) {
     	if (useMybatis() && !loadScaned) {
-            Object mybatisScan = TestUtil.getInstance().getApplicationContext().getBeanByClass(mapperScannerConfigurer);
+            Object mybatisScan = TestUtil.getInstance().getApplicationContext().getProxyBeanByClass(mapperScannerConfigurer);
             try {
             	String basePackage = null;
             	if(mybatisScan != null && LazyProxyManager.isProxy(mybatisScan)) {
@@ -210,8 +211,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     }
 
     @Override
-    public Object buildBean(BaseAbstractLazyProxy model) {
-        Class<?> tagC = model.getBeanModel().getTagClass();
+    public Object buildBean(BeanModel model) {
+        Class<?> tagC = model.getTagClass();
         if(isMybatisBean(tagC)) {
             try {
                 return getMapper(tagC);
@@ -249,5 +250,11 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 		String sqlSessionFactoryBeanName = JunitInvokeUtil.getField(tmp, obj).toString();
 		mybatisScanPathList.add(basePackageValue);
 		mappingSession.put(basePackageValue,LazyBean.findCreateBeanFromFactory(factoryClass, sqlSessionFactoryBeanName));
+	}
+
+	@Override
+	public boolean finded(BeanModel beanModel) {
+		// TODO Auto-generated method stub
+		return false;
 	}
 }

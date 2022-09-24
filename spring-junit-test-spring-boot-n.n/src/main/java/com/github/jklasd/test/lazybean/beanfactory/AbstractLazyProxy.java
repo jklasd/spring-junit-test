@@ -68,7 +68,7 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
                     getTagertObj();
                     Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
                     Object obj = JunitInvokeUtil.invokeMethod(tagertObj, "getObject");
-                    TestUtil.getInstance().getApplicationContext().registBean(BeanNameUtil.getBeanName(obj.getClass()), obj,
+                    TestUtil.getInstance().getApplicationContext().registProxyBean(BeanNameUtil.getBeanName(obj.getClass()), obj,
                         tagC);
                 }
             } catch (Exception e) {

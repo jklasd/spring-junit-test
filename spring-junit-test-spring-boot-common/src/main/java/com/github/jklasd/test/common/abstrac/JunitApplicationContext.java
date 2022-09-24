@@ -9,9 +9,26 @@ public abstract class JunitApplicationContext extends GenericApplicationContext 
 	public JunitApplicationContext(JunitListableBeanFactory instance) {
 		super(instance);
 	}
-	public abstract void registBean(String beanName, Object value, Class<?> type);
+	/**
+	 * 
+	 * @param beanName
+	 * @param value
+	 * @param type
+	 */
+	public abstract void registProxyBean(String beanName, Object proxy, Class<?> type);
 
-	public abstract Object getBeanByClassAndBeanName(String beanName, Class<?> tagClass);
-	public abstract Object getBeanByClass(Class<?> tagClass);
+	/**
+	 * 获取已换成的代理对象
+	 * @param beanName
+	 * @param tagClass
+	 * @return
+	 */
+	public abstract Object getProxyBeanByClassAndBeanName(String beanName, Class<?> tagClass);
+	/**
+	 * 获取已缓存的代理对象
+	 * @param tagClass
+	 * @return
+	 */
+	public abstract Object getProxyBeanByClass(Class<?> tagClass);
 
 }

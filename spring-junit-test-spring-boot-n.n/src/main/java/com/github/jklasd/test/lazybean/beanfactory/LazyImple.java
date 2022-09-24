@@ -5,9 +5,9 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
-import com.github.jklasd.test.lazyplugn.db.LazyMybatisMapperBean;
-import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -32,6 +32,12 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
     protected synchronized Object getTagertObjectCustom() {
         Class<?> tagertC = beanModel.getTagClass();
         String beanName = beanModel.getBeanName();
+        
+        tagertObj = LazyPlugnBeanFactoryManager.getInstance().getTagertObjectCustom(beanModel);
+        if(tagertObj != null) {
+        	return tagertObj;
+        }
+        
         if(LazyDubboBean.getInstance().isDubboNew(tagertC)) {//，判断是否是Dubbo服务
             tagertObj = LazyDubboBean.getInstance().buildBeanNew(tagertC,beanName);
         }else if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo

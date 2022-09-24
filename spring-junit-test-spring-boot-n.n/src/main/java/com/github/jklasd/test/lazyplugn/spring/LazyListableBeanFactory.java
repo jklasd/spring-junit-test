@@ -3,6 +3,7 @@ package com.github.jklasd.test.lazyplugn.spring;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -27,7 +28,6 @@ import org.springframework.beans.factory.support.MethodOverrides;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.core.AttributeAccessor;
-import org.springframework.core.AttributeAccessorSupport;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
@@ -63,6 +63,10 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
 		if(cacheProxyBean.containsKey(name)){
 			return LazyProxyManager.getProxyTagClass(cacheProxyBean.get(name));
+		}
+		if(beanDefMap.containsKey(name)) {
+			BeanDefinition beanDef = beanDefMap.get(name);
+			return ScanUtil.loadClass(beanDef.getBeanClassName());
 		}
 		return super.getType(name);
 	}
@@ -259,6 +263,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
     	return null;
 	}
 	
+	public void removeBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
+		Assert.hasText(beanName, "'beanName' must not be empty");
+
+		BeanDefinition bd = beanDefMap.remove(beanName);
+		beanNames.remove(beanName);
+		beanDefList.remove(bd);
+	}
 	
 	/**
 	 * 通过class 匹配 beanName
@@ -272,11 +283,6 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		ResolvableType type = ResolvableType.forRawClass(tagClass);
 		for(String beanName : beanNames) {
 			try {
-//				if(beanName.equalsIgnoreCase("SqlSessionFactory")
-//						|| beanName.startsWith("org.apache.ibatis.session")
-//						|| beanName.startsWith("org.mybatis.spring")) {
-//					log.info("断点1");
-//				}
 				BeanDefinition mbd = beanDefMap.get(beanName);
 				// Only check bean definition if it is complete.
 				if (!mbd.isAbstract() && (allowEagerInit ||
@@ -305,10 +311,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		return result;
 	}
 	
+	public boolean containsBeanDefinition(String beanName) {
+		Assert.notNull(beanName, "Bean name must not be null");
+		return beanDefMap.containsKey(beanName);
+	}
+	
 	protected boolean isTypeMatch(String name, ResolvableType typeToMatch, boolean allowFactoryBeanInit)
 			throws NoSuchBeanDefinitionException {
 		String beanName = transformedBeanName(name);
-		boolean isFactoryDereference = BeanFactoryUtils.isFactoryDereference(name);
 		BeanDefinition beanDef = beanDefMap.get(beanName);
 		if(beanDef != null) {
 			if(beanDef instanceof RootBeanDefinition) {
@@ -387,11 +397,20 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //		return null;
 //	}
 	
+	Map<String,Object> cacheBeanMap = Maps.newHashMap();
+	
 	@Override
 	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
+		if("productConfigServiceFacade".equalsIgnoreCase(beanName)) {
+			log.info("============================构建真实对象={}===========================",beanName);
+		}
 		log.info("============================构建真实对象={}===========================",beanName);
+		if(cacheBeanMap.containsKey(beanName)) {
+			return cacheBeanMap.get(beanName);
+		}
 		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
 		Object obj = bw.getWrappedInstance();
+		cacheBeanMap.put(beanName, obj);
 		return obj;
 	}
 	

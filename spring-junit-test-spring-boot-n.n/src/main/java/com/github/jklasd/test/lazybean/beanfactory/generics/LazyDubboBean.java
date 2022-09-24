@@ -1,17 +1,23 @@
-package com.github.jklasd.test.lazyplugn.dubbo;
+package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.lang.annotation.Annotation;
 import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.BaseAbstractLazyProxy;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
+import com.github.jklasd.test.lazyplugn.dubbo.AbstractRefHandler;
+import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboAnnotationRefHandler;
+import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboXmlRefHandler;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 /**
@@ -51,21 +57,28 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	private AbstractRefHandler xmlRefHandler = LazyDubboXmlRefHandler.getInstance();
 	private AbstractRefHandler annRefHandler = LazyDubboAnnotationRefHandler.getInstance();
 	
+	Set<String> beanNameSets = Sets.newHashSet();
+	
 	public void handBeanDef(Element ele,BeanDefinition beanDef) {
 		String beanName = null;
+		Object id = beanDef.getPropertyValues().getPropertyValue("id").getValue();
         switch (ele.getTagName()) {
             case "dubbo:reference":
+            	if( id != null ) {
+            		LazyListableBeanFactory.getInstance().removeBeanDefinition(id.toString());
+            	}
             	beanName = beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString();
-            	xmlRefHandler.refType.put(beanName, xmlRefHandler.TypeXml);
-            	xmlRefHandler.dubboRefferCacheDef.put(beanName, beanDef);
+            	beanNameSets.add(beanName);
+            	xmlRefHandler.getRefType().put(beanName, AbstractRefHandler.TypeXml);
+            	xmlRefHandler.getDubboRefferCacheDef().put(beanName, beanDef);
                 break;
             case "dubbo:service":
             	beanName = beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString();
-            	xmlRefHandler.dubboServiceCacheDef.put(beanName, beanDef);
+            	xmlRefHandler.getDubboServiceCacheDef().put(beanName, beanDef);
                 break;
             default:
             	beanName = beanDef.getBeanClassName();
-            	xmlRefHandler.dubboConfigCacheDef.put(beanName, beanDef);
+            	xmlRefHandler.getDubboConfigCacheDef().put(beanName, beanDef);
                 break;
         }
     }
@@ -80,19 +93,19 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
     }
     
     public Object buildBeanNew(Class<?> dubboClass, String beanName) {
-    	if(xmlRefHandler.refType.containsKey(dubboClass.getName())) {
+    	if(xmlRefHandler.getRefType().containsKey(dubboClass.getName())) {
     		return xmlRefHandler.buildBeanNew(dubboClass,beanName);
-    	}else if(annRefHandler.refType.containsKey(dubboClass.getName())) {
+    	}else if(annRefHandler.getRefType().containsKey(dubboClass.getName())) {
     		return annRefHandler.buildBeanNew(dubboClass,beanName);
     	}
     	return null;
     }
 
     @Override
-    public Object buildBean(BaseAbstractLazyProxy model) {
+    public Object buildBean(BeanModel model) {
         if (useDubbo()) {
-            Class<?> dubboClass = model.getBeanModel().getTagClass();
-            return buildBeanNew(dubboClass,model.getBeanModel().getBeanName());
+            Class<?> dubboClass = model.getTagClass();
+            return buildBeanNew(dubboClass,model.getBeanName());
         }
         return null;
     }
@@ -102,6 +115,10 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 //    }
 	public void registerDubboService(Class<?> class1) {
 		xmlRefHandler.registerDubboService(class1);
+	}
+	@Override
+	public boolean finded(BeanModel beanModel) {
+		return beanNameSets.contains(beanModel.getTagClass().getName());
 	}
     
 }

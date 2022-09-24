@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
 import com.github.jklasd.test.version_control.AnnotationMetadataUtil;
 
 import lombok.extern.slf4j.Slf4j;

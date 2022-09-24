@@ -4,19 +4,20 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Set;
 
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.CommonAnnotationBeanPostProcessor;
-import org.springframework.util.ReflectionUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.google.common.collect.Sets;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -38,9 +39,9 @@ class BeanInitHandler {
 		Class<?> sup;
 		boolean hasStatic;
 	}
+	private Set<Object> initObj = Sets.newConcurrentHashSet();
 	protected void processSpringAnnMethod(Param handlerParam) throws IllegalAccessException, InvocationTargetException {
 		Object obj = handlerParam.getObj();
-		Method[] ms = handlerParam.getMs();
 		boolean isStatic = handlerParam.isHasStatic();
 		if(LazyProxyManager.isProxy(obj)) {
 			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
@@ -48,10 +49,14 @@ class BeanInitHandler {
 			}
 			return;
 		}
-		commonAnnotationBeanPostProcessor.postProcessBeforeInitialization(obj, null);
+		if(!initObj.contains(obj)) {//查看父类会重复执行这个方法
+			initObj.add(obj);
+			//不能被重复执行
+			commonAnnotationBeanPostProcessor.postProcessBeforeInitialization(obj, null);
+		}
 //		ReflectionUtils.doWithLocalMethods(obj.getClass(), method -> {
-//			
 //		});
+		Method[] ms = handlerParam.getMs();
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
 			/*

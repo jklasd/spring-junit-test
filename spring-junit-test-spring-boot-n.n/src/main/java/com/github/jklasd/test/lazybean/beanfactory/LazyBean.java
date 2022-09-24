@@ -125,28 +125,22 @@ public class LazyBean implements LazyBeanI{
 	 */
 	public Object buildProxy(BeanModel beanModel) {
 		return StackOverCheckUtil.observeIgnoreException(()->{
-			Object obj = null;
-		    if(StringUtils.isNotBlank(beanModel.getBeanName())) {
-		        obj = util.getApplicationContext().getBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
-		        if(obj!=null) {
-		            return obj;
-		        }
-		    }else {
-		        obj = util.getApplicationContext().getBeanByClass(beanModel.getTagClass());
-	            if(obj!=null) {
-	                return obj;
-	            }
-	            beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
-		    }
+			if(StringUtils.isBlank(beanModel.getBeanName())) {
+				beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
+			}
+			Object proxyBean = util.getApplicationContext().getProxyBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
+			if(proxyBean!=null) {
+                return proxyBean;
+            }
 		    
 		    if(beanModel.getTagClass() == ApplicationContext.class
 		        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
 		        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
 		        return util.getApplicationContext();
 		    }
-		    obj = createBean(beanModel);
-		    util.getApplicationContext().registBean(beanModel.getBeanName(), obj, beanModel.getTagClass());
-	        return obj;
+		    proxyBean = createBean(beanModel);
+		    util.getApplicationContext().registProxyBean(beanModel.getBeanName(), proxyBean, beanModel.getTagClass());
+	        return proxyBean;
 		});
 	}
     private static Object createBean(BeanModel beanModel) {
@@ -346,8 +340,14 @@ public class LazyBean implements LazyBeanI{
 				processAttr(obj, c , true);
 			}
 			return obj;
+		} catch (JunitException e) {
+			if(e.isNeed_throw()) {
+				throw e;
+			}
+			log.warn("处理静态工具类异常=>{}",c);
+			return null;
 		} catch (Exception e) {
-			log.error("处理静态工具类异常=>{}",c);
+			log.error("处理静态工具类异常=>{}",c,e);
 			return null;
 		}
 	}
@@ -462,7 +462,7 @@ public class LazyBean implements LazyBeanI{
 	 */
 	public Object findBean(String beanName) {
 		if(beanName.equals("DEFAULT_DATASOURCE")) {
-		    return util.getApplicationContext().getBeanByClass(DataSource.class);
+		    return util.getApplicationContext().getProxyBeanByClass(DataSource.class);
 		}
 		Class<?> tagC = ScanUtil.findClassByName(beanName);
 		if(tagC!=null) {

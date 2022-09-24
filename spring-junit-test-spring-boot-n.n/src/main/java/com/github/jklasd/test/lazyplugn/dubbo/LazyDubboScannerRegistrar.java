@@ -1,6 +1,7 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 
 public class LazyDubboScannerRegistrar implements ScannerRegistrarI {
 

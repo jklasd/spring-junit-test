@@ -164,10 +164,10 @@ public class JavaBeanUtil {
         		((InitializingBean) tagObj).afterPropertiesSet();
         		tagObj = fb.getObject();
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
         	}else {
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
         	}
         } catch (Exception e) {
         	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
@@ -279,7 +279,7 @@ public class JavaBeanUtil {
         		}
         		Object obj = null;
         		if(tmp.getBeanName()==null) {
-        		    obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(tmp.getTagClass());
+        		    obj = TestUtil.getInstance().getApplicationContext().getProxyBeanByClass(tmp.getTagClass());
         		}else {
         		    obj = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
         		}

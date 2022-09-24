@@ -13,7 +13,7 @@ import org.w3c.dom.Element;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Maps;
