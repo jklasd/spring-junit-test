@@ -6,8 +6,10 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.aop.Advisor;
+import org.springframework.aop.aspectj.AspectJAfterThrowingAdvice;
 import org.springframework.aop.framework.AdvisedSupport;
 import org.springframework.aop.framework.ReflectiveMethodInvocation;
+import org.springframework.aop.interceptor.ExposeInvocationInterceptor;
 
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter;
@@ -52,6 +54,13 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 			return super.roundInvoke(poxy, method, param, beanModel, realObj);
 		}
 		
+		int i=0;
+		for(;i<advList.size();i++) {
+			if(advList.get(i) instanceof AspectJAfterThrowingAdvice) {
+				advList.add(i, ExposeInvocationInterceptor.INSTANCE);
+				break;
+			}
+		}
 		
 		return new MethodInvocationImpl(poxy, realObj, method, param, beanModel.getTagClass(), 
 				advList
@@ -102,7 +111,6 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 	}
 	
 	class MethodInvocationImpl extends ReflectiveMethodInvocation{
-		
 		private Callable callAble;
 		
 		protected MethodInvocationImpl(Object proxy, Object target, Method method, Object[] arguments,
