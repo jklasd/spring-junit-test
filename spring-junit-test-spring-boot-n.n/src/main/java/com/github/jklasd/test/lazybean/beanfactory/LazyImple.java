@@ -43,8 +43,8 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
         }else if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
             tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
         } else {
-            if(LazyMybatisMapperBean.isMybatisBean(tagertC)) {//判断是否是Mybatis mapper
-                return LazyMybatisMapperBean.getInstance().buildBean(tagertC);//防止线程池执行时，出现获取不到session问题
+            if(LazyMybatisMapperBean.getInstance().finded(beanModel)) {//判断是否是Mybatis mapper
+                return LazyMybatisMapperBean.getInstance().buildBean(beanModel);//防止线程池执行时，出现获取不到session问题
             }else {
                 if(beanName == null) {
                     /**

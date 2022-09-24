@@ -3,7 +3,6 @@ package com.github.jklasd.test.lazyplugn.spring;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -130,7 +129,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			List<String> matchBean = matchName(requiredType, isCacheBeanMetadata(), false);
 			if(!matchBean.isEmpty()) {
 				log.info("matchBean=>{}",matchBean);
- 				return (T) doCreateBean(matchBean.get(0), RootBeanDefinitionBuilder.build(beanDefMap.get(matchBean.get(0))), null);
+				if(matchBean.size()>1) {
+					//TODO 没有考虑多Bean情况，后续处理
+				}else {
+					
+				}
+ 				Object obj = doCreateBean(matchBean.get(0), RootBeanDefinitionBuilder.build(beanDefMap.get(matchBean.get(0))), null);
+ 				cacheClassMap.put(requiredType, obj);
+ 				return (T) obj;
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -148,7 +154,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
 			return super.getBean(beanName);
 		}
-		return cacheProxyBean.get(beanName);
+		if(cacheProxyBean.get(beanName)!=null) {
+			return cacheProxyBean.get(beanName);
+		}
+		if(beanDefMap.containsKey(beanName)) {
+			return doCreateBean(beanName, RootBeanDefinitionBuilder.build(beanDefMap.get(beanName)), null);
+		}
+		return null;
 	}
 	
 	@SuppressWarnings("unchecked")
@@ -202,10 +214,16 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //	protected void resetBeanDefinition(String beanName) {
 //		super.resetBeanDefinition(beanName);
 //	}
-
-	public String[] getBeanNamesForTypedStream(Type requiredType) {
-		return BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this, ResolvableType.forRawClass((Class<?>) requiredType));
+	
+	@Override
+	public String[] getBeanNamesForType(Class<?> type) {
+		return matchName(type, true, true).toArray(new String[0]);
 	}
+
+//	public String[] getBeanNamesForTypedStream(Type requiredType) {
+//		return matchName((Class<?>) requiredType, true, true).toArray(new String[0]);
+////		return BeanFactoryUtils.beanNamesForTypeIncludingAncestors(this, ResolvableType.forRawClass((Class<?>) requiredType));
+//	}
 	
 	public OrderComparator.OrderSourceProvider createFactoryAwareOrderSourceProviderExt(Map<String, ?> beans) throws NoSuchMethodException, SecurityException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		Method createFactoryAwareOrderSourceProvider = DefaultListableBeanFactory.class.getDeclaredMethod("createFactoryAwareOrderSourceProvider", Map.class);
@@ -257,10 +275,10 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	}
 	
 	public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
-    	if(beanName.startsWith("org.springframework")) {
-    		return beanDefMap.get(beanName);
-    	}
-    	return null;
+//    	if(beanName.startsWith("org.springframework")) {
+//    		return ;
+//    	}
+    	return beanDefMap.get(beanName);
 	}
 	
 	public void removeBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
@@ -400,15 +418,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	Map<String,Object> cacheBeanMap = Maps.newHashMap();
 	
 	@Override
-	protected Object doCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
-		if("productConfigServiceFacade".equalsIgnoreCase(beanName)) {
-			log.info("============================构建真实对象={}===========================",beanName);
-		}
+	public Object doCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
 		log.info("============================构建真实对象={}===========================",beanName);
 		if(cacheBeanMap.containsKey(beanName)) {
 			return cacheBeanMap.get(beanName);
 		}
 		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
+		populateBean(beanName, mbd, bw);
 		Object obj = bw.getWrappedInstance();
 		cacheBeanMap.put(beanName, obj);
 		return obj;
@@ -480,4 +496,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		}
 		
 	}
+
+	public BeanDefinition getFirstBeanDefinition(Class<?> tagClass) {
+		List<String> matchBean = matchName(tagClass, isCacheBeanMetadata(), false);
+		if(!matchBean.isEmpty()) {
+			log.info("matchBean=>{}",matchBean);
+			return beanDefMap.get(matchBean.get(0));
+		}
+		return null;
+	}
+
 }

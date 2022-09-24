@@ -1,6 +1,7 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,6 +17,7 @@ import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboXmlRefHandler;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
@@ -56,6 +58,7 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
 	}
 	private AbstractRefHandler xmlRefHandler = LazyDubboXmlRefHandler.getInstance();
 	private AbstractRefHandler annRefHandler = LazyDubboAnnotationRefHandler.getInstance();
+	List<String> dubboRefBeanList = Lists.newArrayList();
 	
 	Set<String> beanNameSets = Sets.newHashSet();
 	
@@ -65,7 +68,8 @@ public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
         switch (ele.getTagName()) {
             case "dubbo:reference":
             	if( id != null ) {
-            		LazyListableBeanFactory.getInstance().removeBeanDefinition(id.toString());
+            		dubboRefBeanList.add(id.toString());
+//            		LazyListableBeanFactory.getInstance().removeBeanDefinition(id.toString());
             	}
             	beanName = beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString();
             	beanNameSets.add(beanName);
