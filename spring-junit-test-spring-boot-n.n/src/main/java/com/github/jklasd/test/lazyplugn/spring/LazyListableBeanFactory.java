@@ -39,6 +39,7 @@ import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
+import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -150,9 +151,9 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //	Map<String,Object> cacheProxyBean = Maps.newHashMap();
 	
 	public Object getBean(String beanName) {
-		if(super.containsBean(beanName)) {
-			return super.getBean(beanName);
-		}
+//		if(super.containsBean(beanName)) {
+//			return super.getBean(beanName);
+//		}
 		if(cacheBeanMap.get(beanName)!=null) {
 			return cacheBeanMap.get(beanName);
 		}
@@ -432,9 +433,24 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		if(cacheBeanMap.containsKey(beanName)) {
 			return cacheBeanMap.get(beanName);
 		}
+		//处理一次properties
+		XmlBeanUtil.getInstance().postProcessMutablePropertyValues(mbd.getPropertyValues());
 		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
 		populateBean(beanName, mbd, bw);
+//		applyBeanPropertyValues(bw, beanName);
 		Object obj = bw.getWrappedInstance();
+		
+		if(obj instanceof FactoryBean) {
+			FactoryBean<?> tmp = (FactoryBean<?>) obj;
+			try {
+				obj = tmp.getObject();
+			} catch (Exception e) {
+				log.error("FactoryBean#getObject",e);
+			}
+		}
+		if(!obj.getClass().isInterface()) {
+			LazyBean.getInstance().processAttr(obj, obj.getClass());
+		}
 		cacheBeanMap.put(beanName, obj);
 		return obj;
 	}

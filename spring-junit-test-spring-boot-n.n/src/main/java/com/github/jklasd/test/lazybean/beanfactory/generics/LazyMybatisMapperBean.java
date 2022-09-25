@@ -124,9 +124,8 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
 	private Object getMapper(Class<?> classBean) throws Exception {
 		BeanDefinition beanDef = mapperBeanDef.get(classBean.getName());
-		FactoryBean<?> tag = (FactoryBean<?>) LazyListableBeanFactory.getInstance().doCreateBean(classBean.getName(), RootBeanDefinitionBuilder.build(beanDef), null);
 //        Object tag = JunitInvokeUtil.invokeMethod(getSqlSessionTemplate(), "getMapper", classBean);
-        return tag.getObject();
+        return LazyListableBeanFactory.getInstance().doCreateBean(classBean.getName(), RootBeanDefinitionBuilder.build(beanDef), null);
     }
 
     private void buildMybatisFactory() {
