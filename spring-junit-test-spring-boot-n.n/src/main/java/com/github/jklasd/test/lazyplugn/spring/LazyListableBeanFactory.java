@@ -206,6 +206,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //			cacheProxyBean.put(beanName, singletonObject);
 			throw new JunitException("不应该执行",true);
 		}
+		cacheBeanMap.put(singletonObject.getClass().getName(), singletonObject);
 		super.registerSingleton(beanName, singletonObject);
 	}
 
@@ -433,12 +434,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		if(cacheBeanMap.containsKey(beanName)) {
 			return cacheBeanMap.get(beanName);
 		}
-		//处理一次properties
-		XmlBeanUtil.getInstance().postProcessMutablePropertyValues(mbd.getPropertyValues());
-		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
-		populateBean(beanName, mbd, bw);
-//		applyBeanPropertyValues(bw, beanName);
-		Object obj = bw.getWrappedInstance();
+		Object obj = onlyCreateBean(beanName, mbd, args);
 		
 		if(obj instanceof FactoryBean) {
 			FactoryBean<?> tmp = (FactoryBean<?>) obj;
@@ -452,6 +448,16 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			LazyBean.getInstance().processAttr(obj, obj.getClass());
 		}
 		cacheBeanMap.put(beanName, obj);
+		return obj;
+	}
+	
+	public Object onlyCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
+		//处理一次properties
+		XmlBeanUtil.getInstance().postProcessMutablePropertyValues(mbd.getPropertyValues());
+		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
+		populateBean(beanName, mbd, bw);
+//		applyBeanPropertyValues(bw, beanName);
+		Object obj = bw.getWrappedInstance();
 		return obj;
 	}
 	

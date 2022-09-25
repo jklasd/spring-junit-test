@@ -154,6 +154,7 @@ public class LazyApplicationContext extends JunitApplicationContext{
 				}
 			}
 			env.getPropertySources().addFirst(new PropertiesPropertySource("junitProp", properties));
+			getBeanFactory().registerSingleton("environment", env);
 		}
 	}
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)

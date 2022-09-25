@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.dubbo;
 
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,28 +20,30 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 	public static LazyDubboXmlRefHandler getInstance() {
 		return bean;
 	}
+	
 	@Override
 	public Object buildBeanNew(Class<?> dubboClass,String beanName) {
 		if(dubboData.containsKey(dubboClass)) {
             return dubboData.get(dubboClass);
         }
         log.info("构建Dubbo 代理服务=>{}",dubboClass);
+        
+        
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboRefferCacheDef.get(dubboClass.getName());
         try {
-            Object referenceConfig = beanDef.getBeanClass().newInstance();
-            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                LazyBean.getInstance().setAttr(pv.getName(), referenceConfig, beanDef.getBeanClass(), XmlBeanUtil.getInstance().conversionValue(pv));
-            });
+            Object referenceConfig = lazyBeanFactory.onlyCreateBean(beanName, beanDef, null);
             /**
              * 待后续升级，可能存在动态设定协议或者客户端问题
              */
+//            lazyBeanFactory.getBean(null);
             JunitInvokeUtil.invokeMethod(referenceConfig, "setConsumer",getConsumer());
             JunitInvokeUtil.invokeMethod(referenceConfig, "setApplication",getApplication());
             JunitInvokeUtil.invokeMethod(referenceConfig, "setRegistry",getRegistryConfig());
             if(getConfigCenterConfig()!=null) {
                 JunitInvokeUtil.invokeMethodByParamClass(referenceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
             }
-            Object obj = JunitInvokeUtil.invokeMethod(referenceConfig, "get");
+            FactoryBean<?> fb = (FactoryBean<?>) referenceConfig;
+            Object obj = fb.getObject();
             dubboData.put(dubboClass,obj);
             return obj;
         } catch (Exception e) {

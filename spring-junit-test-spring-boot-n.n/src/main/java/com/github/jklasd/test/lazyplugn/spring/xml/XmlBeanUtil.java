@@ -367,6 +367,11 @@ public class XmlBeanUtil {
     			String newValue = LazyApplicationContext.getInstance().getEnvironment().resolveRequiredPlaceholders(source);
     			log.debug("{}=>{}",source,newValue);
     			mutProp.addPropertyValue(prop.getName(), new TypedStringValue(newValue));
+    		}else if(value instanceof String) {
+    			String source = (String) value;
+    			String newValue = LazyApplicationContext.getInstance().getEnvironment().resolveRequiredPlaceholders(source);
+    			log.debug("{}=>{}",source,newValue);
+    			mutProp.addPropertyValue(prop.getName(), new TypedStringValue(newValue));
     		}
     	});
     	

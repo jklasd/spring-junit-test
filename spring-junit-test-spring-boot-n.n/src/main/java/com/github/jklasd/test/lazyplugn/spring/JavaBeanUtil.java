@@ -164,10 +164,12 @@ public class JavaBeanUtil {
         		((InitializingBean) tagObj).afterPropertiesSet();
         		tagObj = fb.getObject();
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+//        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		LazyListableBeanFactory.getInstance().registerSingleton(assemblyData.getBeanName(), tagObj);
         	}else {
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+//        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		LazyListableBeanFactory.getInstance().registerSingleton(assemblyData.getBeanName(), tagObj);
         	}
         } catch (Exception e) {
         	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
