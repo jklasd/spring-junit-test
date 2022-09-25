@@ -4,8 +4,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanModel;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.google.common.collect.Maps;
 

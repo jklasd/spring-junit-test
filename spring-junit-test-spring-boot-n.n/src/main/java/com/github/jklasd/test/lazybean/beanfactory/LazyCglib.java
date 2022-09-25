@@ -11,10 +11,10 @@ import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
 import com.alibaba.fastjson.JSONObject;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;

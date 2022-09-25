@@ -2,7 +2,6 @@ package com.github.jklasd.test.lazyplugn.spring;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -14,7 +13,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.BeanFactoryUtils;
 import org.springframework.beans.factory.CannotLoadBeanClassException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
@@ -36,6 +34,7 @@ import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -60,8 +59,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //    }
 	
 	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
-		if(cacheProxyBean.containsKey(name)){
-			return LazyProxyManager.getProxyTagClass(cacheProxyBean.get(name));
+		if(cacheBeanMap.containsKey(name)){
+			return cacheBeanMap.get(name).getClass();
 		}
 		if(beanDefMap.containsKey(name)) {
 			BeanDefinition beanDef = beanDefMap.get(name);
@@ -148,14 +147,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		return super.getBean(requiredType);
 	}
 	
-	Map<String,Object> cacheProxyBean = Maps.newHashMap();
+//	Map<String,Object> cacheProxyBean = Maps.newHashMap();
 	
 	public Object getBean(String beanName) {
-		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+		if(super.containsBean(beanName)) {
 			return super.getBean(beanName);
 		}
-		if(cacheProxyBean.get(beanName)!=null) {
-			return cacheProxyBean.get(beanName);
+		if(cacheBeanMap.get(beanName)!=null) {
+			return cacheBeanMap.get(beanName);
 		}
 		if(beanDefMap.containsKey(beanName)) {
 			return doCreateBean(beanName, RootBeanDefinitionBuilder.build(beanDefMap.get(beanName)), null);
@@ -165,10 +164,20 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	@SuppressWarnings("unchecked")
 	public <T> T getBean(String beanName, Class<T> requiredType) throws BeansException {
-		if(super.containsBean(beanName) || !cacheProxyBean.containsKey(beanName)) {
+		if(super.containsBean(beanName)) {
 			return super.getBean(beanName,requiredType);
 		}
-		return (T) cacheProxyBean.get(beanName);
+		if(cacheBeanMap.containsKey(beanName)) {
+			return (T) cacheBeanMap.get(beanName);
+		}
+		if(beanDefMap.containsKey(beanName)) {
+			RootBeanDefinition beanDef = RootBeanDefinitionBuilder.build(beanDefMap.get(beanName));
+			Class<?> tagClass = ScanUtil.loadClass(beanDef.getBeanClassName());
+			if(requiredType.isAssignableFrom(tagClass)) {
+				return (T) doCreateBean(beanName, beanDef, null);
+			}
+		}
+		return null;
 	}
 //	public <T> T getBean(Class<T> requiredType) throws BeansException {
 //		if(cacheClassMap.containsKey(requiredType)) {
@@ -182,7 +191,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //	}
 	
 	public boolean containsBean(String name) {
-		if(cacheProxyBean.containsKey(name)) {
+		if(cacheBeanMap.containsKey(name)) {
 			return true;
 		}
 		return super.containsBean(name);
@@ -193,8 +202,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
 		beanNameSet.add(beanName);
 		if(LazyProxyManager.isProxy(singletonObject)) {
-			cacheProxyBean.put(beanName, singletonObject);
-			return;
+//			cacheProxyBean.put(beanName, singletonObject);
+			throw new JunitException("不应该执行",true);
 		}
 		super.registerSingleton(beanName, singletonObject);
 	}
@@ -244,7 +253,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	}
 
 	protected void releaseBean(Class<?> tagC, Object tmp) {
-		cacheProxyBean.entrySet().stream().filter(entry->entry.getValue()==tmp).forEach(entry->{
+		cacheBeanMap.entrySet().stream().filter(entry->entry.getValue()==tmp).forEach(entry->{
 			BeanModel model = new BeanModel();
 			model.setBeanName(entry.getKey());
 			model.setTagClass(tagC);
@@ -256,7 +265,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	@Override
 	public boolean isSingleton(String name) throws NoSuchBeanDefinitionException {
-		if(cacheProxyBean.containsKey(name)) {
+		if(cacheBeanMap.containsKey(name)) {
 			return true;
 		}
 		return super.isSingleton(name);

@@ -18,8 +18,8 @@ import org.springframework.core.io.Resource;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.util.BeanNameUtil;
