@@ -264,18 +264,17 @@ public class ClassScan implements Scan{
 			return cacheInterfaceImpls.get(interfaceClass);
 		}
 		
-		Set<Class<?>> set = Sets.newConcurrentHashSet();
+		List<Class<?>> list = Lists.newCopyOnWriteArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isImple(tmpClass,interfaceClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					set.add(tmpClass);
+					list.add(tmpClass);
 				}
 			}
 		});
-		List<Class<?>> list = Lists.newArrayList(set);
 		if(!list.isEmpty()) {
 			cacheInterfaceImpls.put(interfaceClass, list);
 		}
@@ -314,18 +313,17 @@ public class ClassScan implements Scan{
 		if(cacheInterfaceImpls.containsKey(abstractClass)) {
 			return cacheInterfaceImpls.get(abstractClass);
 		}
-		Set<Class<?>> set = Sets.newConcurrentHashSet();
+		List<Class<?>> list = Lists.newCopyOnWriteArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isExtends(tmpClass,abstractClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					set.add(tmpClass);
+					list.add(tmpClass);
 				}
 			}
 		});
-		List<Class<?>> list = Lists.newArrayList(set);
 		if(!list.isEmpty()) {
 			cacheInterfaceImpls.put(abstractClass, list);
 		}
