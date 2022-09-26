@@ -1,7 +1,5 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
-import java.lang.annotation.Annotation;
-import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
@@ -9,15 +7,14 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
-import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.core.type.AnnotationMetadata;
 
 import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
-import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -61,35 +58,35 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
     private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
     private static final Class<?> MapperFactoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperFactoryBean");
 //    private static final Class<?> factoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionFactoryBean");
-    private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
-
-    @SuppressWarnings("unchecked")
-    private static final Class<? extends Annotation> mapperScanClass = ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
+//    private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
+//
+//    @SuppressWarnings("unchecked")
+//    private static final Class<? extends Annotation> mapperScanClass = ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
 
     public static final boolean useMybatis() {
         return factoryClass != null;
     }
 
-    private Object sqlSessionTemplate;
-    private Map<String,Object> sqlSessionTemplateMaps = Maps.newHashMap();
+//    private Object sqlSessionTemplate;
+//    private Map<String,Object> sqlSessionTemplateMaps = Maps.newHashMap();
 
-    public Object getSqlSessionTemplate() throws Exception {
-        if (defaultFactory == null) {
-            buildMybatisFactory();
-            restDataSource();
-        }
-        if(sqlSessionTemplateMaps.containsKey(mappingPath.get())) {
-        	return sqlSessionTemplateMaps.get(mappingPath.get());
-        }
-        
-        if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
-            Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
-            Object factory = mappingSession.get(mappingPath.get());
-            factory = factory==null?defaultFactory:factory;
-            sqlSessionTemplateMaps.put(mappingPath.get(), structor.newInstance(factory));
-        }
-        return sqlSessionTemplateMaps.get(mappingPath.get());
-    }
+//    public Object getSqlSessionTemplate() throws Exception {
+//        if (defaultFactory == null) {
+//            buildMybatisFactory();
+//            restDataSource();
+//        }
+//        if(sqlSessionTemplateMaps.containsKey(mappingPath.get())) {
+//        	return sqlSessionTemplateMaps.get(mappingPath.get());
+//        }
+//        
+//        if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
+//            Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
+//            Object factory = mappingSession.get(mappingPath.get());
+//            factory = factory==null?defaultFactory:factory;
+//            sqlSessionTemplateMaps.put(mappingPath.get(), structor.newInstance(factory));
+//        }
+//        return sqlSessionTemplateMaps.get(mappingPath.get());
+//    }
 
     private void restDataSource() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{
     	DatabaseInitialization dataInitia = ContainerManager.getComponent(DatabaseInitialization.class.getName());
@@ -128,37 +125,37 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         return LazyListableBeanFactory.getInstance().doCreateBean(classBean.getName(), RootBeanDefinitionBuilder.build(beanDef), null);
     }
 
-    private void buildMybatisFactory() {
-        if (defaultFactory == null) {
-        	Object obj = LazyListableBeanFactory.getInstance().getBean(factoryClass);
-//            Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
-            if (obj != null) {
-                defaultFactory = obj;
-                return;
-            }
-            processAnnaForFactory();
-        } else {
-            log.debug("factory已存在");
-        }
-    }
+//    private void buildMybatisFactory() {
+//        if (defaultFactory == null) {
+//        	Object obj = LazyListableBeanFactory.getInstance().getBean(factoryClass);
+////            Object obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(factoryClass);
+//            if (obj != null) {
+//                defaultFactory = obj;
+//                return;
+//            }
+//            processAnnaForFactory();
+//        } else {
+//            log.debug("factory已存在");
+//        }
+//    }
 
-    private void processAnnaForFactory() {
-        if (defaultFactory == null) {
-            AssemblyDTO param = new AssemblyDTO();
-            param.setTagClass(factoryClass);
-            defaultFactory = LazyBean.findCreateBeanFromFactory(param);
-        }
-    }
+//    private void processAnnaForFactory() {
+//        if (defaultFactory == null) {
+//        	BeanModel param = new BeanModel();
+//            param.setTagClass(factoryClass);
+//            defaultFactory = LazyBean.findCreateBeanFromFactory(param);
+//        }
+//    }
 
     private static List<String> mybatisScanPathList = Lists.newArrayList();
 
     private static Class<?> mapperScannerConfigurer
         = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperScannerConfigurer");
-    private static boolean loadScaned;
+//    private static boolean loadScaned;
     
     private static Map<String,Object> mappingSession = Maps.newHashMap();
     
-    private static ThreadLocal<String> mappingPath = new ThreadLocal<String>();
+//    private static ThreadLocal<String> mappingPath = new ThreadLocal<String>();
 
 //    @SuppressWarnings({"rawtypes", "unchecked"})
 //    public static boolean isMybatisBean(Class c) {
@@ -303,10 +300,10 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 		Object mapperScan = LazyListableBeanFactory.getInstance().getBean(mapperScannerConfigurer);
 		
 		String sqlSessionFactoryBeanName = (String) JunitInvokeUtil.invokeReadField("sqlSessionFactoryBeanName", mapperScan);
-		Object sqlSessionFactory = LazyListableBeanFactory.getInstance().getBean(sqlSessionFactoryBeanName);
+		defaultFactory = LazyListableBeanFactory.getInstance().getBean(sqlSessionFactoryBeanName);
 		
 		BeanDefinitionRegistryPostProcessor postProcessor = (BeanDefinitionRegistryPostProcessor)mapperScan;
-		JunitInvokeUtil.invokeWriteField("sqlSessionFactory",  mapperScan ,sqlSessionFactory);
+		JunitInvokeUtil.invokeWriteField("sqlSessionFactory",  mapperScan ,defaultFactory);
 		postProcessor.postProcessBeanDefinitionRegistry(LazyListableBeanFactory.getInstance());
 		
 		String[] beanNames = LazyListableBeanFactory.getInstance().getBeanNamesForType(MapperFactoryBeanClass);
@@ -318,6 +315,13 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 				mapperBeanDef.put(metaData.getClassName(), beanDef);
 			}
 			LazyListableBeanFactory.getInstance().removeBeanDefinition(beanName);
+		}
+		
+		try {
+			restDataSource();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new JunitException("h2 重置失败", true);
 		}
 	}
 }
