@@ -15,6 +15,7 @@ import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
 import org.springframework.beans.factory.CannotLoadBeanClassException;
 import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -30,17 +31,16 @@ import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogMessage;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
-import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -68,33 +68,6 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			return ScanUtil.loadClass(beanDef.getBeanClassName());
 		}
 		return super.getType(name);
-	}
-	/**
-	 * TODO 待优化
-	 */
-	@Override
-	public <T> Map<String, T> getBeansOfType(Class<T> type) throws BeansException {
-		Map<String, T> result = super.getBeansOfType(type);
-		
-		//获取名字
-		String[] beanNameArr = StringUtils.toStringArray(beanNameSet);
-		for(String beanName:beanNameArr) {
-			Object bean = getBean(beanName);
-			if(type.isAssignableFrom(LazyProxyManager.getProxyTagClass(bean))) {
-				result.put(beanName, (T) bean);
-			}
-		}
-		
-		if(result.isEmpty()) {
-			//获取子类
-			List<Class<?>> subClass = ScanUtil.findClassExtendAbstract(type);
-			subClass.forEach(subC ->{
-				Object bean = LazyBean.getInstance().buildProxy(subC);
-				result.put(BeanNameUtil.getBeanName(subC), (T) bean);
-			});
-		}
-		
-		return result;
 	}
 	
 	Map<Class<?>,Object> cacheClassMap = Maps.newConcurrentMap();
@@ -218,7 +191,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	protected Object getObjectForBeanInstance(
 			Object beanInstance, String name, String beanName, @Nullable RootBeanDefinition mbd) {
 		Object obj = super.getObjectForBeanInstance(beanInstance, name, beanName, mbd);
-		LazyBean.getInstance().processAttr(obj, obj.getClass());
+//		LazyBean.getInstance().processAttr(obj, obj.getClass());
+		BeanInitModel initModel = new BeanInitModel();
+		initModel.setObj(obj);
+		initModel.setTagClass(obj.getClass());
+		initModel.setBeanName(beanName);
+		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
 		return obj;
 	}
 	
@@ -350,81 +328,26 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		String beanName = transformedBeanName(name);
 		BeanDefinition beanDef = beanDefMap.get(beanName);
 		if(beanDef != null) {
-			if(beanDef instanceof RootBeanDefinition) {
-				RootBeanDefinition tmpDef = (RootBeanDefinition)beanDef;
-				if(tmpDef.getBeanClass()!=null) {
-					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
-					if(match) {
-						log.info("===匹配===");
-					}
-					return match;
+			if(beanDef instanceof AbstractBeanDefinition) {
+				AbstractBeanDefinition tmpDef = (AbstractBeanDefinition) beanDef;
+				
+				if(!tmpDef.hasBeanClass()) {//未转化，先转化
+					String beanClassName = tmpDef.getBeanClassName();
+					Class<?> tagC = ScanUtil.loadClass(beanClassName);
+					tmpDef.setBeanClass(tagC);
 				}
-			}else if (beanDef instanceof ScannedGenericBeanDefinition) {//注解扫描
-				ScannedGenericBeanDefinition tmpDef = (ScannedGenericBeanDefinition)beanDef;
-				if(tmpDef.hasBeanClass()) {
+				
+				if(FactoryBean.class.isAssignableFrom(tmpDef.getBeanClass())) {
 					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
-					if(match) {
-						log.info("===匹配===");
-					}
 					return match;
 				}else {
-					String beanClassName = tmpDef.getBeanClassName();
-					Class<?> tagClass = ScanUtil.loadClass(beanClassName);
-					tmpDef.setBeanClass(tagClass);
 					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
-					if(match) {
-						log.info("===匹配===");
-					}
-					return match;
-				}
-			}else if(beanDef instanceof GenericBeanDefinition) {//XML BeanDef
-				GenericBeanDefinition tmpDef = (GenericBeanDefinition)beanDef;
-				if(tmpDef.hasBeanClass()) {
-					if(FactoryBean.class.isAssignableFrom(tmpDef.getBeanClass())) {
-						Class<?> tagC = (Class<?>)ScanUtil.getGenericType(tmpDef.getBeanClass())[0];
-						boolean match = tagC.isAssignableFrom(typeToMatch.getRawClass());
-						return match;
-					}else {
-						boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
-						if(match) {
-							log.info("===匹配===");
-						}
-						return match;
-					}
-				}else {
-					String beanClassName = tmpDef.getBeanClassName();
-					Class<?> tagClass = ScanUtil.loadClass(beanClassName);
-					tmpDef.setBeanClass(tagClass);
-					if(FactoryBean.class.isAssignableFrom(tmpDef.getBeanClass())) {
-						Class<?> tagC = (Class<?>)ScanUtil.getGenericType(tmpDef.getBeanClass())[0];
-						boolean match = tagC.isAssignableFrom(typeToMatch.getRawClass());
-						return match;
-					}
-					
-					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
-					if(match) {
-						log.info("===匹配===");
-					}
 					return match;
 				}
 			}
-			Object source = beanDef.getSource();
-			if(source instanceof Class) {
-				return ((Class)source).isAssignableFrom(typeToMatch.getRawClass());
-			}
-			log.info("============================匹配真实对象={}={}==========================",name,typeToMatch.getRawClass());
 		}
 		return false;
 	}
-//	
-//	protected <T> T doGetBean(
-//			String name, @Nullable Class<T> requiredType, @Nullable Object[] args, boolean typeCheckOnly)
-//			throws BeansException {
-//		if(requiredType!=null && requiredType.getName().startsWith("org.springframework")) {
-//			return super.doGetBean(name, requiredType, args, typeCheckOnly);
-//		}
-//		return null;
-//	}
 	
 	Map<String,Object> cacheBeanMap = Maps.newHashMap();
 	
@@ -435,7 +358,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			return cacheBeanMap.get(beanName);
 		}
 		Object obj = onlyCreateBean(beanName, mbd, args);
-		
+		if(obj instanceof InitializingBean) {
+			InitializingBean tmp = (InitializingBean) obj;
+			try {
+				tmp.afterPropertiesSet();
+			} catch (Exception e) {
+				log.error("InitializingBean#afterPropertiesSet",e);
+			}
+		}
 		if(obj instanceof FactoryBean) {
 			FactoryBean<?> tmp = (FactoryBean<?>) obj;
 			try {
@@ -445,7 +375,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			}
 		}
 		if(!obj.getClass().isInterface()) {
-			LazyBean.getInstance().processAttr(obj, obj.getClass());
+//			LazyBean.getInstance().processAttr(obj, obj.getClass());
+			BeanInitModel initModel = new BeanInitModel();
+			initModel.setObj(obj);
+			initModel.setTagClass(obj.getClass());
+			initModel.setBeanName(beanName);
+    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
 		}
 		cacheBeanMap.put(beanName, obj);
 		return obj;

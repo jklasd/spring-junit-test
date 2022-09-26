@@ -9,11 +9,14 @@ import java.util.Set;
 import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.CommonAnnotationBeanPostProcessor;
+import org.springframework.util.ReflectionUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
@@ -181,5 +184,57 @@ class BeanInitHandler {
 			}
 		}
 		processSpringAnnMethod(param);
+	}
+	public void processMethod(BeanInitModel model) {
+
+		if(ScanUtil.isImple(model.getTagClass(), ApplicationContextAware.class)) {
+			try {
+				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
+				setApplicationContext.invoke(model.getObj(),LazyApplicationContext.getInstance());
+			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+				log.error("不能注入applicationContext",e);
+			}
+		}
+		
+		Object obj = model.getObj();
+		boolean isStatic = model.isStatic();
+		if(LazyProxyManager.isProxy(obj)) {
+			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
+				LazyProxyManager.instantiateProxy(obj);
+			}
+			return;
+		}
+		if(!initObj.contains(obj)) {//查看父类会重复执行这个方法
+			initObj.add(obj);
+			//不能被重复执行
+			commonAnnotationBeanPostProcessor.postProcessBeforeInitialization(obj, model.getBeanName());
+		}
+		ReflectionUtils.doWithLocalMethods(model.getTagClass(), method -> {
+			try {
+				Type[] paramTypes = method.getGenericParameterTypes();
+				if(method.getAnnotation(Value.class) != null) {
+				    Value aw = method.getAnnotation(Value.class);
+				    if(paramTypes.length>0) {
+				        Type type = paramTypes[0];
+				        Object param = TestUtil.getInstance().value(aw.value(), (Class<?>)type);
+				        method.invoke(obj, param);
+				    }else {
+				        method.invoke(obj);
+				    }
+				    
+	            }else if(method.getAnnotation(Resource.class) != null) {
+	            	if(method.getReturnType() != Void.class
+	            			&& method.getReturnType() != void.class) {
+	            		return;
+	            	}
+	                Resource aw = method.getAnnotation(Resource.class);
+	                String beanName = aw.name();
+	                Object[] param = processParam(method, paramTypes);
+	                Object tmp = method.invoke(obj, param);
+	            }
+			} catch (Exception e) {
+				log.warn("执行初始化方法异常",e);
+			}
+		});
 	}
 }

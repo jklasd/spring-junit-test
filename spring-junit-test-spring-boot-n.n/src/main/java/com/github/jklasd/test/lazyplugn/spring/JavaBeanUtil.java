@@ -27,6 +27,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
@@ -223,7 +224,12 @@ public class JavaBeanUtil {
             if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
             	LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
             }
-            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+//            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+            BeanInitModel initModel = new BeanInitModel();
+			initModel.setObj(factory.get(configClass));
+			initModel.setTagClass(configClass);
+			initModel.setBeanName(configClass.getName());
+    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
             log.error("构建Configuration Bean=>{}",configClass.getSimpleName());
             log.error("构建Bean",e);

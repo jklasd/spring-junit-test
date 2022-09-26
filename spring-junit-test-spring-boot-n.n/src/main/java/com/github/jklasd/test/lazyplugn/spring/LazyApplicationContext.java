@@ -2,6 +2,7 @@ package com.github.jklasd.test.lazyplugn.spring;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -10,7 +11,9 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
@@ -42,14 +45,46 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	public static LazyApplicationContext getInstance() {
 		return signBean;
 	}
+	
+	Map<Class,Map> cacheTypeBeanMap = Maps.newHashMap();
 	public <T> Map<String, T> getBeansOfType(@Nullable Class<T> type){
-		return lazyBeanFactory.getBeansOfType(type);
+		if(cacheTypeBeanMap.containsKey(type)) {
+			return cacheTypeBeanMap.get(type);
+		}
+		Map<String, T> map = Maps.newHashMap();
+		List<Class<?>> subClass = ScanUtil.findSubClass(type);
+		subClass.forEach(subC ->{
+			if(subC == null) {
+				log.error("subC=>{},type->{}",subC,type);
+			}
+			Object bean = LazyBean.getInstance().buildProxy(subC);
+			if(bean!=null) {
+				map.put(subC.getName(), (T) bean);
+			}else {
+				log.warn("获取bean集合，出现问题");
+			}
+		});
+		cacheTypeBeanMap.put(type,map);
+		return map;
 	}
 	
 	Map<String,Object> cacheProxyBean = Maps.newHashMap();
 	
 	public Object getBean(String beanName) {
-		return lazyBeanFactory.getBean(beanName);
+		if(cacheProxyBean.containsKey(beanName)) {
+			return cacheProxyBean.get(beanName);
+		}
+		BeanDefinition beanDef = lazyBeanFactory.getBeanDefinition(beanName);
+		if(beanDef != null && beanDef instanceof AbstractBeanDefinition) {
+			AbstractBeanDefinition tmpBeanDef = (AbstractBeanDefinition) beanDef;
+			if(!tmpBeanDef.hasBeanClass()) {
+				tmpBeanDef.setBeanClass(ScanUtil.loadClass(tmpBeanDef.getBeanClassName()));
+			}
+			Object bean = LazyBean.getInstance().buildProxy(tmpBeanDef.getBeanClass());
+			cacheProxyBean.put(beanName, bean);
+			return bean;
+		}
+		return null;
 	}
 	
 	
@@ -58,7 +93,12 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	}
 	
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
-		return lazyBeanFactory.getBean(requiredType);
+		if(org.springframework.core.env.Environment.class.isAssignableFrom(requiredType)) {
+			return (T) getEnvironment();
+		}else if(org.springframework.context.ApplicationContext.class.isAssignableFrom(requiredType)) {
+			return (T) this;
+		}
+		return (T) LazyBean.getInstance().buildProxy(requiredType);
 	}
 	
 	public Object getProxyBeanByClass(Class<?> tagClass) {

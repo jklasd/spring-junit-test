@@ -105,28 +105,17 @@ public class ScanUtil {
 		return getScanner().findClassExtendAbstract(abstractClass);
 	}
 	
-	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class<?>> classMap,String ClassName){
-		Map<String,Class> tmp = Maps.newHashMap();
-		if(classMap!=null) {
-			tmp.putAll(classMap);
+
+	public static List<Class<?>> findSubClass(Class<?> requiredType) {
+		List<Class<?>> tags = null;
+		if(requiredType.isInterface()) {
+			tags = getScanner().findClassImplInterface(requiredType);
+		}else {
+			tags = getScanner().findClassExtendAbstract(requiredType);
 		}
-		tmp.putAll(nameMap);
-		List<Class<?>> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
-		.runAndWait(name ->{
-			if(ClassName!=null && name.equals(ClassName)) {
-				return;
-			}
-			Class<?> tmpClass = tmp.get(name);
-			if(isImple(tmpClass,interfaceClass)) {
-				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
-						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
-				}
-			}
-		});
-		return list;
+		return tags;
 	}
+	
 	/**
 	 * 扫描实现了interfaceClass 的类
 	 * @param interfaceClass 接口

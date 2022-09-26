@@ -2,6 +2,7 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.util.List;
 
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -28,7 +29,13 @@ public class LazyLocalGenericsBean implements LazyPlugnBeanFactory{
 					Class<?> tagClass = localCache.get().get(0);
 					//修改beanName
 					Object obj = beanFactory.getBean(tagClass);
-					LazyBean.getInstance().processAttr(obj, tagClass);
+//					LazyBean.getInstance().processAttr(obj, tagClass);
+					BeanInitModel initModel = new BeanInitModel();
+					initModel.setObj(obj);
+					initModel.setTagClass(tagClass);
+					initModel.setBeanName(model.getBeanName());
+	        		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
+	        		
 					return obj;
 				}
 				return beanFactory.getBean(model.getBeanName());

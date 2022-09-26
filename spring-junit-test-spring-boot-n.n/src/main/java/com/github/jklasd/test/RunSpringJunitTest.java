@@ -17,6 +17,7 @@ import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.google.common.collect.Lists;
 
@@ -65,7 +66,9 @@ public class RunSpringJunitTest extends BlockJUnit4ClassRunner{
 					}
 					//H2使用判断
 			        MockAnnHandlerComponent.beforeAll(runClass);
+			        
 			        LazyBean.getInstance().processAttr(test, runClass);
+			        
 					MockAnnHandlerComponent.handlerClass(runClass);
 				}
 			});

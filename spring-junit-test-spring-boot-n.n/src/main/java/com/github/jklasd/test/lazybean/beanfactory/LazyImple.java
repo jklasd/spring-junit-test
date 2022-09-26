@@ -4,6 +4,7 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
 import java.lang.reflect.Type;
 
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 
@@ -67,7 +68,12 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
                  * 实现类是本地Bean
                  */
                 tagertObj = tagImp;
-                LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
+//                LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
+                BeanInitModel model = new BeanInitModel();
+        		model.setObj(tagertObj);
+        		model.setTagClass(tagImp.getClass());
+        		model.setBeanName(tagImp.getClass().getName());
+        		LazyBean.getInstance().processAttr(model);// 递归注入代理对象
             }
         }else {
             // 本地bean
@@ -79,7 +85,12 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
                 }
             }
             if(tagImp != null) {
-                LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
+//                LazyBean.getInstance().processAttr(tagImp, tagImp.getClass());
+                BeanInitModel model = new BeanInitModel();
+        		model.setObj(tagImp);
+        		model.setTagClass(tagImp.getClass());
+        		model.setBeanName(beanName);
+        		LazyBean.getInstance().processAttr(model);// 递归注入代理对象
                 tagertObj = tagImp;
             }
         }

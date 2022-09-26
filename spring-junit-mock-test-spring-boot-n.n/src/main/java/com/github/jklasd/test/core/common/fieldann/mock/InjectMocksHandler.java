@@ -11,6 +11,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.core.common.fieldann.AbstractMockHandler;
 import com.github.jklasd.test.core.common.fieldann.MockFieldHandler;
@@ -58,7 +59,11 @@ public class InjectMocksHandler extends AbstractMockHandler implements FieldHand
 				FieldAnnComponent.setObj(attr, tagObject, obj);
 			}else {//已被spring注入
 				//填充
-				LazyBean.getInstance().processAttr(obj, attr.getType());
+				BeanInitModel model = new BeanInitModel();
+				model.setObj(obj);
+				model.setTagClass(attr.getType());
+				model.setBeanName(bName);
+				LazyBean.getInstance().processAttr(model);
 				//mockHandClass 重新填充
 			}
 			MockFieldHandler.getInstance().load(tagObject.getClass(),obj,attr.getType(),bName);

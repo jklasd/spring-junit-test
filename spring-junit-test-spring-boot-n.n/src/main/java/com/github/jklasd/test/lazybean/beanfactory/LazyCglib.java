@@ -12,6 +12,7 @@ import org.springframework.cglib.proxy.MethodProxy;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
@@ -222,7 +223,12 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
                  */
                 tagertObj = constructor.newInstance();
             }
-            LazyBean.getInstance().processAttr(tagertObj, tagertC);// 递归注入代理对象
+            
+            BeanInitModel model = new BeanInitModel();
+    		model.setObj(tagertObj);
+    		model.setTagClass(tagertC);
+    		model.setBeanName(beanModel.getBeanName());
+    		LazyBean.getInstance().processAttr(model);// 递归注入代理对象
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException
             | InvocationTargetException e) {
             log.error("带参构造对象异常model=>{}",JSONObject.toJSONString(beanModel), e);

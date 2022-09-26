@@ -48,14 +48,14 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
 
     private static Object defaultFactory;
 
-    public synchronized Object buildBean(Class<?> classBean) {
-        try {
-            return getMapper(classBean);
-        } catch (Exception e) {
-            log.error("获取Mapper", e);
-        }
-        return null;
-    }
+//    public synchronized Object buildBean(Class<?> classBean) {
+//        try {
+//            return getMapper(classBean);
+//        } catch (Exception e) {
+//            log.error("获取Mapper", e);
+//        }
+//        return null;
+//    }
 
     // private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
     private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");

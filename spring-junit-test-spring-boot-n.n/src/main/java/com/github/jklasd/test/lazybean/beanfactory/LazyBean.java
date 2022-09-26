@@ -15,6 +15,7 @@ import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -39,6 +40,7 @@ import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
@@ -248,21 +250,6 @@ public class LazyBean implements LazyBeanI{
 	
 	public void setObj(Field f,Object obj,Object proxyObj) {
 		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
-		setObj(f, obj, proxyObj, null);
-	}
-	/**
-	 * 反射写入值。
-	 * @param f	属性
-	 * @param obj	属性所属目标对象
-	 * @param proxyObj 写入属性的代理对象
-	 * @param proxyBeanName 存在bean名称时，可传入。
-	 * 
-	 * 
-	 */
-	public static void setObj(Field f,Object obj,Object proxyObj,String proxyBeanName) {
-//		if(proxyObj == null) {//延迟注入,可能启动时，未加载到bean
-////			util.loadLazyAttr(obj, f, proxyBeanName);
-//		}
 		try {
 			if (!f.isAccessible()) {
 				f.setAccessible(true);
@@ -278,7 +265,10 @@ public class LazyBean implements LazyBeanI{
 	 * @param objClassOrSuper
 	 */
 	static Set<String> exist = Sets.newHashSet();
-	public void processAttr(Object obj, Class<?> objClassOrSuper,boolean isStatic) {
+	
+	public void processAttr(BeanInitModel model) {
+		Object obj = model.getObj();
+		Class<?> objClassOrSuper = model.getTagClass();
 		Class<?> objClass = LazyProxyManager.isProxy(obj)? LazyProxyManager.getProxyTagClass(obj): obj.getClass();
 		if(objClass == objClassOrSuper) {
 			//跳过
@@ -293,22 +283,20 @@ public class LazyBean implements LazyBeanI{
 		
 		Class<?> superC = objClassOrSuper.getSuperclass();
 		if (superC != null && superC!=Object.class) {
-			processAttr(obj, superC,isStatic);
+			BeanInitModel tmp = new BeanInitModel();
+			BeanUtils.copyProperties(model, tmp);
+			tmp.setTagClass(superC);
+			processAttr(tmp);
 		}
 
-		Method[] ms = objClassOrSuper.getDeclaredMethods();
-		try {
-			BeanInitHandler.getInstance().processMethod(BeanInitHandler.Param.builder().obj(obj).ms(ms).hasStatic(isStatic).sup(objClassOrSuper).build());
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-            log.error("processMethod=>{}+>{}",objClassOrSuper);
-            log.error("processMethod",e);
-        }
+		BeanInitHandler.getInstance().processMethod(model);
 		
 		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
 		if(proconfig!=null) {
 			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
 		}
 	}
+	
 	/**
 	 * 注入对应的属性值
 	 * 
@@ -321,7 +309,12 @@ public class LazyBean implements LazyBeanI{
 	 * @param objClassOrSuper 目标对象父类，用于递归注入。
 	 */
 	public void processAttr(Object obj, Class<?> objClassOrSuper) {
-		processAttr(obj, objClassOrSuper, false);
+		BeanInitModel model = new BeanInitModel();
+		model.setObj(obj);
+		model.setTagClass(objClassOrSuper);
+		model.setBeanName(objClassOrSuper.getName());
+//		model.setStatic(false);
+		processAttr(model);
 	}
     private void processField(Object obj, Field[] fields) {
         for(Field f : fields){
@@ -337,7 +330,11 @@ public class LazyBean implements LazyBeanI{
 			processed.add(c);
 			Object obj = buildProxy(c);
 			if(obj!=null) {
-				processAttr(obj, c , true);
+				BeanInitModel model = new BeanInitModel();
+				model.setObj(obj);
+				model.setTagClass(c);
+				model.setStatic(true);
+				processAttr(model);
 			}
 			return obj;
 		} catch (JunitException e) {
@@ -530,20 +527,21 @@ public class LazyBean implements LazyBeanI{
 		return annoClass;
 	}
 	
+	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object findBeanByInterface(Class<?> interfaceClass, Type[] classGeneric) {
 		if(classGeneric == null) {
 			return findBeanByInterface(interfaceClass);
 		}
 		if(interfaceClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
-			if(!cL.isEmpty()) {
-				Class c = cL.get(0);
-				throw new JunitException("待开发");
-			}else {
-				if(interfaceClass == ObjectProvider.class) {
-					return new ObjectProviderImpl((Class<?>)classGeneric[0]);
-//					return util.getApplicationContext().getDefaultListableBeanFactory();
-				}
+//			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass);
+//			if(!cL.isEmpty()) {
+//				Class c = cL.get(0);
+//				throw new JunitException("待开发");
+//			}else {
+//				
+//			}
+			if(interfaceClass == ObjectProvider.class) {
+				return new ObjectProviderImpl((Class<?>)classGeneric[0]);
 			}
 		}else if(interfaceClass == List.class) {
 			//
@@ -657,6 +655,7 @@ public class LazyBean implements LazyBeanI{
 		}
 		return list;
 	}
+	
 	/**
 	 * 
 	 * @param beanName beanName
