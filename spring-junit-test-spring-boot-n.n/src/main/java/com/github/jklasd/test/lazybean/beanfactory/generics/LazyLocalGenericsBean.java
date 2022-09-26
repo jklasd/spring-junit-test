@@ -12,12 +12,24 @@ import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyLocalGenericsBean implements LazyPlugnBeanFactory{
+public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
 	
 	private ThreadLocal<List<Class<?>>> localCache = new ThreadLocal<>();
 	
 	LazyListableBeanFactory beanFactory = LazyListableBeanFactory.getInstance();
 
+	@Override
+	public void afterPropertiesSet(Object obj,BeanModel model) {
+		if(obj!=null) {
+			BeanInitModel initModel = new BeanInitModel();
+			initModel.setObj(obj);
+			initModel.setTagClass(obj.getClass());
+			initModel.setBeanName(model.getBeanName());
+    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
+		}
+		localCache.remove();
+	}
+	
 	@Override
 	public Object buildBean(BeanModel model) {
 		if(localCache.get()!=null) {
@@ -29,12 +41,6 @@ public class LazyLocalGenericsBean implements LazyPlugnBeanFactory{
 					Class<?> tagClass = localCache.get().get(0);
 					//修改beanName
 					Object obj = beanFactory.getBean(tagClass);
-					BeanInitModel initModel = new BeanInitModel();
-					initModel.setObj(obj);
-					initModel.setTagClass(tagClass);
-					initModel.setBeanName(model.getBeanName());
-	        		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
-	        		
 					return obj;
 				}
 				return beanFactory.getBean(model.getBeanName());
@@ -76,5 +82,6 @@ public class LazyLocalGenericsBean implements LazyPlugnBeanFactory{
 		
 		return instance;
 	}
+
 
 }

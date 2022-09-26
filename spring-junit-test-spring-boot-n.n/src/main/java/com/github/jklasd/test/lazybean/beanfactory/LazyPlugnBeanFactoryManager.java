@@ -5,6 +5,7 @@ import java.util.List;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMethodBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.google.common.collect.Lists;
@@ -24,16 +25,34 @@ public class LazyPlugnBeanFactoryManager {
 		return instance;
 	}
 	
-	private List<LazyPlugnBeanFactory> beanFactorys = Lists.newArrayList(
+	private List<LazyPlugnBeanFactory> interfaceBeanFactorys = Lists.newArrayList(
 			LazyMybatisMapperBean.getInstance(),
 			LazyDubboBean.getInstance(),
-			LazyLocalGenericsBean.getInstance()
+			LazyLocalGenericsBean.getInstance(),
+			LazyMethodBean.getInstance()
 			);
 	
-	public Object getTagertObjectCustom(BeanModel beanModel) {
-		for(LazyPlugnBeanFactory lpbf : beanFactorys) {
+	public Object getTagertObjectCustomForInterface(BeanModel beanModel) {
+		for(LazyPlugnBeanFactory lpbf : interfaceBeanFactorys) {
 			if(lpbf.finded(beanModel)) {
-				return lpbf.buildBean(beanModel);
+				Object obj = lpbf.buildBean(beanModel);
+				lpbf.afterPropertiesSet(obj,beanModel);
+				return obj;
+			}
+		}
+		return null;
+	}
+	
+	private List<LazyPlugnBeanFactory> classBeanFactorys = Lists.newArrayList(
+			LazyLocalGenericsBean.getInstance(),
+			LazyMethodBean.getInstance()
+			);
+	public Object getTagertObjectCustomForClass(BeanModel beanModel) {
+		for(LazyPlugnBeanFactory lpbf : classBeanFactorys) {
+			if(lpbf.finded(beanModel)) {
+				Object obj = lpbf.buildBean(beanModel);
+				lpbf.afterPropertiesSet(obj,beanModel);
+				return obj;
 			}
 		}
 		return null;

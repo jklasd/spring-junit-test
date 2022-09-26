@@ -142,10 +142,13 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
     
     @Override
     protected  synchronized Object getTagertObjectCustom() {
+    	
+    	tagertObj = LazyPlugnBeanFactoryManager.getInstance().getTagertObjectCustomForClass(beanModel);
+        if(tagertObj != null) {
+        	return tagertObj;
+        }
+    	
         Class<?> tagertC = beanModel.getTagClass();
-//        if(tagertC.getName().contains("JedisCluster")) {
-//            log.info("");
-//        }
         String beanName = beanModel.getBeanName();
         if(!ScanUtil.exists(tagertC)) {
             if(tagertObj==null && !inited && !beanModel.isXmlBean()) {

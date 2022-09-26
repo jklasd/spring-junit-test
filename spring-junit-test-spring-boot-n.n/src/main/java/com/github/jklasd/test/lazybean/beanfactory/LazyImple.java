@@ -29,7 +29,7 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
     @Override
     protected synchronized Object getTagertObjectCustom() {
         
-        tagertObj = LazyPlugnBeanFactoryManager.getInstance().getTagertObjectCustom(beanModel);
+        tagertObj = LazyPlugnBeanFactoryManager.getInstance().getTagertObjectCustomForInterface(beanModel);
         if(tagertObj != null) {
         	return tagertObj;
         }

@@ -15,7 +15,6 @@ import com.github.jklasd.test.lazyplugn.dubbo.AbstractRefHandler;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboAnnotationRefHandler;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboXmlRefHandler;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
-import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -28,7 +27,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class LazyDubboBean implements BeanDefParser,LazyPlugnBeanFactory{
+public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanDefParser,LazyPlugnBeanFactory{
     private LazyDubboBean() {}
     private static volatile LazyDubboBean bean;
     public static LazyDubboBean getInstance() {

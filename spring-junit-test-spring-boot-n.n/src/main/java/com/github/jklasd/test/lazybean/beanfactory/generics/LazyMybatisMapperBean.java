@@ -33,7 +33,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  */
 @Slf4j
-public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
+public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
     private static volatile LazyMybatisMapperBean bean;
 
     public static LazyMybatisMapperBean getInstance() {
