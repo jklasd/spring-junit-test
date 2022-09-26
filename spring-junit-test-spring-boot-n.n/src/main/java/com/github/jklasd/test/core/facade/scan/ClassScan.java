@@ -264,17 +264,18 @@ public class ClassScan implements Scan{
 			return cacheInterfaceImpls.get(interfaceClass);
 		}
 		
-		List<Class<?>> list = Lists.newArrayList();
+		Set<Class<?>> set = Sets.newConcurrentHashSet();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isImple(tmpClass,interfaceClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
+					set.add(tmpClass);
 				}
 			}
 		});
+		List<Class<?>> list = Lists.newArrayList(set);
 		if(!list.isEmpty()) {
 			cacheInterfaceImpls.put(interfaceClass, list);
 		}
@@ -310,17 +311,24 @@ public class ClassScan implements Scan{
 		return componentClassPathMap.containsKey(requiredType.getName());
 	}
 	public List<Class<?>> findClassExtendAbstract(Class<?> abstractClass) {
-		List<Class<?>> list = Lists.newArrayList();
+		if(cacheInterfaceImpls.containsKey(abstractClass)) {
+			return cacheInterfaceImpls.get(abstractClass);
+		}
+		Set<Class<?>> set = Sets.newConcurrentHashSet();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
 			if(ScanUtil.isExtends(tmpClass,abstractClass)) {
 				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
 						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
+					set.add(tmpClass);
 				}
 			}
 		});
+		List<Class<?>> list = Lists.newArrayList(set);
+		if(!list.isEmpty()) {
+			cacheInterfaceImpls.put(abstractClass, list);
+		}
 		return list;
 	}
 
