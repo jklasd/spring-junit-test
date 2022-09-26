@@ -39,7 +39,6 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
-import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
@@ -596,7 +595,7 @@ public class LazyBean implements LazyBeanI{
 		DebugObjectView.readView(()->{
 			log.debug("=================重试查找bean=={}=={}=============",classBean,beanName);
 		});
-		AssemblyDTO asse = new AssemblyDTO();
+		BeanModel asse = new BeanModel();
 		asse.setTagClass(classBean);
 		asse.setBeanName(beanName);
 		JunitMethodDefinition ojb_meth = ScanUtil.findCreateBeanFactoryClass(asse);
@@ -610,7 +609,7 @@ public class LazyBean implements LazyBeanI{
 		return tagObj;
 	}
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
-		AssemblyDTO asse = new AssemblyDTO();
+		BeanModel asse = new BeanModel();
 		asse.setBeanName(beanName);
 		asse.setTagClass(classBean);
 		/**
@@ -622,7 +621,7 @@ public class LazyBean implements LazyBeanI{
 		}
 		return null;
 	}
-	public static Object findCreateBeanFromFactory(AssemblyDTO assemblyData) {
+	public static Object findCreateBeanFromFactory(BeanModel assemblyData) {
 		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
 			JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(assemblyData);
 			if(jmd==null) {

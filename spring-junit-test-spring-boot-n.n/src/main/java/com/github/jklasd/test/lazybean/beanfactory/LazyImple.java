@@ -34,20 +34,6 @@ class LazyImple extends AbstractLazyProxy implements InvocationHandler {
         	return tagertObj;
         }
         
-//        if(LazyDubboBean.getInstance().isDubboNew(tagertC)) {//，判断是否是Dubbo服务
-//            tagertObj = LazyDubboBean.getInstance().buildBeanNew(tagertC,beanName);
-//        }else if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
-//            tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
-//        } else {
-//            if(LazyMybatisMapperBean.getInstance().finded(beanModel)) {//判断是否是Mybatis mapper
-//                return LazyMybatisMapperBean.getInstance().buildBean(beanModel);//防止线程池执行时，出现获取不到session问题
-//            }else {
-//                
-////                if(tagertObj!=null) {
-////                    LazyDubboBean.getInstance().processAttr(tagertObj,tagertObj.getClass());
-////                }
-//            }
-//        }
         Class<?> tagertC = beanModel.getTagClass();
         String beanName = beanModel.getBeanName();
         if(beanName == null) {

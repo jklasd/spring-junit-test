@@ -21,10 +21,8 @@ import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.beans.factory.support.MethodOverrides;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.springframework.context.annotation.ScannedGenericBeanDefinition;
 import org.springframework.core.AttributeAccessor;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
@@ -353,7 +351,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	@Override
 	public Object doCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
-		log.info("============================构建真实对象={}===========================",beanName);
+		log.debug("============================构建真实对象={}===========================",beanName);
 		if(cacheBeanMap.containsKey(beanName)) {
 			return cacheBeanMap.get(beanName);
 		}
@@ -375,7 +373,6 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			}
 		}
 		if(!obj.getClass().isInterface()) {
-//			LazyBean.getInstance().processAttr(obj, obj.getClass());
 			BeanInitModel initModel = new BeanInitModel();
 			initModel.setObj(obj);
 			initModel.setTagClass(obj.getClass());

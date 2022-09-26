@@ -63,7 +63,9 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 		}
 	}
 	
-	
+	/**
+	 * 封装多数据源
+	 */
 	public DataSource build(DataSource dataSource) {
 		
 		if(superSource != null) {

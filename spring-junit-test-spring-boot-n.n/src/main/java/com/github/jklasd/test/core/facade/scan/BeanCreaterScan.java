@@ -15,7 +15,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
-import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
@@ -33,7 +33,7 @@ public class BeanCreaterScan implements BeanScanI{
 	private JunitListableBeanFactory beanFactory = LazyListableBeanFactory.getInstance();
 //	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	
-	private JunitMethodDefinition findClassMethodByBeanName(AssemblyDTO assemblyData) {
+	private JunitMethodDefinition findClassMethodByBeanName(BeanModel assemblyData) {
 		return beanJmdMap.get(assemblyData.getBeanName());
 //		Object[] address = new Object[2];
 //		Object[] tmp = new Object[2];
@@ -97,7 +97,7 @@ public class BeanCreaterScan implements BeanScanI{
 		});
 	}
 	
-	public JunitMethodDefinition findClassMethodByResultType(AssemblyDTO assemblyData) {
+	public JunitMethodDefinition findClassMethodByResultType(BeanModel assemblyData) {
 //		Object[] tmp = new Object[2];
 		final Class<?> tagC = assemblyData.getTagClass();
 //		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(customizeConfigClass))
@@ -188,7 +188,7 @@ public class BeanCreaterScan implements BeanScanI{
 //		}
 //	}
 	
-	public JunitMethodDefinition findCreateBeanFactoryClass(AssemblyDTO assemblyData) {
+	public JunitMethodDefinition findCreateBeanFactoryClass(BeanModel assemblyData) {
 		registMethodBeanDefinition();
 		if(StringUtils.isNotBlank(assemblyData.getBeanName())) {
 			JunitMethodDefinition result = findClassMethodByBeanName(assemblyData);
@@ -221,7 +221,7 @@ public class BeanCreaterScan implements BeanScanI{
 	}
 	public JunitMethodDefinition findCreateBeanFactoryClass(Class<?> tagC) {
 		registMethodBeanDefinition();
-		AssemblyDTO assemblyData = new AssemblyDTO();
+		BeanModel assemblyData = new BeanModel();
 		assemblyData.setTagClass(tagC);
 		return findClassMethodByResultType(assemblyData);
 	}

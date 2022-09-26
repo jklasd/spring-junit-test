@@ -45,12 +45,13 @@ public class AutowiredHandler implements FieldHandler{
 						}
 					}
 					FieldAnnComponent.setObj(attr, tagObj, list);
-					log.info("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
+					log.debug("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
 				} catch (ClassNotFoundException e) {
 					log.error("ClassNotFoundException",e);
 					throw new JunitException("ClassNotFoundException", true);
 				}
 			}else {
+				//TODO 待优化
 				log.info("其他特殊情况");
 			}
 		}else {

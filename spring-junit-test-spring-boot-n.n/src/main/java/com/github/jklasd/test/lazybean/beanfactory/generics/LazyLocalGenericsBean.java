@@ -29,7 +29,6 @@ public class LazyLocalGenericsBean implements LazyPlugnBeanFactory{
 					Class<?> tagClass = localCache.get().get(0);
 					//修改beanName
 					Object obj = beanFactory.getBean(tagClass);
-//					LazyBean.getInstance().processAttr(obj, tagClass);
 					BeanInitModel initModel = new BeanInitModel();
 					initModel.setObj(obj);
 					initModel.setTagClass(tagClass);

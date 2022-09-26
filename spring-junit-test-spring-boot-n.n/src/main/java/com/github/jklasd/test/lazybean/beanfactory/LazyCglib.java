@@ -16,7 +16,6 @@ import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
-import com.github.jklasd.test.lazyplugn.db.LazyMongoBean;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
@@ -149,12 +148,6 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
 //        }
         String beanName = beanModel.getBeanName();
         if(!ScanUtil.exists(tagertC)) {
-            if(LazyMongoBean.isMongo(tagertC)) {//，判断是否是Mongo
-                tagertObj = LazyMongoBean.buildBean(tagertC,beanName);
-            }/*else if(LazyMQBean.isBean(tagertC)) {
-//                tagertObj = LazyMQBean.buildBean(tagertC);
-                log.info("");
-            }*/
             if(tagertObj==null && !inited && !beanModel.isXmlBean()) {
                 tagertObj = LazyBean.findCreateBeanFromFactory(tagertC,beanName);
             }
@@ -218,9 +211,6 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
             if (constructor.getParameterCount() > 0) {
                 tagertObj = constructor.newInstance(getArguments());
             } else {
-                /**
-                 * //直接反射构建目标对象
-                 */
                 tagertObj = constructor.newInstance();
             }
             

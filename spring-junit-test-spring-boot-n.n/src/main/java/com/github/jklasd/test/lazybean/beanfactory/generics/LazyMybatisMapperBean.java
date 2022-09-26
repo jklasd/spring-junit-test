@@ -206,12 +206,12 @@ public class LazyMybatisMapperBean implements LazyPlugnBeanFactory{
         mybatisScanPathList.addAll(basePackages);
     }
 
-    public void configure() {
+//    public void configure() {
         // 判断是否存在类
 //        Class<?> abstractRoutingDataSource
 //            = ScanUtil.loadClass("org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource");
 //        LazyBeanProcess.putAfterMethodEvent(abstractRoutingDataSource);
-    }
+//    }
 
     @Override
     public Object buildBean(BeanModel model) {

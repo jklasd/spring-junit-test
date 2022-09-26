@@ -2,7 +2,6 @@ package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -12,15 +11,13 @@ import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.common.interf.register.Scan;
-import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -160,7 +157,7 @@ public class ScanUtil {
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	private static volatile BeanScanI beanFactoryScaner;
 
-	public /* synchronized */static JunitMethodDefinition findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
+	public /* synchronized */static JunitMethodDefinition findCreateBeanFactoryClass(final BeanModel assemblyData) {
 		if(beanFactoryScaner == null) {
 			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
 			if(beanFactoryScaner == null) {

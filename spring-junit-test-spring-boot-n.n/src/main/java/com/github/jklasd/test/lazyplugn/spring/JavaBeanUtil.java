@@ -26,8 +26,8 @@ import org.springframework.core.io.Resource;
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.exception.JunitException;
-import com.github.jklasd.test.common.model.AssemblyDTO;
 import com.github.jklasd.test.common.model.BeanInitModel;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
@@ -66,7 +66,7 @@ public class JavaBeanUtil {
 	 * @param assemblyData 
 	 * @return
 	 */
-    public Object buildBean(Class<?> configClass, Method method, AssemblyDTO assemblyData) {
+    public Object buildBean(Class<?> configClass, Method method, BeanModel assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
 	        assemblyData.setBeanName(BeanNameUtil.getBeanName(assemblyData.getTagClass()));
 	    }
@@ -119,7 +119,7 @@ public class JavaBeanUtil {
      * @param key   缓存key
      * @param obj   configurationBean
      */
-    private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
+    private void buildTagObject(Method method, BeanModel assemblyData, String key, Object obj) {
         try {
         	if(LazyProxyManager.isProxy(obj)) {//不能是代理对象
         		return;
@@ -271,7 +271,7 @@ public class JavaBeanUtil {
     private Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
-        	AssemblyDTO tmp = new AssemblyDTO();
+        	BeanModel tmp = new BeanModel();
         	tmp.setBeanName(null);
         	if(paramTypes[i] instanceof ParameterizedType) {
         		ParameterizedType  pType = (ParameterizedType) paramTypes[i];

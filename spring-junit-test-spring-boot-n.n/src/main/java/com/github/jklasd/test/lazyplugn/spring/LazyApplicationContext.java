@@ -126,8 +126,15 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			throw new JunitException("注册bean，beanName不能为空",true);
 		}
 		if(cacheProxyBean.containsKey(beanName)) {
-			log.warn("{}=>已存在",beanName);
-			return;
+			Object existsBean = cacheProxyBean.get(beanName);
+			if(tagC.isInstance(existsBean)) {//如果不是，则有可能重名
+				log.warn("{}=>已存在",beanName);
+				return ;
+			}else {
+				beanName = beanName+"#"+proxyBean.hashCode();
+				log.warn("新注册代理bean:{}",beanName);
+				registProxyBean(beanName, proxyBean, tagC);
+			}
 		}
 		
 		if(!LazyProxyManager.isProxy(proxyBean)) {
