@@ -26,6 +26,8 @@ public class LazyMybatisScannerRegistrar implements ScannerRegistrarI {
 	
 	private final static String MapperScanName = "org.mybatis.spring.annotation.MapperScan";
 	
+	LazyMybatisMapperBean lazyMybatis = (LazyMybatisMapperBean) LazyMybatisMapperBean.getInstance();
+	
 	@SuppressWarnings("unchecked")
 	public final Class<? extends Annotation> getAnnotionClass() {
         if (mapperScanClass == null) {
@@ -91,8 +93,8 @@ public class LazyMybatisScannerRegistrar implements ScannerRegistrarI {
 		        .collect(Collectors.toList()));
 			
 			
-		    LazyMybatisMapperBean.getInstance().processConfig(configura,basePackages);
+		    lazyMybatis.processConfig(configura,basePackages);
 		});
-		LazyMybatisMapperBean.getInstance().processScannerConfig();
+		lazyMybatis.processScannerConfig();
 	}
 }

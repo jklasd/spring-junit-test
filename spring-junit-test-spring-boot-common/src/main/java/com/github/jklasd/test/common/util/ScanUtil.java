@@ -35,7 +35,6 @@ public class ScanUtil {
 	public static final String SPRING_PACKAGE = "org.springframework";
 	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
-	static Map<String,Class<?>> nameMap = Maps.newConcurrentMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
 	
 	/**
@@ -51,7 +50,7 @@ public class ScanUtil {
 		return resourceResolver.getResources(path);
 	}
 	public static boolean exists(Class record) {
-		return nameMap.values().contains(record);
+		return scaner.isInScanPath(record);
 	}
 	
 	public static Map<String, Class<?>> findClassMap(String scanPath) {
@@ -172,9 +171,9 @@ public class ScanUtil {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
 	}
-	public static Class getClassByName(String className) {
-		return nameMap.get(className);
-	}
+//	public static Class getClassByName(String className) {
+//		return nameMap.get(className);
+//	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
 		for(String path: paths) {

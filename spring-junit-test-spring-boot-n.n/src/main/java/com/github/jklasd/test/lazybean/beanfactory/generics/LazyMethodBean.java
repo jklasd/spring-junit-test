@@ -41,18 +41,7 @@ public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements Lazy
 		localCache.remove();
 	}
 	
-	static LazyAbstractPlugnBeanFactory instance;
 	public static LazyAbstractPlugnBeanFactory getInstance() {
-		if(instance != null) {
-			return instance;
-		}
-		
-		synchronized (LazyMethodBean.class) {
-			if(instance == null) {
-				instance = new LazyMethodBean();
-			}
-		}
-		
-		return instance;
+		return getInstanceByClass(LazyMethodBean.class);
 	}
 }

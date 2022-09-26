@@ -3,6 +3,9 @@ package com.github.jklasd.test.lazybean.beanfactory;
 import java.util.List;
 
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyConfigurationPropertiesBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyOtherBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMethodBean;
@@ -44,8 +47,10 @@ public class LazyPlugnBeanFactoryManager {
 	}
 	
 	private List<LazyPlugnBeanFactory> classBeanFactorys = Lists.newArrayList(
-			LazyLocalGenericsBean.getInstance(),
-			LazyMethodBean.getInstance()
+			LazyBeanDefBean.getInstance(),
+			LazyConfigurationPropertiesBean.getInstance(),
+			LazyMethodBean.getInstance(),
+			LazyOtherBean.getInstance()
 			);
 	public Object getTagertObjectCustomForClass(BeanModel beanModel) {
 		for(LazyPlugnBeanFactory lpbf : classBeanFactorys) {

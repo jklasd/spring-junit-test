@@ -68,19 +68,8 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 		return false;
 	}
 
-	static LazyLocalGenericsBean instance;
-	public static LazyLocalGenericsBean getInstance() {
-		if(instance != null) {
-			return instance;
-		}
-		
-		synchronized (LazyLocalGenericsBean.class) {
-			if(instance == null) {
-				instance = new LazyLocalGenericsBean();
-			}
-		}
-		
-		return instance;
+	public static LazyAbstractPlugnBeanFactory getInstance() {
+		return getInstanceByClass(LazyLocalGenericsBean.class);
 	}
 
 

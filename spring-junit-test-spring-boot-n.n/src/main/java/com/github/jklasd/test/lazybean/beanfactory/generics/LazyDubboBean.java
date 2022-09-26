@@ -28,14 +28,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanDefParser,LazyPlugnBeanFactory{
-    private LazyDubboBean() {}
-    private static volatile LazyDubboBean bean;
-    public static LazyDubboBean getInstance() {
-        if(bean == null) {
-            bean = new LazyDubboBean();
-        }
-        return bean;
-    }
+    public static LazyAbstractPlugnBeanFactory getInstance() {
+		return getInstanceByClass(LazyDubboBean.class);
+	}
     
 	private static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	

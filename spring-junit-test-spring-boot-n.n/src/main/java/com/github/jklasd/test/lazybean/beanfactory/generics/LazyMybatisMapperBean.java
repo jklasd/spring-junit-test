@@ -34,14 +34,9 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
-    private static volatile LazyMybatisMapperBean bean;
-
-    public static LazyMybatisMapperBean getInstance() {
-        if (bean == null) {
-            bean = new LazyMybatisMapperBean();
-        }
-        return bean;
-    }
+	public static LazyAbstractPlugnBeanFactory getInstance() {
+		return getInstanceByClass(LazyMybatisMapperBean.class);
+	}
 
     private static Object defaultFactory;
 

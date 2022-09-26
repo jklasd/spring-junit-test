@@ -26,4 +26,8 @@ public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactor
 			LazyConfPropBind.processConfigurationProperties(obj,propConfig);
 		}
 	}
+	
+	public static LazyAbstractPlugnBeanFactory getInstance() {
+		return getInstanceByClass(LazyConfigurationPropertiesBean.class);
+	}
 }
