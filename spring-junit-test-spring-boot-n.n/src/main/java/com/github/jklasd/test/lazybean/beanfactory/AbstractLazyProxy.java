@@ -54,24 +54,24 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
 //    	return LazyProxyManager.getProxyTagClass(obj);
 //    }
     
-    protected void initLazyProxy() {
-            try {
-                if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
-                    log.info("initLazyProxy=>{}",beanModel.getTagClass());
-                    getTagertObj();
-                    Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
-                    Object obj = JunitInvokeUtil.invokeMethod(tagertObj, "getObject");
-                    TestUtil.getInstance().getApplicationContext().registProxyBean(BeanNameUtil.getBeanName(obj.getClass()), obj,
-                        tagC);
-                }
-            } catch (Exception e) {
-                 if(beanModel.isThrows()) {
-                	 throw e;
-                 }else {
-                	 e.printStackTrace();
-                 }
-            }
-    }
+//    protected void initLazyProxy() {
+//            try {
+//                if (ScanUtil.isImple(beanModel.getTagClass(), FactoryBean.class)) {
+//                    log.info("initLazyProxy=>{}",beanModel.getTagClass());
+//                    getTagertObj();
+//                    Class<?> tagC = (Class<?>)ScanUtil.getGenericType(beanModel.getTagClass())[0];
+//                    Object obj = JunitInvokeUtil.invokeMethod(tagertObj, "getObject");
+//                    TestUtil.getInstance().getApplicationContext().registProxyBean(BeanNameUtil.getBeanName(obj.getClass()), obj,
+//                        tagC);
+//                }
+//            } catch (Exception e) {
+//                 if(beanModel.isThrows()) {
+//                	 throw e;
+//                 }else {
+//                	 e.printStackTrace();
+//                 }
+//            }
+//    }
     
     private AtomicInteger errorTimes = new AtomicInteger();
     
