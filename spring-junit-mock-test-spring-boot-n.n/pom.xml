@@ -41,7 +41,7 @@
 	<parent>
 		<groupId>com.github.jklasd</groupId>
 		<artifactId>spring-junit-test-parent</artifactId>
-		<version>1.2.3-SNAPSHOT</version>
+		<version>2.0.1-SNAPSHOT</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
