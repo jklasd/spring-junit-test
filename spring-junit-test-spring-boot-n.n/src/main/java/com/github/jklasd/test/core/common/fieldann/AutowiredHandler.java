@@ -19,6 +19,7 @@ import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.util.BeanNameUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -56,7 +57,10 @@ public class AutowiredHandler implements FieldHandler{
 			}
 		}else {
 			if(StringUtils.isBlank(bName)) {
-				bName = attr.getName();
+				bName = BeanNameUtil.getBeanName(attr.getType());
+				if(StringUtils.isBlank(bName)) {
+					bName = attr.getName();
+				}
 			}
 			FieldAnnComponent.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(attr.getType(),bName));
 		}

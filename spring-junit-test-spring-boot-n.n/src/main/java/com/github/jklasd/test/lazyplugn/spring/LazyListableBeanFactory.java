@@ -23,6 +23,7 @@ import org.springframework.beans.factory.support.AbstractBeanDefinition;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.MethodOverrides;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.core.AttributeAccessor;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
@@ -36,6 +37,7 @@ import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -99,7 +101,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		try {
 			List<String> matchBean = matchName(requiredType, isCacheBeanMetadata(), false);
 			if(!matchBean.isEmpty()) {
-				log.info("matchBean=>{}",matchBean);
+				log.debug("matchBean=>{}",matchBean);
 				if(matchBean.size()>1) {
 					//TODO 没有考虑多Bean情况，后续处理
 				}else {
@@ -253,9 +255,26 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	Map<String,BeanDefinition> beanDefMap = Maps.newHashMap();
 	List<String> beanNames = Lists.newArrayList();
 	Set<String> beanNameDefSet = Sets.newHashSet();
+	
+	
+	BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	@Override
 	public synchronized void registerBeanDefinition(String beanName, BeanDefinition beanDefinition)
 			throws BeanDefinitionStoreException {
+		
+		AbstractBeanDefinition tmpDef =  (AbstractBeanDefinition) beanDefinition;
+		if(!tmpDef.hasBeanClass()) {//未转化，先转化
+			String beanClassName = tmpDef.getBeanClassName();
+			Class<?> tagC = ScanUtil.loadClass(beanClassName);
+			tmpDef.setBeanClass(tagC);
+		}
+		if(tmpDef.getBeanClass().isAnnotationPresent(Configuration.class)) {
+			//configuration
+			log.debug("处理{}",tmpDef.getBeanClass());
+			beanCreaterScan.loadConfigurationClass(tmpDef.getBeanClass());
+		}
+		
+		
 		beanDefList.add(beanDefinition);
 		beanDefMap.put(beanName, beanDefinition);
 		beanNames.add(beanName);
@@ -328,13 +347,6 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		if(beanDef != null) {
 			if(beanDef instanceof AbstractBeanDefinition) {
 				AbstractBeanDefinition tmpDef = (AbstractBeanDefinition) beanDef;
-				
-				if(!tmpDef.hasBeanClass()) {//未转化，先转化
-					String beanClassName = tmpDef.getBeanClassName();
-					Class<?> tagC = ScanUtil.loadClass(beanClassName);
-					tmpDef.setBeanClass(tagC);
-				}
-				
 				if(FactoryBean.class.isAssignableFrom(tmpDef.getBeanClass())) {
 					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
 					return match;

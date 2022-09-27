@@ -192,7 +192,10 @@ public class BeanCreaterScan implements BeanScanI{
 		registMethodBeanDefinition();
 		if(StringUtils.isNotBlank(assemblyData.getBeanName())) {
 			JunitMethodDefinition result = findClassMethodByBeanName(assemblyData);
-			return result;
+			if(result!=null) {
+				return result;
+			}
+			//通过beanname 没找到
 		}
 		return findClassMethodByResultType(assemblyData);
 	}
@@ -202,6 +205,7 @@ public class BeanCreaterScan implements BeanScanI{
 	private volatile Set<Class<?>> springConfigClass = Sets.newConcurrentHashSet();
 	public void loadConfigurationClass(Class<?> configClass) {
 		if(!CheckUtil.checkClassExists(configClass)) {
+			log.info("=============不能加载{}=============",configClass);
 			return;
 		}
 		log.debug("=============加载{}=============",configClass);

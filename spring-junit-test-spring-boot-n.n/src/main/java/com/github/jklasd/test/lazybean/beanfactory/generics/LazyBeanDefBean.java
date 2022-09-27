@@ -1,6 +1,7 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
 
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
@@ -25,8 +26,19 @@ public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
 		BeanDefinition bd = null;
 		if(beanFactory.containsBeanDefinition(beanModel.getBeanName())) {
 			bd = beanFactory.getBeanDefinition(beanModel.getBeanName());
-		}else {
+			if(bd!=null) {
+				AbstractBeanDefinition abd = (AbstractBeanDefinition) bd;
+				if(!beanModel.getTagClass().isAssignableFrom(abd.getBeanClass())) {
+					bd = null;
+				}
+			}
+		}
+		if(bd == null) {
 			bd = beanFactory.getFirstBeanDefinition(beanModel.getTagClass());
+			if(bd!=null) {
+				beanModel.setBeanName(beanModel.getTagClass().getName());//重置beanName
+				beanFactory.registerBeanDefinition(beanModel.getBeanName(), bd);
+			}
 		}
 		localCache.set(bd);
 		
