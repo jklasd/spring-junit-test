@@ -165,37 +165,34 @@ public class TestUtil implements JunitCoreComponentI{
 		}
 	}
 
-	public String getPropertiesValue(String key, String defaultStr) {
-		key = key.replace("${", "").replace("}", "");
-		if (getApplicationContext() != null) {
-			String[] keys = key.split(":");
-			String value = getApplicationContext().getEnvironment().getProperty(keys[0]);
-			if (value != null) {
-				return value;
-			} else {
-				if(keys.length > 1) {
-					return keys[1];
-				}else {
-					if(key.contains(":")) {
-						return "";
-					}else {
-						return defaultStr == null ? key : defaultStr;
-					}
-				}
-			}
-		}
-		return key;
-	}
-
-	public String getPropertiesValue(String key) {
-		return getPropertiesValue(key, null);
-	}
-
-	public Object value(String key, Class<?> type) {
-//		if(key.contains("finalPV.userId")) {
-//			log.debug("断点");
+//	public String getPropertiesValue(String key, String defaultStr) {
+//		key = key.replace("${", "").replace("}", "");
+//		if (getApplicationContext() != null) {
+//			String[] keys = key.split(":");
+//			String value = getApplicationContext().getEnvironment().getProperty(keys[0]);
+//			if (value != null) {
+//				return value;
+//			} else {
+//				if(keys.length > 1) {
+//					return keys[1];
+//				}else {
+//					if(key.contains(":")) {
+//						return "";
+//					}else {
+//						return defaultStr == null ? key : defaultStr;
+//					}
+//				}
+//			}
 //		}
-		String value = getPropertiesValue(key);
+//		return key;
+//	}
+
+//	public String getPropertiesValue(String key) {
+//		return getPropertiesValue(key, null);
+//	}
+
+	public Object valueFromEnvForAnnotation(String key, Class<?> type) {
+		String value = getApplicationContext().getEnvironment().resolvePlaceholders(key);
 		try {
 			if (StringUtils.isNotBlank(value)) {
 				if (type == null || type == String.class) {

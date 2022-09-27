@@ -9,6 +9,7 @@ import java.lang.reflect.Proxy;
 import java.lang.reflect.Type;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import javax.annotation.Resource;
@@ -53,7 +54,6 @@ import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.DebugObjectView;
 import com.github.jklasd.test.util.StackOverCheckUtil;
-import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -247,17 +247,6 @@ public class LazyBean implements LazyBeanI{
 		return buildProxy(model);
 	}
 	
-	public void setObj(Field f,Object obj,Object proxyObj) {
-		log.debug("{}注入属性:{}",obj.getClass(),f.getName());
-		try {
-			if (!f.isAccessible()) {
-				f.setAccessible(true);
-			}
-			f.set(obj, proxyObj);
-		} catch (Exception e) {
-			log.error("注入对象异常",e);
-		}
-	}
 	/**
 	 * 注入
 	 * @param obj
@@ -348,61 +337,82 @@ public class LazyBean implements LazyBeanI{
 		}
 	}
     private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
-    private Map<Class<?>,Map<String,Method>> fieldsCache = Maps.newHashMap();
+    private Map<Class<?>,Map<String,Field>> fieldsCache = Maps.newHashMap();
 
-	public boolean setAttr(String field, Object obj,Class<?> superClass,Object value) {
-			String mName = "set"+field.substring(0, 1).toUpperCase()+field.substring(1);
-			if(methodsCache.containsKey(superClass)) {
-			    Method tagM = methodsCache.get(superClass).get(mName);
-			    if(tagM!=null) {
-			    	boolean success = invokeSet(field, obj, value, tagM);
-			    	if(success) {
-			    		return success;
-			    	}
-			    }
-			}else {
-			    methodsCache.put(superClass, Maps.newHashMap());
-			}
-			Method[] methods = superClass.getDeclaredMethods();
-			for(Method m : methods) {
-				if(Objects.equal(m.getName(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
-					boolean success = invokeSet(field, obj, value, m);
-					if(success) {
-					    methodsCache.get(superClass).put(mName, m);
-					    return success;
-					}
+    /**
+     * 注解赋值
+     * @param field
+     * @param obj
+     * @param superClass
+     * @param value
+     * @return
+     */
+	public boolean setFieldValueFromExpression(String field, Object obj,Class<?> superClass,Object value) {
+		
+		String mName = "set"+field.toLowerCase();
+		if(methodsCache.containsKey(superClass)) {
+		    Method tagM = methodsCache.get(superClass).get(mName);
+		    if(tagM!=null) {
+		    	boolean success = invokeSet(field, obj, value, tagM);
+		    	if(success) {
+		    		return success;
+		    	}
+		    }
+		}else {
+		    methodsCache.put(superClass, Maps.newHashMap());
+		}
+		Method[] methods = superClass.getDeclaredMethods();
+		for(Method m : methods) {
+			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
+				boolean success = invokeSet(field, obj, value, m);
+				if(success) {
+				    methodsCache.get(superClass).put(mName, m);
+				    return success;
 				}
 			}
-			Field[] fields = superClass.getDeclaredFields();
-			boolean found = false;
-				for(Field f : fields){
-				    if(Modifier.isFinal(f.getModifiers())) {
-				        continue;
-				    }
-					if(Objects.equal(f.getName(), field)) {
-					    Object fv = value;
-						if(value instanceof String) {
-							fv = util.value(value.toString(), f.getType());	
-						}
-						try {
-							setObj(f, obj, fv);
-						} catch (IllegalArgumentException e) {
-							log.error("",e);
-							return false;
-						}
-						return true;
-					}
+		}
+		if(fieldsCache.containsKey(superClass)) {
+			Field tagM = fieldsCache.get(superClass).get(field);
+		    if(tagM!=null) {
+		    	if(value instanceof String) {
+		    		value = util.valueFromEnvForAnnotation(value.toString(), tagM.getType());	
 				}
-			Class<?> superC = superClass.getSuperclass();
-			if (!found && superC != null ) {
-				return setAttr(field,obj,superC,value);
+		    	FieldAnnComponent.setObj(tagM, obj, value);
+		    	return true;
+		    }
+		}
+		boolean found = findAndSet(field, obj, superClass, value);
+		Class<?> superC = superClass.getSuperclass();
+		if (!found && superC != null ) {
+			return setFieldValueFromExpression(field,obj,superC,value);
+		}
+		return false;
+	}
+	private boolean findAndSet(String fieldName, Object obj, Class<?> superClass, Object value) {
+		Field[] fields = superClass.getDeclaredFields();
+		for(Field field : fields){
+		    if(Modifier.isFinal(field.getModifiers())) {
+		        continue;
+		    }
+			if(Objects.equals(field.getName(), fieldName)) {
+			    Object fv = value;
+				if(value instanceof String) {
+					fv = util.valueFromEnvForAnnotation(value.toString(), field.getType());	
+				}
+				FieldAnnComponent.setObj(field, obj, fv);
+				if(!fieldsCache.containsKey(superClass)) {
+					fieldsCache.put(superClass, Maps.newHashMap());
+				}
+				fieldsCache.get(superClass).put(fieldName, field);
+				return true;
 			}
+		}
 		return false;
 	}
     private boolean invokeSet(String field, Object obj, Object value, Method m) {
         Object fv = value;
         if(value instanceof String) {
-        	fv = util.value(value.toString(), m.getParameterTypes()[0]);	
+        	fv = util.valueFromEnvForAnnotation(value.toString(), m.getParameterTypes()[0]);	
         }
         try {
             if(fv != null) {
@@ -418,7 +428,7 @@ public class LazyBean implements LazyBeanI{
         return false;
     }
 	
-	public static boolean existBean(Class beanClass) {
+	public static boolean existBean(Class<?> beanClass) {
 		Annotation[] anns = beanClass.getDeclaredAnnotations();
 		for(Annotation ann : anns) {
 			Class<?> type = ann.annotationType();

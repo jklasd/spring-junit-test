@@ -20,7 +20,7 @@ public class ValueHandler  implements FieldHandler{
 		Object obj = def.getTagObj();
 		Value v = (Value) ann;
 		if (v != null) {
-			FieldAnnComponent.setObj(attr, obj, util.value(v.value().replace("${", "").replace("}", ""), attr.getType()));
+			FieldAnnComponent.setObj(attr, obj, util.valueFromEnvForAnnotation(v.value(), attr.getType()));
 		}
 	}
 	public String getType() {

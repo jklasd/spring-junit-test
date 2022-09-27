@@ -5,6 +5,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.Map;
 
+import org.apache.commons.lang3.StringUtils;
+
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.JunitInvokeUtil;
@@ -35,22 +37,23 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
             for(Method m : ms) {
                 Object pv = m.invoke(ann);
                 if(pv!=null) {
+                	if(pv instanceof String && StringUtils.isBlank(pv.toString())) {
+                		continue;
+                	}
                     log.debug("m=>{},v=>{}",m.getName(),pv);
                 }
                 if(pv instanceof String) {
-                    if(pv.toString().length()>0) {
-                        LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
-                    }
+                	LazyBean.getInstance().setFieldValueFromExpression(m.getName(), referenceConfig, referenceConfigC, pv);
                 }else if(pv instanceof String[]) {
                     if(((String[])pv).length>0) {
-                        LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
+                        LazyBean.getInstance().setFieldValueFromExpression(m.getName(), referenceConfig, referenceConfigC, pv);
                     }
                 }else if(pv instanceof Integer || pv instanceof Boolean) {
-                    LazyBean.getInstance().setAttr(m.getName(), referenceConfig, referenceConfigC, pv);
+                    LazyBean.getInstance().setFieldValueFromExpression(m.getName(), referenceConfig, referenceConfigC, pv);
                 }
             }
-            LazyBean.getInstance().setAttr("injvm", referenceConfig, referenceConfigC, false);//关闭本地
-            LazyBean.getInstance().setAttr("interface", referenceConfig, referenceConfigC, dubboClass.getName());
+            LazyBean.getInstance().setFieldValueFromExpression("injvm", referenceConfig, referenceConfigC, false);//关闭本地
+            LazyBean.getInstance().setFieldValueFromExpression("interface", referenceConfig, referenceConfigC, dubboClass.getName());
             /**
              * 待后续升级，可能存在动态设定协议或者客户端问题
              */

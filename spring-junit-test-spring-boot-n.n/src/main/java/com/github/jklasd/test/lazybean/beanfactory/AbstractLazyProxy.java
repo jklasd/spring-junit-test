@@ -107,11 +107,11 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
         Object tmp = getTagertObjectCustom();
         if(tmp!=null && !inited) {
             inited = true;
-            if(attr!=null && attr.size()>0) {
-                attr.forEach((key,value)->{
-                    LazyBean.getInstance().setAttr(key, tmp, beanModel.getTagClass(), value);
-                });
-            }
+//            if(attr!=null && attr.size()>0) {
+//                attr.forEach((key,value)->{
+//                    LazyBean.getInstance().setAttr(key, tmp, beanModel.getTagClass(), value);
+//                });
+//            }
             if(tagertObj instanceof InitializingBean) {
                 try {
                     JunitInvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");

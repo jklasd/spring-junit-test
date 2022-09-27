@@ -16,10 +16,6 @@ public abstract class AbstractReferenceHandler implements FieldHandler{
 	
 	@Override
 	public void handler(FieldDef def, Annotation ann) {
-//		Object ref = LazyDubboAnnotationRefHandler.getInstance().buildBeanRef(def.getField().getType(),ann);
-//		if(ref!=null) {
-//			FieldAnnComponent.setObj(def.getField(), def.getTagObj(),ref);
-//		}
 		/**
 		 * 延迟处理
 		 */

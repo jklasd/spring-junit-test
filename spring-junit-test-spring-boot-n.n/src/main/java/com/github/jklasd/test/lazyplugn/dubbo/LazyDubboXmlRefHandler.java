@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationEventPublisher;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 
@@ -57,20 +58,8 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 			log.info("注册dubboService=>{}",dubboServiceClass);
 	        RootBeanDefinition beanDef = (RootBeanDefinition)dubboServiceCacheDef.get(dubboServiceClass.getName());
 	        try {
-	            Object serviceConfig = beanDef.getBeanClass().newInstance();
-	            beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-	                if(pv.getName().equals("ref")) {
-	                    Object instance = beanDef.getPropertyValues().get("interface");
-	                    Object value = XmlBeanUtil.getInstance().conversionValue(pv);
-	                    if(value == null) {
-	                        RuntimeBeanReference tmp = (RuntimeBeanReference)pv.getValue();
-	                        value = LazyBean.getInstance().buildProxy(ScanUtil.loadClass(instance.toString()), tmp.getBeanName());
-	                    }
-	                    LazyBean.getInstance().setAttr(pv.getName(), serviceConfig, beanDef.getBeanClass(), value);
-	                }else {
-	                    LazyBean.getInstance().setAttr(pv.getName(), serviceConfig, beanDef.getBeanClass(), XmlBeanUtil.getInstance().conversionValue(pv));
-	                }
-	            });
+	        	//TODO 待处理
+	            Object serviceConfig = LazyListableBeanFactory.getInstance().doCreateBean(dubboServiceClass.getName(), beanDef, null);
 	            
 	            JunitInvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
 	            JunitInvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
@@ -81,9 +70,9 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 	            if(getConfigCenterConfig()!=null) {
 	                JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
 	            }
-//	            Object obj = 
-	                JunitInvokeUtil.invokeMethod(serviceConfig, "export");
-	                log.info("注册=========={}===============成功",dubboServiceClass);
+	            
+                JunitInvokeUtil.invokeMethod(serviceConfig, "export");
+                log.info("注册=========={}===============成功",dubboServiceClass);
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
 	        }

@@ -116,7 +116,9 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
 	}
 	@Override
 	public boolean finded(BeanModel beanModel) {
-		return beanNameSets.contains(beanModel.getTagClass().getName());
+		String className = beanModel.getTagClass().getName();
+		return xmlRefHandler.getRefType().containsKey(className)
+				|| annRefHandler.getRefType().containsKey(className);
 	}
     
 }

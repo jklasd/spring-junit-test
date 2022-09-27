@@ -78,7 +78,7 @@ class BeanInitHandler {
 			    Value aw = m.getAnnotation(Value.class);
 			    if(paramTypes.length>0) {
 			        Type type = paramTypes[0];
-			        Object param = TestUtil.getInstance().value(aw.value(), (Class<?>)type);
+			        Object param = TestUtil.getInstance().valueFromEnvForAnnotation(aw.value(), (Class<?>)type);
 			        m.invoke(obj, param);
 			    }else {
 			        m.invoke(obj);
@@ -216,7 +216,7 @@ class BeanInitHandler {
 				    Value aw = method.getAnnotation(Value.class);
 				    if(paramTypes.length>0) {
 				        Type type = paramTypes[0];
-				        Object param = TestUtil.getInstance().value(aw.value(), (Class<?>)type);
+				        Object param = TestUtil.getInstance().valueFromEnvForAnnotation(aw.value(), (Class<?>)type);
 				        method.invoke(obj, param);
 				    }else {
 				        method.invoke(obj);
