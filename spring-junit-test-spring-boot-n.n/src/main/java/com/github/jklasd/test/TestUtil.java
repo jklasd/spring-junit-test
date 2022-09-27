@@ -125,45 +125,45 @@ public class TestUtil implements JunitCoreComponentI{
 		return obj;
 	}
 
-	/**
-	 * 获取存在Service,Complent的相关对象
-	 * 
-	 * @param classD   bean 类型
-	 * @param beanName 名称
-	 * @return 返回容器中已存在的Bean
-	 */
-	@SuppressWarnings("unchecked")
-	public Object getExistBean(Class classD, String beanName) {
-		try {
-			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
-				return getApplicationContext();
-			} else if (classD == Environment.class) {
-				return getApplicationContext().getEnvironment();
-			}
-			if (beanName != null) {
-				Object obj = getApplicationContext().getBean(beanName);
-				return obj;
-			}
-			Object obj = getApplicationContext().getBean(classD);
-			return obj;
-		} catch (NullPointerException e) {
-			return null;
-		} catch (NoUniqueBeanDefinitionException e) {
-			if (beanName != null) {
-				Object obj = getApplicationContext().getBean(beanName);
-				return obj;
-			}
-			return null;
-		} catch (NoSuchBeanDefinitionException e) {
-			return null;
-		} catch (UnsatisfiedDependencyException e) {
-			log.error("UnsatisfiedDependencyException=>{},{}获取异常", classD, beanName);
-			return null;
-		} catch (BeanCreationException e) {
-			log.error("BeanCreationException=>{},{}获取异常", classD, beanName);
-			return null;
-		}
-	}
+//	/**
+//	 * 获取存在Service,Complent的相关对象
+//	 * 
+//	 * @param classD   bean 类型
+//	 * @param beanName 名称
+//	 * @return 返回容器中已存在的Bean
+//	 */
+//	@SuppressWarnings("unchecked")
+//	public Object getExistBean(Class classD, String beanName) {
+//		try {
+//			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
+//				return getApplicationContext();
+//			} else if (classD == Environment.class) {
+//				return getApplicationContext().getEnvironment();
+//			}
+//			if (beanName != null) {
+//				Object obj = getApplicationContext().getBean(beanName);
+//				return obj;
+//			}
+//			Object obj = getApplicationContext().getBean(classD);
+//			return obj;
+//		} catch (NullPointerException e) {
+//			return null;
+//		} catch (NoUniqueBeanDefinitionException e) {
+//			if (beanName != null) {
+//				Object obj = getApplicationContext().getBean(beanName);
+//				return obj;
+//			}
+//			return null;
+//		} catch (NoSuchBeanDefinitionException e) {
+//			return null;
+//		} catch (UnsatisfiedDependencyException e) {
+//			log.error("UnsatisfiedDependencyException=>{},{}获取异常", classD, beanName);
+//			return null;
+//		} catch (BeanCreationException e) {
+//			log.error("BeanCreationException=>{},{}获取异常", classD, beanName);
+//			return null;
+//		}
+//	}
 
 //	public String getPropertiesValue(String key, String defaultStr) {
 //		key = key.replace("${", "").replace("}", "");
