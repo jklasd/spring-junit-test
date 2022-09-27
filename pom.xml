@@ -74,7 +74,7 @@
 			<dependency>
 		    	<groupId>com.github.jklasd</groupId>
 				<artifactId>spring-junit-test-common</artifactId>
-				<version>1.2.2.SNAPSHOT</version>
+				<version>1.2.2-SNAPSHOT</version>
 		    </dependency>
 		    <dependency>
 				<groupId>com.alibaba</groupId>
