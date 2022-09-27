@@ -1,4 +1,4 @@
-package com.github.jklasd.test;
+package com.github.jklasd.test.ann;
 
 import java.lang.reflect.Method;
 import java.util.List;
@@ -16,6 +16,7 @@ import org.junit.runners.model.FrameworkMethod;
 import org.junit.runners.model.InitializationError;
 import org.junit.runners.model.Statement;
 
+import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
