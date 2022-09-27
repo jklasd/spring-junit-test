@@ -5,7 +5,6 @@
 	<name>spring-junit-test-common</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test-common</artifactId>
-	<version>1.0.0.SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
