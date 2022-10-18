@@ -9,6 +9,7 @@ import java.util.Map;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Factory;
 
+import com.github.jklasd.test.lazybean.beanfactory.invoker.JunitInvoker;
 import com.github.jklasd.test.lazybean.beanfactory.invoker.LazyAopInvoker;
 import com.github.jklasd.test.lazybean.beanfactory.invoker.ProxyInvoker;
 import com.github.jklasd.test.lazybean.beanfactory.invoker.TransferInvoker;
@@ -108,6 +109,7 @@ public class LazyProxyManager {
 	private synchronized static ProxyInvoker bruildInvokerList() {
         if(proxyInvoker == null) {
         	List<ProxyInvoker> pis = Lists.newArrayList(
+        			JunitInvoker.getInstance(),
         			LazyAopInvoker.getInstance(),
         			TransferInvoker.getInstance());
         	proxyInvoker = pis.get(0);

@@ -110,5 +110,13 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	public boolean isInitDataSource() {
 		return h2Source!=null;
 	}
+	
+	public void handInsertResource(String... insertResource) {
+		try {
+			Statement statement = h2Source.getConnection().createStatement();
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 }

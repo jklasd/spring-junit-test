@@ -34,6 +34,8 @@ public class H2SelectHandler extends AbstractMockHandler implements MockClassHan
 	public void hand(Class<?> testClass) {
 		JunitH2Selected selected = testClass.getAnnotation(JunitH2Selected.class);
 		useClassMock.set(selected.value());
+		
+		RoutingDataSourceExt.getInstance().handInsertResource(selected.insertResource());
 	}
 
 	@Override
