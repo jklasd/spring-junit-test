@@ -17,5 +17,20 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
 public @interface JunitH2Selected {
-	boolean value() default true; 
+	/**
+	 * 是否使用H2数据库
+	 * @return
+	 */
+	boolean value() default true;
+	
+	/**
+	 * 当定义在class上时使用，控制当前表示当前junit class用到的数据源写入。<br/>
+	 * 
+	 * insertResource,寻址源头是从src/test/resources去找，路径可以自定义
+	 * 
+	 * 表的创建建议统一写到db-h2/schema <br/>
+	 * db-h2/data下也可以写一些插入公共数据
+	 * @return
+	 */
+	String[] insertResource() default "";
 }
