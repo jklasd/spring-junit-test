@@ -66,7 +66,7 @@ public class JunitInvoker extends AbstractProxyInvoker{
 					Object tagObj = f.get(obj);
 					if(LazyProxyManager.isProxy(tagObj)) {
 						//process
-						LazyBean.getInstance().processAttr(tagObj, f.getType(), false);
+						LazyBean.getInstance().processAttr(tagObj, f.getType());
 					}
 				}
 			}
