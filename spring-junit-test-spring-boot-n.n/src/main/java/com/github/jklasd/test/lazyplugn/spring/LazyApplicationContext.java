@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
@@ -88,8 +89,13 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	}
 	
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getBean(String name, Class<T> requiredType) {
-		return lazyBeanFactory.getBean(name, requiredType);
+		Object obj = lazyBeanFactory.getBean(name, requiredType);
+		if(obj == null) {
+			throw new NoSuchBeanDefinitionException(name);
+		}
+		return (T) obj;
 	}
 	
 	@SuppressWarnings("unchecked")
