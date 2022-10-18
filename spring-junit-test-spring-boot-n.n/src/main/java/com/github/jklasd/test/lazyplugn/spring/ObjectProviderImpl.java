@@ -45,6 +45,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public T getIfAvailable() throws BeansException {
 		if(type != null) {
@@ -64,6 +65,8 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				log.warn("ObjectProvider#getIfAvailable##############{}##############",type);
+			} catch (Exception e) {
+				log.warn("ObjectProvider#getIfAvailable##############{}##############",type,e);
 			}
 		}
 		return null;

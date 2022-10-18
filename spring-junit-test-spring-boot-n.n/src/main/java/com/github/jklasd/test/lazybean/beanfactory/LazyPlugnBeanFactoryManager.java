@@ -2,15 +2,18 @@ package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.util.List;
 
+import org.springframework.beans.factory.ObjectProvider;
+
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyConfigurationPropertiesBean;
-import com.github.jklasd.test.lazybean.beanfactory.generics.LazyOtherBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMethodBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyOtherBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
+import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.google.common.collect.Lists;
 
 public class LazyPlugnBeanFactoryManager {
@@ -42,6 +45,9 @@ public class LazyPlugnBeanFactoryManager {
 				lpbf.afterPropertiesSet(obj,beanModel);
 				return obj;
 			}
+		}
+		if(ObjectProvider.class == beanModel.getTagClass()) {
+			return new ObjectProviderImpl<>((Class<?>)beanModel.getClassGeneric()[0]);
 		}
 		return null;
 	}

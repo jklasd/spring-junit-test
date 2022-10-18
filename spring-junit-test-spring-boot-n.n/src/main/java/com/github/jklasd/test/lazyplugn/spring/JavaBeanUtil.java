@@ -68,7 +68,7 @@ public class JavaBeanUtil {
 	 */
     public Object buildBean(Class<?> configClass, Method method, BeanModel assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
-	        assemblyData.setBeanName(BeanNameUtil.getBeanName(assemblyData.getTagClass()));
+	        assemblyData.setBeanName(BeanNameUtil.getBeanNameForMethod(method,assemblyData.getTagClass()));
 	    }
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
@@ -148,7 +148,7 @@ public class JavaBeanUtil {
         		}
         		tagObj = method.invoke(obj,args);
         	}catch(Exception e) {
-        		log.error("方法调用异常=>{}",method);
+        		log.error("方法调用异常=>{},err:{}",method,e.getMessage());
         		throw new JunitException(e);
         	}
         	

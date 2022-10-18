@@ -12,6 +12,7 @@ import org.springframework.aop.aspectj.annotation.ReflectiveAspectJAdvisorFactor
 import org.springframework.aop.aspectj.autoproxy.AspectJAwareAdvisorAutoProxyCreator;
 
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.invoker.LazyAopInvoker;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
@@ -55,7 +56,13 @@ public class AopClassHandler implements MockClassHandler{
 //			AspectMetadata amd = new AspectMetadata(aopClass, BeanNameUtil.getBeanName(aopClass));
 			String beanName = BeanNameUtil.getBeanName(aopClass);
 //			LazyListableBeanFactory.getInstance().registerSingleton(beanName, );
-			LazyBean.getInstance().createBeanForProxy(beanName, aopClass);
+//			LazyBean.getInstance().createBeanForProxy(beanName, aopClass);
+			
+			BeanModel model = new BeanModel();
+		    model.setBeanName(beanName);
+		    model.setTagClass(aopClass);
+		    LazyBean.getInstance().buildProxy(model);
+			
 			MetadataAwareAspectInstanceFactory factory =
 					new BeanFactoryAspectInstanceFactory(LazyListableBeanFactory.getInstance(), beanName);
 			

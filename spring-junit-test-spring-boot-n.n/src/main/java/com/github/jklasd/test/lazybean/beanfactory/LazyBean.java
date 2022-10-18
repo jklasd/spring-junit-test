@@ -93,7 +93,7 @@ public class LazyBean implements LazyBeanI{
 	 * @param classGeneric 代理类的泛型类型
 	 * @return 代理对象
 	 */
-	public Object buildProxyForGeneric(Class classBean,Type[] classGeneric) {
+	public Object buildProxyForGeneric(Class<?> classBean,Type[] classGeneric) {
 		Object tagObject = null;
 		if (classBean.isInterface()) {
 		    BeanModel model = new BeanModel();
@@ -129,21 +129,18 @@ public class LazyBean implements LazyBeanI{
 			if(StringUtils.isBlank(beanModel.getBeanName())) {
 				beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
 			}
+			
 			Object proxyBean = util.getApplicationContext().getProxyBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
 			if(proxyBean!=null) {
                 return proxyBean;
             }
 		    
-		    if(beanModel.getTagClass() == ApplicationContext.class
-		        || ScanUtil.isExtends(beanModel.getTagClass(), ApplicationContext.class)
-		        || ScanUtil.isImple(beanModel.getTagClass(), ApplicationContext.class)) {
-		        return util.getApplicationContext();
-		    }
 		    proxyBean = createBean(beanModel);
 		    util.getApplicationContext().registProxyBean(beanModel.getBeanName(), proxyBean, beanModel.getTagClass());
 	        return proxyBean;
 		});
 	}
+	
     private static Object createBean(BeanModel beanModel) {
         Class<?> beanClass = beanModel.getTagClass();
         Object tag = null;
@@ -487,6 +484,7 @@ public class LazyBean implements LazyBeanI{
 	 * @param type bean类型
 	 * @return 返回bean对象
 	 */
+	@Deprecated
 	public Object findBean(String beanName,Class<?> type) {
 		if(type.isInterface()) {
 			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
@@ -536,6 +534,7 @@ public class LazyBean implements LazyBeanI{
 		return annoClass;
 	}
 	
+	@Deprecated
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	public Object findBeanByInterface(Class<?> interfaceClass, Type[] classGeneric) {
 		if(classGeneric == null) {
@@ -565,6 +564,7 @@ public class LazyBean implements LazyBeanI{
 	 * @param interfaceClass  接口
 	 * @return 返回实现接口的对象
 	 */
+	@Deprecated
 	public Object findBeanByInterface(Class<?> interfaceClass) {
 		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
 				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
@@ -671,6 +671,7 @@ public class LazyBean implements LazyBeanI{
 	 * @param type 目标类型
 	 * @return 代理对象构建真实对象
 	 */
+	@Deprecated
 	public Object createBeanForProxy(String beanName, Class<?> type) {
 		Class<?> tagClass = null;
 		if(type.isInterface()) {

@@ -92,6 +92,7 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		return lazyBeanFactory.getBean(name, requiredType);
 	}
 	
+	@SuppressWarnings("unchecked")
 	public <T> T getBean(Class<T> requiredType) throws BeansException {
 		if(org.springframework.core.env.Environment.class.isAssignableFrom(requiredType)) {
 			return (T) getEnvironment();
@@ -102,6 +103,11 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	}
 	
 	public Object getProxyBeanByClass(Class<?> tagClass) {
+		if(org.springframework.core.env.Environment.class.isAssignableFrom(tagClass)) {
+			return getEnvironment();
+		}else if(org.springframework.context.ApplicationContext.class.isAssignableFrom(tagClass)) {
+			return this;
+		}
 		String beanName = BeanNameUtil.getBeanName(tagClass);
 		return cacheProxyBean.get(beanName);
 	}

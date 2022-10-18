@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
 import org.springframework.stereotype.Repository;
@@ -19,6 +20,17 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class BeanNameUtil {
 
+	public synchronized static String getBeanNameForMethod(Method method, Class<?> tagClass) {
+		if(method.getAnnotation(Bean.class)!=null) {
+			Bean ann = method.getAnnotation(Bean.class);
+			if(ann.value().length>0) {
+				return ann.value()[0];
+			}
+			return method.getName();
+		}
+		return getBeanName(tagClass);
+	}
+	
 	public synchronized static String getBeanName(Class<?> classBean) {
 		boolean finded = findedFormAnno(classBean);
 		if(finded) {
