@@ -307,7 +307,10 @@ public class JavaBeanUtil {
         		if(tmp.getClassGeneric()!=null) {
         			param[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
         		}else {
-        			param[i] = LazyBean.getInstance().buildProxy(tmp.getTagClass());
+        			if(tmp.getBeanName()==null) {
+        				tmp.setBeanName(BeanNameUtil.fixedBeanName(tmp.getTagClass()));
+        			}
+        			param[i] = LazyBean.getInstance().buildProxy(tmp);
         		}
         	}
         }

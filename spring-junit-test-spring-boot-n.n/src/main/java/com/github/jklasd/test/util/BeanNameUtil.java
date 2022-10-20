@@ -40,7 +40,7 @@ public class BeanNameUtil {
 			}
 		}
 		if(classBean.isInterface()) {
-			return classBean.getName();
+			return null;
 		}
 		if(classBean.getSimpleName().length()<1) {
 		    return null;
@@ -80,5 +80,10 @@ public class BeanNameUtil {
 			throw new JunitException(e, true);
 		}
 		return null;
+	}
+
+	public static String fixedBeanName(Class<?> tagClass) {
+		String beanName = getBeanName(tagClass);
+		return beanName == null?tagClass.getName():beanName;
 	}
 }
