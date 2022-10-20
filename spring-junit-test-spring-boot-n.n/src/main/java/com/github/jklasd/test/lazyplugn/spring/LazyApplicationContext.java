@@ -11,6 +11,7 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
@@ -113,6 +114,8 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			return getEnvironment();
 		}else if(org.springframework.context.ApplicationContext.class.isAssignableFrom(tagClass)) {
 			return this;
+		}else if(org.springframework.beans.factory.BeanFactory.class.isAssignableFrom(tagClass)) {
+			return lazyBeanFactory;
 		}
 		String beanName = BeanNameUtil.getBeanName(tagClass);
 		return cacheProxyBean.get(beanName);

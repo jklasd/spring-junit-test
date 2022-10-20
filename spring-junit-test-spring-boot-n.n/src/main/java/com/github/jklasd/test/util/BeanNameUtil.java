@@ -40,7 +40,7 @@ public class BeanNameUtil {
 			}
 		}
 		if(classBean.isInterface()) {
-		    return null;
+			return classBean.getName();
 		}
 		if(classBean.getSimpleName().length()<1) {
 		    return null;
