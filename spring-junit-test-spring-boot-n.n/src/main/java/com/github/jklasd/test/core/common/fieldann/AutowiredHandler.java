@@ -6,17 +6,20 @@ import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.util.BeanNameUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,14 +46,22 @@ public class AutowiredHandler implements FieldHandler{
 						}
 					}
 					FieldAnnComponent.setObj(attr, tagObj, list);
-					log.info("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
+					log.debug("{}注入集合=>{},{}个对象",tagObj.getClass(),attr.getName(),list.size());
 				} catch (ClassNotFoundException e) {
-					e.printStackTrace();
+					log.error("ClassNotFoundException",e);
+					throw new JunitException("ClassNotFoundException", true);
 				}
 			}else {
+				//TODO 待优化
 				log.info("其他特殊情况");
 			}
 		}else {
+			if(StringUtils.isBlank(bName)) {
+				bName = BeanNameUtil.getBeanName(attr.getType());
+				if(StringUtils.isBlank(bName)) {
+					bName = attr.getName();
+				}
+			}
 			FieldAnnComponent.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(attr.getType(),bName));
 		}
 	}

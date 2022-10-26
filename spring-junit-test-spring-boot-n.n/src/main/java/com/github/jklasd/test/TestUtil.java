@@ -24,6 +24,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.util.LogbackUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -32,7 +33,6 @@ import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.PropResourceManager;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
@@ -125,77 +125,74 @@ public class TestUtil implements JunitCoreComponentI{
 		return obj;
 	}
 
-	/**
-	 * 获取存在Service,Complent的相关对象
-	 * 
-	 * @param classD   bean 类型
-	 * @param beanName 名称
-	 * @return 返回容器中已存在的Bean
-	 */
-	@SuppressWarnings("unchecked")
-	public Object getExistBean(Class classD, String beanName) {
-		try {
-			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
-				return getApplicationContext();
-			} else if (classD == Environment.class) {
-				return getApplicationContext().getEnvironment();
-			}
-			if (beanName != null) {
-				Object obj = getApplicationContext().getBean(beanName);
-				return obj;
-			}
-			Object obj = getApplicationContext().getBean(classD);
-			return obj;
-		} catch (NullPointerException e) {
-			return null;
-		} catch (NoUniqueBeanDefinitionException e) {
-			if (beanName != null) {
-				Object obj = getApplicationContext().getBean(beanName);
-				return obj;
-			}
-			return null;
-		} catch (NoSuchBeanDefinitionException e) {
-			return null;
-		} catch (UnsatisfiedDependencyException e) {
-			log.error("UnsatisfiedDependencyException=>{},{}获取异常", classD, beanName);
-			return null;
-		} catch (BeanCreationException e) {
-			log.error("BeanCreationException=>{},{}获取异常", classD, beanName);
-			return null;
-		}
-	}
-
-	public String getPropertiesValue(String key, String defaultStr) {
-		key = key.replace("${", "").replace("}", "");
-		if (getApplicationContext() != null) {
-			String[] keys = key.split(":");
-			String value = getApplicationContext().getEnvironment().getProperty(keys[0]);
-			if (value != null) {
-				return value;
-			} else {
-				if(keys.length > 1) {
-					return keys[1];
-				}else {
-					if(key.contains(":")) {
-						return "";
-					}else {
-						return defaultStr == null ? key : defaultStr;
-					}
-				}
-			}
-		}
-		return key;
-	}
-
-	public String getPropertiesValue(String key) {
-		return getPropertiesValue(key, null);
-	}
-
-	public Object value(String key, Class<?> type) {
-//		if(key.contains("finalPV.userId")) {
-//			log.debug("断点");
+//	/**
+//	 * 获取存在Service,Complent的相关对象
+//	 * 
+//	 * @param classD   bean 类型
+//	 * @param beanName 名称
+//	 * @return 返回容器中已存在的Bean
+//	 */
+//	@SuppressWarnings("unchecked")
+//	public Object getExistBean(Class classD, String beanName) {
+//		try {
+//			if (classD == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, classD)) {
+//				return getApplicationContext();
+//			} else if (classD == Environment.class) {
+//				return getApplicationContext().getEnvironment();
+//			}
+//			if (beanName != null) {
+//				Object obj = getApplicationContext().getBean(beanName);
+//				return obj;
+//			}
+//			Object obj = getApplicationContext().getBean(classD);
+//			return obj;
+//		} catch (NullPointerException e) {
+//			return null;
+//		} catch (NoUniqueBeanDefinitionException e) {
+//			if (beanName != null) {
+//				Object obj = getApplicationContext().getBean(beanName);
+//				return obj;
+//			}
+//			return null;
+//		} catch (NoSuchBeanDefinitionException e) {
+//			return null;
+//		} catch (UnsatisfiedDependencyException e) {
+//			log.error("UnsatisfiedDependencyException=>{},{}获取异常", classD, beanName);
+//			return null;
+//		} catch (BeanCreationException e) {
+//			log.error("BeanCreationException=>{},{}获取异常", classD, beanName);
+//			return null;
 //		}
-		String value = getPropertiesValue(key);
+//	}
+
+//	public String getPropertiesValue(String key, String defaultStr) {
+//		key = key.replace("${", "").replace("}", "");
+//		if (getApplicationContext() != null) {
+//			String[] keys = key.split(":");
+//			String value = getApplicationContext().getEnvironment().getProperty(keys[0]);
+//			if (value != null) {
+//				return value;
+//			} else {
+//				if(keys.length > 1) {
+//					return keys[1];
+//				}else {
+//					if(key.contains(":")) {
+//						return "";
+//					}else {
+//						return defaultStr == null ? key : defaultStr;
+//					}
+//				}
+//			}
+//		}
+//		return key;
+//	}
+
+//	public String getPropertiesValue(String key) {
+//		return getPropertiesValue(key, null);
+//	}
+
+	public Object valueFromEnvForAnnotation(String key, Class<?> type) {
+		String value = getApplicationContext().getEnvironment().resolvePlaceholders(key);
 		try {
 			if (StringUtils.isNotBlank(value)) {
 				if (type == null || type == String.class) {

@@ -8,8 +8,8 @@ import java.lang.reflect.Method;
 
 import org.springframework.util.ReflectionUtils;
 
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.exception.JunitException;
 
 public class JunitInvokeUtil extends ReflectionUtils{
 	public static Object invokeMethodSignParam(Object obj,String methodStr,Class<?> argClasses ,Object arg) {

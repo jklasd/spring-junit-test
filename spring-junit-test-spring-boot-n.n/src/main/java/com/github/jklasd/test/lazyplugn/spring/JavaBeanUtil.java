@@ -25,13 +25,15 @@ import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.model.BeanInitModel;
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.exception.JunitException;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
@@ -64,9 +66,9 @@ public class JavaBeanUtil {
 	 * @param assemblyData 
 	 * @return
 	 */
-    public Object buildBean(Class<?> configClass, Method method, AssemblyDTO assemblyData) {
+    public Object buildBean(Class<?> configClass, Method method, BeanModel assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
-	        assemblyData.setBeanName(BeanNameUtil.getBeanName(assemblyData.getTagClass()));
+	        assemblyData.setBeanName(BeanNameUtil.getBeanNameForMethod(method,assemblyData.getTagClass()));
 	    }
 		String key = assemblyData.getTagClass()+"=>beanName:"+assemblyData.getBeanName();
 		if(cacheBean.containsKey(key)) {
@@ -117,13 +119,13 @@ public class JavaBeanUtil {
      * @param key   缓存key
      * @param obj   configurationBean
      */
-    private void buildTagObject(Method method, AssemblyDTO assemblyData, String key, Object obj) {
+    private void buildTagObject(Method method, BeanModel assemblyData, String key, Object obj) {
         try {
-        	if(AbstractLazyProxy.isProxy(obj)) {//不能是代理对象
+        	if(LazyProxyManager.isProxy(obj)) {//不能是代理对象
         		return;
         	}
         	Object exitsBean = getExists(method);
-        	if(exitsBean != null && !AbstractLazyProxy.isProxy(exitsBean)) {//不能是代理对象
+        	if(exitsBean != null && !LazyProxyManager.isProxy(exitsBean)) {//不能是代理对象
         		log.info("---Bean 已构建,method:{}---",method);
         		cacheBean.put(key, exitsBean);
         		return;
@@ -141,12 +143,12 @@ public class JavaBeanUtil {
         		 */
         		for(int i=0;i<args.length;i++) {
         			if(args[i] instanceof Proxy) {
-        				args[i] = AbstractLazyProxy.getProxyTagObj(args[i]);
+        				args[i] = LazyProxyManager.getProxyTagObj(args[i]);
         			}
         		}
         		tagObj = method.invoke(obj,args);
         	}catch(Exception e) {
-        		log.error("方法调用异常=>{}",method);
+        		log.error("方法调用异常=>{},err:{}",method,e.getMessage());
         		throw new JunitException(e);
         	}
         	
@@ -163,10 +165,12 @@ public class JavaBeanUtil {
         		((InitializingBean) tagObj).afterPropertiesSet();
         		tagObj = fb.getObject();
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+//        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		LazyListableBeanFactory.getInstance().registerSingleton(assemblyData.getBeanName(), tagObj);
         	}else {
         		cacheBean.put(key, tagObj);
-        		TestUtil.getInstance().getApplicationContext().registBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+//        		TestUtil.getInstance().getApplicationContext().registProxyBean(assemblyData.getBeanName(), tagObj, assemblyData.getTagClass());
+        		LazyListableBeanFactory.getInstance().registerSingleton(assemblyData.getBeanName(), tagObj);
         	}
         } catch (Exception e) {
         	log.error("JavaBeanUtil#buildBean=>{},obj:{},method:{}",JSONObject.toJSON(assemblyData),obj,method);
@@ -220,7 +224,12 @@ public class JavaBeanUtil {
             if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
             	LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
             }
-            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+//            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+            BeanInitModel initModel = new BeanInitModel();
+			initModel.setObj(factory.get(configClass));
+			initModel.setTagClass(configClass);
+			initModel.setBeanName(configClass.getName());
+    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
             log.error("构建Configuration Bean=>{}",configClass.getSimpleName());
             log.error("构建Bean",e);
@@ -262,7 +271,7 @@ public class JavaBeanUtil {
     private Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
-        	AssemblyDTO tmp = new AssemblyDTO();
+        	BeanModel tmp = new BeanModel();
         	tmp.setBeanName(null);
         	if(paramTypes[i] instanceof ParameterizedType) {
         		ParameterizedType  pType = (ParameterizedType) paramTypes[i];
@@ -278,7 +287,7 @@ public class JavaBeanUtil {
         		}
         		Object obj = null;
         		if(tmp.getBeanName()==null) {
-        		    obj = TestUtil.getInstance().getApplicationContext().getBeanByClass(tmp.getTagClass());
+        		    obj = TestUtil.getInstance().getApplicationContext().getProxyBeanByClass(tmp.getTagClass());
         		}else {
         		    obj = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
         		}
@@ -288,9 +297,9 @@ public class JavaBeanUtil {
         		}
         	}
 //        	tmp.setNameMapTmp(nameSpace);
-        	Object[] ojb_meth = ScanUtil.findCreateBeanFactoryClass(tmp);
-        	if(ojb_meth[0]!=null && ojb_meth[1] != null) {
-        		param[i] = buildBean((Class)ojb_meth[0],(Method)ojb_meth[1], tmp);
+        	JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(tmp);
+        	if(jmd!=null) {
+        		param[i] = buildBean(jmd.getConfigurationClass(),jmd.getMethod(), tmp);
         		if(param[i] == null) {
         		    log.warn("arg 为空，警告");
         		}
@@ -298,7 +307,10 @@ public class JavaBeanUtil {
         		if(tmp.getClassGeneric()!=null) {
         			param[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
         		}else {
-        			param[i] = LazyBean.getInstance().buildProxy(tmp.getTagClass());
+        			if(tmp.getBeanName()==null) {
+        				tmp.setBeanName(BeanNameUtil.fixedBeanName(tmp.getTagClass()));
+        			}
+        			param[i] = LazyBean.getInstance().buildProxy(tmp);
         		}
         	}
         }

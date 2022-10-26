@@ -7,3 +7,5 @@ com.github.jklasd.test.lazyplugn.dubbo.reference.ApacheDubboReferenceHandler
 
 
 com.github.jklasd.test.common.interf.register.ScannerRegistrarI=com.github.jklasd.test.lazyplugn.db.LazyMybatisScannerRegistrar
+
+com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.test.ann.AopClassHandler

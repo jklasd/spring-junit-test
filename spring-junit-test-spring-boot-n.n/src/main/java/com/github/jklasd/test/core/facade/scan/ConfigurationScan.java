@@ -79,7 +79,7 @@ public class ConfigurationScan {
 		if(!CheckUtil.checkProp(configClass)) {
 			return;
 		}
-		beanCreaterScan.load(configClass);
+		beanCreaterScan.loadConfigurationClass(configClass);
 		MetadataReader sourceToProcess = null;
 		try {
 			Class<?>[] subCs = configClass.getDeclaredClasses();

@@ -17,10 +17,10 @@ import org.springframework.core.OrderComparator;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.util.BeanNameUtil;
-import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -45,6 +45,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 		return null;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public T getIfAvailable() throws BeansException {
 		if(type != null) {
@@ -64,6 +65,8 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
 				log.warn("ObjectProvider#getIfAvailable##############{}##############",type);
+			} catch (Exception e) {
+				log.warn("ObjectProvider#getIfAvailable##############{}##############",type,e);
 			}
 		}
 		return null;
@@ -86,12 +89,10 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 		if(tagC.getName().startsWith("org.springframework.boot")) {
 			Map<String, T> matchingBeans = new LinkedHashMap<>();
 			
-			Object[] c_m = beanCreaterScan.findCreateBeanFactoryClass(tagC);
-			if(c_m[0] == null) {
-				
-			}else {
-				String name = BeanNameUtil.getBeanName(tagC);
-				matchingBeans.put(name==null?tagC.getName():name,getIfAvailable());
+			JunitMethodDefinition jmd = beanCreaterScan.findCreateBeanFactoryClass(tagC);
+			if(jmd != null) {
+//				String name = BeanNameUtil.getBeanName(tagC);
+				matchingBeans.put(jmd.getBeanName(),getIfAvailable());
 			}
 			
 			Stream<T> stream = matchingBeans.values().stream();

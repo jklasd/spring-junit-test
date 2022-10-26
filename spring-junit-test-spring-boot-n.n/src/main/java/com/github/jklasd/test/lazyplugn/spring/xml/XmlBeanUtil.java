@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.logging.Log;
@@ -14,6 +15,7 @@ import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanDefinitionHolder;
+import org.springframework.beans.factory.config.RuntimeBeanNameReference;
 import org.springframework.beans.factory.config.RuntimeBeanReference;
 import org.springframework.beans.factory.config.TypedStringValue;
 import org.springframework.beans.factory.support.ManagedList;
@@ -30,6 +32,8 @@ import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.filter.LazyBeanFilter.LazyBeanInitProcessImpl;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -293,7 +297,10 @@ public class XmlBeanUtil {
     	Object value;
         if(ele instanceof RuntimeBeanReference) {
             RuntimeBeanReference tmp = (RuntimeBeanReference)ele;
-            value = TestUtil.getInstance().getApplicationContext().getBean(tmp.getBeanName());
+            value = LazyListableBeanFactory.getInstance().getBean(tmp.getBeanName());
+        }else if (ele instanceof RuntimeBeanNameReference) {
+        	String refName = ((RuntimeBeanNameReference) ele).getBeanName();
+        	value = LazyListableBeanFactory.getInstance().getBean(refName);
         }else if(ele instanceof ManagedList) {
             ManagedList<?> tmp = (ManagedList<?>)ele;
             List<Object> list = Lists.newArrayList();
@@ -348,4 +355,26 @@ public class XmlBeanUtil {
         }
         return value;
     }
+    
+    
+    public void postProcessMutablePropertyValues(MutablePropertyValues mutProp) {
+    	
+    	mutProp.stream().forEach(prop->{
+    		Object value = prop.getValue();
+    		if(value instanceof TypedStringValue) {
+    			TypedStringValue tsv = (TypedStringValue) value;
+    			String source = tsv.getValue();
+    			String newValue = LazyApplicationContext.getInstance().getEnvironment().resolveRequiredPlaceholders(source);
+    			log.debug("{}=>{}",source,newValue);
+    			mutProp.addPropertyValue(prop.getName(), new TypedStringValue(newValue));
+    		}else if(value instanceof String) {
+    			String source = (String) value;
+    			String newValue = LazyApplicationContext.getInstance().getEnvironment().resolveRequiredPlaceholders(source);
+    			log.debug("{}=>{}",source,newValue);
+    			mutProp.addPropertyValue(prop.getName(), new TypedStringValue(newValue));
+    		}
+    	});
+    	
+    }
+    
 }

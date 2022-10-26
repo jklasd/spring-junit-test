@@ -28,13 +28,13 @@ import org.springframework.stereotype.Service;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.ResourceLoader;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
-import com.github.jklasd.test.exception.JunitException;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -85,7 +85,7 @@ public class ClassScan implements Scan{
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).setExecutorService(2).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
-									if(name.contains(".class")) {
+									if(name.endsWith(".class")) {
 										classNames.add(name.replace("/", ".").replace("\\", "."));
 									}else {
 										try {
@@ -257,8 +257,14 @@ public class ClassScan implements Scan{
 			return findClass.get();
 		}
 	}
+	Map<Class<?>,List<Class<?>>> cacheInterfaceImpls = Maps.newConcurrentMap();
 	public List<Class<?>> findClassImplInterface(Class<?> interfaceClass) {
-		List<Class<?>> list = Lists.newArrayList();
+		
+		if(cacheInterfaceImpls.containsKey(interfaceClass)) {
+			return cacheInterfaceImpls.get(interfaceClass);
+		}
+		
+		List<Class<?>> list = Lists.newCopyOnWriteArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
@@ -269,6 +275,9 @@ public class ClassScan implements Scan{
 				}
 			}
 		});
+		if(!list.isEmpty()) {
+			cacheInterfaceImpls.put(interfaceClass, list);
+		}
 		return list;
 	}
 	public static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
@@ -301,7 +310,10 @@ public class ClassScan implements Scan{
 		return componentClassPathMap.containsKey(requiredType.getName());
 	}
 	public List<Class<?>> findClassExtendAbstract(Class<?> abstractClass) {
-		List<Class<?>> list = Lists.newArrayList();
+		if(cacheInterfaceImpls.containsKey(abstractClass)) {
+			return cacheInterfaceImpls.get(abstractClass);
+		}
+		List<Class<?>> list = Lists.newCopyOnWriteArrayList();
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
 		.runAndWait(name ->{
 			Class<?> tmpClass = componentClassPathMap.get(name);
@@ -312,6 +324,9 @@ public class ClassScan implements Scan{
 				}
 			}
 		});
+		if(!list.isEmpty()) {
+			cacheInterfaceImpls.put(abstractClass, list);
+		}
 		return list;
 	}
 

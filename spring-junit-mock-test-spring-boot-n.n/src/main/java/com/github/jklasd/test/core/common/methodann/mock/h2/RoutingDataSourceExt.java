@@ -7,6 +7,9 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.support.EncodedResource;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.lookup.AbstractRoutingDataSource;
 
@@ -14,6 +17,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -26,7 +30,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	
 	@Override
 	protected Object determineCurrentLookupKey() {
-		if(MockAnnHandlerComponent.isMock(H2Select.class.getName())) {
+		if(MockAnnHandlerComponent.isMock(JunitH2Selected.class.getName())) {
 			return junitH2Key;
 		}
 		return defaultKey;
@@ -63,7 +67,9 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 		}
 	}
 	
-	
+	/**
+	 * 封装多数据源
+	 */
 	public DataSource build(DataSource dataSource) {
 		
 		if(superSource != null) {
@@ -109,6 +115,25 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	@Override
 	public boolean isInitDataSource() {
 		return h2Source!=null;
+	}
+	
+	/**
+	 * 开放用户自定义插入脚本配置
+	 * @param insertResource
+	 */
+	public void handInsertResource(String... insertResource) {
+		try {
+			for(String path : insertResource) {
+				if(StringUtils.isBlank(path)) {
+					continue;
+				}
+				Resource resouce = LazyApplicationContext.getInstance().getResource(path);
+				EncodedResource encodedScript = new EncodedResource(resouce);
+				ScriptUtilsExt.executeSqlScript(h2Source.getConnection(), encodedScript);
+			}
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
 	}
 
 }

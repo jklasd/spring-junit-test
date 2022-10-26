@@ -2,8 +2,8 @@ package com.github.jklasd.test.util;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.LogbackUtil;
-import com.github.jklasd.test.exception.JunitException;
 
 import lombok.extern.slf4j.Slf4j;
 

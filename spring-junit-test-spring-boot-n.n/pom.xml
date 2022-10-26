@@ -5,7 +5,6 @@
 	<name>spring-junit-test</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test</artifactId>
-	<version>1.2.2-SNAPSHOT</version>
 	<packaging>jar</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -43,7 +42,7 @@
 	<parent>
 		<groupId>com.github.jklasd</groupId>
 		<artifactId>spring-junit-test-parent</artifactId>
-		<version>1.2.2-SNAPSHOT</version>
+		<version>2.0.1-SNAPSHOT</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>

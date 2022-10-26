@@ -2,7 +2,6 @@ package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
 import java.lang.annotation.Annotation;
-import java.lang.reflect.Modifier;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.util.List;
@@ -12,15 +11,14 @@ import java.util.stream.Collectors;
 
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
-import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
 import com.github.jklasd.test.common.interf.register.PropResourceManagerI;
 import com.github.jklasd.test.common.interf.register.Scan;
-import com.github.jklasd.test.common.model.AssemblyDTO;
+import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -37,7 +35,6 @@ public class ScanUtil {
 	public static final String SPRING_PACKAGE = "org.springframework";
 	public static final String BOOT_AUTO_CONFIG = "org.springframework.boot.autoconfigure";
 	private static String CLASS_SUFFIX = ".class";
-	static Map<String,Class<?>> nameMap = Maps.newConcurrentMap();
 	private static PathMatchingResourcePatternResolver resourceResolver;
 	
 	/**
@@ -53,7 +50,7 @@ public class ScanUtil {
 		return resourceResolver.getResources(path);
 	}
 	public static boolean exists(Class record) {
-		return nameMap.values().contains(record);
+		return scaner.isInScanPath(record);
 	}
 	
 	public static Map<String, Class<?>> findClassMap(String scanPath) {
@@ -104,28 +101,17 @@ public class ScanUtil {
 		return getScanner().findClassExtendAbstract(abstractClass);
 	}
 	
-	public static List<Class<?>> findClassImplInterface(Class interfaceClass,Map<String,Class<?>> classMap,String ClassName){
-		Map<String,Class> tmp = Maps.newHashMap();
-		if(classMap!=null) {
-			tmp.putAll(classMap);
+
+	public static List<Class<?>> findSubClass(Class<?> requiredType) {
+		List<Class<?>> tags = null;
+		if(requiredType.isInterface()) {
+			tags = getScanner().findClassImplInterface(requiredType);
+		}else {
+			tags = getScanner().findClassExtendAbstract(requiredType);
 		}
-		tmp.putAll(nameMap);
-		List<Class<?>> list = Lists.newArrayList();
-		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(tmp.keySet()))
-		.runAndWait(name ->{
-			if(ClassName!=null && name.equals(ClassName)) {
-				return;
-			}
-			Class<?> tmpClass = tmp.get(name);
-			if(isImple(tmpClass,interfaceClass)) {
-				if((tmpClass.getAnnotation(Component.class)!=null || tmpClass.getAnnotation(Service.class)!=null)
-						&& !Modifier.isAbstract(tmpClass.getModifiers())) {
-					list.add(tmpClass);
-				}
-			}
-		});
-		return list;
+		return tags;
 	}
+	
 	/**
 	 * 扫描实现了interfaceClass 的类
 	 * @param interfaceClass 接口
@@ -170,12 +156,12 @@ public class ScanUtil {
 	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	private static volatile BeanScanI beanFactoryScaner;
 
-	public /* synchronized */static Object[] findCreateBeanFactoryClass(final AssemblyDTO assemblyData) {
+	public /* synchronized */static JunitMethodDefinition findCreateBeanFactoryClass(final BeanModel assemblyData) {
 		if(beanFactoryScaner == null) {
 			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
 			if(beanFactoryScaner == null) {
 				log.warn("beanFactoryScaner 未加载到");
-				return new Object[1];
+				return null;
 			}
 		}
 		return beanFactoryScaner.findCreateBeanFactoryClass(assemblyData);
@@ -185,9 +171,9 @@ public class ScanUtil {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
 	}
-	public static Class getClassByName(String className) {
-		return nameMap.get(className);
-	}
+//	public static Class getClassByName(String className) {
+//		return nameMap.get(className);
+//	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
 		for(String path: paths) {

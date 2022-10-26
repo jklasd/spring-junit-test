@@ -14,6 +14,7 @@ import org.springframework.util.StringUtils;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
 import com.github.jklasd.test.version_control.AnnotationMetadataUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,8 @@ public class LazyMybatisScannerRegistrar implements ScannerRegistrarI {
 	private static Class<? extends Annotation> mapperScanClass;
 	
 	private final static String MapperScanName = "org.mybatis.spring.annotation.MapperScan";
+	
+	LazyMybatisMapperBean lazyMybatis = (LazyMybatisMapperBean) LazyMybatisMapperBean.getInstance();
 	
 	@SuppressWarnings("unchecked")
 	public final Class<? extends Annotation> getAnnotionClass() {
@@ -90,8 +93,8 @@ public class LazyMybatisScannerRegistrar implements ScannerRegistrarI {
 		        .collect(Collectors.toList()));
 			
 			
-		    LazyMybatisMapperBean.getInstance().processConfig(configura,basePackages);
+		    lazyMybatis.processConfig(configura,basePackages);
 		});
-		LazyMybatisMapperBean.getInstance().processScannerConfig();
+		lazyMybatis.processScannerConfig();
 	}
 }

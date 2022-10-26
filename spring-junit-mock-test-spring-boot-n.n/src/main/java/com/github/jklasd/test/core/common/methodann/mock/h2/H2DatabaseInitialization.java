@@ -22,17 +22,24 @@ public class H2DatabaseInitialization implements BootHandler{
 		try {
 			
 			DatabasePopulatorExt tmp = new DatabasePopulatorExt();
-			
-			Resource[] schema = ScanUtil.getResources("classpath:/"+findPath+"/schema/*");
-			if(schema.length == 0) {
+			Resource[] schema = null;
+			try {
+				schema = ScanUtil.getResources("classpath:/"+findPath+"/schema/*");
+				if(schema.length == 0) {
+					return;
+				}
+			} catch (FileNotFoundException e) {
 				return;
 			}
 			tmp.addSchema(schema);
 			String databaseName = findDataBaseName(schema);
 			findOtherSchema(schema,tmp);
 			
-			Resource[] data = ScanUtil.getResources("classpath:/"+findPath+"/data/**");
-			tmp.addData(data);
+			try {
+				Resource[] data = ScanUtil.getResources("classpath:/"+findPath+"/data/**");
+				tmp.addData(data);
+			} catch (FileNotFoundException e) {
+			}
 			
 			
 			EmbeddedDatabaseFactory defaultFactory = new EmbeddedDatabaseFactory();
@@ -48,7 +55,7 @@ public class H2DatabaseInitialization implements BootHandler{
 			
 		} catch (IOException e) {
 			if(e instanceof FileNotFoundException) {
-				log.warn("load classpath:/db-h2/ =>{}",e.getMessage());
+				log.warn("load classpath:/db-h2/ =>{}",e);
 			}
 		} catch (Exception e) {
 			log.error("H2DatabaseInitialization",e);

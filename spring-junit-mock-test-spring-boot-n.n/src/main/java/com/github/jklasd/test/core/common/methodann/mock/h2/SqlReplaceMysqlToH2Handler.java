@@ -9,12 +9,12 @@ public class SqlReplaceMysqlToH2Handler extends AbstractMockHandler implements M
 	
 	@Override
 	public String getType() {
-		return MysqlToH2.class.getName();
+		return JunitMysqlToH2.class.getName();
 	}
 
 	@Override
 	public void hand(Method testMethod) {
-		MysqlToH2 selected = testMethod.getAnnotation(MysqlToH2.class);
+		JunitMysqlToH2 selected = testMethod.getAnnotation(JunitMysqlToH2.class);
 		mysqlToH2Mock.set(selected);
 	}
 
@@ -34,7 +34,7 @@ public class SqlReplaceMysqlToH2Handler extends AbstractMockHandler implements M
 		mysqlToH2Mock.remove();
 	}
 	
-	public MysqlToH2 getData() {
+	public JunitMysqlToH2 getData() {
 		return mysqlToH2Mock.get();
 	}
 

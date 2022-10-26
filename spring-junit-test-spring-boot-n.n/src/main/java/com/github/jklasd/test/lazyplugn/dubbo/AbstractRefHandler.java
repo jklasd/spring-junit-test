@@ -5,36 +5,38 @@ import java.util.Map;
 import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
-import org.w3c.dom.Element;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public abstract class AbstractRefHandler implements DubboHandler{
 	protected static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	public static void putAnnService(Class<?> dubboServiceClass) {}
+	
+	public final static Integer TypeXml = 1;
+	public final static Integer TypeAnn = 2;
+	
+	@Getter
+	protected Map<String,Integer> refType = Maps.newHashMap();
+	
+	@Getter
 	protected Map<String,BeanDefinition> dubboRefferCacheDef = Maps.newHashMap();
+	@Getter
 	protected Map<String,BeanDefinition> dubboServiceCacheDef = Maps.newHashMap();
+	@Getter
 	protected Map<String,BeanDefinition> dubboConfigCacheDef = Maps.newHashMap();
-	public void handBeanDef(Element ele,BeanDefinition beanDef) {
-        switch (ele.getTagName()) {
-            case "dubbo:reference":
-                dubboRefferCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
-                break;
-            case "dubbo:service":
-                dubboServiceCacheDef.put(beanDef.getPropertyValues().getPropertyValue("interface").getValue().toString(), beanDef);
-                break;
-            default:
-                dubboConfigCacheDef.put(beanDef.getBeanClassName(), beanDef);
-                break;
-        }
-    }
+	
+	protected LazyListableBeanFactory lazyBeanFactory = LazyListableBeanFactory.getInstance();
+	
 	private static DubboConfig dubboConfiguration;
 	{
 		if(dubboConfiguration==null)
@@ -70,11 +72,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConfigCenterConfig");  
             }
             if(beanDef!=null) {
-                Class<?> registerClass = beanDef.getBeanClass();
-                configCenterConfig = beanDef.getBeanClass().newInstance();
-                beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                    LazyBean.getInstance().setAttr(pv.getName(), configCenterConfig, registerClass, XmlBeanUtil.getInstance().conversionValue(pv));
-                });
+                configCenterConfig = LazyListableBeanFactory.getInstance().doCreateBean("dubboConfigCenterConfig", beanDef, null);
             }else {
                 //扫描Configuration
                 configCenterConfig = scanConfigruation("com.alibaba.dubbo.config.ConfigCenterConfig","org.apache.dubbo.config.ConfigCenterConfig");
@@ -91,11 +89,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                  beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ProtocolConfig");  
              }
              if(beanDef!=null) {
-                 Class<?> registerClass = beanDef.getBeanClass();
-                 protocol = beanDef.getBeanClass().newInstance();
-                 beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                     LazyBean.getInstance().setAttr(pv.getName(), protocol, registerClass, pv.getValue());
-                 });
+                 protocol = LazyListableBeanFactory.getInstance().doCreateBean("dubboProtocolConfig", beanDef, null);
              }else {
                  //扫描Configuration
                  protocol = scanConfigruation("com.alibaba.dubbo.config.ProtocolConfig","org.apache.dubbo.config.ProtocolConfig");
@@ -112,11 +106,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ConsumerConfig");  
             }
             if(beanDef!=null) {
-                Class<?> registerClass = beanDef.getBeanClass();
-                consumer = beanDef.getBeanClass().newInstance();
-                beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                    LazyBean.getInstance().setAttr(pv.getName(), consumer, registerClass, pv.getValue());
-                });
+                consumer = LazyListableBeanFactory.getInstance().doCreateBean("dubboConsumerConfig", beanDef, null);
             }else {
                 //扫描Configuration
                 consumer = scanConfigruation("com.alibaba.dubbo.config.ConsumerConfig","org.apache.dubbo.config.ConsumerConfig");
@@ -133,14 +123,10 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ProviderConfig");  
             }
             if(beanDef!=null) {
-                Class<?> registerClass = beanDef.getBeanClass();
-                registryCenter = beanDef.getBeanClass().newInstance();
-                beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                    LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
-                });
+                providerConfig = LazyListableBeanFactory.getInstance().doCreateBean("dubboProviderConfig", beanDef, null);
             }else {
                 // 扫描Configuration
-                registryCenter = scanConfigruation("com.alibaba.dubbo.config.ProviderConfig","org.apache.dubbo.config.ProviderConfig");
+            	providerConfig = scanConfigruation("com.alibaba.dubbo.config.ProviderConfig","org.apache.dubbo.config.ProviderConfig");
             }
             return registryCenter;
         }
@@ -156,11 +142,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.RegistryConfig");  
             }
             if(beanDef!=null) {
-                Class<?> registerClass = beanDef.getBeanClass();
-                registryCenter = beanDef.getBeanClass().newInstance();
-                beanDef.getPropertyValues().getPropertyValueList().forEach(pv->{
-                    LazyBean.getInstance().setAttr(pv.getName(), registryCenter, registerClass, pv.getValue());
-                });
+            	registryCenter = LazyListableBeanFactory.getInstance().doCreateBean("dubboRegistryCenter", beanDef, null);
             }else {
                 // 扫描Configuration
                 registryCenter = scanConfigruation("com.alibaba.dubbo.config.RegistryConfig","org.apache.dubbo.config.RegistryConfig");
@@ -178,9 +160,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 beanDef = (RootBeanDefinition)dubboConfigCacheDef.get("org.apache.dubbo.config.ApplicationConfig");
             }
             if(beanDef!=null) {
-                application = beanDef.getBeanClass().newInstance();
-                PropertyValue name = beanDef.getPropertyValues().getPropertyValue("name");
-                LazyBean.getInstance().setAttr("name", application, beanDef.getBeanClass(), TestUtil.getInstance().getPropertiesValue(name.getValue().toString()));
+                application = LazyListableBeanFactory.getInstance().doCreateBean("dubboApplication", beanDef, null);
             }else {
              // 扫描Configuration
                 application = scanConfigruation("com.alibaba.dubbo.config.ApplicationConfig","org.apache.dubbo.config.ApplicationConfig");

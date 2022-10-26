@@ -10,7 +10,7 @@ import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazybean.beanfactory.AbstractLazyProxy;
+import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -44,7 +44,7 @@ public class TranstionalManager {
     }
     
     private AnnotationTransactionAttributeSource atas = new AnnotationTransactionAttributeSource();
-    public TransactionAttribute processAnnoInfo(Method method,Object obj) throws Exception {
+    public TransactionAttribute processAnnoInfo(Method method,Object obj){
         if(obj == null) {
             return null;
         }
@@ -58,7 +58,7 @@ public class TranstionalManager {
         log.info("开启事务=>{}",txInfo);
         if(txManager == null) {
             txManager = TestUtil.getInstance().getApplicationContext().getBean(DataSourceTransactionManager.class);
-            txManager = (DataSourceTransactionManager) AbstractLazyProxy.instantiateProxy(txManager);
+            txManager = (DataSourceTransactionManager) LazyProxyManager.instantiateProxy(txManager);
         }
         //final方法处理
         return txManager.getTransaction(txInfo);//不能是代理类
