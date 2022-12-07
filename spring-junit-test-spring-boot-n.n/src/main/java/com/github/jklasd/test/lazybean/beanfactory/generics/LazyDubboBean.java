@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
@@ -103,7 +104,11 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
     public Object buildBean(BeanModel model) {
         if (useDubbo()) {
             Class<?> dubboClass = model.getTagClass();
-            return buildBeanNew(dubboClass,model.getBeanName());
+            String beanName = StringUtils.isBlank(model.getBeanName())?model.getFieldName():model.getBeanName();
+            if(StringUtils.isBlank(beanName)) {
+            	beanName = dubboClass.getName();
+            }
+            return buildBeanNew(dubboClass,beanName);
         }
         return null;
     }

@@ -124,19 +124,26 @@ public class LazyBean implements LazyBeanI{
 	 * @param beanModel 对象配置信息
 	 * @return 代理对象
 	 */
-	public Object buildProxy(BeanModel beanModel) {
+	public Object buildProxy(final BeanModel beanModel) {
 		return StackOverCheckUtil.observeIgnoreException(()->{
 			if(StringUtils.isBlank(beanModel.getBeanName())) {
 				beanModel.setBeanName(BeanNameUtil.getBeanName(beanModel.getTagClass()));
 			}
+			/**
+			 * 不能直接设置beanName,否则会出现其他问题
+			 */
+			String proxyBeanName = beanModel.getBeanName();
+			if(StringUtils.isBlank(proxyBeanName)) {
+				proxyBeanName = beanModel.getTagClass().getName();
+			}
 			
-			Object proxyBean = util.getApplicationContext().getProxyBeanByClassAndBeanName(beanModel.getBeanName(), beanModel.getTagClass());
-			if(proxyBean!=null) {
+			Object proxyBean = util.getApplicationContext().getProxyBeanByClassAndBeanName(proxyBeanName, beanModel.getTagClass());
+			if(proxyBean!=null && beanModel.getTagClass().isInstance(proxyBean)) {
                 return proxyBean;
             }
 		    
 		    proxyBean = createBean(beanModel);
-		    util.getApplicationContext().registProxyBean(beanModel.getBeanName(), proxyBean, beanModel.getTagClass());
+		    util.getApplicationContext().registProxyBean(proxyBeanName, proxyBean, beanModel.getTagClass());
 	        return proxyBean;
 		});
 	}

@@ -2,6 +2,11 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.util.List;
 
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.config.BeanDefinition;
+import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -37,13 +42,20 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 			 * 开始创建对象
 			 */
 			if(localCache.get().size()==1) {
-				if(!beanFactory.containsBeanDefinition(model.getBeanName())) {
+				String beanName = model.getBeanName();
+				if(StringUtils.isBlank(beanName)) {
+					beanName = model.getFieldName();
+				}
+				if(!beanFactory.containsBeanDefinition(beanName)) {//这里beanName 不能为空。临时使用fieldName替代
 					Class<?> tagClass = localCache.get().get(0);
 					//修改beanName
 					Object obj = beanFactory.getBean(tagClass);
 					return obj;
 				}
-				return beanFactory.getBean(model.getBeanName());
+				BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
+				if(beanDef instanceof AbstractBeanDefinition) {
+					return beanFactory.getBean(beanName);
+				}
 			}else {
 				log.warn("活的多个bean;{}",model.getTagClass());
 			}
