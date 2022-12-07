@@ -27,7 +27,7 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 		if(dubboData.containsKey(dubboClass)) {
             return dubboData.get(dubboClass);
         }
-        log.info("构建Dubbo 代理服务=>{}",dubboClass);
+        log.debug("构建Dubbo 代理服务=>{}",dubboClass);
         
         
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboRefferCacheDef.get(dubboClass.getName());
@@ -55,7 +55,7 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 	
 	public void registerDubboService(Class<?> dubboServiceClass) {
 		if(dubboServiceCacheDef.containsKey(dubboServiceClass.getName())) {
-			log.info("注册dubboService=>{}",dubboServiceClass);
+			log.debug("注册dubboService=>{}",dubboServiceClass);
 	        RootBeanDefinition beanDef = (RootBeanDefinition)dubboServiceCacheDef.get(dubboServiceClass.getName());
 	        try {
 	        	//TODO 待处理
@@ -72,7 +72,7 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
 	            }
 	            
                 JunitInvokeUtil.invokeMethod(serviceConfig, "export");
-                log.info("注册=========={}===============成功",dubboServiceClass);
+                log.debug("注册=========={}===============成功",dubboServiceClass);
 	        } catch (Exception e) {
 	            log.error("构建Dubbo 代理服务",e);
 	        }
