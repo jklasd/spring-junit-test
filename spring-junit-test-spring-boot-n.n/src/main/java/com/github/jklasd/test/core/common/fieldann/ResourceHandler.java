@@ -15,6 +15,7 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
@@ -44,11 +45,15 @@ public class ResourceHandler  implements FieldHandler{
 					log.info("其他特殊情况");
 				}
 			}else {
-				String beanName = c.name();
-				if(StringUtils.isBlank(beanName)) {
-					beanName = attr.getName();
-				}
-				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
+				//存在beanName不是Resouce指定的名称
+//				if(StringUtils.isBlank(beanName)) {
+//					beanName = attr.getName();
+//				}
+				BeanModel model = new BeanModel();
+				model.setTagClass(attr.getType());
+				model.setBeanName(c.name());
+				model.setFieldName(attr.getName());
+				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(model));
 			}
 		}
 	}

@@ -3,6 +3,7 @@ package com.github.jklasd.test.core.common.fieldann.mock;
 import static org.mockito.Mockito.withSettings;
 
 import java.lang.annotation.Annotation;
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 
 import org.mockito.InjectMocks;
@@ -48,10 +49,38 @@ public class InjectMocksHandler extends AbstractMockHandler implements FieldHand
 			if(!attr.isAccessible()) {
 				attr.setAccessible(true);
 			}
-			//创建mockbean 注册到容器中，需要兼容spring 注入注解
-			obj = Mockito.mock(attr.getType(), withSettings()
-					.defaultAnswer(Mockito.CALLS_REAL_METHODS)
-					.name(attr.getName()));
+			Constructor<?>[] constrs = attr.getType().getDeclaredConstructors();
+			boolean noParam = false;
+			for(Constructor<?> c : constrs) {
+				if(c.getParameterCount()<1) {
+					noParam = true;
+					break;
+				}
+			}
+			if(noParam) {
+				//创建mockbean 注册到容器中，需要兼容spring 注入注解
+				obj = Mockito.mock(attr.getType(), withSettings()
+						.defaultAnswer(Mockito.CALLS_REAL_METHODS)
+						.name(attr.getName()));
+			}else {
+				if(constrs.length == 1) {
+					Class<?>[] params = constrs[0].getParameterTypes();
+					Object[] objs = new Object[params.length];
+					
+					for(int i=0;i<params.length;i++) {
+						objs[i] = LazyBean.getInstance().buildProxy(params[i]);
+					}
+					
+					obj = Mockito.mock(attr.getType(), withSettings()
+							.useConstructor(objs)
+							.defaultAnswer(Mockito.CALLS_REAL_METHODS)
+							.name(attr.getName()));
+				}else {
+					obj = Mockito.mock(attr.getType(), withSettings()
+							.defaultAnswer(Mockito.CALLS_REAL_METHODS)
+							.name(attr.getName()));
+				}
+			}
 			//则注入，在类结束后释放掉对象
 			if(attr.get(tagObject)==null) {
 				//针对mockbean处理
@@ -60,6 +89,7 @@ public class InjectMocksHandler extends AbstractMockHandler implements FieldHand
 				//填充
 				LazyBean.getInstance().processAttr(obj, attr.getType());
 				//mockHandClass 重新填充
+				
 			}
 			MockFieldHandler.getInstance().load(tagObject.getClass(),obj,attr.getType(),bName);
 		} catch (IllegalArgumentException | IllegalAccessException e) {

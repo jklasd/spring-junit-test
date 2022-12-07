@@ -4,6 +4,7 @@ import java.lang.reflect.Field;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Map;
+import java.util.Set;
 
 import javax.sql.DataSource;
 
@@ -19,6 +20,7 @@ import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -119,12 +121,14 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements C
 	 * 开放用户自定义插入脚本配置
 	 * @param insertResource
 	 */
+	Set<String> executed = Sets.newHashSet();
 	public void handInsertResource(String... insertResource) {
 		try {
 			for(String path : insertResource) {
-				if(StringUtils.isBlank(path)) {
+				if(StringUtils.isBlank(path) || executed.contains(path)) {
 					continue;
 				}
+				executed.add(path);
 				Resource resouce = LazyApplicationContext.getInstance().getResource(path);
 				EncodedResource encodedScript = new EncodedResource(resouce);
 				ScriptUtilsExt.executeSqlScript(h2Source.getConnection(), encodedScript);
