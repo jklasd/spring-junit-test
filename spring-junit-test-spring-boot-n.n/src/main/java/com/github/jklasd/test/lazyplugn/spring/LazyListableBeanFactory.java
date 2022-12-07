@@ -103,12 +103,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			List<String> matchBean = matchName(requiredType, isCacheBeanMetadata(), false);
 			if(!matchBean.isEmpty()) {
 				log.debug("matchBean=>{}",matchBean);
-				if(matchBean.size()>1) {
-					//TODO 没有考虑多Bean情况，后续处理
-				}else {
-					
-				}
- 				Object obj = doCreateBean(matchBean.get(0), RootBeanDefinitionBuilder.build(beanDefMap.get(matchBean.get(0))), null);
+				String beanDefName = findMatchOne(requiredType, matchBean);
+ 				Object obj = doCreateBean(beanDefName, RootBeanDefinitionBuilder.build(beanDefMap.get(beanDefName)), null);
  				cacheClassMap.put(requiredType, obj);
  				return (T) obj;
 			}
@@ -120,6 +116,20 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //			return null;
 //		}
 		return super.getBean(requiredType);
+	}
+
+	public <T> String findMatchOne(Class<T> requiredType, List<String> matchBean) {
+		if(matchBean.size() == 1) {
+			return matchBean.get(0);
+		}
+		return matchBean.stream().filter(beanName -> {
+			String className = beanDefMap.get(beanName).getBeanClassName();
+			Class<?> c = ScanUtil.findClassByName(className);
+			if(c!=null && c.isAssignableFrom(requiredType)) {
+				return true;
+			}
+			return false;
+		}).findFirst().orElse(matchBean.get(0));
 	}
 	
 //	Map<String,Object> cacheProxyBean = Maps.newHashMap();
@@ -483,7 +493,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		List<String> matchBean = matchName(tagClass, isCacheBeanMetadata(), false);
 		if(!matchBean.isEmpty()) {
 			log.info("matchBean=>{}",matchBean);
-			return beanDefMap.get(matchBean.get(0));
+			String beanDefName = findMatchOne(tagClass, matchBean);
+			return beanDefMap.get(beanDefName);
 		}
 		return null;
 	}
