@@ -19,4 +19,5 @@ public class BeanModel {
 //    private Map<String,String> beanMethods;
     private ConstructorArgumentValues constructorArgs;
     private boolean isThrows;
+    private String fieldName;
 }
