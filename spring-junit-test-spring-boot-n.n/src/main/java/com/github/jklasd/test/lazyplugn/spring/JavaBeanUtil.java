@@ -268,7 +268,7 @@ public class JavaBeanUtil {
      * @param annotations 
      * @return  参数对象组
      */
-    private Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
+    public Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	BeanModel tmp = new BeanModel();

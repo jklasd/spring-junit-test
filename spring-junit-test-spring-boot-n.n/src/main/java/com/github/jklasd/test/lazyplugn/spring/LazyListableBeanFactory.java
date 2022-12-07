@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -398,6 +399,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	public Object onlyCreateBean(String beanName, RootBeanDefinition mbd, Object[] args) throws BeanCreationException {
 		//处理一次properties
 		XmlBeanUtil.getInstance().postProcessMutablePropertyValues(mbd.getPropertyValues());
+		
+		Constructor<?>[] construcs = mbd.getBeanClass().getConstructors();
+		if(construcs.length == 1 && construcs[0].getParameterCount()>0) {//处理带参构造函数
+			args = JavaBeanUtil.getInstance().buildParam(construcs[0].getParameterTypes(), construcs[0].getParameterAnnotations());
+		}
+		
 		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
 		populateBean(beanName, mbd, bw);
 //		applyBeanPropertyValues(bw, beanName);
