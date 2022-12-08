@@ -151,6 +151,10 @@ public class ClassScan implements Scan{
 					}
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					log.error("未找到类=>{}",p);
+					if(p.startsWith("com.github.jdkasd.test")) {
+						log.warn(tmp.getPath());
+						throw new JunitException(e);
+					}
 				}catch(Exception e) {
 					log.error("加载类异常",e);
 				}catch (VerifyError e) {
