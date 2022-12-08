@@ -103,6 +103,9 @@ public class ClassScan implements Scan{
 				} catch (IOException e1) {
 					log.error("getURL",e1);
 					loadFaile.set(true);
+				} catch(JunitException e) {
+					log.error("getURL",e);
+					loadFaile.set(true);
 				}
 			});
 		} catch (IOException e1) {
