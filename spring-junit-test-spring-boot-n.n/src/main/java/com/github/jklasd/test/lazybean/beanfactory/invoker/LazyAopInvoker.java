@@ -37,7 +37,12 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 		Object newObj = dto.getRealObj();
 		Object oldObj = AopContextSuppert.getProxyObject();
 		context.put("oldObj", oldObj);
-        AopContextSuppert.setProxyObj(dto.getPoxy());
+		
+		if(dto.getBeanModel().getTagClass().isInterface()) {//防止接口代理对象被实现类强转
+			AopContextSuppert.setProxyObj(dto.getRealObj());
+		}else {
+			AopContextSuppert.setProxyObj(dto.getPoxy());
+		}
         LazyBeanFilter.processLazyConfig(newObj, dto.getMethod(), dto.getParam());
 		
 		return false;
