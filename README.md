@@ -1,5 +1,12 @@
-# Spring-junit-test
+# Spring-Junit-Test
+
+
+
+## 1、简介
+
 Spring-junit-test 是一个用于SpringBoot项目单元测试的工具包。
+
+##### 产生背景
 
 JUnit和SpringTest,基本上可以满足绝大多数的单元测试了，但是，由于现在的系统越来越复杂，相互之间的依赖越来越多。特别是微服务化以后的系统，往往一个模块的代码需要依赖几个其他模块的东西。因此，在做单元测试的时候，往往很难构造出需要的依赖。
 
@@ -27,4 +34,75 @@ public class HttpTest{
 		stockHttpService.collectData("");
 	}
 }
+```
+
+## 2、使用方式
+
+Spring-Junit-Test的使用方式分为Junit4和Junit5
+
+#### Junit4的使用方式
+
+```java
+@Runwith(RunSpringJunitTest.class)
+public class HttpTest{
+
+	@Autowired
+	private StockHttpService stockHttpService;
+	
+	@Test
+	public void stockTest() {
+		stockHttpService.collectData("");
+	}
+}
+```
+
+#### Junit5的使用方式
+
+```java
+@RunSpringJunitTestFor5
+public class HttpTest{
+
+	@Autowired
+	private StockHttpService stockHttpService;
+	
+	@Test
+	public void stockTest() {
+		stockHttpService.collectData("");
+	}
+}
+```
+
+
+
+#### maven 配置
+
+```xml
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test-boot-version-controller</artifactId>
+    <version>2.4.0</version>
+    <exclusions>
+        <exclusion>
+            <groupId>com.github.jklasd</groupId>
+            <artifactId>spring-junit-test-common</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test</artifactId>
+    <version>2.0.1-SNAPSHOT</version>
+</dependency>
+```
+
+spring-junit-test-boot-version-controller 是用于对springboot的版本兼容性处理的。
+
+当如果你使用的2.x一下的，则请选择
+
+```xml
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test-boot-version-controller</artifactId>
+    <version>1.5.0</version>
+</dependency>
 ```
