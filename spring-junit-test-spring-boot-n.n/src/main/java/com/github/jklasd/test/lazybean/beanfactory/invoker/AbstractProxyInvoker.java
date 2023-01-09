@@ -58,7 +58,7 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
         	throw e;
         }catch (InvocationTargetException e) {
         	//异常处理
-        	exceptionInvoke(dto,context,e);
+        	exceptionInvoke(dto,context,(Exception) e.getTargetException());
         	throw e;
 		}catch (Exception e) {
         	log.warn("LazyCglib#intercept warn.lastInvoker=>{}", lastInvokerInfo);
