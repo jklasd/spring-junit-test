@@ -106,7 +106,7 @@ public class MethodSnoopUtil {
 			if(method.getParameterCount()>0) {
 				Class<?>[] paramTypes = method.getParameterTypes();
 				CtClass[] paramCts = toCtClass(paramTypes);
-				ctClass.getDeclaredMethod(method.getName(), paramCts);
+				return ctClass.getDeclaredMethod(method.getName(), paramCts);
 			}
 			return ctClass.getDeclaredMethod(method.getName());
 		} catch (NotFoundException e) {
