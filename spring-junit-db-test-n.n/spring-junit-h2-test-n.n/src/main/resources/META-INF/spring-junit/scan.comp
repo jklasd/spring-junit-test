@@ -1,0 +1,7 @@
+com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2SelectHandler,\
+com.github.jklasd.test.core.common.methodann.mock.h2.SqlReplaceMysqlToH2Handler
+
+
+com.github.jklasd.test.common.interf.handler.BootHandler=com.github.jklasd.test.core.common.methodann.mock.h2.H2DatabaseInitialization
+
+com.github.jklasd.test.common.interf.ContainerRegister=com.github.jklasd.test.core.common.methodann.mock.h2.SqlInterceptor
