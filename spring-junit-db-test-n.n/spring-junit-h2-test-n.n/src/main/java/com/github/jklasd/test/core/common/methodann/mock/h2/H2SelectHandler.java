@@ -2,8 +2,8 @@ package com.github.jklasd.test.core.common.methodann.mock.h2;
 
 import java.lang.reflect.Method;
 
+import com.github.jklasd.test.common.interf.handler.AbstractDbHandler;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
-import com.github.jklasd.test.core.common.methodann.mock.AbstractMockHandler;
 
 /**
  * 数据源切换
@@ -12,7 +12,7 @@ import com.github.jklasd.test.core.common.methodann.mock.AbstractMockHandler;
  * @author jubin.zhang
  *
  */
-public class H2SelectHandler extends AbstractMockHandler implements MockClassHandler{
+public class H2SelectHandler extends AbstractDbHandler implements MockClassHandler{
 
 	@Override
 	public String getType() {

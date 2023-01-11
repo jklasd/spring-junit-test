@@ -21,19 +21,6 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
         super(beanModel);
     }
     
-//    public boolean hasFinalMethod() {
-//        Method[] ms = beanModel.getTagClass().getDeclaredMethods();
-//        for(Method m : ms) {
-//            if(Modifier.isFinal(m.getModifiers())
-//                    && Modifier.isPublic(m.getModifiers())) {
-//                //存在final方法，且是公共方法，不能使用代理对象
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-
-    
     @Override
     public Object intercept(Object poxy, Method method, Object[] param, MethodProxy arg3) throws Throwable {
     	return StackOverCheckUtil.observeThrowException(()->{

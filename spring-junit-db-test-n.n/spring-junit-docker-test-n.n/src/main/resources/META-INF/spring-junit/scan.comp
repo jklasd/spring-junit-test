@@ -1,0 +1,4 @@
+com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.test.core.common.methodann.mock.docker.DockerDbHandler
+
+
+com.github.jklasd.test.common.interf.handler.BootHandler=com.github.jklasd.test.core.common.methodann.mock.docker.MysqlContainersInitialization

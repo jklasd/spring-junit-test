@@ -1,5 +1,12 @@
-# Spring-junit-test
+# Spring-Junit-Test
+
+
+
+## 1、简介
+
 Spring-junit-test 是一个用于SpringBoot项目单元测试的工具包。
+
+##### 产生背景
 
 JUnit和SpringTest,基本上可以满足绝大多数的单元测试了，但是，由于现在的系统越来越复杂，相互之间的依赖越来越多。特别是微服务化以后的系统，往往一个模块的代码需要依赖几个其他模块的东西。因此，在做单元测试的时候，往往很难构造出需要的依赖。
 
@@ -29,30 +36,73 @@ public class HttpTest{
 }
 ```
 
+## 2、使用方式
+
+Spring-Junit-Test的使用方式分为Junit4和Junit5
+
+#### Junit4的使用方式
+
+```java
+@Runwith(RunSpringJunitTest.class)
+public class HttpTest{
+
+	@Autowired
+	private StockHttpService stockHttpService;
+	
+	@Test
+	public void stockTest() {
+		stockHttpService.collectData("");
+	}
+}
+```
+
+#### Junit5的使用方式
+
+```java
+@RunSpringJunitTestFor5
+public class HttpTest{
+
+	@Autowired
+	private StockHttpService stockHttpService;
+	
+	@Test
+	public void stockTest() {
+		stockHttpService.collectData("");
+	}
+}
+```
 
 
-# Spring-Junit-Test
 
-Spring-junit-test 是一个基于SpringBoot开发项目中单元测试的工具包。
+#### maven 配置
 
-由于Spring项目在Junit测试，按照IOC的启动方式，需要预先准备好所有的环境，才去执行junit task。
+```xml
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test-boot-version-controller</artifactId>
+    <version>2.4.0</version>
+    <exclusions>
+        <exclusion>
+            <groupId>com.github.jklasd</groupId>
+            <artifactId>spring-junit-test-common</artifactId>
+        </exclusion>
+    </exclusions>
+</dependency>
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test</artifactId>
+    <version>2.0.1-SNAPSHOT</version>
+</dependency>
+```
 
-也许你的单元测试只用到Mysql，只需要加载好数据库连接池，初始化好Mybatis或者Hibernate，但使用SpringBoot 自带的单元测试方式测试时，它会配置好所有环境比如Redis、Mq、Zookeeper等等其他中间件。这导致你执行一个普通的单元测试，都是非常麻烦，这导致对业务做单元测试的时候，需要消耗很长的环境配置时间。
+spring-junit-test-boot-version-controller 是用于对springboot的版本兼容性处理的。
 
-如果你使用了Spring-junit-test 测试工具包，则省去了这些不必要的环境配置。
+当如果你使用的2.x一下的，则请选择
 
-当你只用到Redis时，通过Spring-junit-test测试工具包去做Junit单元测试。它只会为你建立Redis连接，不会去连接其他不必要的Zookeeper、Mq、或者服务注册之类的，这为你做单元测试省去了80%的时间。
-
-很多Java开发人员对单元测试都具有排斥心理，其中项目长时间启动等待就是一个原因。
-
-
-
-# Quick Start
-
-# Learn it & Contact us
-
-# Contributing
-
-# License
-
-# Export Control Notice
+```xml
+<dependency>
+    <groupId>com.github.jklasd</groupId>
+    <artifactId>spring-junit-test-boot-version-controller</artifactId>
+    <version>1.5.0</version>
+</dependency>
+```

@@ -2,10 +2,12 @@ package com.github.jklasd.test.core.common.methodann.mock.h2;
 
 import java.lang.reflect.Method;
 
+import com.github.jklasd.test.common.interf.handler.AbstractDbHandler;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
-import com.github.jklasd.test.core.common.methodann.mock.AbstractMockHandler;
 
-public class SqlReplaceMysqlToH2Handler extends AbstractMockHandler implements MockClassHandler{
+public class SqlReplaceMysqlToH2Handler extends AbstractDbHandler implements MockClassHandler{
+	
+	protected InheritableThreadLocal<JunitMysqlToH2> mysqlToH2Mock = new InheritableThreadLocal<>();
 	
 	@Override
 	public String getType() {

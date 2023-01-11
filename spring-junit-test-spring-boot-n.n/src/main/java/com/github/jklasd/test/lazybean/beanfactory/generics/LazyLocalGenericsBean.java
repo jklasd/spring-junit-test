@@ -3,9 +3,6 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.beans.factory.support.RootBeanDefinition;
 
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
@@ -13,6 +10,8 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
+import com.github.jklasd.test.util.BeanNameUtil;
+import com.google.common.base.Objects;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -41,22 +40,21 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 			/**
 			 * 开始创建对象
 			 */
-			if(localCache.get().size()==1) {
-				String beanName = model.getBeanName();
-				if(StringUtils.isBlank(beanName)) {
-					beanName = model.getFieldName();
-				}
-				if(!beanFactory.containsBeanDefinition(beanName)) {//这里beanName 不能为空。临时使用fieldName替代
-					Class<?> tagClass = localCache.get().get(0);
-					//修改beanName
+			String beanName = model.getBeanName();
+			if(localCache.get().size()==1 || StringUtils.isBlank(beanName)) {
+				Class<?> tagClass = localCache.get().get(0);
+				Object obj = beanFactory.getBean(tagClass);
+				return obj;
+			}else {
+				//判断beanName一致
+				Class<?> tagClass = localCache.get().stream().filter(classItem->{
+					String cBeanName = BeanNameUtil.getBeanName(classItem);
+					return Objects.equal(cBeanName, beanName);
+				}).findFirst().orElse(null);
+				if(tagClass != null) {
 					Object obj = beanFactory.getBean(tagClass);
 					return obj;
 				}
-				BeanDefinition beanDef = beanFactory.getBeanDefinition(beanName);
-				if(beanDef instanceof AbstractBeanDefinition) {
-					return beanFactory.getBean(beanName);
-				}
-			}else {
 				log.warn("活的多个bean;{}",model.getTagClass());
 			}
 		}
