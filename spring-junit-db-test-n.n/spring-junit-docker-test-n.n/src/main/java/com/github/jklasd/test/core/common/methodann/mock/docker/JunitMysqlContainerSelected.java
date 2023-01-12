@@ -18,7 +18,7 @@ import java.lang.annotation.Target;
 @Documented
 public @interface JunitMysqlContainerSelected {
 	/**
-	 * 是否使用H2数据库
+	 * 是否使用mysql容器数据库
 	 * @return
 	 */
 	boolean value() default true;

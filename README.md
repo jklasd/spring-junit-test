@@ -1,3 +1,5 @@
+[toc]
+
 # Spring-Junit-Test
 
 
@@ -105,4 +107,189 @@ spring-junit-test-boot-version-controller 是用于对springboot的版本兼容�
     <artifactId>spring-junit-test-boot-version-controller</artifactId>
     <version>1.5.0</version>
 </dependency>
+```
+
+
+
+#### 对DB的支持方式
+
+spring-junit-test 对db的处理支持通过mysql容器和H2两种方式，实现可重复使用的sql和查询数据，方便java单元测试重复执行。
+
+##### 对mysql容器的支持
+
+* 配置初始化语句
+
+```
+表结构初始化
+src/test/resources/db-mysql/schema/*.sql 
+
+跨库表结构初始化【针对某些项目需要跨库查询，可初始化其他库的表结构】
+src/test/resources/db-mysql/schema/cross-library/*.sql
+
+表数据初始化
+src/test/resources/db-mysql/data/*.sql
+
+```
+
+* @JunitMysqlContainerSelected注解使用
+
+```java
+/*
+* 放在class上面，全部的method都是用虚拟mysql容器数据库
+*/
+@JunitMysqlContainerSelected
+@RunSpringJunitTestFor5
+public class MysqlTest {
+	@Autowired
+	private TestService testService;
+	
+	@Autowired
+	private TestService2 testService2;
+	
+	@Test
+	public void findData() {
+		testService2.getData("81800000008", 1l);
+	}
+	
+	@Test
+	public void findData2() {
+		
+		TestData data = testService.getData(2);
+		
+		System.out.println(data!=null);
+		
+		System.out.println(data.getTitle());
+		
+	}
+}
+```
+
+```java
+
+@RunSpringJunitTestFor5
+public class MysqlTest {
+	@Autowired
+	private TestService testService;
+	
+	@Autowired
+	private TestService2 testService2;
+	
+	@Test
+	public void findData() {
+		testService2.getData("81800000008", 1l);
+	}
+    
+    /*
+    * 放在method上面，指定某个method都是用虚拟mysql容器数据库
+    */
+	@JunitMysqlContainerSelected
+	@Test
+	public void findData2() {
+		
+		TestData data = testService.getData(2);
+		
+		System.out.println(data!=null);
+		
+		System.out.println(data.getTitle());
+		
+	}
+}
+```
+
+
+
+```java
+/*
+* 放在class上面，全部的method都是用虚拟mysql容器数据库
+*/
+@JunitMysqlContainerSelected
+@RunSpringJunitTestFor5
+public class MysqlTest {
+	@Autowired
+	private TestService testService;
+	
+	@Autowired
+	private TestService2 testService2;
+	
+	@Test
+	public void findData() {//这个方法使用虚拟mysql容器数据库
+		testService2.getData("81800000008", 1l);
+	}
+    
+    
+	@JunitMysqlContainerSelected(false)//指定某个method不使用虚拟mysql容器数据库
+	@Test
+	public void findData2() {//这个方法使用项目配置application.properties/application.yml配置的数据库
+		
+		TestData data = testService.getData(2);
+		
+		System.out.println(data!=null);
+		
+		System.out.println(data.getTitle());
+		
+	}
+}
+```
+
+
+
+
+
+##### 对H2数据库的支持
+
+* 配置初始化语句
+
+```
+表结构初始化
+src/test/resources/db-h2/schema/*.sql 
+
+跨库表结构初始化【针对某些项目需要跨库查询，可初始化其他库的表结构】
+src/test/resources/db-h2/schema/cross-library/*.sql
+
+表数据初始化
+src/test/resources/db-h2/data/*.sql
+```
+
+* @JunitH2Selected注解使用
+
+```
+同@JunitMysqlContainerSelected
+```
+
+* @JunitMysqlToH2注解使用【用于替换H2不支持的mysql语句，替换成标准sql】
+
+```java
+/*
+*由于Mysql 和 H2的兼容性问题
+*/
+@JunitH2Selected//放在class上面，全部的method都是用H2数据库
+@RunSpringJunitTestFor5
+public class MysqlTest {
+	@Autowired
+	private TestService testService;
+	
+	@Autowired
+	private TestService2 testService2;
+	
+	@Test
+	@JunitMysqlToH2(from = {"LAST_DAY(DATE_ADD(CURDATE()-DAY(CURDATE())+1,INTERVAL 1 MONTH))",
+    		"DATE_ADD(CURDATE()-DAY(CURDATE())+1,INTERVAL 1 MONTH)"},
+    to = {"'2022-09-30'","'2022-09-01'"})//用于mysql的特殊函数替换成简单值或者标准sql，针对历史sql处理问题，不修改业务代码。
+	public void findData() {//这个方法使用H2数据库
+		testService2.getData("81800000008", 1l);
+	}
+    
+    
+	@JunitH2Selected(false)//指定某个method不使用H2数据库
+	@Test
+	public void findData2() {//这个方法使用项目配置application.properties/application.yml配置的数据库
+		
+		TestData data = testService.getData(2);
+		
+		System.out.println(data!=null);
+		
+		System.out.println(data.getTitle());
+		
+	}
+}
 ```
