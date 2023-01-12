@@ -1,25 +1,25 @@
 package com.github.jklasd.test.core.common.methodann.mock.docker;
 
-import java.sql.Connection;
 import java.sql.Driver;
-import java.sql.SQLException;
 
-import javax.sql.DataSource;
-
-import org.springframework.jdbc.datasource.embedded.ConnectionProperties;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseConfigurer;
-import org.springframework.util.ClassUtils;
+import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 import org.testcontainers.containers.MySQLContainer;
+import org.testcontainers.shaded.com.google.common.collect.Lists;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class BaseTestContainers implements EmbeddedDatabaseConfigurer{
-	public MySQLContainer mySQLContainer;
+public class BaseTestContainers{
+	private MySQLContainer mySQLContainer;
+	@Getter
 	private String url;
+	@Getter
 	private String userName="junit";
+	@Getter
 	private String password="junit";
-	private String className;
+	@Getter
+	private Class<? extends Driver> driverClass;
 
 	public BaseTestContainers(String databaseName) {
 		mySQLContainer = new MySQLContainer("mysql:5.7")
@@ -27,42 +27,13 @@ public class BaseTestContainers implements EmbeddedDatabaseConfigurer{
 		            .withPassword(password)
 		            .withDatabaseName(databaseName);
 		
-		url = mySQLContainer.getJdbcUrl();
-		className = mySQLContainer.getDriverClassName();
+		mySQLContainer.start();
+		url = mySQLContainer.getJdbcUrl()+"?characterEncoding=UTF-8&useSSL=false";
+		log.info("构建Mysql容器,url:{}",url);
+		driverClass = mySQLContainer.getJdbcDriverInstance().getClass();
 	}
 
-	@Override
-	public void configureConnectionProperties(ConnectionProperties properties, String databaseName) {
-		try {
-			properties.setDriverClass((Class<? extends Driver>)ClassUtils.forName(className, BaseTestContainers.class.getClassLoader()));
-		} catch (ClassNotFoundException | LinkageError e) {
-			e.printStackTrace();
-		}
-		properties.setUrl(url);
-		properties.setUsername(userName);
-		properties.setPassword(password);
-	}
-
-	@Override
-	public void shutdown(DataSource dataSource, String databaseName) {
-		Connection con = null;
-		try {
-			con = dataSource.getConnection();
-			con.createStatement().execute("SHUTDOWN");
-		}
-		catch (SQLException ex) {
-			log.warn("Could not shut down embedded database", ex);
-		}
-		finally {
-			if (con != null) {
-				try {
-					con.close();
-				}
-				catch (Throwable ex) {
-					log.debug("Could not close JDBC Connection on shutdown", ex);
-				}
-			}
-		}
+	public void initScript(ResourceDatabasePopulator tmp) {
 	}
 
 }

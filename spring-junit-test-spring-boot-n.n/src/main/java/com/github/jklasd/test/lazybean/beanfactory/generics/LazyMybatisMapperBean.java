@@ -40,48 +40,12 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 
     private static Object defaultFactory;
 
-//    public synchronized Object buildBean(Class<?> classBean) {
-//        try {
-//            return getMapper(classBean);
-//        } catch (Exception e) {
-//            log.error("获取Mapper", e);
-//        }
-//        return null;
-//    }
-
-    // private static ThreadLocal<SqlSession> sessionList = new ThreadLocal<>();
     private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
     private static final Class<?> MapperFactoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperFactoryBean");
-//    private static final Class<?> factoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionFactoryBean");
-//    private static final Class<?> sqlSessionTemplateClass = ScanUtil.loadClass("org.mybatis.spring.SqlSessionTemplate");
-//
-//    @SuppressWarnings("unchecked")
-//    private static final Class<? extends Annotation> mapperScanClass = ScanUtil.loadClass("org.mybatis.spring.annotation.MapperScan");
 
     public static final boolean useMybatis() {
         return factoryClass != null;
     }
-
-//    private Object sqlSessionTemplate;
-//    private Map<String,Object> sqlSessionTemplateMaps = Maps.newHashMap();
-
-//    public Object getSqlSessionTemplate() throws Exception {
-//        if (defaultFactory == null) {
-//            buildMybatisFactory();
-//            restDataSource();
-//        }
-//        if(sqlSessionTemplateMaps.containsKey(mappingPath.get())) {
-//        	return sqlSessionTemplateMaps.get(mappingPath.get());
-//        }
-//        
-//        if (sqlSessionTemplateClass != null && sqlSessionTemplate == null) {// 配置session控制器
-//            Constructor<?> structor = sqlSessionTemplateClass.getConstructor(factoryClass);
-//            Object factory = mappingSession.get(mappingPath.get());
-//            factory = factory==null?defaultFactory:factory;
-//            sqlSessionTemplateMaps.put(mappingPath.get(), structor.newInstance(factory));
-//        }
-//        return sqlSessionTemplateMaps.get(mappingPath.get());
-//    }
 
     private void restDataSource() throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, NoSuchMethodException, SecurityException{
     	DatabaseInitialization dataInitia = ContainerManager.getComponent(DatabaseInitialization.class.getName());

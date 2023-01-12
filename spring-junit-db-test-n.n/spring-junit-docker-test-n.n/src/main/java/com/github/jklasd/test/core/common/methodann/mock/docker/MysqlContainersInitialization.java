@@ -4,8 +4,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 
 import org.springframework.core.io.Resource;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory;
+import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import com.github.jklasd.test.common.interf.handler.BootHandler;
@@ -23,45 +22,60 @@ public class MysqlContainersInitialization implements BootHandler{
 		try {
 			
 			ResourceDatabasePopulator tmp = new ResourceDatabasePopulator();
-			Resource[] schema = null;
-			try {
-				schema = ScanUtil.getResources("classpath:/"+findPath+"/schema/*");
-				if(schema.length == 0) {
-					return;
-				}
-				tmp.addScripts(schema);
-			} catch (FileNotFoundException e) {
-				return;
-			}
-			String databaseName = findDataBaseName(schema);
-			try {
-				Resource[] data = ScanUtil.getResources("classpath:/"+findPath+"/data/**");
-				tmp.addScripts(data);
-			} catch (FileNotFoundException e) {
-			}
+			String schemaPath = "classpath:/"+findPath+"/schema/*";
+			addscript(schemaPath, tmp);
+			String databaseName = findDataBaseName(schemaPath);
+			addscript("classpath:/"+findPath+"/data/**", tmp);
 			
+			BaseTestContainers baseContainer = new BaseTestContainers(databaseName);
 			
-			EmbeddedDatabaseFactory defaultFactory = new EmbeddedDatabaseFactory();
+			SimpleDriverDataSource source = new SimpleDriverDataSource();
+			source.setUrl(baseContainer.getUrl());
+			source.setDriverClass(baseContainer.getDriverClass());
+			source.setUsername(baseContainer.getUserName());
+			source.setPassword(baseContainer.getPassword());
 			
+			tmp.execute(source);
 			
-			defaultFactory.setDatabaseConfigurer(new BaseTestContainers(databaseName));
-			defaultFactory.setDatabasePopulator(tmp);
-			defaultFactory.setDatabaseName(databaseName);
-			
-			EmbeddedDatabase source = defaultFactory.getDatabase();
-			RoutingDataSourceExt.getInstance().initFunction(source);
-			RoutingDataSourceExt.getInstance().setDataSource(source);
+			RoutingDataSourceExt sourceRount = RoutingDataSourceExt.getInstance();
+			sourceRount.setDataSource(source);
 			
 		} catch (IOException e) {
 			if(e instanceof FileNotFoundException) {
 				log.warn("load classpath:/db-mysql/ =>{}",e);
 			}
+		} catch (IllegalStateException e) {
+			if(e.getMessage().contains(" a valid Docker")) {
+				log.warn(e.getMessage());
+			}else {
+				log.error("构建mysql 容器异常",e);
+			}
 		} catch (Exception e) {
-			log.error("H2DatabaseInitialization",e);
+			log.error("MysqlContainerDatabaseInitialization",e);
 		}
 	}
 
-	protected String findDataBaseName(Resource[] schemaes) throws IOException {
+	private void addscript(String path, ResourceDatabasePopulator tmp) throws IOException {
+		try {
+			Resource[] rs = ScanUtil.getResources(path);
+			if(rs.length == 0) {
+				return;
+			}
+			for(Resource r : rs) {
+				if(!r.getFile().isDirectory()) {
+					tmp.addScript(r);
+				}
+//				else {
+//					log.warn("文件夹:{}",r.getFile());
+//				}
+			}
+		} catch (FileNotFoundException e) {
+			return;
+		}
+	}
+
+	protected String findDataBaseName(String path) throws IOException {
+		Resource[] schemaes = ScanUtil.getResources(path);
 		if(schemaes.length == 1) {
 			return nameConvert(schemaes[0].getFilename());
 		}else {
