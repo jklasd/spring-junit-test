@@ -3,11 +3,15 @@ package com.github.jklasd.test.core.common.methodann.mock.docker;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 
+import javax.sql.DataSource;
+
 import org.springframework.core.io.Resource;
 import org.springframework.jdbc.datasource.SimpleDriverDataSource;
 import org.springframework.jdbc.datasource.init.ResourceDatabasePopulator;
 
 import com.github.jklasd.test.common.interf.handler.BootHandler;
+import com.github.jklasd.test.common.util.LazyDataSourceUtil;
+import com.github.jklasd.test.common.util.LazyDataSourceUtil.DataSourceBuilder;
 import com.github.jklasd.test.common.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -19,40 +23,47 @@ public class MysqlContainersInitialization implements BootHandler{
 	
 	@Override
 	public void launcher() {
-		try {
+			DataSource dataSource = LazyDataSourceUtil.buildLazyDataSource(new DataSourceBuilder() {
+				@Override
+				public DataSource build() {
+					try {
+						ResourceDatabasePopulator tmp = new ResourceDatabasePopulator();
+						String schemaPath = "classpath:/"+findPath+"/schema/*";
+						addscript(schemaPath, tmp);
+						String databaseName = findDataBaseName(schemaPath);
+						addscript("classpath:/"+findPath+"/data/**", tmp);
+						
+						BaseTestContainers baseContainer = new BaseTestContainers(databaseName);
+						
+						SimpleDriverDataSource source = new SimpleDriverDataSource();
+						source.setUrl(baseContainer.getUrl());
+						source.setDriverClass(baseContainer.getDriverClass());
+						source.setUsername(baseContainer.getUserName());
+						source.setPassword(baseContainer.getPassword());
+						
+						tmp.execute(source);
+						return source;
+					} catch (IOException e) {
+						if(e instanceof FileNotFoundException) {
+							log.warn("load classpath:/db-mysql/ =>{}",e);
+						}
+					} catch (IllegalStateException e) {
+						if(e.getMessage().contains(" a valid Docker")) {
+							log.warn(e.getMessage());
+						}else {
+							log.error("构建mysql 容器异常",e);
+						}
+					} catch (Exception e) {
+						log.error("MysqlContainerDatabaseInitialization",e);
+					}
+					return null;
+				}
+			});
 			
-			ResourceDatabasePopulator tmp = new ResourceDatabasePopulator();
-			String schemaPath = "classpath:/"+findPath+"/schema/*";
-			addscript(schemaPath, tmp);
-			String databaseName = findDataBaseName(schemaPath);
-			addscript("classpath:/"+findPath+"/data/**", tmp);
-			
-			BaseTestContainers baseContainer = new BaseTestContainers(databaseName);
-			
-			SimpleDriverDataSource source = new SimpleDriverDataSource();
-			source.setUrl(baseContainer.getUrl());
-			source.setDriverClass(baseContainer.getDriverClass());
-			source.setUsername(baseContainer.getUserName());
-			source.setPassword(baseContainer.getPassword());
-			
-			tmp.execute(source);
 			
 			RoutingDataSourceExt sourceRount = RoutingDataSourceExt.getInstance();
-			sourceRount.setDataSource(source);
+			sourceRount.setDataSource(dataSource);
 			
-		} catch (IOException e) {
-			if(e instanceof FileNotFoundException) {
-				log.warn("load classpath:/db-mysql/ =>{}",e);
-			}
-		} catch (IllegalStateException e) {
-			if(e.getMessage().contains(" a valid Docker")) {
-				log.warn(e.getMessage());
-			}else {
-				log.error("构建mysql 容器异常",e);
-			}
-		} catch (Exception e) {
-			log.error("MysqlContainerDatabaseInitialization",e);
-		}
 	}
 
 	private void addscript(String path, ResourceDatabasePopulator tmp) throws IOException {
@@ -65,9 +76,6 @@ public class MysqlContainersInitialization implements BootHandler{
 				if(!r.getFile().isDirectory()) {
 					tmp.addScript(r);
 				}
-//				else {
-//					log.warn("文件夹:{}",r.getFile());
-//				}
 			}
 		} catch (FileNotFoundException e) {
 			return;
