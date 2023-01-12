@@ -23,6 +23,10 @@ public class JunitThreadUtil{
 				LazyProxyManager.isProxy(bean)?LazyProxyManager.getProxyTagObj(bean):bean);
 		wait(executor);
 	}
+	public static void wait(Object bean,String fieldName) {
+		ThreadPoolExecutor executor = (ThreadPoolExecutor) JunitInvokeUtil.invokeReadField(fieldName,bean);
+		wait(executor);
+	}
 	public static void wait(ThreadPoolExecutor executor) {
 		JunitThreadFactory jtf = new JunitThreadFactory();
 		executor.setThreadFactory(jtf);

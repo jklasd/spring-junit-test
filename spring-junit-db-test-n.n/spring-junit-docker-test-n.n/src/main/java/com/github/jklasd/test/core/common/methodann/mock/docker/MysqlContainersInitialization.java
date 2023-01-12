@@ -1,11 +1,7 @@
 package com.github.jklasd.test.core.common.methodann.mock.docker;
 
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URL;
 
 import javax.sql.DataSource;
 
@@ -34,6 +30,7 @@ public class MysqlContainersInitialization implements BootHandler{
 						ResourceDatabasePopulator tmp = new ResourceDatabasePopulator();
 						String schemaPath = "classpath:/"+findPath+"/schema/*";
 						addscript(schemaPath, tmp);
+						addscript(schemaPath+"*", tmp);
 						String databaseName = findDataBaseName(schemaPath);
 						addscript("classpath:/"+findPath+"/data/**", tmp);
 						
@@ -81,7 +78,7 @@ public class MysqlContainersInitialization implements BootHandler{
 				return;
 			}
 			for(Resource r : rs) {
-				if(!r.getFile().isDirectory()) {
+				if(r.isReadable() && !r.getFile().isDirectory()) {
 					tmp.addScript(r);
 				}
 			}
@@ -107,4 +104,5 @@ public class MysqlContainersInitialization implements BootHandler{
 	protected String nameConvert(String fileName) {
 		return fileName.endsWith(".sql")?fileName.replace(".sql", ""):fileName;
 	}
+	
 }
