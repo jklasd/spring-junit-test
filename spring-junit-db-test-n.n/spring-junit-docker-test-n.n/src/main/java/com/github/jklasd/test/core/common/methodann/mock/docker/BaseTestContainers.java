@@ -15,9 +15,9 @@ public class BaseTestContainers{
 	@Getter
 	private String url;
 	@Getter
-	private String userName="junit";
+	private String userName="root";
 	@Getter
-	private String password="junit";
+	private String password="root";
 	@Getter
 	private Class<? extends Driver> driverClass;
 

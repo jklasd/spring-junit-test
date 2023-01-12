@@ -1,7 +1,11 @@
 package com.github.jklasd.test.core.common.methodann.mock.docker;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.net.URL;
 
 import javax.sql.DataSource;
 
@@ -42,13 +46,17 @@ public class MysqlContainersInitialization implements BootHandler{
 						source.setPassword(baseContainer.getPassword());
 						
 						tmp.execute(source);
+						//5.7 group问题
+						source.getConnection().createStatement().execute("set @@GLOBAL.sql_mode='STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION';");
+						
 						return source;
 					} catch (IOException e) {
 						if(e instanceof FileNotFoundException) {
 							log.warn("load classpath:/db-mysql/ =>{}",e);
 						}
 					} catch (IllegalStateException e) {
-						if(e.getMessage().contains(" a valid Docker")) {
+						if(e.getMessage().contains(" a valid Docker")
+								|| e.getMessage().contains("Docker environment failed")) {
 							log.warn(e.getMessage());
 						}else {
 							log.error("构建mysql 容器异常",e);

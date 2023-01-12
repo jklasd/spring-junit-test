@@ -38,11 +38,14 @@ class DataSourceImpl implements InvocationHandler{
 		this.builder = builder;
 	}
 
+	private boolean builded;
+	
 	@Override
 	public Object invoke(Object arg0, Method arg1, Object[] arg2) throws Throwable {
 		try {
-			if(source == null) {
+			if(source == null && !builded) {
 				source = builder.build();
+				builded = true;
 			}
 			if(source != null) {
 				return arg1.invoke(source, arg2);
