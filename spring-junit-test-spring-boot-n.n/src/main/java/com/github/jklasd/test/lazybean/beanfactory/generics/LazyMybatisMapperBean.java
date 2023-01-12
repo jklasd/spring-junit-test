@@ -16,6 +16,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.LazyDataSourceUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
@@ -55,6 +56,7 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 	    	if(dataBaseEnv!=null) {
 //	    		System.out.println(dataBaseEnv);
 	    		DataSource dataSource = (DataSource) JunitInvokeUtil.invokeMethod(dataBaseEnv, "getDataSource");
+	    		LazyDataSourceUtil.defaultDataSouce(dataSource);
 	    		
 	    		Object newDataSource = dataInitia.build(dataSource);
 	    		if(newDataSource != null) {

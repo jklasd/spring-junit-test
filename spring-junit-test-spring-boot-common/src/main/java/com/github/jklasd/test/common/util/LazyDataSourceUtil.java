@@ -20,7 +20,13 @@ public class LazyDataSourceUtil {
 		DataSourceImpl handler = new DataSourceImpl(builder);
         return (DataSource) Proxy.newProxyInstance(JunitClassLoader.getInstance(), new Class[] { DataSource.class }, handler);
 	}
-
+	private static DataSource defaultDataSouce;
+	public static void defaultDataSouce(DataSource dataSource) {
+		defaultDataSouce = dataSource;
+	}
+	public static DataSource getDefaultDataSouce() {
+		return defaultDataSouce;
+	}
 }
 
 class DataSourceImpl implements InvocationHandler{
@@ -38,7 +44,11 @@ class DataSourceImpl implements InvocationHandler{
 			if(source == null) {
 				source = builder.build();
 			}
-			return arg1.invoke(source, arg2);
+			if(source != null) {
+				return arg1.invoke(source, arg2);
+			}else {
+				return arg1.invoke(LazyDataSourceUtil.getDefaultDataSouce(), arg2);
+			}
 		} catch (InvocationTargetException e) {
 			throw e.getTargetException();
 		}
