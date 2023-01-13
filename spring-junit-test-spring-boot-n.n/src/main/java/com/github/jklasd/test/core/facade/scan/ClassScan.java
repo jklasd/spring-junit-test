@@ -85,7 +85,7 @@ public class ClassScan implements Scan{
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).setExecutorService(2).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
-									if(name.endsWith(".class")) {
+									if(name.endsWith(CLASS_SUFFIX)) {
 										classNames.add(name.replace("/", ".").replace("\\", "."));
 									}else {
 										try {
@@ -172,9 +172,6 @@ public class ClassScan implements Scan{
 //		Set<String> classPaths =TestUtil.getInstance().getScanClassPath();
 		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
 		.runAndWait(name->{
-//			if(name.contains("SpringContextUtil")) {
-//				log.info("短点");
-//			}
 			if(name.endsWith(CLASS_SUFFIX) && !componentClassPathMap.containsKey(name)) {
 				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class

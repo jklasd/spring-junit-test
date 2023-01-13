@@ -53,7 +53,6 @@ public class ConfigurationScan {
 //		if(configClass.getName().contains("MongoReactiveDataAutoConfiguration")) {
 //			log.debug("=============加载{}=============",configClass);			
 //		}
-		
 		cacheScanConfig.add(configClass);
 		//@Configuration
 		if(!AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {
@@ -79,6 +78,7 @@ public class ConfigurationScan {
 		if(!CheckUtil.checkProp(configClass)) {
 			return;
 		}
+		
 		beanCreaterScan.loadConfigurationClass(configClass);
 		MetadataReader sourceToProcess = null;
 		try {
@@ -115,7 +115,9 @@ public class ConfigurationScan {
 			}
 		}
 		
-		if(!configClass.getName().startsWith("org.springframework") && ClassUtil.getInstance().hasStaticMethod(configClass)) {
+		if(!configClass.getName().startsWith("org.springframework")
+				&& ClassUtil.getInstance().hasStaticMethod(configClass)
+				) {
 			ClassScan.getInstance().loadComponentClass(configClass);
 		}
 		
