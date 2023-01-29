@@ -42,6 +42,7 @@ import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -285,7 +286,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			beanCreaterScan.loadConfigurationClass(tmpDef.getBeanClass());
 		}
 		
-		
+		if(beanDefMap.containsKey(beanName)) {
+			if(!Objects.equal(beanDefMap.get(beanName), beanDefinition)) {
+				throw new JunitException("bean "+beanName +"注冊重复", true);
+			}
+			return;
+		}
 		beanDefList.add(beanDefinition);
 		beanDefMap.put(beanName, beanDefinition);
 		beanNames.add(beanName);

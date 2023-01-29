@@ -110,7 +110,7 @@ public class TestUtil implements JunitCoreComponentI{
 	    processed = true;
 	    ContainerManager.stats = ContainerManager.init;
 	    log.debug("=========加载配置========");
-	    ResourceLoader.getInstance().init();
+	    ResourceLoader.getInstance().initLoader();
 		ScannerRegistrarComponent.process();
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 		ContainerManager.stats = ContainerManager.inited;

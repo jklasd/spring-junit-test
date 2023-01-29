@@ -11,6 +11,7 @@ import org.w3c.dom.Element;
 
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,17 +26,25 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
     private XmlReaderContext readerContext;
     public LazyBeanDefinitionParserDelegate(XmlReaderContext readerContext,LazyBeanDefinitionDocumentReader documentReader) {
         super(readerContext);
+        /**
+         * 需要修正env
+         */
+        readerContext.getReader().setEnvironment(LazyApplicationContext.getInstance().getEnvironment());
         this.readerContext = readerContext;
     }
     
+//    private boolean inited_scan;
     public BeanDefinition parseCustomElement(Element ele, BeanDefinition containingBd) {
-
     	String namespaceUri = getNamespaceURI(ele);
         NamespaceHandler handler = this.readerContext.getNamespaceHandlerResolver().resolve(namespaceUri);
         if (handler == null) {
             error("Unable to locate Spring NamespaceHandler for XML schema namespace [" + namespaceUri + "]", ele);
             return null;
         }
+//        if(ele.getTagName().equals("context:component-scan") && !inited_scan) {
+//        	JunitInvokeUtil.invokeMethod(handler, NamespaceHandlerSupport.class, "registerBeanDefinitionParser", new Object[] {"component-scan",new LazyComponentScanBeanDefinitionParser()});
+//        	inited_scan = true;
+//        }
         BeanDefinition beanDef =  handler.parse(ele, new ParserContext(this.readerContext, this, containingBd));
         if(beanDef != null) {
             if(parser.containsKey(namespaceUri)) {

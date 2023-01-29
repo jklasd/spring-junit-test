@@ -45,7 +45,7 @@ public class ResourceLoader {
 		});
 	}
 	
-	public void init() {
+	public void initLoader() {
 		loaderList.forEach(loader->loader.initResource());
 	}
 
