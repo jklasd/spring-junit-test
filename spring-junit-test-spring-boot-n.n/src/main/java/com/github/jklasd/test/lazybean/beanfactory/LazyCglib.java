@@ -7,6 +7,7 @@ import java.lang.reflect.Modifier;
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 

@@ -105,24 +105,23 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
         }
         log.debug("开始实例化:{}",beanModel);
         Object tmp = getTagertObjectCustom();
-        if(tmp!=null && !inited) {
-            inited = true;
-//            if(attr!=null && attr.size()>0) {
-//                attr.forEach((key,value)->{
-//                    LazyBean.getInstance().setAttr(key, tmp, beanModel.getTagClass(), value);
-//                });
-//            }
-            if(tagertObj instanceof InitializingBean) {
-                try {
-                    JunitInvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
-                } catch (SecurityException | IllegalArgumentException e) {
-                    log.error("InitializingBean#afterPropertiesSet", e);
-                    if(beanModel.isThrows()) {
-                    	throw e;
-                    }
-                }
-            }
-        }
+		if (tmp != null) {
+			if (!inited) {
+				inited = true;
+				if (tagertObj instanceof InitializingBean) {
+					try {
+						JunitInvokeUtil.invokeMethod(tagertObj, "afterPropertiesSet");
+					} catch (SecurityException | IllegalArgumentException e) {
+						log.error("InitializingBean#afterPropertiesSet", e);
+						if (beanModel.isThrows()) {
+							throw e;
+						}
+					}
+				}
+			}
+		} else {
+			throw new JunitException("未找到bean," + beanModel.getTagClass());
+		}
         return tmp;
     }
     
