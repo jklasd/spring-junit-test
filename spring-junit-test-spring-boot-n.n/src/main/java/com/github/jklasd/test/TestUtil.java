@@ -250,7 +250,7 @@ public class TestUtil implements JunitCoreComponentI{
 //	private static void handlerFirstClass(Object obj) {
 //		new MockHandler().handler(obj.getClass());
 //	}
-
+	
 	public static void resourcePreparation() {
 		if(processInited) {
 	        return;
@@ -275,8 +275,8 @@ public class TestUtil implements JunitCoreComponentI{
 		LazyBean.getInstance().register();
 		BeanCreaterScan.getInstance().register();
 		BeanFactoryProcessor.getInstance().register();
-		LazyListableBeanFactory.getInstance().register();
-		LazyApplicationContext.getInstance().register();
+//		LazyListableBeanFactory.getInstance().register();
+//		LazyApplicationContext.getInstance().register();
 	}
 
 	private void loadProp() {

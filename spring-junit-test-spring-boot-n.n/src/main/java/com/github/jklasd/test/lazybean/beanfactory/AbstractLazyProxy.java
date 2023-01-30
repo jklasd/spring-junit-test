@@ -34,7 +34,7 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
         }
     }
     
-    private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+    private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
     
     private AtomicInteger errorTimes = new AtomicInteger();
     

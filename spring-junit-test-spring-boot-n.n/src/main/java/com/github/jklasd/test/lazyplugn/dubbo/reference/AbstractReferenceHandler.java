@@ -13,7 +13,7 @@ import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboAnnotationRefHandler;
 
 public abstract class AbstractReferenceHandler implements FieldHandler{
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 	
 	@Override
 	public void handler(FieldDef def, Annotation ann) {

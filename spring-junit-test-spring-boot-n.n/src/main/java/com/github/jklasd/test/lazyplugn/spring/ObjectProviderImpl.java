@@ -20,7 +20,6 @@ import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.util.BeanNameUtil;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -31,13 +30,19 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
      */
     private static final long serialVersionUID = 3004906006576222643L;
     private Type type;
+    
+    T objCache;
+    
 	public ObjectProviderImpl(Class<T> type) {
 		this.type = type;
 	}
 
 	@Override
 	public T getObject() throws BeansException {
-		return null;
+		if(objCache == null) {
+			return getIfAvailable();
+		}
+		return objCache;
 	}
 
 	@Override
@@ -60,7 +65,8 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 				Method[] ms = builderC.getDeclaredMethods();
 				for(Method m : ms) {
 					if(m.getReturnType() == tagC) {
-						return (T) m.invoke(builderC.newInstance());
+						objCache = (T) m.invoke(builderC.newInstance()); 
+						return objCache;
 					}
 				}
 			} catch (ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
@@ -77,7 +83,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 		return null;
 	}
 	
-	private LazyApplicationContext applicationContext = ContainerManager.getComponent(JunitApplicationContext.class.getSimpleName());
+	private LazyApplicationContext applicationContext = LazyApplicationContext.getInstance();
 	private LazyListableBeanFactory lazyBeanFactory = (LazyListableBeanFactory) applicationContext.getDefaultListableBeanFactory();
 	private BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	/**

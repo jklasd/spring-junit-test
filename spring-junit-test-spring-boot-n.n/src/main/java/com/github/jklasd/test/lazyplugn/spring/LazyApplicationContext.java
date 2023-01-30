@@ -224,13 +224,13 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		return LazyBean.findBeanWithAnnotation(annotationType);
 	}
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
-	
-	@Override
-	public String getBeanKey() {
-		return JunitApplicationContext.class.getSimpleName();
-	}
+//	@Override
+//	public void register() {
+//		ContainerManager.registComponent(this);
+//	}
+//	
+//	@Override
+//	public String getBeanKey() {
+//		return JunitApplicationContext.class.getSimpleName();
+//	}
 }

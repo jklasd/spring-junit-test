@@ -15,7 +15,6 @@ public final class ContainerManager {
 	public static volatile int stats;
 	
 	public static final class NameConstants{
-		public final static String MockFieldHandler = "com.github.jklasd.test.core.common.fieldann.MockFieldHandler";
 		public final static String SqlInterceptor = "com.github.jklasd.test.core.common.methodann.mock.h2.SqlInterceptor";
 	}
 	

@@ -61,7 +61,7 @@ public class ResourceHandler  implements FieldHandler{
 		return Resource.class.getName();
 	}
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {

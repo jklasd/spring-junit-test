@@ -69,7 +69,7 @@ public class CheckUtil {
 		@Override
 		public BeanDefinitionRegistry getRegistry() {
 			// TODO Auto-generated method stub
-			return null;
+			return bean.getApplicationContext();
 		}
 
 		@Override

@@ -234,15 +234,15 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		return (OrderSourceProvider) createFactoryAwareOrderSourceProvider.invoke(this,beans);
 	}
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent( this);
-	}
-	
-	@Override
-	public String getBeanKey() {
-		return JunitListableBeanFactory.class.getSimpleName();
-	}
+//	@Override
+//	public void register() {
+//		ContainerManager.registComponent( this);
+//	}
+//	
+//	@Override
+//	public String getBeanKey() {
+//		return JunitListableBeanFactory.class.getSimpleName();
+//	}
 
 	protected void releaseBean(Class<?> tagC, Object tmp) {
 		cacheBeanMap.entrySet().stream().filter(entry->entry.getValue()==tmp).forEach(entry->{

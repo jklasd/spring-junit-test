@@ -25,7 +25,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class RoutingDataSourceExt extends AbstractRoutingDataSource implements ContainerRegister,DatabaseInitialization{
+public class RoutingDataSourceExt extends AbstractRoutingDataSource implements DatabaseInitialization{
 	
 	String junitH2Key = "junitH2";
 	String defaultKey = "default";

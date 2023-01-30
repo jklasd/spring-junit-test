@@ -12,7 +12,6 @@ import org.mockito.mock.MockCreationSettings;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
-import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
@@ -24,7 +23,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class MockFieldHandler implements ContainerRegister, MockFieldHandlerI {
+public class MockFieldHandler implements MockFieldHandlerI {
 	public static MockFieldHandler obj;
 
 	private MockFieldHandler() {
@@ -47,7 +46,7 @@ public class MockFieldHandler implements ContainerRegister, MockFieldHandlerI {
 	}
 
 	public String getBeanKey() {
-		return ContainerManager.NameConstants.MockFieldHandler;
+		return MockFieldHandlerI.class.getName();
 	}
 
 	ThreadLocal<String> testClassId = new InheritableThreadLocal<>();
