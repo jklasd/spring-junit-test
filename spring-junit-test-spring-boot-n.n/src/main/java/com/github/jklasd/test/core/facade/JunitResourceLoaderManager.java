@@ -15,11 +15,11 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class ResourceLoader {
+public class JunitResourceLoaderManager {
 
-	private final static ResourceLoader resourceLoader = new ResourceLoader();
+	private final static JunitResourceLoaderManager resourceLoader = new JunitResourceLoaderManager();
 	
-	private ResourceLoader() {
+	private JunitResourceLoaderManager() {
 		Lists.newArrayList(
 				XMLResourceLoader.getInstance(),//xml顺序第一位
 				AnnotationResourceLoader.getInstance(),
@@ -27,19 +27,19 @@ public class ResourceLoader {
 				).forEach(loaderClass->regist(loaderClass));
 	}
 	
-	public static ResourceLoader getInstance() {
+	public static JunitResourceLoaderManager getInstance() {
 		return resourceLoader;
 	}
 	
-	private Map<String,JunitResourceLoader> loaderMap = Maps.newHashMap();
-	private List<JunitResourceLoader> loaderList = Lists.newArrayList();
+	private Map<String,JunitResourceLoaderI> loaderMap = Maps.newHashMap();
+	private List<JunitResourceLoaderI> loaderList = Lists.newArrayList();
 
-	private void regist(JunitResourceLoader loader) {
+	private void regist(JunitResourceLoaderI loader) {
 		loaderMap.put(loader.key().getFileName(), loader);
 		loaderList.add(loader);
-		loaderList.sort(new Comparator<JunitResourceLoader>() {
+		loaderList.sort(new Comparator<JunitResourceLoaderI>() {
 			@Override
-			public int compare(JunitResourceLoader o1, JunitResourceLoader o2) {
+			public int compare(JunitResourceLoaderI o1, JunitResourceLoaderI o2) {
 				return o1.key().getOrder() - o2.key().getOrder();
 			}
 		});

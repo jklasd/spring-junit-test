@@ -29,7 +29,7 @@ public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelega
         /**
          * 需要修正env
          */
-        readerContext.getReader().setEnvironment(LazyApplicationContext.getInstance().getEnvironment());
+//        readerContext.getReader().setEnvironment(LazyApplicationContext.getInstance().getEnvironment()); //创建时注入
         this.readerContext = readerContext;
     }
     

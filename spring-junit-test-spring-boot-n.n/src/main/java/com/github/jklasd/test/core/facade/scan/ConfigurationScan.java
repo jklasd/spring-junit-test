@@ -18,7 +18,7 @@ import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.util.ClassUtil;
@@ -33,7 +33,7 @@ public class ConfigurationScan {
 	private static ConfigurationScan scaner = new ConfigurationScan();
 	public static ConfigurationScan getInstance() {return scaner;};
 	
-	JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
+	JunitResourceLoaderI xmlResourceLoader = XMLResourceLoader.getInstance();
 	PropResourceManager propLoader = PropResourceManager.getInstance();
 	BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	

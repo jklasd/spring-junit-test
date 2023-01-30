@@ -28,7 +28,7 @@ import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.util.LogbackUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.ResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
@@ -110,7 +110,7 @@ public class TestUtil implements JunitCoreComponentI{
 	    processed = true;
 	    ContainerManager.stats = ContainerManager.init;
 	    log.debug("=========加载配置========");
-	    ResourceLoader.getInstance().initLoader();
+	    JunitResourceLoaderManager.getInstance().initLoader();
 		ScannerRegistrarComponent.process();
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 		ContainerManager.stats = ContainerManager.inited;

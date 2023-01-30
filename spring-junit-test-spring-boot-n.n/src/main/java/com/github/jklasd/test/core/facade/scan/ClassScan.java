@@ -33,7 +33,7 @@ import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.ResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
@@ -53,7 +53,7 @@ public class ClassScan implements Scan{
 	private static String CLASS_SUFFIX = ".class";
 	
 	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
-	private ResourceLoader resourceLoader = ResourceLoader.getInstance();
+	private JunitResourceLoaderManager resourceLoader = JunitResourceLoaderManager.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);

@@ -29,6 +29,8 @@ import org.springframework.core.AttributeAccessor;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
 import org.springframework.core.ResolvableType;
+import org.springframework.core.env.Environment;
+import org.springframework.core.env.EnvironmentCapable;
 import org.springframework.core.log.LogMessage;
 import org.springframework.util.Assert;
 
@@ -50,7 +52,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class LazyListableBeanFactory extends JunitListableBeanFactory {
+public class LazyListableBeanFactory extends JunitListableBeanFactory implements EnvironmentCapable{
 	protected LazyListableBeanFactory() {}
 	private static LazyListableBeanFactory beanFactory = new LazyListableBeanFactory();
 	public static LazyListableBeanFactory getInstance() {
@@ -503,6 +505,11 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			return beanDefMap.get(beanDefName);
 		}
 		return null;
+	}
+
+	@Override
+	public Environment getEnvironment() {
+		return LazyApplicationContext.getInstance().getEnvironment();
 	}
 
 }

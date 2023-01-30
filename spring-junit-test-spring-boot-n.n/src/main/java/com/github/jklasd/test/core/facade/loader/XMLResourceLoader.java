@@ -24,7 +24,7 @@ import org.xml.sax.InputSource;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.xml.LazyBeanDefinitionDocumentReader;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -34,7 +34,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class XMLResourceLoader implements JunitResourceLoader{
+public class XMLResourceLoader implements JunitResourceLoaderI{
 	private static XMLResourceLoader loader = new XMLResourceLoader();
 	private XMLResourceLoader() {}
 	public static XMLResourceLoader getInstance() {

@@ -4,7 +4,7 @@ import java.io.InputStream;
 
 import com.github.jklasd.test.core.facade.loader.JunitResourceLoaderEnum;
 
-public interface JunitResourceLoader {
+public interface JunitResourceLoaderI {
 	JunitResourceLoaderEnum key();
 	void loadResource(InputStream jarFileIs);
 	void loadResource(String... sourcePath);

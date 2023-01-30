@@ -20,15 +20,15 @@ import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class JunitComponentResourceLoader implements JunitResourceLoader{
+public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 	private static JunitComponentResourceLoader loader = new JunitComponentResourceLoader();
 	private JunitComponentResourceLoader() {}
-	public static JunitResourceLoader getInstance() {
+	public static JunitResourceLoaderI getInstance() {
 		return loader;
 	}
 

@@ -10,7 +10,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.google.common.collect.Lists;
@@ -19,10 +19,10 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class AnnotationResourceLoader implements JunitResourceLoader{
+public class AnnotationResourceLoader implements JunitResourceLoaderI{
 	private static AnnotationResourceLoader loader = new AnnotationResourceLoader();
 	private AnnotationResourceLoader() {}
-	public static JunitResourceLoader getInstance() {
+	public static JunitResourceLoaderI getInstance() {
 		return loader;
 	}
 	
