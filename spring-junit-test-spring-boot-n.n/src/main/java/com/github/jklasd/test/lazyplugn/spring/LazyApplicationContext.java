@@ -1,6 +1,5 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
@@ -11,17 +10,15 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.boot.DefaultBootstrapContext;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.EventPublishingRunListener;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -179,46 +176,14 @@ public class LazyApplicationContext extends JunitApplicationContext{
 
 	private synchronized void buildEnv() {
 		if(env == null) {
+			
 			env = new StandardEnvironment();
-			if(properties == null) {
-				properties = new Properties();
-				try {
-					Resource propRes = ScanUtil.getRecourceAnyOne("application.properties","config/application.properties");
-					if(propRes!=null && propRes.exists()) {
-						properties.load(propRes.getInputStream());
-						String active = null;
-						if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
-							Resource activePropRes = ScanUtil.getRecourceAnyOne("application-"+active+".properties","config/application-"+active+".properties");
-							if(activePropRes!=null && activePropRes.exists()) {
-								properties.load(activePropRes.getInputStream());
-							}
-						}
-					}else {
-//						Object yml = Class.forName("Ymal").newInstance();
-						Resource ymlRes = ScanUtil.getRecourceAnyOne("application.yml","config/application.yml");
-						if(ymlRes!=null && ymlRes.exists()) {
-							YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
-							ymlToProp.setResources(ymlRes);
-							properties.putAll(ymlToProp.getObject());
-							String active = null;
-							if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
-								Resource activeYmlRes = ScanUtil.getRecourceAnyOne("application-"+active+".yml","config/application-"+active+".yml");
-								if(activeYmlRes!=null && activeYmlRes.exists()) {
-									ymlToProp.setResources(activeYmlRes);
-									properties.putAll(ymlToProp.getObject());
-								}
-							}
-							
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
-			}
-			env.getPropertySources().addFirst(new PropertiesPropertySource("junitProp", properties));
+			new EventPublishingRunListener(new SpringApplication(),new String[] {})
+				.environmentPrepared(new DefaultBootstrapContext(), env);
 			getBeanFactory().registerSingleton("environment", env);
 		}
 	}
+	
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 			throws BeansException {
 		return LazyBean.findBeanWithAnnotation(annotationType);

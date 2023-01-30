@@ -268,7 +268,9 @@ public class TestUtil implements JunitCoreComponentI{
 			throw new JunitException(e);
 		}
 	}
-
+	/**
+	 * 方便引用jar的代码中用到组件
+	 */
 	private static void registerComponent() {
 		ClassScan.getInstance().register();
 		PropResourceManager.getInstance().register();

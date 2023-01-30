@@ -46,6 +46,14 @@ public class HttpTest{
 
 2、分布式项目开发
 
+#### 适用场景
+
+1、业务代码测试
+
+#### 不适用场景
+
+1、架构开发测试
+
 ## 2、使用方式
 
 Spring-Junit-Test的使用方式分为Junit4和Junit5
