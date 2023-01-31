@@ -16,6 +16,8 @@ import java.lang.annotation.Target;
  * 
  * MYSQL_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
  * RYUK_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
+ * 
+ * docker 开启远程配置，参考https://www.php1.cn/detail/dockerdaemon_Yua_afdecdc6.html
  *
  */
 @Target({ElementType.METHOD,ElementType.TYPE})//指定位置
