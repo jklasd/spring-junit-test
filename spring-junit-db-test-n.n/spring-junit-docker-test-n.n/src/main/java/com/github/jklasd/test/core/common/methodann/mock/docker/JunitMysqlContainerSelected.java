@@ -11,6 +11,11 @@ import java.lang.annotation.Target;
  * 
  * 使用时，切换到MysqlContainer数据库
  * @author jubin.zhang
+ * 
+ * 如果是使用远程Docker镜像，请配置DOCKER_HOST,例:tcp://127.0.0.1:2375<br/>
+ * 
+ * MYSQL_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
+ * RYUK_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
  *
  */
 @Target({ElementType.METHOD,ElementType.TYPE})//指定位置
