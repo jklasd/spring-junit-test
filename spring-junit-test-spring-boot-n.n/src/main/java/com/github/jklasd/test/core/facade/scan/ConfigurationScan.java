@@ -1,18 +1,28 @@
 package com.github.jklasd.test.core.facade.scan;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
+import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
+import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
+import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
@@ -21,6 +31,8 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.ClassUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -114,7 +126,20 @@ public class ConfigurationScan {
 				TestUtil.getInstance().loadEnv(sourcePath,resource.getFilename());
 			}
 		}
-		
+		//@ImportResource;
+		if(AnnHandlerUtil.isAnnotationPresent(configClass,ComponentScan.class)) {
+			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, ComponentScan.class);
+//			ClassScan.getInstance().loadContextPathClass((String[]) attr.get("value"));
+			ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(LazyListableBeanFactory.getInstance(),
+					(Boolean)attr.get("useDefaultFilters"), LazyApplicationContext.getInstance().getEnvironment());
+			
+			String[] scanPaths =(String[]) attr.get("value");
+			if(scanPaths.length<1) {
+				scanPaths = new String[] {configClass.getPackage().getName()};
+			}
+			
+			scanner.scan(scanPaths);
+		}
 		if(!configClass.getName().startsWith("org.springframework")
 				&& ClassUtil.getInstance().hasStaticMethod(configClass)
 				) {

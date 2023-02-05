@@ -186,12 +186,15 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	Set<String> beanNameSet = Sets.newHashSet();
 	
 	public void registerSingleton(String beanName, Object singletonObject) throws IllegalStateException {
+		if(cacheBeanMap.containsKey(beanName)) {
+			throw new JunitException(beanName+"单例Bean注册失败", true);
+		}
 		beanNameSet.add(beanName);
 		if(LazyProxyManager.isProxy(singletonObject)) {
 //			cacheProxyBean.put(beanName, singletonObject);
 			throw new JunitException("不应该执行",true);
 		}
-		cacheBeanMap.put(singletonObject.getClass().getName(), singletonObject);
+		cacheBeanMap.put(beanName, singletonObject);
 		super.registerSingleton(beanName, singletonObject);
 	}
 
