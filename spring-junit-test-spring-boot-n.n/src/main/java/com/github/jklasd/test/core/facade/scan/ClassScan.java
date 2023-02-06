@@ -18,6 +18,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -29,9 +31,11 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
+import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
+import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -117,22 +121,19 @@ public class ClassScan implements Scan{
 			throw new JunitException();
 		}
 		log.info("=============加载class结束=============");
-//		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
-//		if(springBoot.isEmpty()) {
-//			throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
-//		}
-//		springBoot.forEach(startClass ->{
-//			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
-//			/**
-//			 * 查看导入资源
-//			 */
-//			ImportResource resource = startClass.getAnnotation(ImportResource.class);
-//			if(resource != null) {
-//				XMLResourceLoader.getInstance().loadResource(resource.value());
-//			}
-//		});
+		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
+		if(springBoot.isEmpty()) {
+			throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
+		}
+		for(Class<?> bootClass : springBoot) {
+			try {
+				ConfigurationScan.getInstance().scanConfigClass(bootClass);
+			} catch (IOException e) {
+				throw new JunitException("scanConfigClass处理 SpringBootApplication类", true);
+			}
+		}
 //		loadContextPathClass();
-//		log.debug("=============加载class结束=============");
+		log.debug("=============加载class结束=============");
 	}
 	@Getter
 	static Map<String,Class<?>> applicationAllClassMap = Maps.newConcurrentMap();
@@ -172,7 +173,7 @@ public class ClassScan implements Scan{
 			}
 		}
 	}
-//	@Deprecated
+
 //	public void loadContextPathClass() {
 ////		Set<String> classPaths =TestUtil.getInstance().getScanClassPath();
 //		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
