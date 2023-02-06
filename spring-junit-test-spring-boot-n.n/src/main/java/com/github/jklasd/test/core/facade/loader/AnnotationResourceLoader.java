@@ -11,6 +11,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
 import com.github.jklasd.test.spring.suppert.AopContextSuppert;
 import com.google.common.collect.Lists;
@@ -63,6 +64,7 @@ public class AnnotationResourceLoader implements JunitResourceLoaderI{
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(thridAutoConfigClass)).forEach(configClass->{
 			try {
 				configurationScan.scanConfigClass(configClass);
+				ClassScan.getInstance().loadComponentClassForAnnotation(configClass);
 			} catch (IOException e) {
 				log.error("AnnotationResourceLoader#scanConfigClass",e);
 			}

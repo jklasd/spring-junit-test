@@ -73,6 +73,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		if(cacheProxyBean.containsKey(beanName)) {
 			return cacheProxyBean.get(beanName);
 		}
+		Object tmpObject = lazyBeanFactory.getBean(beanName);
+		if(tmpObject != null) {
+			return tmpObject;
+		}
 		BeanDefinition beanDef = lazyBeanFactory.getBeanDefinition(beanName);
 		if(beanDef != null && beanDef instanceof AbstractBeanDefinition) {
 			AbstractBeanDefinition tmpBeanDef = (AbstractBeanDefinition) beanDef;
@@ -188,7 +192,7 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			throws BeansException {
 		return LazyBean.findBeanWithAnnotation(annotationType);
 	}
-
+	
 //	@Override
 //	public void register() {
 //		ContainerManager.registComponent(this);

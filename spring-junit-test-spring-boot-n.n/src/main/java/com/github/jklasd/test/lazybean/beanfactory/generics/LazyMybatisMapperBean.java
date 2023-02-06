@@ -7,6 +7,7 @@ import java.util.Map;
 
 import javax.sql.DataSource;
 
+import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.BeanDefinitionRegistryPostProcessor;
 import org.springframework.context.annotation.ScannedGenericBeanDefinition;
@@ -25,6 +26,7 @@ import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory.RootBeanD
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -96,7 +98,7 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
     private static Map<String,Object> mappingSession = Maps.newHashMap();
     
     public synchronized void processConfig(Class<?> configura, List<String> basePackages) {
-        mybatisScanPathList.addAll(basePackages);
+        mybatisScanPathList.addAll(Sets.newConcurrentHashSet(basePackages));
     }
 
     @Override
@@ -144,20 +146,25 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 		if(beanModel.getTagClass() == null) {
 			return false;
 		}
-		if(inited<3) {
-			if(inited<2) {
-				initMybatisBasePackage();
-			}
+		try {
 			if(inited<3) {
-				boolean finded = !mybatisScanPathList.isEmpty() && mybatisScanPathList.stream()
-		        .anyMatch(mybatisScanPath -> {
-		        	boolean tmp = beanModel.getTagClass().getPackage().getName().contains(mybatisScanPath);
-		        	return tmp;
-		        });
-		        if(finded) {
-		        	initMybatis();
-		        }
+				if(inited<2) {
+					initMybatisBasePackage();
+				}
+				if(inited<3) {
+					boolean finded = !mybatisScanPathList.isEmpty() && mybatisScanPathList.stream()
+			        .anyMatch(mybatisScanPath -> {
+			        	boolean tmp = beanModel.getTagClass().getPackage().getName().contains(mybatisScanPath);
+			        	return tmp;
+			        });
+			        if(finded) {
+			        		initMybatis();
+			        }
+				}
 			}
+		}catch (Exception e) {
+			log.error("初始化失败",e);
+			return false;
 		}
 		return mapperBeanDef.containsKey(beanModel.getTagClass().getName());
 	}
@@ -167,7 +174,13 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 			return;
 		}
 		inited = 2;
-		Object mapperScan = LazyListableBeanFactory.getInstance().getBean(mapperScannerConfigurer);
+		Object mapperScan = null;
+		try {
+			mapperScan = LazyListableBeanFactory.getInstance().getBean(mapperScannerConfigurer);
+		} catch (BeansException e) {
+			log.warn("未找到{}相关bean",mapperScannerConfigurer);
+			return;
+		}
 		String basePackage = (String) JunitInvokeUtil.invokeReadField("basePackage", mapperScan);
 		if(basePackage!=null) {
     		mybatisScanPathList.add(basePackage);
@@ -182,8 +195,13 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 			return;
 		}
 		inited = 3;
-		
-		Object mapperScan = LazyListableBeanFactory.getInstance().getBean(mapperScannerConfigurer);
+		Object mapperScan = null;
+		try {
+			mapperScan = LazyListableBeanFactory.getInstance().getBean(mapperScannerConfigurer);
+		} catch (BeansException e) {
+			log.warn("未找到{}相关bean",mapperScannerConfigurer);
+			return;
+		}
 		
 		String sqlSessionFactoryBeanName = (String) JunitInvokeUtil.invokeReadField("sqlSessionFactoryBeanName", mapperScan);
 		defaultFactory = LazyListableBeanFactory.getInstance().getBean(sqlSessionFactoryBeanName);

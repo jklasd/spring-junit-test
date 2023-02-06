@@ -30,6 +30,7 @@ public class AnnHandlerUtil {
 		return cachingmetadatareaderfactory.getMetadataReader(configClass.getName()).getAnnotationMetadata()
 				.getAnnotationAttributes(annotation.getName(), true);
 	}
+	
 	public static boolean isAnnotationPresent(Class<?> configClass,Class<?> annotation){
 		try {
 			return bean.getAnnotationValue(configClass, annotation)!=null;
