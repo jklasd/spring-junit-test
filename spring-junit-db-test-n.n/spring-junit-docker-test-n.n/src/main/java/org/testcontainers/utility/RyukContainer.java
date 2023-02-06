@@ -12,6 +12,8 @@ class RyukContainer extends GenericContainer<RyukContainer> {
 
     RyukContainer() {
         super("testcontainers/ryuk:0.3.4");
+        
+        Integer maxContainerMemory = LazyApplicationContext.getInstance().getEnvironment().getProperty("MAX_CONTAINER_MEMORY", Integer.class,128);//测试使用
         withExposedPorts(8080);
         withCreateContainerCmdModifier(cmd -> {
             cmd.withName("testcontainers-ryuk-" + DockerClientFactory.SESSION_ID);
@@ -26,6 +28,7 @@ class RyukContainer extends GenericContainer<RyukContainer> {
                             new Volume("/var/run/docker.sock")
                         )
                     )
+                    .withMemory(maxContainerMemory*1024*1024L)//限制256M
             );
         });
 
