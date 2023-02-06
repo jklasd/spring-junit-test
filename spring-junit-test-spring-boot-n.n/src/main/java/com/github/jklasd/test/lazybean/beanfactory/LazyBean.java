@@ -426,8 +426,7 @@ public class LazyBean implements LazyBeanI{
             }
         	return true;
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
-		    log.info("m=>{},field=>{},value=>{}",m,field,value);
-        	e.printStackTrace();
+		    log.warn("m=>{},field=>{},value=>{}",m,field,value,e);
         }
         return false;
     }
@@ -487,40 +486,6 @@ public class LazyBean implements LazyBeanI{
 	
 	/**
 	 * 
-	 * @param beanName bean名称
-	 * @param type bean类型
-	 * @return 返回bean对象
-	 */
-	@Deprecated
-	public Object findBean(String beanName,Class<?> type) {
-		if(type.isInterface()) {
-			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
-			for(Class<?> c : classList) {
-				Service ann = (Service) findByAnnotation(c,Service.class);
-				Component cAnn = (Component) findByAnnotation(c,Component.class);
-				if ((ann != null && ann.value().equals(beanName)) | (cAnn != null && cAnn.value().equals(beanName))) {
-					return buildProxy(c, beanName);
-				}
-			}
-			log.warn("ScanUtil # findBean=>Interface[{}]",type);
-		}else if(Modifier.isAbstract(type.getModifiers())) {//抽象类
-		}else {
-			Object obj = findBean(beanName); 
-			try {
-				if(type.getConstructors().length>0) {
-					return  obj == null?type.newInstance():obj;
-				}else {
-					throw new NoSuchBeanDefinitionException("没有获取到构造器");
-				}
-			} catch (InstantiationException | IllegalAccessException e) {
-				log.error("不能构建bean=>{}=>{}",beanName,type);
-			}
-		}
-		return null;
-	}
-	
-	/**
-	 * 
 	 * 通过注解查找Bean
 	 * 
 	 * @param annotationType Annotation类型
@@ -539,65 +504,6 @@ public class LazyBean implements LazyBeanI{
 		});
 		cacheMap.put(annotationType, annoClass);
 		return annoClass;
-	}
-	
-	@Deprecated
-	@SuppressWarnings({ "rawtypes", "unchecked" })
-	public Object findBeanByInterface(Class<?> interfaceClass, Type[] classGeneric) {
-		if(classGeneric == null) {
-			return findBeanByInterface(interfaceClass);
-		}
-		if(interfaceClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-//			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass);
-//			if(!cL.isEmpty()) {
-//				Class c = cL.get(0);
-//				throw new JunitException("待开发");
-//			}else {
-//				
-//			}
-			if(interfaceClass == ObjectProvider.class) {
-				return new ObjectProviderImpl((Class<?>)classGeneric[0]);
-			}
-		}else if(interfaceClass == List.class) {
-			//
-			List<?> list = LazyBean.findListBean((Class<?>)classGeneric[0]);
-			return list;
-		}
-		return null;
-	}
-	
-	/**
-	 * 扫描类 for bean
-	 * @param interfaceClass  接口
-	 * @return 返回实现接口的对象
-	 */
-	@Deprecated
-	public Object findBeanByInterface(Class<?> interfaceClass) {
-		if(interfaceClass == ApplicationContext.class || ScanUtil.isExtends(ApplicationContext.class, interfaceClass)
-				|| ScanUtil.isExtends(interfaceClass,ApplicationContext.class)) {
-			return util.getApplicationContext();
-		}
-		if(interfaceClass == Environment.class
-				|| ScanUtil.isExtends(Environment.class,interfaceClass)
-				|| ScanUtil.isExtends(interfaceClass, Environment.class)) {
-			return util.getApplicationContext().getEnvironment();
-		}
-		if(interfaceClass.getPackage().getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
-//			List<Class<?>> cL = ScanUtil.findClassImplInterface(interfaceClass,ScanUtil.findClassMap(ScanUtil.SPRING_PACKAGE),null);
-//			if(!cL.isEmpty()) {
-//				return LazyBean.getInstance().buildProxy(cL.get(0));
-//			}
-//			if(interfaceClass == ObjectProvider.class) {
-//				return new ObjectProviderImpl(classGeneric[0]);
-//			}
-			log.error("****************SPRING_PACKAGE 需处理**{}**************",interfaceClass);
-			return null;
-		}
-		List<Class<?>> tags = ScanUtil.findClassImplInterface(interfaceClass);
-		if (!tags.isEmpty()) {
-			return LazyBean.getInstance().buildProxy(tags.get(0));
-		}
-		return null;
 	}
 	
 	/**
@@ -654,7 +560,7 @@ public class LazyBean implements LazyBeanI{
 	 * @param requiredType 接口或者抽象类
 	 * @return 放回List对象
 	 */
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({ "unchecked", "rawtypes" })
 	public static List findListBean(Class<?> requiredType) {
 		/*
 		 * TODO List 处理
@@ -672,44 +578,6 @@ public class LazyBean implements LazyBeanI{
 		return list;
 	}
 	
-	/**
-	 * 
-	 * @param beanName beanName
-	 * @param type 目标类型
-	 * @return 代理对象构建真实对象
-	 */
-	@Deprecated
-	public Object createBeanForProxy(String beanName, Class<?> type) {
-		Class<?> tagClass = null;
-		if(type.isInterface()) {
-			List<Class<?>> classList = ScanUtil.findClassImplInterface(type);
-			for(Class<?> c : classList) {
-				Service ann = (Service) findByAnnotation(c,Service.class);
-				Component cAnn = (Component) findByAnnotation(c,Component.class);
-				if (ann != null  || cAnn != null ) {
-				    if ((ann != null && ann.value().equals(beanName)) || (cAnn != null && cAnn.value().equals(beanName))) {
-				        tagClass = c;
-				        break;
-				    }
-				    tagClass = c;
-				}
-			}
-			log.warn("ScanUtil # findBean=>Interface[{}]",type);
-		}
-		Object obj = null;
-		if(tagClass == null) {
-		    obj = util.getApplicationContext().getBean(type);
-			if(obj == null && type.isInterface()) {
-				obj = findBeanByInterface(type);
-			}
-		}else {
-		    BeanModel model = new BeanModel();
-		    model.setBeanName(beanName);
-		    model.setTagClass(tagClass);
-			obj = buildProxy(model);
-		}
-		return obj;
-	}
 	public static Object findCreateByProp(Class<?> tagertC) {
 		try {
 			return PropResourceManager.getInstance().findCreateByProp(tagertC);

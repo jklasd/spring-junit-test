@@ -20,7 +20,6 @@ import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -78,11 +77,11 @@ public class ScanUtil {
 		init = true;
 		getScanner().scan();
 	}
-//	private static Set<String> autoConfigClass = Sets.newConcurrentHashSet();
-//	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
-	public static void loadContextPathClass() {
-		getScanner().loadContextPathClass();
-	}
+	
+//	@Deprecated
+//	public static void loadContextPathClass() {
+//		getScanner().loadContextPathClass();
+//	}
 	
 	public static Class findClassByName(String beanName) {
 		return getScanner().findClassByName(beanName);
@@ -171,9 +170,6 @@ public class ScanUtil {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
 	}
-//	public static Class getClassByName(String className) {
-//		return nameMap.get(className);
-//	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
 		for(String path: paths) {
