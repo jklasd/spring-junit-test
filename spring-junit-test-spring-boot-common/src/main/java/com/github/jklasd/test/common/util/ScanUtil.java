@@ -51,7 +51,7 @@ public class ScanUtil {
 	public static boolean exists(Class record) {
 		return scaner.isInScanPath(record);
 	}
-	
+	@Deprecated
 	public static Map<String, Class<?>> findClassMap(String scanPath) {
 		return getScanner().findClassMap(scanPath);
 	}

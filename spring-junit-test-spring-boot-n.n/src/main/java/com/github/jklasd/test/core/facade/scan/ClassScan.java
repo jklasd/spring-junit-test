@@ -262,7 +262,8 @@ public class ClassScan implements Scan{
 		}
 		return list;
 	}
-	public static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
+	private static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
+	@Deprecated
 	public Map<String, Class<?>> findClassMap(String scanPath) {
 		if(pathForClass.containsKey(scanPath)) {
 			return pathForClass.get(scanPath);

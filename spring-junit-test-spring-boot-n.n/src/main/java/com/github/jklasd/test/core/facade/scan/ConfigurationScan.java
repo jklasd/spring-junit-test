@@ -1,17 +1,10 @@
 package com.github.jklasd.test.core.facade.scan;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.function.Supplier;
 
-import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.beans.factory.support.GenericBeanDefinition;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
@@ -22,7 +15,6 @@ import org.springframework.context.annotation.ImportResource;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
-import org.springframework.util.StringUtils;
 
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
@@ -126,7 +118,7 @@ public class ConfigurationScan {
 				TestUtil.getInstance().loadEnv(sourcePath,resource.getFilename());
 			}
 		}
-		//@ImportResource;
+		//@ComponentScan;
 		if(AnnHandlerUtil.isAnnotationPresent(configClass,ComponentScan.class)) {
 			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, ComponentScan.class);
 //			ClassScan.getInstance().loadContextPathClass((String[]) attr.get("value"));
