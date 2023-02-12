@@ -106,7 +106,7 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 	private AdvisedSupport advised = new AdvisedSupport();
 	/**
 	 * Advisor 顺序 由 Advisor自身执行顺序控制
-	 * @param classAdvisors
+	 * @param classAdvisors 需要注册的AOP处理方法【包含before,after,around,exception等等】
 	 */
 	public void regist(List<Advisor> classAdvisors) {
 		advised.addAdvisors(classAdvisors);

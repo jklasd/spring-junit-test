@@ -19,13 +19,13 @@ import org.springframework.core.type.classreading.MetadataReader;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
+import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
-import com.github.jklasd.test.util.ClassUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 

@@ -87,8 +87,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 	private LazyListableBeanFactory lazyBeanFactory = (LazyListableBeanFactory) applicationContext.getDefaultListableBeanFactory();
 	private BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	/**
-	 * Spring boot 2.3.1
-	 * @return
+	 * Spring boot 2.3.1 支持，返回通过tagC扫描的对象集合
 	 */
 	public Stream<T> orderedStream() {//临时处理
 		Class<?> tagC = (Class<?>) type;

@@ -12,10 +12,10 @@ import java.lang.annotation.Target;
  * 使用时，切换到MysqlContainer数据库
  * @author jubin.zhang
  * 
- * 如果是使用远程Docker镜像，请配置DOCKER_HOST,例:tcp://127.0.0.1:2375<br/>
+ * 如果是使用远程Docker镜像，请配置DOCKER_HOST,例:tcp://127.0.0.1:2375 <BR>
  * 
- * MYSQL_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
- * RYUK_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值<br/>
+ * MYSQL_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值 <BR>
+ * RYUK_CONTAINER_PORT，配置后固定端口号，如果是公共资源，建议不设置值 <BR>
  * 
  * docker 开启远程配置，参考https://www.php1.cn/detail/dockerdaemon_Yua_afdecdc6.html
  *
@@ -25,19 +25,19 @@ import java.lang.annotation.Target;
 @Documented
 public @interface JunitMysqlContainerSelected {
 	/**
-	 * 是否使用mysql容器数据库
-	 * @return
+	 * @return 是否使用mysql容器数据库
 	 */
 	boolean value() default true;
 	
 	/**
-	 * 当定义在class上时使用，控制当前表示当前junit class用到的数据源写入。<br/>
+	 * 当定义在class上时使用，控制当前表示当前junit class用到的数据源写入。<BR>
 	 * 
-	 * insertResource,寻址源头是从src/test/resources去找，路径可以自定义
+	 * insertResource,寻址源头是从src/test/resources去找，路径可以自定义 <BR>
 	 * 
-	 * 表的创建建议统一写到db-mysql/schema <br/>
+	 * 表的创建建议统一写到db-mysql/schema <BR>
 	 * db-mysql/data下也可以写一些插入公共数据
-	 * @return
+	 * 
+	 * @return 返回脚本地址
 	 */
 	String[] insertResource() default "";
 }

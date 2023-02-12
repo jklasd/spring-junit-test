@@ -317,10 +317,10 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 	
 	/**
 	 * 通过class 匹配 beanName
-	 * @param tagClass
-	 * @param includeNonSingletons
-	 * @param allowEagerInit
-	 * @return
+	 * @param tagClass 目标类
+	 * @param includeNonSingletons 是否导入非单例对象
+	 * @param allowEagerInit 允许初始化
+	 * @return 返回匹配好的所有beanName
 	 */
 	public List<String> matchName(Class<?> tagClass,boolean includeNonSingletons, boolean allowEagerInit) {
 		List<String> result = Lists.newArrayList();

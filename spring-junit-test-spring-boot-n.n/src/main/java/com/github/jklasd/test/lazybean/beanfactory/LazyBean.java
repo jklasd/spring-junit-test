@@ -343,13 +343,14 @@ public class LazyBean implements LazyBeanI{
     private Map<Class<?>,Map<String,Method>> methodsCache = Maps.newHashMap();
     private Map<Class<?>,Map<String,Field>> fieldsCache = Maps.newHashMap();
 
+    
     /**
      * 注解赋值
-     * @param field
-     * @param obj
-     * @param superClass
-     * @param value
-     * @return
+     * @param field 赋值的成员变量
+     * @param obj 需要赋值的对象
+     * @param superClass 对象父级类
+     * @param value 赋值对象
+     * @return true 赋值成功
      */
 	public boolean setFieldValueFromExpression(String field, Object obj,Class<?> superClass,Object value) {
 		
