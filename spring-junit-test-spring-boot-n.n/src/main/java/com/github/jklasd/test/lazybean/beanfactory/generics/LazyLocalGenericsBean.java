@@ -72,6 +72,13 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 			if(!impleList.isEmpty()) {
 				localCache.set(impleList);
 				return true;
+			}else {
+				//从beanFactory找
+				impleList = beanFactory.findBeanDefiByClass(beanModel.getTagClass());
+				if(!impleList.isEmpty()) {
+					localCache.set(impleList);
+					return true;
+				}
 			}
 		}
 		localCache.remove();

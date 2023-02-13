@@ -6,6 +6,7 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Nullable;
 
@@ -32,7 +33,7 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.log.LogMessage;
 import org.springframework.util.Assert;
 
-import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.model.BeanInitModel;
@@ -368,10 +369,10 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			if(beanDef instanceof AbstractBeanDefinition) {
 				AbstractBeanDefinition tmpDef = (AbstractBeanDefinition) beanDef;
 				if(FactoryBean.class.isAssignableFrom(tmpDef.getBeanClass())) {
-					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
+					boolean match = typeToMatch.getRawClass().isAssignableFrom(tmpDef.getBeanClass());
 					return match;
 				}else {
-					boolean match = tmpDef.getBeanClass().isAssignableFrom(typeToMatch.getRawClass());
+					boolean match = typeToMatch.getRawClass().isAssignableFrom(tmpDef.getBeanClass());
 					return match;
 				}
 			}
@@ -506,6 +507,21 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			return beanDefMap.get(beanDefName);
 		}
 		return null;
+	}
+
+	public List<Class<?>> findBeanDefiByClass(Class<?> tagClass) {
+		List<String> matchBean = matchName(tagClass, isCacheBeanMetadata(), false);
+		if(!matchBean.isEmpty()) {
+			List<Class<?>> tagClasses = matchBean.stream().map(beanName->{
+				try {
+					return JunitClassLoader.getInstance().junitloadClass(beanDefMap.get(beanName).getBeanClassName());
+				} catch (ClassNotFoundException e) {
+					return null;
+				}
+			}).filter(item->item!=null).collect(Collectors.toList());
+			return tagClasses;
+		}
+		return Lists.newArrayList();
 	}
 
 }
