@@ -35,7 +35,11 @@ public class LazyProxyManager {
 
 	
 	/************************************代理类判别工具********************************************/
-	
+	/**
+	 * 
+	 * @param obj 判别对象
+	 * @return true 是代理对象
+	 */
 	public static boolean isProxy(Object obj){
 		return obj instanceof Proxy || obj instanceof Factory;
     }

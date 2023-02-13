@@ -12,8 +12,7 @@ import com.google.common.collect.Maps;
 /**
  * @author one.xu
  * @version v1.0
- * @description
- * @date 2022/8/15 16:46
+ * 2022/8/15 16:46
  */
 public class TransformMysqlToH2 {
     private static final AtomicInteger INDEX = new AtomicInteger();
@@ -38,8 +37,9 @@ public class TransformMysqlToH2 {
     }
 
     /**
-     * @param content
-     * @return
+     * mysql to H2
+     * @param content 转化前脚本
+     * @return 返回转化后的脚本
      */
     public static String transformCreateTable(String content) {
         content = "SET MODE MYSQL;\n\n" + content;

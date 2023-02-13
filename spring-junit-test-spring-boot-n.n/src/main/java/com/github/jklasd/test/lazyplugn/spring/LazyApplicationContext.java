@@ -131,11 +131,9 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	}
 	
 	private Map<Class<?>,Set<String>> classMapName = Maps.newHashMap();
+	
 	/**
-	 * bean 注册
-	 * @param beanName
-	 * @param tmp
-	 * @param tagC
+	 *注册代理对象
 	 */
 	public void registProxyBean(String beanName, Object proxyBean, Class<?> tagC) {
 		if(StringUtils.isBlank(beanName)) {

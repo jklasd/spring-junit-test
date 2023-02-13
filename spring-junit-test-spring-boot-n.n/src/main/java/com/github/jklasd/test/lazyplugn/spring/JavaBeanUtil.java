@@ -63,8 +63,8 @@ public class JavaBeanUtil {
 	 * 2-1在构建目标对象前，先判断构建方法是否存在参数，若存在参数，则先去寻找并创建相应的参数对象
 	 * @param configClass  构建目标对象的方法的类
 	 * @param method   构建目标对象的方法
-	 * @param assemblyData 
-	 * @return
+	 * @param assemblyData 构建参数 
+	 * @return 返回构建的对象
 	 */
     public Object buildBean(Class<?> configClass, Method method, BeanModel assemblyData) {
 	    if(StringUtils.isBlank(assemblyData.getBeanName())) {
@@ -240,7 +240,6 @@ public class JavaBeanUtil {
     /**
      * 查询对应的构造函数，并创建bean
      * @param configClass   confirguration对象
-     * @param nameSpace 扫描域
      * @param cons  构建函数
      * @throws InstantiationException
      * @throws IllegalAccessException
@@ -263,9 +262,8 @@ public class JavaBeanUtil {
     }
     /**
      * 构建目标对象的方法参数对象
-     * @param nameSpace 扫描域
      * @param paramTypes    参数类型组
-     * @param annotations 
+     * @param paramAnnotations    参数的注解组
      * @return  参数对象组
      */
     public Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {

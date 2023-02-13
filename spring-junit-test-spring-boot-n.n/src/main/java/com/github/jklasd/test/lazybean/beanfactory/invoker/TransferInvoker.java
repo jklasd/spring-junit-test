@@ -115,9 +115,9 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	
 	/**
 	 * 回滚事务
-	 * @param oldTxInfo
-	 * @param txStatus
-	 * @param e
+	 * @param oldTxInfo 旧事务信息
+     * @param txStatus 当前事务状态
+	 * @param e 导致回滚事务的异常
 	 */
 	
 	protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
@@ -160,10 +160,11 @@ public class TransferInvoker extends AbstractProxyInvoker{
         return txStatus;
     }
     /**
+     * 
      * 关闭事务
      * @param oldTxInfo 旧事务信息
-     * @param txStatus 当前事务
-     * @param method 
+     * @param txStatus 当前事务状态
+     * @param method 存在事务的方法 
      */
     protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
         if (txStatus != null) {

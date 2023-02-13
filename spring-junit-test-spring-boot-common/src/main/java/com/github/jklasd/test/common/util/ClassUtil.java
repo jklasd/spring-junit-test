@@ -17,12 +17,12 @@ public class ClassUtil {
 	}
 	
 	/**
-	 * 个别自定义类
-	 * @param configClass
+	 * @param tagClass 需要检查的类
+	 * @return 存在静态方法
 	 */
-	public boolean hasStaticMethod(Class<?> configClass) {
+	public boolean hasStaticMethod(Class<?> tagClass) {
 		try {
-			Method[] methods = configClass.getDeclaredMethods();
+			Method[] methods = tagClass.getDeclaredMethods();
 			return Lists.newArrayList(methods).stream().anyMatch(m->{
 				if(Modifier.isStatic(m.getModifiers())
 						&& !m.getName().equals("main")//非main方法
@@ -31,7 +31,7 @@ public class ClassUtil {
 						&& !m.getName().startsWith("$")) {//非代理类的方法
 					Class<?> returnType = m.getReturnType();
 					if(!returnType.getName().contains("void")) {
-						log.debug("class=>{},method=>{}",configClass,m);
+						log.debug("class=>{},method=>{}",tagClass,m);
 						return true;
 					}
 				}
