@@ -1,0 +1,80 @@
+## Package declaration
+#if($StringUtils.isNotEmpty($sourceClass.packageName))
+package $sourceClass.packageName;
+#end
+
+
+## spring-junit-test 引入包
+#junitTestImport()
+##
+## 同一包下不用引用，业务类
+## import ${sourceClass.packageName}.${sourceClass.name};
+import org.springframework.beans.factory.annotation.Autowired;
+## service 引入包
+#serviceImport()
+##
+${junitAnn}
+class ${sourceClass.name}_Test {
+
+    @Autowired
+    private ${sourceClass.name} ${sourceClass.testClassMemberName};
+
+
+#foreach($method in $methods)
+#if($method.name.indexOf('lambda$')<0)
+    @Test
+    public void ${method.name}_test(){
+##		构建参数
+#junitBuildParams($method,$tmp)
+##		调用方法
+	${sourceClass.testClassMemberName}.${method.name}($tmp);
+    }
+#end
+#end
+
+}
+
+## junit 导入判断 ##
+#macro(junitTestImport)
+#if(${junitAnn.indexOf("RunSpringJunitTestFor5")}!=-1)
+import com.github.jklasd.test.ann.RunSpringJunitTestFor5;
+import org.junit.jupiter.api.Test;
+#else
+import com.github.jklasd.test.ann.RunSpringJunitTest;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+#end
+#end
+## ##
+
+## service 导入判断 ##
+#macro(serviceImport)
+
+#foreach($method in $methods)
+#if($method.name.indexOf('lambda$')<0)
+#set($serviceImports = "")
+#foreach($param in $method.parameters)
+#set($paramsInfo = $param.toString().split(" "))
+#set($serviceImports = $MethodParamUtil.handlerImport($paramsInfo,$serviceImports))
+#end
+#if($serviceImports.length()>0)
+import com.alibaba.fastjson.JSONObject;
+$serviceImports
+#end
+#end
+#end
+
+#end
+## ##
+
+## junit 构建入参 ##
+#macro(junitBuildParams $method,$tmp)
+	#set($params = "")
+	#foreach($param in $method.parameters)
+	#set($paramsInfo = $param.toString().split(" "))
+	$MethodParamUtil.beforeHandFixedParams($paramsInfo)
+	#set($params = $MethodParamUtil.handParams($paramsInfo,$params))
+	#end
+	#set($tmp = $params)
+#end
+## ##

@@ -354,28 +354,28 @@ public class LazyBean implements LazyBeanI{
      */
 	public boolean setFieldValueFromExpression(String field, Object obj,Class<?> superClass,Object value) {
 		
-		String mName = "set"+field.toLowerCase();
-		if(methodsCache.containsKey(superClass)) {
-		    Method tagM = methodsCache.get(superClass).get(mName);
-		    if(tagM!=null) {
-		    	boolean success = invokeSet(field, obj, value, tagM);
-		    	if(success) {
-		    		return success;
-		    	}
-		    }
-		}else {
-		    methodsCache.put(superClass, Maps.newHashMap());
-		}
-		Method[] methods = superClass.getDeclaredMethods();
-		for(Method m : methods) {
-			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
-				boolean success = invokeSet(field, obj, value, m);
-				if(success) {
-				    methodsCache.get(superClass).put(mName, m);
-				    return success;
-				}
-			}
-		}
+//		String mName = "set"+field.toLowerCase();
+//		if(methodsCache.containsKey(superClass)) {
+//		    Method tagM = methodsCache.get(superClass).get(mName);
+//		    if(tagM!=null) {
+//		    	boolean success = invokeSet(field, obj, value, tagM);
+//		    	if(success) {
+//		    		return success;
+//		    	}
+//		    }
+//		}else {
+//		    methodsCache.put(superClass, Maps.newHashMap());
+//		}
+//		Method[] methods = superClass.getDeclaredMethods();
+//		for(Method m : methods) {
+//			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
+//				boolean success = invokeSet(field, obj, value, m);
+//				if(success) {
+//				    methodsCache.get(superClass).put(mName, m);
+//				    return success;
+//				}
+//			}
+//		}
 		if(fieldsCache.containsKey(superClass)) {
 			Field tagM = fieldsCache.get(superClass).get(field);
 		    if(tagM!=null) {
