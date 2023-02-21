@@ -19,7 +19,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -31,11 +30,9 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
-import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
-import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -262,6 +259,25 @@ public class ClassScan implements Scan{
 		}
 		return list;
 	}
+	
+	public List<Class<?>> findClassForList(String scanPath) {
+		return classNames.stream().filter(cn->cn.contains(scanPath)).map(className ->{
+			className = className.replace("/", ".").replace("\\", ".").replace(".class", "");
+			// 查看是否class
+			try {
+				Class<?> c = classLoader.junitloadClass(className);
+				return c;
+			} catch (ClassNotFoundException | NoClassDefFoundError e) {
+				if(TestUtil.getInstance().isScanClassPath(className)) {
+					log.error("加载{}=>未找到类{}",className,e.getMessage());
+				}
+			}catch(Error e) {
+				log.error("未找到类{}=>{}",className,e.getMessage());
+			}
+			return null;
+		}).collect(Collectors.toList());
+	}
+	
 	private static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
 	@Deprecated
 	public Map<String, Class<?>> findClassMap(String scanPath) {

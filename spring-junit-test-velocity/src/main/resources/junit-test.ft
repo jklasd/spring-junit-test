@@ -54,8 +54,7 @@ import org.junit.Test;
 #if($method.name.indexOf('lambda$')<0)
 #set($serviceImports = "")
 #foreach($param in $method.parameters)
-#set($paramsInfo = $param.toString().split(" "))
-#set($serviceImports = $MethodParamUtil.handlerImport($paramsInfo,$serviceImports))
+#set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports))
 #end
 #if($serviceImports.length()>0)
 import com.alibaba.fastjson.JSONObject;
@@ -71,9 +70,8 @@ $serviceImports
 #macro(junitBuildParams $method,$tmp)
 	#set($params = "")
 	#foreach($param in $method.parameters)
-	#set($paramsInfo = $param.toString().split(" "))
-	$MethodParamUtil.beforeHandFixedParams($paramsInfo)
-	#set($params = $MethodParamUtil.handParams($paramsInfo,$params))
+	$MethodParamUtil.beforeHandFixedParams($param)
+	#set($params = $MethodParamUtil.handParams($param,$params))
 	#end
 	#set($tmp = $params)
 #end

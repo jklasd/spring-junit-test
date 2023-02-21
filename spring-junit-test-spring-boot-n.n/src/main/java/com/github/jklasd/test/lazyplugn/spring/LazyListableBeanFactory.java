@@ -40,6 +40,7 @@ import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
+import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -289,13 +290,14 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			log.debug("处理{}",tmpDef.getBeanClass());
 			beanCreaterScan.loadConfigurationClass(tmpDef.getBeanClass());
 		}
-		
+		ClassScan.getInstance().loadComponentClassForAnnotation(tmpDef.getBeanClass());
 		if(beanDefMap.containsKey(beanName)) {
 			if(!Objects.equal(beanDefMap.get(beanName), beanDefinition)) {
 				throw new JunitException("bean "+beanName +"注冊重复", true);
 			}
 			return;
 		}
+		
 		beanDefList.add(beanDefinition);
 		beanDefMap.put(beanName, beanDefinition);
 		beanNames.add(beanName);
