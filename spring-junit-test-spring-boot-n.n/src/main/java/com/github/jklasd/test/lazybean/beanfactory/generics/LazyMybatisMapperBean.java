@@ -41,10 +41,10 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 		return getInstanceByClass(LazyMybatisMapperBean.class);
 	}
 
-    private static Object defaultFactory;
+    private Object defaultFactory;
 
     private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
-    private static final Class<?> MapperFactoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperFactoryBean");
+    private final Class<?> MapperFactoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperFactoryBean");
 
     public static final boolean useMybatis() {
         return factoryClass != null;
@@ -91,7 +91,7 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 
     private static List<String> mybatisScanPathList = Lists.newArrayList();
 
-    private static Class<?> mapperScannerConfigurer
+    private Class<?> mapperScannerConfigurer
         = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperScannerConfigurer");
 //    private static boolean loadScaned;
     
@@ -206,6 +206,21 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 		String sqlSessionFactoryBeanName = (String) JunitInvokeUtil.invokeReadField("sqlSessionFactoryBeanName", mapperScan);
 		defaultFactory = LazyListableBeanFactory.getInstance().getBean(sqlSessionFactoryBeanName);
 		
+		handMapperBeanDefinition(mapperScan);
+		
+		try {
+			restDataSource();
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| NoSuchMethodException | SecurityException e) {
+			throw new JunitException("数据源 重置失败", true);
+		}
+	}
+	/**
+	 * 待优化
+	 * 暂时处理所有mapperbeanDefinition
+	 * @param mapperScan mapperScanBean
+	 */
+	private void handMapperBeanDefinition(Object mapperScan) {
 		BeanDefinitionRegistryPostProcessor postProcessor = (BeanDefinitionRegistryPostProcessor)mapperScan;
 		JunitInvokeUtil.invokeWriteField("sqlSessionFactory",  mapperScan ,defaultFactory);
 		postProcessor.postProcessBeanDefinitionRegistry(LazyListableBeanFactory.getInstance());
@@ -219,13 +234,6 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 				mapperBeanDef.put(metaData.getClassName(), beanDef);
 			}
 			LazyListableBeanFactory.getInstance().removeBeanDefinition(beanName);
-		}
-		
-		try {
-			restDataSource();
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| NoSuchMethodException | SecurityException e) {
-			throw new JunitException("h2 重置失败", true);
 		}
 	}
 }

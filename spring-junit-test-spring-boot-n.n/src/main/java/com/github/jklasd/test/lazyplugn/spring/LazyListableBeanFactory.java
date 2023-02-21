@@ -290,7 +290,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			log.debug("处理{}",tmpDef.getBeanClass());
 			beanCreaterScan.loadConfigurationClass(tmpDef.getBeanClass());
 		}
-		ClassScan.getInstance().loadComponentClassForAnnotation(tmpDef.getBeanClass());
+		//xml,ann
+		ClassScan.getInstance().loadComponentClass(tmpDef.getBeanClass());
 		if(beanDefMap.containsKey(beanName)) {
 			if(!Objects.equal(beanDefMap.get(beanName), beanDefinition)) {
 				throw new JunitException("bean "+beanName +"注冊重复", true);
