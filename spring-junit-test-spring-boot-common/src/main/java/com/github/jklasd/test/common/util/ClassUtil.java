@@ -24,7 +24,8 @@ public class ClassUtil {
 		try {
 			Method[] methods = tagClass.getDeclaredMethods();
 			return Lists.newArrayList(methods).stream().anyMatch(m->{
-				if(Modifier.isStatic(m.getModifiers())
+				if(Modifier.isPublic(m.getModifiers())
+						&& Modifier.isStatic(m.getModifiers())
 						&& !m.getName().equals("main")//非main方法
 						&& !m.getName().contains("lambda$")//非匿名方法
 						&& !m.getName().contains("access$")//非匿名方法

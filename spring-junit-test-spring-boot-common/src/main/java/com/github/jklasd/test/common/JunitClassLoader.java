@@ -1,23 +1,17 @@
 package com.github.jklasd.test.common;
 
-import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.util.List;
+import java.util.Set;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
-import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.SignalNotificationUtil;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +37,7 @@ public class JunitClassLoader extends ClassLoader{
 	public Class<?> junitloadClass(String name) throws ClassNotFoundException {
 		return loadClass(name);
 	}
-	private List<Class<?>> staticComponentClass = Lists.newArrayList();
+	private Set<Class<?>> staticComponentClass = Sets.newConcurrentHashSet();
 	private BeanFactoryProcessorI beanFactoryProcessor;
 	private LazyBeanI lazyBean;
 	private boolean staticClassHandled;
@@ -51,11 +45,11 @@ public class JunitClassLoader extends ClassLoader{
 		setBean();
 		if(!staticClassHandled) {
 			staticClassHandled = true;
-			staticComponentClass.forEach(staticClass->{
-				if(beanFactoryProcessor.notBFProcessor(staticClass) && CheckUtil.checkProp(staticClass)) {
-					lazyBean.processStatic(staticClass);
-				}
-			});
+//			staticComponentClass.forEach(staticClass->{
+//				if(beanFactoryProcessor.notBFProcessor(staticClass) && CheckUtil.checkProp(staticClass)) {
+//					lazyBean.processStatic(staticClass);
+//				}
+//			});
 		}
 	}
 	
@@ -72,21 +66,13 @@ public class JunitClassLoader extends ClassLoader{
 			return null;
 		}
 		loadClass = loadClass(name, false);
-		try {
+//		try {
 			if(!Modifier.isAbstract(loadClass.getModifiers())
 					&& !loadClass.getName().startsWith("org.springframework")) {
-				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
-				if(meta.hasAnnotation(Component.class.getName())
-						|| meta.hasAnnotation(Service.class.getName())
-						|| meta.hasAnnotation(Configuration.class.getName())
-						|| meta.hasAnnotation(Repository.class.getName())
-						) {
+//				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
+				if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
 					log.debug("查看{}是否是静态类",loadClass);
 					if(scan.hasStaticMethod(loadClass)) {
-//						scan.hasStaticMethod(loadClass);
-//						if(loadClass.getName().contains("CostConfiguration")) {
-//							log.debug("断点");
-//						}
 						int process = ContainerManager.stats;
 						if(process < ContainerManager.inited) {
 							staticComponentClass.add(loadClass);
@@ -104,9 +90,9 @@ public class JunitClassLoader extends ClassLoader{
 					}
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
-		}
+//		} catch (IOException e) {
+//			e.printStackTrace();
+//		}
 		
 		return loadClass;
     }

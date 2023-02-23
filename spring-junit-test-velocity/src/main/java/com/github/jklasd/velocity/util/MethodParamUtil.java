@@ -121,6 +121,10 @@ public class MethodParamUtil {
 	static class BuildJSONObjectByClass{
 		public static String parseJsonFromClass(String tagClassName) {
 			Class<?> tagClass = JunitClassLoader.loadClass(tagClassName);
+			if(tagClass == null) {
+				log.debug("");
+				return "";
+			}
 			StringBuilder jsonBuilder = new StringBuilder("{\"+\n");
 			jsonBuilder.append(spaceStr);
 			Field[] fields = tagClass.getDeclaredFields();
@@ -223,7 +227,7 @@ public class MethodParamUtil {
 		//arr[1]
 //		String paramName = arr[1];
 		
-		if(checkParams(arr)) {
+		if(checkParams(arr) || arr[0].contains("Class<")) {
 			return params;
 		}
 		StringBuilder imports = new StringBuilder(params);
@@ -323,9 +327,9 @@ public class MethodParamUtil {
 			}, type)+"]";
 		default:
 			Class<?> tagC = JunitClassLoader.loadClass(typeStr);
-			if(tagC == null) {
-				log.debug("断点");
-			}
+//			if(tagC == null) {
+//				log.debug("断点");
+//			}
 			if(tagC == null || tagC.isEnum()) {
 				return "''";
 			}

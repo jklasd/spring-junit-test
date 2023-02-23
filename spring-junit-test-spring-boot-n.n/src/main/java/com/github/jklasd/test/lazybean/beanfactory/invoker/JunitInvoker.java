@@ -3,11 +3,13 @@ package com.github.jklasd.test.lazybean.beanfactory.invoker;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.MethodSnoopUtil;
+import com.github.jklasd.test.common.util.MethodSnoopUtil.PryMethodInfo;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.google.common.collect.Sets;
@@ -36,6 +38,8 @@ public class JunitInvoker extends AbstractProxyInvoker{
 
 	Set<Method> handledMethods = Sets.newConcurrentHashSet();
 	Set<String> handledClassName = Sets.newConcurrentHashSet();
+	Set<Class<?>> staticClassName = Sets.newConcurrentHashSet();
+	private LazyBeanI lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
@@ -43,22 +47,26 @@ public class JunitInvoker extends AbstractProxyInvoker{
 			return true;
 		}
 		try {
-			List<String> className = MethodSnoopUtil.findNotPublicMethodForClass(dto.getMethod());
-			if(className.isEmpty()) {
+			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(dto.getMethod());
+			handledMethods.add(dto.getMethod());
+			if(!methodInfo.getFindToStatic().isEmpty()) {
+				//处理静态方法
+				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+			}
+			if(methodInfo.getFindToFinal().isEmpty()) {
 				return true;
 			}
-			handledMethods.add(dto.getMethod());
 			
 			Object obj = dto.getRealObj();
 			//获取相关属性
 			Class<?> tagClass = obj.getClass();
 			Field[] fs = tagClass.getDeclaredFields();
 			for(Field f : fs) {
-				if(className.contains(f.getType().getName())) {
-					if(handledClassName.contains(tagClass.getName()+className)) {
+				if(methodInfo.getFindToFinal().contains(f.getType().getName())) {
+					if(handledClassName.contains(tagClass.getName()+f.getType().getName())) {
 						continue;
 					}
-					handledClassName.add(tagClass.getName()+className);
+					handledClassName.add(tagClass.getName()+f.getType().getName());
 					//处理
 					if(!f.isAccessible()) {
 						f.setAccessible(true);

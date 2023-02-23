@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
@@ -54,13 +55,7 @@ public class BeanNameUtil {
 	static List<Class<? extends Annotation>> list = Lists.newArrayList(Component.class,Service.class,Repository.class,Controller.class);
 	
 	public synchronized static boolean findedFormAnno(Class<?> classBean) {
-		for(Class<? extends Annotation> annClass : list) {
-			Annotation ann = classBean.getAnnotation(annClass);
-			if(ann!=null) {
-				return true;
-			}
-		}
-		return false;
+		return AnnHandlerUtil.isAnnotationPresent(classBean, Component.class);
 	}
 	
 	public synchronized static String getBeanNameFormAnno(Class<?> classBean) {

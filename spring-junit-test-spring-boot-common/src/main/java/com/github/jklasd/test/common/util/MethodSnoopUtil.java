@@ -6,11 +6,8 @@ import java.lang.reflect.Modifier;
 import java.util.List;
 import java.util.Set;
 
-import org.springframework.context.annotation.Configuration;
 import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
@@ -52,11 +49,7 @@ public class MethodSnoopUtil {
 					
 					Class<?> tagClass = ScanUtil.loadClass(m.getClassName());
 					AnnotationMetadata meta = annHandler.getAnnotationMetadata(tagClass);
-					if(meta.hasAnnotation(Component.class.getName())
-							|| meta.hasAnnotation(Service.class.getName())
-							|| meta.hasAnnotation(Configuration.class.getName())
-							|| meta.hasAnnotation(Repository.class.getName())
-							) {
+					if(AnnHandlerUtil.isAnnotationPresent(tagClass, tagClass)) {
 						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {
 							lazyBean.processStatic(tagClass);
 						}
@@ -90,11 +83,61 @@ public class MethodSnoopUtil {
 		}
 	}
 	
-	public static List<String> findNotPublicMethodForClass(Method method) throws CannotCompileException{
+	/**
+	 * 待后期优化，静态类访问问题
+	 * @author jubin.zhang
+	 *
+	 */
+	public static class PryMethodInfo extends ExprEditor{
+		private BeanFactoryProcessorI beanFactoryProcessor = ContainerManager.getComponent(BeanFactoryProcessorI.class.getSimpleName());
+		@Getter
+		private Set<String> findToFinal = Sets.newConcurrentHashSet();
+		@Getter
+		private Set<Class<?>> findToStatic = Sets.newConcurrentHashSet();
+		private Method method;
+		public PryMethodInfo(Method method) {
+			this.method = method;
+		}
+		
+		public void edit(MethodCall m) throws CannotCompileException{
+			try {
+				if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
+						|| !Modifier.isPublic(m.getMethod().getModifiers())) {//如果不是公开方法
+					String cName = m.getClassName();
+					String mName = m.getMethodName();
+					String params = m.getSignature();
+					log.debug("params:{},name:{},of:{}",params,mName,cName);
+					
+					Class tagClass = method.getDeclaringClass();
+					if(!tagClass.getName().equals(cName)) {
+						findToFinal.add(m.getClassName());
+					}
+				}
+				
+				if(!m.getMethodName().startsWith("$") 
+						&& Modifier.isStatic(m.getMethod().getModifiers())
+						&& Modifier.isPublic(m.getMethod().getModifiers())) {
+					
+					
+					Class<?> tagClass = ScanUtil.loadClass(m.getClassName());
+//					AnnotationMetadata meta = annHandler.getAnnotationMetadata(tagClass);
+					if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
+						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {
+							findToStatic.add(tagClass);
+						}
+					}
+				}
+			} catch (NotFoundException e) {
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public static PryMethodInfo findNotPublicMethodForClass(Method method) throws CannotCompileException{
 		CtMethod ctMethod = getCtMethod(method);
-		PryNotPubilcMethod tmp = new PryNotPubilcMethod();
+		PryMethodInfo tmp = new PryMethodInfo(method);
 		ctMethod.instrument(tmp);
-		return tmp.getFindToDo();
+		return tmp;
 	}
 	
 	
