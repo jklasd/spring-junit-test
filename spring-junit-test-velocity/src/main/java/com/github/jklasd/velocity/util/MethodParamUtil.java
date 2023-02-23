@@ -40,6 +40,9 @@ public class MethodParamUtil {
 				Class<?> tagC = JunitClassLoader.loadClass(typeStr);
 				if(tagC != null ) {
 					String tagClassName = typeStr.substring(typeStr.lastIndexOf(".")+1);
+					if(tagClassName.contains("$")) {
+						tagClassName = tagClassName.replace("$", ".");//匿名内部类处理
+					}
 					createBean.append(tagClassName);
 					createBean.append(" ");
 					createBean.append(paramName);
@@ -226,6 +229,9 @@ public class MethodParamUtil {
 		StringBuilder imports = new StringBuilder(params);
 		Class<?> tagC = JunitClassLoader.loadClass(typeStr);
 		if(tagC != null ) {
+			if(typeStr.contains("$")) {
+				typeStr = typeStr.substring(0,typeStr.indexOf("$"));//匿名内部类处理
+			}
 			appendMap(map, typeStr, imports);
 		}else {
 			if(typeStr.startsWith("java.util")) {
@@ -317,7 +323,10 @@ public class MethodParamUtil {
 			}, type)+"]";
 		default:
 			Class<?> tagC = JunitClassLoader.loadClass(typeStr);
-			if(tagC.isEnum()) {
+			if(tagC == null) {
+				log.debug("断点");
+			}
+			if(tagC == null || tagC.isEnum()) {
 				return "''";
 			}
 			return "{}";
