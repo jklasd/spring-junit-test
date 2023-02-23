@@ -13,17 +13,19 @@ import org.springframework.beans.factory.annotation.Autowired;
 ## service 引入包
 #serviceImport()
 ##
+
 ${junitAnn}
 class ${sourceClass.name}_Test {
 
     @Autowired
     private ${sourceClass.name} ${sourceClass.testClassMemberName};
 
-
+#set($methodMap = {})
 #foreach($method in $methods)
 #if($method.name.indexOf('lambda$')<0)
+#set($tmpName = $MethodParamUtil.convertionMethodName(${method.name},$methodMap))
     @Test
-    public void ${method.name}_test(){
+    public void ${tmpName}_test() ${MethodParamUtil.throwException($method)}{
 ##		构建参数
 #junitBuildParams($method,$tmp)
 ##		调用方法
@@ -49,20 +51,20 @@ import org.junit.Test;
 
 ## service 导入判断 ##
 #macro(serviceImport)
-
+#set($tmpImportMap={})
 #foreach($method in $methods)
 #if($method.name.indexOf('lambda$')<0)
 #set($serviceImports = "")
 #foreach($param in $method.parameters)
-#set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports))
+#set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports,$tmpImportMap))
 #end
+#set($serviceImports = $MethodParamUtil.handlerExceptionImport($method,$serviceImports,$tmpImportMap))
 #if($serviceImports.length()>0)
-import com.alibaba.fastjson.JSONObject;
 $serviceImports
 #end
 #end
 #end
-
+import com.alibaba.fastjson.JSONObject;
 #end
 ## ##
 

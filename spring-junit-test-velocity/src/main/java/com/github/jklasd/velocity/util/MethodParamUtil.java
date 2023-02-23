@@ -1,10 +1,12 @@
 package com.github.jklasd.velocity.util;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Map;
 import java.util.Set;
 
 import com.github.jklasd.test.common.exception.JunitException;
@@ -211,7 +213,7 @@ public class MethodParamUtil {
 	/**
 	 * export
 	 */
-	public static String handlerImport(String paramInfo,String params) {
+	public static String handlerImport(String paramInfo,String params,Map map) {
 		String[] arr = split(paramInfo);
 		//arr[0]
 		String typeStr = arr[0];
@@ -224,32 +226,37 @@ public class MethodParamUtil {
 		StringBuilder imports = new StringBuilder(params);
 		Class<?> tagC = JunitClassLoader.loadClass(typeStr);
 		if(tagC != null ) {
-			imports.append("import ").append(typeStr).append(";");
-			imports.append("\n");
+			appendMap(map, typeStr, imports);
 		}else {
 			if(typeStr.startsWith("java.util")) {
 				String[] types = parseGenericType(typeStr);
 				Set<String> exits = Sets.newHashSet(types);
 				for(String t : exits) {
-					imports.append("import ").append(t).append(";");
-					imports.append("\n");
+					appendMap(map, t, imports);
 				}
 				if(typeStr.contains("Map")) {
-					imports.append("import java.util.HashMap;");
-					imports.append("\n");
+					appendMap(map, "java.util.HashMap", imports);
 				}
 			}else {
 				String[] types = parseGenericType(typeStr);
 				Set<String> exits = Sets.newHashSet(types);
 				for(String t : exits) {
-					imports.append("import ").append(t).append(";");
-					imports.append("\n");
+					appendMap(map, t, imports);
 				}
 			}
 		}
 		
 		
 		return imports.toString();
+	}
+
+	private static void appendMap(Map map, String typeStr, StringBuilder imports) {
+		if(!map.containsKey(typeStr)) {
+			imports.append("import ").append(typeStr).append(";");
+			imports.append("\n");
+			
+			map.put(typeStr, typeStr);
+		}
 	}
 	private static String[] parseGenericType(String typeStr) {
 		if(typeStr.contains("Map")) {
@@ -328,11 +335,12 @@ public class MethodParamUtil {
 		switch (typeStr) {
 		case "int":
 		case "java.lang.Integer":
-		case "byte":
-		case "java.lang.Byte":
 		case "short":
 		case "java.lang.Short":
 			return params+"0";
+		case "byte":
+		case "java.lang.Byte":
+			return params+"(byte)0";
 		case "java.lang.String":
 			return params+"\""+paramName+"\"";
 		case "char":
@@ -359,5 +367,44 @@ public class MethodParamUtil {
 	private static String[] split(String paramInfo) {
 		return paramInfo.replace(", ", ",").split(" ");
 	}
+
+	public static String convertionMethodName(String methodName,Object tmpObj) {
+		Map tmp = (Map) tmpObj;
+		if(tmp.containsKey(methodName)) {
+			String tmpName = methodName;
+			for(int i=1;i<100;i++) {
+				tmpName = methodName+"_t_"+i;
+				if(tmp.containsKey(tmpName)) {
+					continue;
+				}
+				tmp.put(tmpName, tmpName);
+				break;
+			}
+			return tmpName;
+		}else {
+			tmp.put(methodName, methodName);
+			return methodName;
+		}
+	}
 	
+	public static String handlerExceptionImport(Method method,String importStr,Map tmpMap) {
+		if(method.getGenericExceptionTypes().length>0) {
+			StringBuilder sbl = new StringBuilder();
+			for(Type et:method.getGenericExceptionTypes()) {
+				appendMap(tmpMap, et.getTypeName(), sbl);
+			}
+			return sbl.toString()+importStr;
+		}
+		return importStr;
+	}
+	public static String throwException(Method method) {
+		if(method.getGenericExceptionTypes().length>0) {
+			StringBuilder sbl = new StringBuilder();
+			for(Type et:method.getGenericExceptionTypes()) {
+				sbl.append(((Class<?>)et).getSimpleName());
+			}
+			return "throws "+sbl.toString();
+		}
+		return "";
+	}
 }

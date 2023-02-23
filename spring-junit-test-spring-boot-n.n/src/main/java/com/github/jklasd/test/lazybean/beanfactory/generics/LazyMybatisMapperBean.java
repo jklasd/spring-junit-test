@@ -217,7 +217,7 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 	}
 	/**
 	 * 待优化
-	 * 暂时处理所有mapperbeanDefinition
+	 * 暂时扫描出所有mapperbeanDefinition
 	 * @param mapperScan mapperScanBean
 	 */
 	private void handMapperBeanDefinition(Object mapperScan) {
