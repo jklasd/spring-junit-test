@@ -67,29 +67,29 @@ public class JunitClassLoader extends ClassLoader{
 		}
 		loadClass = loadClass(name, false);
 //		try {
-			if(!Modifier.isAbstract(loadClass.getModifiers())
-					&& !loadClass.getName().startsWith("org.springframework")) {
-//				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
-				if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
-					log.debug("查看{}是否是静态类",loadClass);
-					if(scan.hasStaticMethod(loadClass)) {
-						int process = ContainerManager.stats;
-						if(process < ContainerManager.inited) {
-							staticComponentClass.add(loadClass);
-						}else {
-							//预热静态方法的实例对象
-							if(beanFactoryProcessor.notBFProcessor(loadClass)) {
-								String value = SignalNotificationUtil.get(loadClass.getName());
-								if(value == null) {
-									lazyBean.processStatic(loadClass);
-								}else {
-									SignalNotificationUtil.put(loadClass.getName(), "false");
-								}
-							}
-						}
-					}
-				}
-			}
+//			if(!Modifier.isAbstract(loadClass.getModifiers())
+//					&& !loadClass.getName().startsWith("org.springframework")) {
+////				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
+//				if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
+//					log.debug("查看{}是否是静态类",loadClass);
+//					if(scan.hasStaticMethod(loadClass)) {
+//						int process = ContainerManager.stats;
+//						if(process < ContainerManager.inited) {
+//							staticComponentClass.add(loadClass);
+//						}else {
+//							//预热静态方法的实例对象
+//							if(beanFactoryProcessor.notBFProcessor(loadClass)) {
+//								String value = SignalNotificationUtil.get(loadClass.getName());
+//								if(value == null) {
+//									lazyBean.processStatic(loadClass);
+//								}else {
+//									SignalNotificationUtil.put(loadClass.getName(), "false");
+//								}
+//							}
+//						}
+//					}
+//				}
+//			}
 //		} catch (IOException e) {
 //			e.printStackTrace();
 //		}

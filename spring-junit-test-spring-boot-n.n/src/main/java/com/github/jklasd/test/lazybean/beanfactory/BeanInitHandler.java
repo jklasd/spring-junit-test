@@ -186,7 +186,7 @@ class BeanInitHandler {
 		processSpringAnnMethod(param);
 	}
 	public void processMethod(BeanInitModel model) {
-
+		boolean isStatic = model.isStatic();
 		if(ScanUtil.isImple(model.getTagClass(), ApplicationContextAware.class)) {
 			try {
 				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
@@ -197,7 +197,7 @@ class BeanInitHandler {
 		}
 		
 		Object obj = model.getObj();
-		boolean isStatic = model.isStatic();
+		
 		if(LazyProxyManager.isProxy(obj)) {
 			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
 				LazyProxyManager.instantiateProxy(obj);
