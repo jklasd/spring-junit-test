@@ -12,6 +12,7 @@ import org.springframework.stereotype.Component;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.google.common.base.Objects;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -98,19 +99,43 @@ public class MethodSnoopUtil {
 		public PryMethodInfo(Method method) {
 			this.method = method;
 		}
+		private CtMethod ctmethod;
+		public PryMethodInfo(CtMethod method) {
+			this.ctmethod = method;
+		}
 		
 		public void edit(MethodCall m) throws CannotCompileException{
 			try {
+				String cName = m.getMethod().getDeclaringClass().getName();
+				String localC = null;
+				if(method == null) {
+					localC = ctmethod.getDeclaringClass().getName();
+				}else {
+					localC = method.getDeclaringClass().getName();
+				}
+				if(Objects.equal(cName, localC)) {
+					//调用本类方法,继续查看
+					log.debug("调用本类方法,继续查看");
+					CtMethod ctMethod = m.getMethod();
+					PryMethodInfo tmp = new PryMethodInfo(m.getMethod());
+					ctMethod.instrument(tmp);
+					
+					findToStatic.addAll(tmp.getFindToStatic());
+					findToFinal.addAll(tmp.getFindToFinal());
+					return;
+				}
+				
 				if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
 						|| !Modifier.isPublic(m.getMethod().getModifiers())) {//如果不是公开方法
-					String cName = m.getClassName();
 					String mName = m.getMethodName();
 					String params = m.getSignature();
 					log.debug("params:{},name:{},of:{}",params,mName,cName);
 					
-					Class tagClass = method.getDeclaringClass();
-					if(!tagClass.getName().equals(cName)) {
-						findToFinal.add(m.getClassName());
+					Class<?> tagClass = ScanUtil.loadClass(cName);
+					if(!localC.equals(cName)) {
+						if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
+							findToFinal.add(m.getClassName());
+						}
 					}
 				}
 				
@@ -119,7 +144,7 @@ public class MethodSnoopUtil {
 						&& Modifier.isPublic(m.getMethod().getModifiers())) {
 					
 					
-					Class<?> tagClass = ScanUtil.loadClass(m.getClassName());
+					Class<?> tagClass = ScanUtil.loadClass(cName);
 //					AnnotationMetadata meta = annHandler.getAnnotationMetadata(tagClass);
 					if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
 						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {

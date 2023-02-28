@@ -3,6 +3,7 @@ package com.github.jklasd.test.lazybean.beanfactory.invoker;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.Set;
 
@@ -43,12 +44,22 @@ public class JunitInvoker extends AbstractProxyInvoker{
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(handledMethods.contains(dto.getMethod())) {
+		Method tagMethod = dto.getMethod();
+		if(dto.getBeanModel().getTagClass().isInterface()
+				|| Modifier.isAbstract(dto.getBeanModel().getTagClass().getModifiers())) {//处理接口方法和抽象类方法
+			try {
+				tagMethod = dto.getRealObj().getClass().getDeclaredMethod(tagMethod.getName(), tagMethod.getParameterTypes());
+			} catch (NoSuchMethodException | SecurityException e) {
+			}
+		}
+		if(handledMethods.contains(tagMethod)) {
 			return true;
 		}
 		try {
-			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(dto.getMethod());
-			handledMethods.add(dto.getMethod());
+
+			
+			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(tagMethod);
+			handledMethods.add(tagMethod);
 			if(!methodInfo.getFindToStatic().isEmpty()) {
 				//处理静态方法
 				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
