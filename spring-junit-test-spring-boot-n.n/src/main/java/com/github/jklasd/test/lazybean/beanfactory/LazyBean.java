@@ -380,6 +380,9 @@ public class LazyBean implements LazyBeanI{
 		return false;
 	}
 	private boolean handlerByReload(String fieldName, Object obj, Class<?> superClass, Object value) {
+		if(value == null) {
+			return false;
+		}
 		String mName = "set"+fieldName.toLowerCase();
 		String mNameKey = "set"+fieldName.toLowerCase()+value.getClass().getName();
 		if(methodsCache.containsKey(superClass)) {
@@ -395,7 +398,7 @@ public class LazyBean implements LazyBeanI{
 		}
 		Method[] methods = superClass.getDeclaredMethods();
 		for(Method m : methods) {
-			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
+			if(Objects.equals(m.getName().toLowerCase(), mName) && (m.getParameterTypes()[0] == value.getClass())) {
 				boolean success = invokeSet(fieldName, obj, value, m);
 				if(success) {
 				    methodsCache.get(superClass).put(mNameKey, m);
