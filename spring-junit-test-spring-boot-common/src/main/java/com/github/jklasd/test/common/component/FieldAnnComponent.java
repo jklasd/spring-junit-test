@@ -61,6 +61,19 @@ public class FieldAnnComponent {
 			log.warn("=====注入数据为空==={}={}=",obj,attr.getName());
 		}
 		try {
+			
+			Class<?> c1 = proxyObj.getClass();
+			Class<?> c2 = attr.getType();
+			if(proxyObj !=null && (!c2.isAssignableFrom(c1))) {
+				log.warn("=====类型不一致==={}={}=",c2,c1);
+//				switch(c2.getName()) {
+//				case "java.lang.String":
+//					proxyObj = proxyObj.toString();
+//					break;
+//				default:
+//				}
+			}
+			
 			if (!attr.isAccessible()) {
 				attr.setAccessible(true);
 			}

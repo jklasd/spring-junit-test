@@ -103,10 +103,14 @@ public class MethodSnoopUtil {
 		public PryMethodInfo(CtMethod method) {
 			this.ctmethod = method;
 		}
-		
+		@Getter
+		Set<String> filtered = Sets.newConcurrentHashSet();
 		public void edit(MethodCall m) throws CannotCompileException{
 			try {
 				String cName = m.getMethod().getDeclaringClass().getName();
+				if(filtered.contains(cName)) {//过滤不需要处理的
+					return;
+				}
 				String localC = null;
 				if(method == null) {
 					localC = ctmethod.getDeclaringClass().getName();
@@ -124,33 +128,30 @@ public class MethodSnoopUtil {
 					findToFinal.addAll(tmp.getFindToFinal());
 					return;
 				}
-				
-				if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
-						|| !Modifier.isPublic(m.getMethod().getModifiers())) {//如果不是公开方法
-					String mName = m.getMethodName();
-					String params = m.getSignature();
-					log.debug("params:{},name:{},of:{}",params,mName,cName);
+				Class<?> tagClass = ScanUtil.loadClass(cName);
+				if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
 					
-					Class<?> tagClass = ScanUtil.loadClass(cName);
-					if(!localC.equals(cName)) {
-						if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
+					if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
+							|| !Modifier.isPublic(m.getMethod().getModifiers())) {//如果不是公开方法
+						String mName = m.getMethodName();
+						String params = m.getSignature();
+						log.debug("params:{},name:{},of:{}",params,mName,cName);
+						
+						if(!localC.equals(cName)) {
 							findToFinal.add(m.getClassName());
 						}
 					}
-				}
-				
-				if(!m.getMethodName().startsWith("$") 
-						&& Modifier.isStatic(m.getMethod().getModifiers())
-						&& Modifier.isPublic(m.getMethod().getModifiers())) {
 					
-					
-					Class<?> tagClass = ScanUtil.loadClass(cName);
-//					AnnotationMetadata meta = annHandler.getAnnotationMetadata(tagClass);
-					if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
+					if(!m.getMethodName().startsWith("$") 
+							&& Modifier.isStatic(m.getMethod().getModifiers())
+							&& Modifier.isPublic(m.getMethod().getModifiers())) {
+						
 						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {
 							findToStatic.add(tagClass);
 						}
 					}
+				}else {
+					filtered.add(cName);
 				}
 			} catch (NotFoundException e) {
 				e.printStackTrace();
@@ -160,6 +161,9 @@ public class MethodSnoopUtil {
 	
 	public static PryMethodInfo findNotPublicMethodForClass(Method method) throws CannotCompileException{
 		CtMethod ctMethod = getCtMethod(method);
+		if(ctMethod == null) {
+			return new PryMethodInfo(ctMethod);
+		}
 		PryMethodInfo tmp = new PryMethodInfo(method);
 		ctMethod.instrument(tmp);
 		return tmp;
@@ -178,7 +182,7 @@ public class MethodSnoopUtil {
 			}
 			return ctClass.getDeclaredMethod(method.getName());
 		} catch (NotFoundException e) {
-			e.printStackTrace();
+//			e.printStackTrace();
 			return null;
 		}
 	}
