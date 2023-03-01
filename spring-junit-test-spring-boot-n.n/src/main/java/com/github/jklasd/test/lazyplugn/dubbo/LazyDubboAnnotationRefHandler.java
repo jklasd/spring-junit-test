@@ -53,7 +53,7 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
                 }
             }
             LazyBean.getInstance().setFieldValueFromExpression("injvm", referenceConfig, referenceConfigC, false);//关闭本地
-            LazyBean.getInstance().setFieldValueFromExpression("interface", referenceConfig, referenceConfigC, dubboClass.getName());
+            JunitInvokeUtil.invokeMethod(referenceConfig, "setInterface",dubboClass);
             /**
              * 待后续升级，可能存在动态设定协议或者客户端问题
              */
