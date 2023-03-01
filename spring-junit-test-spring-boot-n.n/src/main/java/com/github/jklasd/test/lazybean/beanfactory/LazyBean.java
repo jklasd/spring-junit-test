@@ -346,38 +346,24 @@ public class LazyBean implements LazyBeanI{
     
     /**
      * 注解赋值
-     * @param field 赋值的成员变量
+     * @param fieldName 赋值的成员变量
      * @param obj 需要赋值的对象
      * @param superClass 对象父级类
      * @param value 赋值对象
      * @return true 赋值成功
      */
-	public boolean setFieldValueFromExpression(String field, Object obj,Class<?> superClass,Object value) {
+	public boolean setFieldValueFromExpression(String fieldName, Object obj,Class<?> superClass,Object value) {
+		/**
+		 * 存在重载方法的可能
+		 */
+		boolean handlerSuccess = handlerByReload(fieldName, obj, superClass, value);
+		if(handlerSuccess) {
+			return true;
+		}
 		
-//		String mName = "set"+field.toLowerCase();
-//		if(methodsCache.containsKey(superClass)) {
-//		    Method tagM = methodsCache.get(superClass).get(mName);
-//		    if(tagM!=null) {
-//		    	boolean success = invokeSet(field, obj, value, tagM);
-//		    	if(success) {
-//		    		return success;
-//		    	}
-//		    }
-//		}else {
-//		    methodsCache.put(superClass, Maps.newHashMap());
-//		}
-//		Method[] methods = superClass.getDeclaredMethods();
-//		for(Method m : methods) {
-//			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
-//				boolean success = invokeSet(field, obj, value, m);
-//				if(success) {
-//				    methodsCache.get(superClass).put(mName, m);
-//				    return success;
-//				}
-//			}
-//		}
+		
 		if(fieldsCache.containsKey(superClass)) {
-			Field tagM = fieldsCache.get(superClass).get(field);
+			Field tagM = fieldsCache.get(superClass).get(fieldName);
 		    if(tagM!=null) {
 		    	if(value instanceof String) {
 		    		value = util.valueFromEnvForAnnotation(value.toString(), tagM.getType());	
@@ -386,10 +372,36 @@ public class LazyBean implements LazyBeanI{
 		    	return true;
 		    }
 		}
-		boolean found = findAndSet(field, obj, superClass, value);
+		boolean found = findAndSet(fieldName, obj, superClass, value);
 		Class<?> superC = superClass.getSuperclass();
 		if (!found && superC != null ) {
-			return setFieldValueFromExpression(field,obj,superC,value);
+			return setFieldValueFromExpression(fieldName,obj,superC,value);
+		}
+		return false;
+	}
+	private boolean handlerByReload(String fieldName, Object obj, Class<?> superClass, Object value) {
+		String mName = "set"+fieldName.toLowerCase();
+		String mNameKey = "set"+fieldName.toLowerCase()+value.getClass().getName();
+		if(methodsCache.containsKey(superClass)) {
+		    Method tagM = methodsCache.get(superClass).get(mNameKey);
+		    if(tagM!=null) {
+		    	boolean success = invokeSet(fieldName, obj, value, tagM);
+		    	if(success) {
+		    		return true;
+		    	}
+		    }
+		}else {
+		    methodsCache.put(superClass, Maps.newHashMap());
+		}
+		Method[] methods = superClass.getDeclaredMethods();
+		for(Method m : methods) {
+			if(Objects.equals(m.getName().toLowerCase(), mName) && (value!= null && m.getParameterTypes()[0] == value.getClass())) {
+				boolean success = invokeSet(fieldName, obj, value, m);
+				if(success) {
+				    methodsCache.get(superClass).put(mNameKey, m);
+				    return true;
+				}
+			}
 		}
 		return false;
 	}
