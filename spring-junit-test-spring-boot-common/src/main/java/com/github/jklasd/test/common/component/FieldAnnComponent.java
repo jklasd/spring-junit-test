@@ -2,6 +2,7 @@ package com.github.jklasd.test.common.component;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
@@ -11,6 +12,7 @@ import org.apache.commons.lang3.StringUtils;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.model.FieldDef;
+import com.github.jklasd.test.common.util.ClassUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -65,7 +67,10 @@ public class FieldAnnComponent {
 			Class<?> c1 = proxyObj.getClass();
 			Class<?> c2 = attr.getType();
 			if(proxyObj !=null && (!c2.isAssignableFrom(c1))) {
-				log.warn("=====类型不一致==={}={}=",c2,c1);
+					if(!ClassUtil.getInstance().isBasicType(c1)
+							&& !ClassUtil.getInstance().isBasicType(c2)) {
+						log.warn("=====类型不一致==={}={}=",c2,c1);
+					}
 //				switch(c2.getName()) {
 //				case "java.lang.String":
 //					proxyObj = proxyObj.toString();
