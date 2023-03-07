@@ -105,23 +105,38 @@ public class MethodSnoopUtil {
 		}
 		@Getter
 		Set<String> filtered = Sets.newConcurrentHashSet();
+		
+		Set<String> recursion = Sets.newConcurrentHashSet();
+		
 		public void edit(MethodCall m) throws CannotCompileException{
 			try {
+				String mName = m.getMethodName();
 				String cName = m.getMethod().getDeclaringClass().getName();
 				if(filtered.contains(cName)) {//过滤不需要处理的
 					return;
 				}
+				String recursionKey = cName+"#"+mName;
+				if(recursion.contains(recursionKey)) {
+					return;
+				}
 				String localC = null;
+				String mName_tmp = null;
 				if(method == null) {
 					localC = ctmethod.getDeclaringClass().getName();
+					mName_tmp = ctmethod.getMethodInfo().getName();
 				}else {
 					localC = method.getDeclaringClass().getName();
+					mName_tmp = method.getName();
 				}
-				if(Objects.equal(cName, localC)) {
+				recursion.add(recursionKey);
+				if(Objects.equal(cName, localC) 
+						&& !Objects.equal(mName_tmp,mName)) {
 					//调用本类方法,继续查看
 					log.debug("调用本类方法,继续查看");
 					CtMethod ctMethod = m.getMethod();
 					PryMethodInfo tmp = new PryMethodInfo(m.getMethod());
+					tmp.filtered.addAll(filtered);//防止递归
+					tmp.recursion.addAll(recursion);//防止递归
 					ctMethod.instrument(tmp);
 					
 					findToStatic.addAll(tmp.getFindToStatic());
@@ -133,7 +148,6 @@ public class MethodSnoopUtil {
 					
 					if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
 							|| !Modifier.isPublic(m.getMethod().getModifiers())) {//如果不是公开方法
-						String mName = m.getMethodName();
 						String params = m.getSignature();
 						log.debug("params:{},name:{},of:{}",params,mName,cName);
 						
