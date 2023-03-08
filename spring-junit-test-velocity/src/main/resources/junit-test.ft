@@ -28,6 +28,8 @@ class ${sourceClass.name}_Test {
     public void ${tmpName}_test() ${MethodParamUtil.throwException($method)}{
 ##		构建参数
 #junitBuildParams($method,$tmp)
+##		构建返回结果
+#junitBuildResult($method,$test_result)
 ##		调用方法
 	${sourceClass.testClassMemberName}.${method.name}($tmp);
     }
@@ -55,9 +57,10 @@ import org.junit.Test;
 #foreach($method in $methods)
 #if($method.name.indexOf('lambda$')<0)
 #set($serviceImports = "")
-#foreach($param in $method.parameters)
-#set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports,$tmpImportMap))
-#end
+##foreach($param in $method.parameters)
+##set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports,$tmpImportMap))
+##end
+#set($serviceImports = $MethodParamUtil.handlerImport($method,$tmpImportMap))
 #set($serviceImports = $MethodParamUtil.handlerExceptionImport($method,$serviceImports,$tmpImportMap))
 #if($serviceImports.length()>0)
 $serviceImports
@@ -67,14 +70,17 @@ $serviceImports
 import com.alibaba.fastjson.JSONObject;
 #end
 ## ##
-
 ## junit 构建入参 ##
 #macro(junitBuildParams $method,$tmp)
 	#set($params = "")
-	#foreach($param in $method.parameters)
-	$MethodParamUtil.beforeHandFixedParams($param)
-	#set($params = $MethodParamUtil.handParams($param,$params))
-	#end
-	#set($tmp = $params)
+	$MethodParamUtil.beforeHandFixedParamsByMethod($method)
+	#set($tmp = $MethodParamUtil.handParams($method))
+#end
+## ##
+## junit 构建返回结果 ##
+#macro(junitBuildResult $method,$tmp)
+	#set($tmpResult = "")
+	#set($tmpResult = $MethodParamUtil.handResult($method,$tmpResult))
+	#set($tmp = $tmpResult)
 #end
 ## ##
