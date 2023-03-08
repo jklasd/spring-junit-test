@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -41,6 +42,7 @@ import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
+import com.github.jklasd.test.core.facade.scan.ConfigurationScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
@@ -289,6 +291,11 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			//configuration
 			log.debug("处理{}",tmpDef.getBeanClass());
 			beanCreaterScan.loadConfigurationClass(tmpDef.getBeanClass());
+			try {
+				ConfigurationScan.getInstance().scanConfigClass(tmpDef.getBeanClass());
+			} catch (IOException e) {
+				log.error("AnnotationResourceLoader#scanConfigClass",e);
+			}
 		}
 		//xml,ann
 		ClassScan.getInstance().loadComponentClass(tmpDef.getBeanClass());
@@ -425,7 +432,9 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		
 		Constructor<?>[] construcs = mbd.getBeanClass().getConstructors();
 		if(construcs.length == 1 && construcs[0].getParameterCount()>0) {//处理带参构造函数
-			args = JavaBeanUtil.getInstance().buildParam(construcs[0].getParameterTypes(), construcs[0].getParameterAnnotations());
+			if(mbd.getConstructorArgumentValues().getArgumentCount()<1) {//存在beanDefinition自带构造参数
+				args = JavaBeanUtil.getInstance().buildParam(construcs[0].getParameterTypes(), construcs[0].getParameterAnnotations());
+			}
 		}
 		
 		BeanWrapper bw = createBeanInstance(beanName, mbd, args);
@@ -499,6 +508,18 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 				original.setAttribute(attributeName, source.getAttribute(attributeName));
 			}
 		}
+
+//		public static Object[] getArgs(RootBeanDefinition rbd) {
+//			if(rbd.getConstructorArgumentValues().isEmpty()) {
+//				return null;
+//			}
+//			ConstructorArgumentValues cav = rbd.getConstructorArgumentValues();
+//			Object[] args = new Object[cav.getArgumentCount()];
+//			for(int i=0;i<args.length;i++) {
+//				args[i] = cav.getGenericArgumentValues().get(i).getValue();
+//			}
+//			return args;
+//		}
 		
 	}
 

@@ -2,6 +2,7 @@ package com.github.jklasd.velocity.util;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import java.text.SimpleDateFormat;
@@ -31,7 +32,7 @@ public class MethodParamUtil {
 				//arr[1]
 				String paramName = arr[1];
 				
-				if(checkParams(arr)) {
+				if(checkParams(arr[0])) {
 					return "";
 				}
 				StringBuilder createBean = new StringBuilder();
@@ -131,7 +132,7 @@ public class MethodParamUtil {
 			for(Field f : fields) {
 				jsonBuilder.append("\"");
 				jsonBuilder.append("'").append(f.getName()).append("'").append(":")
-					.append(handParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
+					.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 				jsonBuilder.append(",\"+\n");
 				jsonBuilder.append(spaceStr);
 			}
@@ -149,7 +150,7 @@ public class MethodParamUtil {
 			for(Field f : fields) {
 				jsonBuilder.append("\"");
 				jsonBuilder.append("'").append(f.getName()).append("'").append(":")
-					.append(handParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
+					.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 				jsonBuilder.append(",\"+\n");
 				jsonBuilder.append(spaceStr);
 			}
@@ -172,7 +173,7 @@ public class MethodParamUtil {
 						.append("#{"+refName+"}");
 				}else {
 					jsonBuilder.append("'").append(f.getName()).append("'").append(":")
-						.append(handParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
+						.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 				}
 				jsonBuilder.append(",\"+\n");
 				jsonBuilder.append(spaceStr);
@@ -189,9 +190,8 @@ public class MethodParamUtil {
 	 * @param arr
 	 * @return
 	 */
-	public static boolean checkParams(String[] arr) {
+	public static boolean checkParams(String typeStr) {
 		//arr[0]
-		String typeStr = arr[0];
 		
 		switch (typeStr) {
 		case "int":
@@ -217,45 +217,40 @@ public class MethodParamUtil {
 		return false;
 	}
 	
+	public static String handlerImport(Method method,Map map) {
+		Parameter[] params = method.getParameters();
+		String imports = "";
+		for(Parameter p : params) {
+			imports = handlerImport(p, imports, map);
+		}
+		return imports;
+	}
 	/**
 	 * export
 	 */
-	public static String handlerImport(String paramInfo,String params,Map map) {
-		String[] arr = split(paramInfo);
-		//arr[0]
-		String typeStr = arr[0];
-		//arr[1]
-//		String paramName = arr[1];
-		
-		if(checkParams(arr) || arr[0].contains("Class<")) {
+	private static String handlerImport(Parameter p,String params,Map map) {
+		String[] arr = covertion(p);
+		if(checkParams(arr[0]) || arr[0].contains("Class<")) {
 			return params;
 		}
+		
 		StringBuilder imports = new StringBuilder(params);
-		Class<?> tagC = JunitClassLoader.loadClass(typeStr);
-		if(tagC != null ) {
-			if(typeStr.contains("$")) {
-				typeStr = typeStr.substring(0,typeStr.indexOf("$"));//匿名内部类处理
-			}
-			appendMap(map, typeStr, imports);
-		}else {
-			if(typeStr.startsWith("java.util")) {
-				String[] types = parseGenericType(typeStr);
-				Set<String> exits = Sets.newHashSet(types);
-				for(String t : exits) {
-					appendMap(map, t, imports);
-				}
-				if(typeStr.contains("Map")) {
-					appendMap(map, "java.util.HashMap", imports);
-				}
-			}else {
-				String[] types = parseGenericType(typeStr);
-				Set<String> exits = Sets.newHashSet(types);
-				for(String t : exits) {
-					appendMap(map, t, imports);
+		Type pType = p.getParameterizedType();
+		if(pType!=null) {
+			if(pType instanceof ParameterizedType) {
+				ParameterizedType pt = (ParameterizedType) pType;
+				if(pt.getActualTypeArguments()!=null
+						&& pt.getActualTypeArguments().length>0) {
+					for(Type t:pt.getActualTypeArguments()) {
+						if(checkParams(t.getTypeName())) {
+							continue;
+						}
+						appendMap(map, t.getTypeName(), imports);
+					}
 				}
 			}
 		}
-		
+		appendMap(map, p.getType().getName(), imports);
 		
 		return imports.toString();
 	}
@@ -279,12 +274,20 @@ public class MethodParamUtil {
 	 * 构建执行方法参数
 	 * export
 	 */
-	public static String beforeHandFixedParams(String paramInfo) {
-		String[] arr= split(paramInfo);
-		return BuildMethodObjParam.beforeHandFixedParams(arr);
+	public static String beforeHandFixedParamsByMethod(Method method) {
+		Parameter[] params = method.getParameters();
+		StringBuilder ref = new StringBuilder();
+		for(Parameter p : params) {
+			ref.append(BuildMethodObjParam.beforeHandFixedParams(covertion(p)));
+		}
+		return ref.toString();
 	}
+//	public static String beforeHandFixedParams(String paramInfo) {
+//		String[] arr= split(paramInfo);
+//		return BuildMethodObjParam.beforeHandFixedParams(arr);
+//	}
 	static String spaceStr = "JSONObject.parseObject".replaceAll(".", " ");
-	public static String handParams(String[] arr, Type type) {
+	public static String handRefParams(String[] arr, Type type) {
 		//arr[0]
 		String typeStr = arr[0];
 		//arr[1]
@@ -321,7 +324,7 @@ public class MethodParamUtil {
 			return "'"+new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date())+"'";
 		case "java.util.List":
 			ParameterizedType typeImpl = (ParameterizedType) type;
-			return "["+handParams(new String[] {
+			return "["+handRefParams(new String[] {
 					typeImpl.getActualTypeArguments()[0].getTypeName(),
 					paramName
 			}, type)+"]";
@@ -336,9 +339,17 @@ public class MethodParamUtil {
 			return "{}";
 		}
 	}
-	public static String handParams(String paramInfo,String params) {
+	public static String handParams(Method method) {
+		Parameter[] params = method.getParameters();
+		String paramStr = "";
+		for(Parameter p : params) {
+			paramStr = handParams(p, paramStr);
+		}
+		return paramStr;
+	}
+	public static String handParams(Parameter paramInfo,String params) {
 		
-		String[] arr= split(paramInfo);
+		String[] arr= covertion(paramInfo);
 		
 		//arr[0]
 		String typeStr = arr[0];
@@ -377,9 +388,13 @@ public class MethodParamUtil {
 		
 	}
 
-	private static String[] split(String paramInfo) {
-		return paramInfo.replace(", ", ",").split(" ");
+	private static String[] covertion(Parameter paramInfo) {
+		return new String[] {paramInfo.getParameterizedType().getTypeName(),paramInfo.getName()};
 	}
+
+//	private static String[] split(String paramInfo) {
+//		return paramInfo.replace(", ", ",").split(" ");
+//	}
 
 	public static String convertionMethodName(String methodName,Object tmpObj) {
 		Map tmp = (Map) tmpObj;
@@ -419,5 +434,13 @@ public class MethodParamUtil {
 			return "throws "+sbl.toString();
 		}
 		return "";
+	}
+	
+	public static String handResult(Method method) {
+		if(method.getReturnType() == Void.class ||method.getReturnType() == void.class ) {
+			return "";
+		}
+		String type = "";
+		return type+" methodResult = ";
 	}
 }

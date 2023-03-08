@@ -50,13 +50,13 @@ public class ConfigurationScan {
 	Set<Class<?>> cacheScanConfig = Sets.newConcurrentHashSet();
 	
 	public void scanConfigClass(Class<?> configClass) throws IOException {
+//		if(configClass.getName().contains("ScanConfiguration")) {
+//			log.debug("=============加载{}=============",configClass);			
+//		}
 		if(configClass==null || cacheScanConfig.contains(configClass)) {
 			return;
 		}
 		
-//		if(configClass.getName().contains("MongoReactiveDataAutoConfiguration")) {
-//			log.debug("=============加载{}=============",configClass);			
-//		}
 		cacheScanConfig.add(configClass);
 		//@Configuration
 		if(!AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {

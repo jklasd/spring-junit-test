@@ -152,6 +152,7 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		}
 		
 		if(!LazyProxyManager.isProxy(proxyBean)) {
+			log.warn("beanName：{},tagC:{}",beanName,tagC);
 			throw new JunitException("注册bean非代理bean，不能在这里处理",true);
 		}
 		
