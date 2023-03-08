@@ -78,9 +78,9 @@ import com.alibaba.fastjson.JSONObject;
 #end
 ## ##
 ## junit 构建返回结果 ##
-#macro(junitBuildResult $method,$tmp)
+#macro(junitBuildResult $method,$test_result)
 	#set($tmpResult = "")
 	#set($tmpResult = $MethodParamUtil.handResult($method,$tmpResult))
-	#set($tmp = $tmpResult)
+	#set($test_result = $tmpResult)
 #end
 ## ##
