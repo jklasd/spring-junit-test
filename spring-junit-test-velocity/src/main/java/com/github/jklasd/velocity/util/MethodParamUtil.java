@@ -2,48 +2,18 @@ package com.github.jklasd.velocity.util;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Parameter;
-import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.Map;
+import java.util.Set;
+
+import com.github.jklasd.test.ann.DefaultTestMethod;
+import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class MethodParamUtil {
 	
-	/**
-	 * 判断类型，是否是引用对象
-	 * @param arr
-	 * @return
-	 */
-	public static boolean checkParams(String typeStr) {
-		//arr[0]
-		
-		switch (typeStr) {
-		case "int":
-		case "java.lang.Integer":
-		case "byte":
-		case "java.lang.Byte":
-		case "short":
-		case "java.lang.Short":
-		case "java.lang.String":
-		case "char":
-		case "boolean":
-		case "java.lang.Boolean":
-		case "long":
-		case "java.lang.Long":
-		case "double":
-		case "java.lang.Double":
-		case "float":
-		case "java.lang.Float":
-			return true;
-		default:
-			break;
-		}
-		return false;
-	}
 	//export
 	public static String handlerImport(Method method,Map map) {
 		Parameter[] params = method.getParameters();
@@ -68,8 +38,7 @@ public class MethodParamUtil {
 		}
 		return ref.toString();
 	}
-	public final static String spaceStr = "JSONObject.parseObject".replaceAll(".", " ");
-	
+	//export
 	public static String handParams(Method method) {
 		Parameter[] params = method.getParameters();
 		String paramStr = "";
@@ -78,7 +47,7 @@ public class MethodParamUtil {
 		}
 		return paramStr;
 	}
-	public static String handParams(Parameter paramInfo,String params) {
+	private static String handParams(Parameter paramInfo,String params) {
 		
 		String[] arr= CommonUtil.covertion(paramInfo);
 		
@@ -118,28 +87,14 @@ public class MethodParamUtil {
 		}
 		
 	}
-
 	/*
 	 * export
 	 */
-	public static String convertionMethodName(String methodName,Object tmpObj) {
-		Map tmp = (Map) tmpObj;
-		if(tmp.containsKey(methodName)) {
-			String tmpName = methodName;
-			for(int i=1;i<100;i++) {
-				tmpName = methodName+"_t_"+i;
-				if(tmp.containsKey(tmpName)) {
-					continue;
-				}
-				tmp.put(tmpName, tmpName);
-				break;
-			}
-			return tmpName;
-		}else {
-			tmp.put(methodName, methodName);
-			return methodName;
-		}
+	public static String convertionMethodName(Method method) {
+		return MethodNameUtil.convertionMethodName(method);
 	}
+
+	
 	/*
 	 * export
 	 */
@@ -159,7 +114,9 @@ public class MethodParamUtil {
 		}
 		return "";
 	}
-	
+	/*
+	 * export
+	 */
 	public static String handResult(Method method) {
 		if(method.getReturnType() == Void.class ||method.getReturnType() == void.class ) {
 			return "";

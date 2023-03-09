@@ -20,10 +20,10 @@ class ${sourceClass.name}_Test {
     @Autowired
     private ${sourceClass.name} ${sourceClass.testClassMemberName};
 
-#set($methodMap = {})
 #foreach($method in $methods)
 #if($method.name.indexOf('lambda$')<0)
-#set($tmpName = $MethodParamUtil.convertionMethodName(${method.name},$methodMap))
+#set($tmpName = $methodNames.get($MethodParamUtil.convertionMethodName($method)))
+	@DefaultTestMethod//移除后将不会覆盖该方法
     @Test
     public void ${tmpName}_test() ${MethodParamUtil.throwException($method)}{
 ##		构建参数
@@ -31,7 +31,7 @@ class ${sourceClass.name}_Test {
 ##		构建返回结果
 #junitBuildResult($method,$test_result)
 ##		调用方法
-	${sourceClass.testClassMemberName}.${method.name}($tmp);
+		${sourceClass.testClassMemberName}.${method.name}($tmp);
     }
 #end
 #end
@@ -42,9 +42,11 @@ class ${sourceClass.name}_Test {
 #macro(junitTestImport)
 #if(${junitAnn.indexOf("RunSpringJunitTestFor5")}!=-1)
 import com.github.jklasd.test.ann.RunSpringJunitTestFor5;
+import com.github.jklasd.test.ann.DefaultTestMethod;
 import org.junit.jupiter.api.Test;
 #else
 import com.github.jklasd.test.ann.RunSpringJunitTest;
+import com.github.jklasd.test.ann.DefaultTestMethod;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 #end
@@ -67,13 +69,12 @@ $serviceImports
 #end
 #end
 #end
-import com.alibaba.fastjson.JSONObject;
 #end
 ## ##
 ## junit 构建入参 ##
 #macro(junitBuildParams $method,$tmp)
 	#set($params = "")
-	$MethodParamUtil.beforeHandFixedParamsByMethod($method)
+		$MethodParamUtil.beforeHandFixedParamsByMethod($method)
 	#set($tmp = $MethodParamUtil.handParams($method))
 #end
 ## ##

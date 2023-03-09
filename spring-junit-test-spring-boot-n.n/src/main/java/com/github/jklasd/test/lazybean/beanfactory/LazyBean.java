@@ -83,7 +83,7 @@ public class LazyBean implements LazyBeanI{
 	    }
 	    return bean;
 	}
-	public Object invokeBuildObject(Class<?> tagClass){
+	public static <T> T invokeBuildObject(Class<T> tagClass){
 		return objenesis.newInstance(tagClass);
 	}
 	/**
