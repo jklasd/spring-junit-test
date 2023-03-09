@@ -16,20 +16,41 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class BuildJSONObjectByClass {
-	public static String parseJsonFromClass(String tagClassName) {
-		Class<?> tagClass = JunitClassLoader.loadClass(tagClassName);
+	
+	public static String parseJsonFromClass(Class<?> tagClass) {
 		if(tagClass == null) {
 			return "";
 		}
 		StringBuilder jsonBuilder = new StringBuilder("{\"+\n");
-		jsonBuilder.append(MethodParamUtil.spaceStr);
+		jsonBuilder.append(CommonUtil.spaceStr);
 		Field[] fields = tagClass.getDeclaredFields();
 		for(Field f : fields) {
 			jsonBuilder.append("\"");
 			jsonBuilder.append("'").append(f.getName()).append("'").append(":")
 				.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 			jsonBuilder.append(",\"+\n");
-			jsonBuilder.append(MethodParamUtil.spaceStr);
+			jsonBuilder.append(CommonUtil.spaceStr);
+		}
+		
+		jsonBuilder.append("\"}");
+		
+		return jsonBuilder.toString();
+	}
+	
+	public static String parseJsonFromClass(String tagClassName) {
+		Class<?> tagClass = JunitClassLoader.loadClass(tagClassName);
+		if(tagClass == null) {
+			return "";
+		}
+		StringBuilder jsonBuilder = new StringBuilder("{\"+\n");
+		jsonBuilder.append(CommonUtil.spaceStr);
+		Field[] fields = tagClass.getDeclaredFields();
+		for(Field f : fields) {
+			jsonBuilder.append("\"");
+			jsonBuilder.append("'").append(f.getName()).append("'").append(":")
+				.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
+			jsonBuilder.append(",\"+\n");
+			jsonBuilder.append(CommonUtil.spaceStr);
 		}
 		
 		jsonBuilder.append("\"}");
@@ -40,14 +61,14 @@ public class BuildJSONObjectByClass {
 	public static String parseJsonFromClassForInner(String tagClassName) {
 		Class<?> tagClass = JunitClassLoader.loadClass(tagClassName);
 		StringBuilder jsonBuilder = new StringBuilder("{\"+\n");
-		jsonBuilder.append(MethodParamUtil.spaceStr);
+		jsonBuilder.append(CommonUtil.spaceStr);
 		Field[] fields = tagClass.getDeclaredFields();
 		for(Field f : fields) {
 			jsonBuilder.append("\"");
 			jsonBuilder.append("'").append(f.getName()).append("'").append(":")
 				.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 			jsonBuilder.append(",\"+\n");
-			jsonBuilder.append(MethodParamUtil.spaceStr);
+			jsonBuilder.append(CommonUtil.spaceStr);
 		}
 		
 		jsonBuilder.append("\"}");
@@ -58,7 +79,7 @@ public class BuildJSONObjectByClass {
 		Class<?> tagClass = JunitClassLoader.loadClass(tagClassName);
 		Type[] tagCt = tagClass.getTypeParameters();
 		StringBuilder jsonBuilder = new StringBuilder("{\"+\n");
-		jsonBuilder.append(MethodParamUtil.spaceStr);
+		jsonBuilder.append(CommonUtil.spaceStr);
 		Field[] fields = tagClass.getDeclaredFields();
 		for(Field f : fields) {
 			jsonBuilder.append("\"");
@@ -71,7 +92,7 @@ public class BuildJSONObjectByClass {
 					.append(handRefParams(new String[] {f.getType().getName(),f.getName()},f.getGenericType()));
 			}
 			jsonBuilder.append(",\"+\n");
-			jsonBuilder.append(MethodParamUtil.spaceStr);
+			jsonBuilder.append(CommonUtil.spaceStr);
 		}
 		
 		jsonBuilder.append("\"}");
@@ -85,7 +106,7 @@ public class BuildJSONObjectByClass {
 		//arr[1]
 		String paramName = arr[1];
 		
-		String tagClassName = typeStr.substring(typeStr.lastIndexOf(".")+1);
+//		String tagClassName = typeStr.substring(typeStr.lastIndexOf(".")+1);
 		
 //		String name = type.getClass().getName();
 		

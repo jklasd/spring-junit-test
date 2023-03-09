@@ -1,6 +1,7 @@
 package com.github.jklasd.velocity.util;
 
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.lang.reflect.Parameter;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
@@ -23,7 +24,7 @@ public class ImportUtil {
 	 */
 	public static String handlerImport(Parameter p,String params,Map map) {
 		String[] arr = CommonUtil.covertion(p);
-		if(MethodParamUtil.checkParams(arr[0]) || arr[0].contains("Class<")) {
+		if(CommonUtil.checkParams(arr[0]) || arr[0].contains("Class<")) {
 			return params;
 		}
 		
@@ -35,11 +36,20 @@ public class ImportUtil {
 				if(pt.getActualTypeArguments()!=null
 						&& pt.getActualTypeArguments().length>0) {
 					for(Type t:pt.getActualTypeArguments()) {
-						if(MethodParamUtil.checkParams(t.getTypeName())) {
+						if(CommonUtil.checkParams(t.getTypeName())) {
 							continue;
 						}
 						appendMap(map, t.getTypeName(), imports);
 					}
+				}
+				appendMap(map, "com.alibaba.fastjson.JSONObject", imports);
+			}else {
+				if(Modifier.isFinal(p.getType().getModifiers())) {
+					if(!p.getType().isEnum()) {
+						appendMap(map, "com.github.jklasd.test.lazybean.beanfactory.LazyBean", imports);
+					}
+				}else {
+					appendMap(map, "com.alibaba.fastjson.JSONObject", imports);
 				}
 			}
 		}
