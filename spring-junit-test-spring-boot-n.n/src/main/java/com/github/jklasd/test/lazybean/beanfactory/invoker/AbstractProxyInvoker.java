@@ -59,7 +59,11 @@ public abstract class AbstractProxyInvoker implements ProxyInvoker{
         }catch (InvocationTargetException e) {
         	Exception newE = e;
         	if(e.getTargetException()!=null) {//处理反射调用包裹异常问题
-        		newE = (Exception) e.getTargetException(); 
+        		if(e.getTargetException() instanceof Exception) {
+        			newE = (Exception) e.getTargetException(); 
+        		}else {
+        			newE = new JunitException(e.getTargetException());
+        		}
         	}
         	//异常处理
         	exceptionInvoke(dto,context,newE);

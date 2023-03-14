@@ -33,7 +33,7 @@ import com.google.common.collect.Sets;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class Squaretest {
+public class VelocityUtil {
 
 	private final static String junit_test = "";
 
@@ -53,6 +53,9 @@ public class Squaretest {
 			try {
 				Class<?> tagClass = JunitClassLoader.getInstance()
 						.loadClass(packagePath.replace("/", ".") + "." + fileName.replace(".class", ""));
+				if(tagClass.isInterface()) {
+					continue;
+				}
 				square(tagClass, "src/test/java");
 			} catch (ClassNotFoundException e) {
 				e.printStackTrace();
