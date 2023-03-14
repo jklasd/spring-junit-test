@@ -62,7 +62,7 @@ public class BuildMethodObjParam {
 							createBean.append(paramName);
 							createBean.append(" = ");
 							if(typeStr.contains("Map")) {
-								createBean.append("new HashMap<>();");
+								createBean.append("new HashMap<>();\n");
 							}
 						}
 					}else {

@@ -144,6 +144,25 @@ public class MethodSnoopUtil {
 					return;
 				}
 				Class<?> tagClass = ScanUtil.loadClass(cName);
+				
+				if(!m.getMethodName().startsWith("$") 
+						&& Modifier.isStatic(m.getMethod().getModifiers())
+						&& Modifier.isPublic(m.getMethod().getModifiers())) {
+					
+					CtMethod ctMethod = m.getMethod();
+					PryMethodInfo tmp = new PryMethodInfo(m.getMethod());
+					tmp.filtered.addAll(filtered);//防止递归
+					tmp.recursion.addAll(recursion);//防止递归
+					ctMethod.instrument(tmp); // 存在静态方法中调用静态方法，然后调用spring 容器获取对象
+					
+					findToStatic.addAll(tmp.getFindToStatic());
+					findToFinal.addAll(tmp.getFindToFinal());
+					if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
+						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {
+							findToStatic.add(tagClass);
+						}
+					}
+				}
 				if(AnnHandlerUtil.isAnnotationPresent(tagClass, Component.class)) {
 					
 					if(Modifier.isFinal(m.getMethod().getModifiers())//如果是final
@@ -156,14 +175,6 @@ public class MethodSnoopUtil {
 						}
 					}
 					
-					if(!m.getMethodName().startsWith("$") 
-							&& Modifier.isStatic(m.getMethod().getModifiers())
-							&& Modifier.isPublic(m.getMethod().getModifiers())) {
-						
-						if(beanFactoryProcessor.notBFProcessor(tagClass) && CheckUtil.checkProp(tagClass)) {
-							findToStatic.add(tagClass);
-						}
-					}
 				}else {
 					filtered.add(cName);
 				}

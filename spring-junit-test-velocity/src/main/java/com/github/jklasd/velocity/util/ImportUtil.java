@@ -42,6 +42,9 @@ public class ImportUtil {
 						appendMap(map, t.getTypeName(), imports);
 					}
 				}
+				if(map.containsKey("java.util.Map")) {
+					appendMap(map, "java.util.HashMap", imports);
+				}
 				appendMap(map, "com.alibaba.fastjson.JSONObject", imports);
 			}else {
 				if(Modifier.isFinal(p.getType().getModifiers())) {
