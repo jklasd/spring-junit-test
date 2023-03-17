@@ -60,10 +60,10 @@ public class JunitInvoker extends AbstractProxyInvoker{
 			
 			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(tagMethod);
 			handledMethods.add(tagMethod);
-			if(!methodInfo.getFindToStatic().isEmpty()) {
-				//处理静态方法
-				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
-			}
+//			if(!methodInfo.getFindToStatic().isEmpty()) {
+//				//处理静态方法
+//				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+//			}
 			if(methodInfo.getFindToFinal().isEmpty()) {
 				return true;
 			}

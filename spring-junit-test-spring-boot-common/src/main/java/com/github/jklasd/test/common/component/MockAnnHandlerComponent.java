@@ -10,6 +10,9 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
+import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.github.jklasd.test.common.util.MethodSnoopUtil;
+import com.github.jklasd.test.common.util.MethodSnoopUtil.PryMethodInfo;
 import com.google.common.collect.Maps;
 
 public class MockAnnHandlerComponent {
@@ -25,7 +28,16 @@ public class MockAnnHandlerComponent {
 			}
 		}
 	}
+//	private static LazyBeanI lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	public static void handlerMethod(Method method) {
+//		try {
+//			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(method);
+//			if(!methodInfo.getFindToStatic().isEmpty()) {
+//				//处理静态方法
+//				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+//			}
+//		} catch (Exception e) {
+//		}
 		Annotation[] anns = method.getAnnotations();
 		for(Annotation ann : anns) {
 			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());

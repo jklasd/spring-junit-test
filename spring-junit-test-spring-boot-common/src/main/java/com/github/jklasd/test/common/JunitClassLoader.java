@@ -45,11 +45,11 @@ public class JunitClassLoader extends ClassLoader{
 		setBean();
 		if(!staticClassHandled) {
 			staticClassHandled = true;
-//			staticComponentClass.forEach(staticClass->{
-//				if(beanFactoryProcessor.notBFProcessor(staticClass) && CheckUtil.checkProp(staticClass)) {
-//					lazyBean.processStatic(staticClass);
-//				}
-//			});
+			staticComponentClass.forEach(staticClass->{
+				if(beanFactoryProcessor.notBFProcessor(staticClass) && CheckUtil.checkProp(staticClass)) {
+					lazyBean.processStatic(staticClass);
+				}
+			});
 		}
 	}
 	
@@ -66,34 +66,38 @@ public class JunitClassLoader extends ClassLoader{
 			return null;
 		}
 		loadClass = loadClass(name, false);
-//		try {
-//			if(!Modifier.isAbstract(loadClass.getModifiers())
-//					&& !loadClass.getName().startsWith("org.springframework")) {
-////				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
-//				if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
-//					log.debug("查看{}是否是静态类",loadClass);
-//					if(scan.hasStaticMethod(loadClass)) {
-//						int process = ContainerManager.stats;
-//						if(process < ContainerManager.inited) {
-//							staticComponentClass.add(loadClass);
-//						}else {
-//							//预热静态方法的实例对象
-//							if(beanFactoryProcessor.notBFProcessor(loadClass)) {
-//								String value = SignalNotificationUtil.get(loadClass.getName());
-//								if(value == null) {
-//									lazyBean.processStatic(loadClass);
-//								}else {
-//									SignalNotificationUtil.put(loadClass.getName(), "false");
-//								}
-//							}
-//						}
-//					}
-//				}
-//			}
-//		} catch (IOException e) {
-//			e.printStackTrace();
-//		}
+		
+		handHasstaticMethodClass(loadClass);
 		
 		return loadClass;
     }
+
+	/**
+	 * 部分其他非springbean中调用了静态方法，需要提前处理
+	 * @param loadClass
+	 */
+	private void handHasstaticMethodClass(Class<?> loadClass) {
+		if(!Modifier.isAbstract(loadClass.getModifiers())
+				&& !loadClass.getName().startsWith("org.springframework")) {
+			if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
+				log.debug("查看{}是否是静态类",loadClass);
+				if(scan.hasStaticMethod(loadClass)) {
+					int process = ContainerManager.stats;
+					if(process < ContainerManager.inited) {
+						staticComponentClass.add(loadClass);
+					}else {
+						//预热静态方法的实例对象
+						if(beanFactoryProcessor.notBFProcessor(loadClass)) {
+							String value = SignalNotificationUtil.get(loadClass.getName());
+							if(value == null) {
+								lazyBean.processStatic(loadClass);
+							}else {
+								SignalNotificationUtil.put(loadClass.getName(), "false");
+							}
+						}
+					}
+				}
+			}
+		}
+	}
 }
