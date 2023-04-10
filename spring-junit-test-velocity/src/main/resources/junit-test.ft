@@ -42,11 +42,11 @@ class ${sourceClass.name}_Test {
 #macro(junitTestImport)
 #if(${junitAnn.indexOf("RunSpringJunitTestFor5")}!=-1)
 import com.github.jklasd.test.ann.RunSpringJunitTestFor5;
-import com.github.jklasd.velocity.ann.DefaultTestMethod;
+import com.github.jklasd.test.common.ann.DefaultTestMethod;
 import org.junit.jupiter.api.Test;
 #else
 import com.github.jklasd.test.ann.RunSpringJunitTest;
-import com.github.jklasd.velocity.ann.DefaultTestMethod;
+import com.github.jklasd.test.common.ann.DefaultTestMethod;
 import org.junit.runner.RunWith;
 import org.junit.Test;
 #end
