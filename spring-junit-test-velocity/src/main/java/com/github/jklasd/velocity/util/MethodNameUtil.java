@@ -4,7 +4,7 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import com.github.jklasd.velocity.ann.DefaultTestMethod;
+import com.github.jklasd.test.common.ann.DefaultTestMethod;
 
 public class MethodNameUtil {
 	public static boolean validateMethod(Method method, Map<String, String> methodNames) {

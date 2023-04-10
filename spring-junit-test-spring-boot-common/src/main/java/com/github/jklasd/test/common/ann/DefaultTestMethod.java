@@ -1,4 +1,4 @@
-package com.github.jklasd.velocity.ann;
+package com.github.jklasd.test.common.ann;
 
 import java.lang.annotation.Documented;
 import java.lang.annotation.ElementType;
