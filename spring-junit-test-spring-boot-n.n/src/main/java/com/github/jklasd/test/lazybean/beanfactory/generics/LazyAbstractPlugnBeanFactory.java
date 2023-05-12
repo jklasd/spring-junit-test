@@ -2,8 +2,8 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.util.Map;
 
+import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.google.common.collect.Maps;
 

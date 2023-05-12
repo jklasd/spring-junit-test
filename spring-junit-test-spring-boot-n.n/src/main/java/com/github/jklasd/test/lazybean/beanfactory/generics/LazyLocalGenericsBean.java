@@ -4,11 +4,11 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.base.Objects;

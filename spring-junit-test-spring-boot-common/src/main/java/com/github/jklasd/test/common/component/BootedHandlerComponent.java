@@ -6,7 +6,7 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.google.common.collect.Lists;
 
-public class BootedHandlerComponent {
+public class BootedHandlerComponent extends AbstractComponent<BootHandler>{
 	
 	private static List<BootHandler> bootList = Lists.newArrayList();
 	
@@ -22,5 +22,10 @@ public class BootedHandlerComponent {
 
 	public static void init() {
 		bootList.stream().forEach(item->item.launcher());
+	}
+
+	@Override
+	<T> void add(T t) {
+		
 	}
 }

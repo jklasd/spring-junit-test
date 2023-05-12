@@ -1,4 +1,4 @@
- package com.github.jklasd.test.lazyplugn;
+ package com.github.jklasd.test.common.interf.register;
 
 import com.github.jklasd.test.common.model.BeanModel;
 

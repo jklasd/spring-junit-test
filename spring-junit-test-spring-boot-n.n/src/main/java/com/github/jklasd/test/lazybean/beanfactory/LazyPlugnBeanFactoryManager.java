@@ -4,6 +4,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.ObjectProvider;
 
+import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyConfigurationPropertiesBean;
@@ -12,7 +13,6 @@ import com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBea
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMethodBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean;
 import com.github.jklasd.test.lazybean.beanfactory.generics.LazyOtherBean;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
 import com.google.common.collect.Lists;
 

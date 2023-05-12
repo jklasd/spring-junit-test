@@ -32,6 +32,7 @@
 		<module>spring-junit-test-spring-boot-n.n</module>
 		<module>spring-junit-mock-test-spring-boot-n.n</module>
 		<module>spring-junit-db-test-n.n</module>
+		<module>spring-junit-remote-test-n.n</module>
 	</modules>
 
 	<licenses>

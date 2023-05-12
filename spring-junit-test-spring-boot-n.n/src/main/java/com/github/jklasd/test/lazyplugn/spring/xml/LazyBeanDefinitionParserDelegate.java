@@ -20,9 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelegate{
     
     private Map<String,BeanDefParser> parser = Maps.newConcurrentMap();
-    {
-        LazyDubboBean.getInstance().load(parser);
-    }
+//    {
+//        LazyDubboBean.getInstance().load(parser);
+//    }
     private XmlReaderContext readerContext;
     public LazyBeanDefinitionParserDelegate(XmlReaderContext readerContext,LazyBeanDefinitionDocumentReader documentReader) {
         super(readerContext);
