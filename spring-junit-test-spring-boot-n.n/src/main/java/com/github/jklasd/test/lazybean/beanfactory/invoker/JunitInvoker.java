@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Set;
 
 import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.Contants;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.MethodSnoopUtil;
 import com.github.jklasd.test.common.util.MethodSnoopUtil.PryMethodInfo;
@@ -60,10 +61,12 @@ public class JunitInvoker extends AbstractProxyInvoker{
 			
 			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(tagMethod);
 			handledMethods.add(tagMethod);
-//			if(!methodInfo.getFindToStatic().isEmpty()) {
-//				//处理静态方法
-//				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
-//			}
+			if(Contants.prepareStatic) {
+				if(!methodInfo.getFindToStatic().isEmpty()) {
+					//处理静态方法
+					methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+				}
+			}
 			if(methodInfo.getFindToFinal().isEmpty()) {
 				return true;
 			}

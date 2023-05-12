@@ -63,12 +63,6 @@ public class FieldAnnComponent extends AbstractComponent{
 							&& !ClassUtil.getInstance().isBasicType(c2)) {
 						log.warn("=====类型不一致==={}={}=",c2,c1);
 					}
-//				switch(c2.getName()) {
-//				case "java.lang.String":
-//					proxyObj = proxyObj.toString();
-//					break;
-//				default:
-//				}
 			}
 			
 			if (!attr.isAccessible()) {
