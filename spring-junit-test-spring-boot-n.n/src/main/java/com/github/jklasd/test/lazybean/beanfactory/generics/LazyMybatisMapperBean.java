@@ -16,11 +16,11 @@ import org.springframework.core.type.AnnotationMetadata;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.LazyDataSourceUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory.RootBeanDefinitionBuilder;
 import com.github.jklasd.test.util.JunitInvokeUtil;
@@ -39,6 +39,20 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyMybatisMapperBean.class);
+	}
+	@Override
+	public String getName() {
+		return "LazyMybatisMapperBean";
+	}
+	
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 100;
 	}
 
     private Object defaultFactory;
@@ -236,4 +250,5 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 			LazyListableBeanFactory.getInstance().removeBeanDefinition(beanName);
 		}
 	}
+
 }

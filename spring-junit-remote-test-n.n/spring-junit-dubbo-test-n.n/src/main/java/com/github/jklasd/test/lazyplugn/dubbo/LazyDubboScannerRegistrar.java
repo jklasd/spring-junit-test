@@ -10,6 +10,7 @@ public class LazyDubboScannerRegistrar implements ScannerRegistrarI {
 		return LazyDubboBean.useDubbo();
 	}
 
+	//服务暴露时能用到处理
 	@Override
 	public void scannerAndRegister() {
 //		List<Class<?>> dubboServiceList = ScanUtil.findClassWithAnnotation(LazyDubboBean.getAnnotionClass(),ClassScan.getApplicationAllClassMap());

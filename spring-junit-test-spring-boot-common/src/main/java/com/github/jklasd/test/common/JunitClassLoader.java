@@ -67,7 +67,9 @@ public class JunitClassLoader extends ClassLoader{
 		}
 		loadClass = loadClass(name, false);
 		
-		handHasstaticMethodClass(loadClass);
+		if(Contants.prepareStatic) {
+			handHasstaticMethodClass(loadClass);
+		}
 		
 		return loadClass;
     }

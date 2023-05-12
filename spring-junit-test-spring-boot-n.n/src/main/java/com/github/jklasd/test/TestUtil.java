@@ -49,7 +49,7 @@ public class TestUtil implements JunitCoreComponentI{
 	@Getter
 	private Set<String> scanClassPath = Sets.newHashSet();
 	private Set<String> scanPropertiesList = Sets.newHashSet();
-
+	
 	public void loadProperties(String... scanPropertiesPath) {
 		for (String path : scanPropertiesPath) {
 			scanPropertiesList.add(path);

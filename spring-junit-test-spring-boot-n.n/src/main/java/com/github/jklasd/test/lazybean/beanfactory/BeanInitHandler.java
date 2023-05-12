@@ -62,18 +62,6 @@ class BeanInitHandler {
 		Method[] ms = handlerParam.getMs();
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
-			/*
-			 * if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。 try { if
-			 * (!m.isAccessible()) { m.setAccessible(true); } m.invoke(obj, null); } catch
-			 * (IllegalAccessException | IllegalArgumentException |
-			 * InvocationTargetException e) { log.error("初始化方法执行异常{}#{}",obj,m);
-			 * log.error("初始化方法执行异常",e); } }else
-			 */
-//		    if(m.getAnnotation(Autowired.class) != null) {
-//			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
-//			    Object[] param = processParam(m, paramTypes);
-//                Object tmp = m.invoke(obj, param);
-//			}else 
 			if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
 			    if(paramTypes.length>0) {
@@ -93,41 +81,7 @@ class BeanInitHandler {
                 String beanName = aw.name();
                 Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
-//                }
             }
-//            else if(m.getAnnotation(Bean.class) != null) {
-//            	if(m.getReturnType() != Void.class
-//            			&& m.getReturnType() != void.class) {
-//            		return;
-//            	}
-//                Bean aw = m.getAnnotation(Bean.class);
-//                String beanName = null;
-//                if(aw.value().length>0) {
-//                	beanName = aw.value()[0];
-//                }else if(aw.name().length>0){
-//                	beanName = aw.name()[0];
-//                }else {
-//                	beanName = m.getName();
-//                }
-//                boolean exitBean = TestUtil.getInstance().getApplicationContext().containsBean(beanName);
-//                if(exitBean) {
-//                	return;
-//                }
-//                if (!m.isAccessible()) {
-//					m.setAccessible(true);
-//				}
-//                Object[] param = processParam(m, paramTypes);
-//                Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
-//                    if(confPro!=null) {
-//                    	LazyConfPropBind.processConfigurationProperties(tmp,confPro);
-//                    }
-//                    TestUtil.getInstance().getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
-//                }
-//            }
 		}
 	}
 	

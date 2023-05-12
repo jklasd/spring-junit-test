@@ -2,14 +2,12 @@ package com.github.jklasd.test.common.component;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.lang.reflect.Modifier;
 import java.util.Comparator;
 import java.util.Map;
 import java.util.TreeMap;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.common.util.ClassUtil;
@@ -18,22 +16,16 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FieldAnnComponent {
-	
+public class FieldAnnComponent extends AbstractComponent{
 	private static Map<String,FieldHandler> handlerMap = Maps.newHashMap();
-	public static class HandlerLoader{
-		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
-			for(String hclass :handlerClasses) {
-				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
-				FieldHandler handler = (FieldHandler) handlerClass.newInstance();
-				if(StringUtils.isNotBlank(handler.getType())) {
-					handlerMap.put(handler.getType(), handler);
-				}
-			}
+	
+	void add(Object obj) {
+		FieldHandler handler = (FieldHandler) obj;
+		if(StringUtils.isNotBlank(handler.getType())) {
+			handlerMap.put(handler.getType(), handler);
 		}
 	}
 	
-
 	public static void handlerField(FieldDef attr) {
 		Annotation[] anns = attr.getField().getAnnotations();
 		TreeMap<FieldHandler,Annotation> hitHandlerMap = Maps.newTreeMap(new Comparator<FieldHandler>() {
@@ -71,12 +63,6 @@ public class FieldAnnComponent {
 							&& !ClassUtil.getInstance().isBasicType(c2)) {
 						log.warn("=====类型不一致==={}={}=",c2,c1);
 					}
-//				switch(c2.getName()) {
-//				case "java.lang.String":
-//					proxyObj = proxyObj.toString();
-//					break;
-//				default:
-//				}
 			}
 			
 			if (!attr.isAccessible()) {
@@ -98,4 +84,5 @@ public class FieldAnnComponent {
 			}
 		}
 	}
+
 }

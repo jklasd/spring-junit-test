@@ -52,6 +52,7 @@ public class JunitResourceLoaderManager {
 	public void loadResource(String name, InputStream inputStream) {
 		for(JunitResourceLoaderEnum item : JunitResourceLoaderEnum.values()) {
 			if(name.contains(item.getFileName())) {
+//				log.info("处理:{}",name);
 				loaderMap.get(item.getFileName()).loadResource(inputStream);
 			}
 		}

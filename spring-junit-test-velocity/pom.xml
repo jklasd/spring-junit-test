@@ -130,10 +130,12 @@
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-common</artifactId>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>

@@ -14,9 +14,8 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.core.OrderComparator;
 
-import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
-import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.interf.register.ObjectProviderBuilder;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.core.facade.scan.BeanCreaterScan;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
@@ -125,5 +124,4 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 			return null;
 		}
 	}
-	
 }
