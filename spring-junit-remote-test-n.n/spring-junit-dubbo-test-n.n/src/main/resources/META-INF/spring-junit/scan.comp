@@ -1,4 +1,4 @@
-com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory=com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean
+com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory=com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean
 
 com.github.jklasd.test.common.interf.handler.BeanDefinitionParserDelegateHandler=com.github.jklasd.test.lazybean.beanfactory.generics.BeanDefParserLoader
 

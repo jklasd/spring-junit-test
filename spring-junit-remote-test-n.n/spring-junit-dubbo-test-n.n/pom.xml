@@ -61,11 +61,6 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>org.mockito</groupId>
-			<artifactId>mockito-core</artifactId>
-			<scope>compile</scope>
-		</dependency>
-		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
 			<scope>provided</scope>
@@ -83,7 +78,7 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
@@ -125,29 +120,15 @@
 			<artifactId>slf4j-api</artifactId>
 			<scope>provided</scope>
 		</dependency>
-	    <!--<dependency>
-	        <groupId>org.springframework.boot</groupId>
-	        <artifactId>spring-boot-starter-test</artifactId>
-	        <scope>provided</scope>
-		</dependency>-->
 		<dependency>
 			<groupId>junit</groupId>
 			<artifactId>junit</artifactId>
-			<scope>compile</scope>
+			<scope>provided</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test</artifactId>
-		</dependency>
-		<dependency>
-		    <groupId>org.testcontainers</groupId>
-		    <artifactId>testcontainers</artifactId>
-		    <version>1.17.6</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.testcontainers</groupId>
-		    <artifactId>mysql</artifactId>
-		    <version>1.17.6</version>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 
