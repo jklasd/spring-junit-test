@@ -40,4 +40,9 @@ public class LazyOtherBean extends LazyAbstractPlugnBeanFactory{
     		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
 		}
 	}
+
+	@Override
+	public String getName() {
+		return "LazyOtherBean";
+	}
 }

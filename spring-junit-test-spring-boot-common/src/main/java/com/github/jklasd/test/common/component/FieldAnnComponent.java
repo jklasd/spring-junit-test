@@ -16,7 +16,7 @@ import com.google.common.collect.Maps;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class FieldAnnComponent extends AbstractComponent<FieldHandler>{
+public class FieldAnnComponent extends AbstractComponent{
 	private static Map<String,FieldHandler> handlerMap = Maps.newHashMap();
 	
 	void add(Object obj) {

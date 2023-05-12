@@ -9,9 +9,8 @@ import org.springframework.beans.factory.xml.ParserContext;
 import org.springframework.beans.factory.xml.XmlReaderContext;
 import org.w3c.dom.Element;
 
-import com.github.jklasd.test.lazybean.beanfactory.generics.LazyDubboBean;
-import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
-import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.common.component.BeanDefinitionParserDelegateComponent;
+import com.github.jklasd.test.common.interf.handler.BeanDefParser;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -20,9 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 public class LazyBeanDefinitionParserDelegate extends BeanDefinitionParserDelegate{
     
     private Map<String,BeanDefParser> parser = Maps.newConcurrentMap();
-//    {
-//        LazyDubboBean.getInstance().load(parser);
-//    }
+    {
+        BeanDefinitionParserDelegateComponent.loadBeanDefParser(parser);
+    }
     private XmlReaderContext readerContext;
     public LazyBeanDefinitionParserDelegate(XmlReaderContext readerContext,LazyBeanDefinitionDocumentReader documentReader) {
         super(readerContext);

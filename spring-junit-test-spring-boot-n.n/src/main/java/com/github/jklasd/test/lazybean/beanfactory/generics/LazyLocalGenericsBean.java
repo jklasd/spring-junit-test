@@ -4,7 +4,7 @@ import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
 
-import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -87,6 +87,11 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyLocalGenericsBean.class);
+	}
+
+	@Override
+	public String getName() {
+		return "LazyLocalGenericsBean";
 	}
 
 

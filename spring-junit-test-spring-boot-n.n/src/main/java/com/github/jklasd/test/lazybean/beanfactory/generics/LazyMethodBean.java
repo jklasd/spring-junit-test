@@ -1,6 +1,6 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
-import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
@@ -43,5 +43,10 @@ public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements Lazy
 	
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyMethodBean.class);
+	}
+
+	@Override
+	public String getName() {
+		return "LazyMethodBean";
 	}
 }

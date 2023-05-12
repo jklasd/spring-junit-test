@@ -16,7 +16,7 @@ import org.springframework.core.type.AnnotationMetadata;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.DatabaseInitialization;
-import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.LazyDataSourceUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -235,5 +235,10 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 			}
 			LazyListableBeanFactory.getInstance().removeBeanDefinition(beanName);
 		}
+	}
+
+	@Override
+	public String getName() {
+		return "LazyMybatisMapperBean";
 	}
 }

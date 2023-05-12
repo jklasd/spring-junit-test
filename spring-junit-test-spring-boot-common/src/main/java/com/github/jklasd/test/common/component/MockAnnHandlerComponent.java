@@ -10,25 +10,10 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
-import com.github.jklasd.test.common.interf.register.LazyBeanI;
-import com.github.jklasd.test.common.util.MethodSnoopUtil;
-import com.github.jklasd.test.common.util.MethodSnoopUtil.PryMethodInfo;
 import com.google.common.collect.Maps;
 
-public class MockAnnHandlerComponent {
+public class MockAnnHandlerComponent extends AbstractComponent{
 	private static Map<String,MockClassHandler> handlerMap = Maps.newHashMap();
-	public static class HandlerLoader{
-		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
-			for(String hclass :handlerClasses) {
-				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
-				MockClassHandler handler = (MockClassHandler) handlerClass.newInstance();
-				if(StringUtils.isNotBlank(handler.getType())) {
-					handlerMap.put(handler.getType(), handler);
-				}
-			}
-		}
-	}
-//	private static LazyBeanI lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	public static void handlerMethod(Method method) {
 //		try {
 //			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(method);
@@ -103,6 +88,14 @@ public class MockAnnHandlerComponent {
 		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 		if(injectMocksHandler!=null) {
 			injectMocksHandler.registId();
+		}
+	}
+
+	@Override
+	<T> void add(T component) {
+		MockClassHandler handler = (MockClassHandler) component;
+		if(StringUtils.isNotBlank(handler.getType())) {
+			handlerMap.put(handler.getType(), handler);
 		}
 	}
 }

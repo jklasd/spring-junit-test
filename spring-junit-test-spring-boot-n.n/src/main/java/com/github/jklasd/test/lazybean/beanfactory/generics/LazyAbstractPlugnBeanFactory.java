@@ -2,9 +2,8 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import java.util.Map;
 
-import com.github.jklasd.test.common.interf.register.LazyPlugnBeanFactory;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
-import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -25,8 +24,6 @@ public abstract class LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFacto
 		}
 		return null;
 	}
-	
-	public void load(Map<String, BeanDefParser> parser) {}
 	
 	@Override
 	public void afterPropertiesSet(Object obj,BeanModel model) {

@@ -30,4 +30,9 @@ public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactor
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyConfigurationPropertiesBean.class);
 	}
+
+	@Override
+	public String getName() {
+		return "LazyConfigurationPropertiesBean";
+	}
 }

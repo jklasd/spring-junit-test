@@ -69,4 +69,9 @@ public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyBeanDefBean.class);
 	}
+
+	@Override
+	public String getName() {
+		return "LazyBeanDefBean";
+	}
 }

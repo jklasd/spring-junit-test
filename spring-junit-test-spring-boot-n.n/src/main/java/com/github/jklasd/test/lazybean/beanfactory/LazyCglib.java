@@ -2,12 +2,11 @@ package com.github.jklasd.test.lazybean.beanfactory;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
-import java.lang.reflect.Modifier;
 
 import org.springframework.cglib.proxy.MethodInterceptor;
 import org.springframework.cglib.proxy.MethodProxy;
 
-import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.component.LazyPlugnBeanFactoryComponent;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 
@@ -32,7 +31,7 @@ class LazyCglib extends AbstractLazyProxy implements MethodInterceptor {
     @Override
     protected  synchronized Object getTagertObjectCustom() {
     	
-    	tagertObj = LazyPlugnBeanFactoryManager.getInstance().getTagertObjectCustomForClass(beanModel);
+    	tagertObj = LazyPlugnBeanFactoryComponent.getInstance().getTagertObjectCustomForClass(beanModel);
     	if(tagertObj == null) {
     		log.warn("{},未找到bean",beanModel);
     	}

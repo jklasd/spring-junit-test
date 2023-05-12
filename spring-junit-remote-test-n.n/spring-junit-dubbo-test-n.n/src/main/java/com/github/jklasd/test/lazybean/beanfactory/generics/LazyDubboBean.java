@@ -9,14 +9,13 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.w3c.dom.Element;
 
+import com.github.jklasd.test.common.interf.handler.BeanDefParser;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.dubbo.AbstractRefHandler;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboAnnotationRefHandler;
 import com.github.jklasd.test.lazyplugn.dubbo.LazyDubboXmlRefHandler;
-import com.github.jklasd.test.lazyplugn.spring.BeanDefParser;
-import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
@@ -29,8 +28,8 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanDefParser,LazyPlugnBeanFactory{
-    public static LazyAbstractPlugnBeanFactory getInstance() {
-		return getInstanceByClass(LazyDubboBean.class);
+    public static LazyDubboBean getInstance() {
+		return (LazyDubboBean) getInstanceByClass(LazyDubboBean.class);
 	}
     
 	private static Map<Class<?>,Object> dubboData = Maps.newHashMap();
@@ -81,11 +80,6 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
                 break;
         }
     }
-    public void load(Map<String, BeanDefParser> parser) {
-        XmlBeanUtil.getInstance().getNamespaceURIList().stream().filter(url->url.contains("dubbo")).forEach(url->{
-            parser.put(url, this);
-        });
-    }
     public boolean isDubboNew(Class<?> classBean) {
         return xmlRefHandler.isDubboNew(classBean)
         		|| annRefHandler.isDubboNew(classBean);
@@ -124,6 +118,10 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
 		String className = beanModel.getTagClass().getName();
 		return xmlRefHandler.getRefType().containsKey(className)
 				|| annRefHandler.getRefType().containsKey(className);
+	}
+	@Override
+	public String getName() {
+		return "LazyDubboBean";
 	}
     
 }
