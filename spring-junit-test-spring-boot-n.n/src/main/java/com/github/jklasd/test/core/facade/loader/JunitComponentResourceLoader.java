@@ -17,6 +17,7 @@ import com.github.jklasd.test.common.component.AbstractComponent;
 import com.github.jklasd.test.common.component.BeanDefinitionParserDelegateComponent;
 import com.github.jklasd.test.common.component.BootedHandlerComponent;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
+import com.github.jklasd.test.common.component.LazyPlugnBeanFactoryComponent;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.component.VersionControlComponent;
@@ -24,10 +25,10 @@ import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.BeanDefinitionParserDelegateHandler;
 import com.github.jklasd.test.common.interf.handler.BootHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -48,6 +49,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 		componentCache.put(VersionController.class.getName(), VersionControlComponent.class);
 		componentCache.put(ScannerRegistrarI.class.getName(), ScannerRegistrarComponent.class);
 		componentCache.put(BeanDefinitionParserDelegateHandler.class.getName(), BeanDefinitionParserDelegateComponent.class);
+		componentCache.put(LazyPlugnBeanFactory.class.getName(), LazyPlugnBeanFactoryComponent.class);
 	}
 	
 
@@ -62,8 +64,6 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 			if(StringUtils.isNotBlank(containerName)) {
 				ContainerManager.HandlerLoader.load(containerName.split(","));
 			}
-			
-			Lists.newArrayList();
 			
 			Iterator<Entry<String, Class<?>>> iterator = componentCache.entrySet().iterator();
 			while(iterator.hasNext()) {
