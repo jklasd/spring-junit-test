@@ -31,6 +31,19 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
     public static LazyDubboBean getInstance() {
 		return (LazyDubboBean) getInstanceByClass(LazyDubboBean.class);
 	}
+    @Override
+	public String getName() {
+		return "LazyDubboBean";
+	}
+    
+	public Integer getOrder() {
+		return 200;
+	}
+	
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
     
 	private static Map<Class<?>,Object> dubboData = Maps.newHashMap();
 	
@@ -119,9 +132,5 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
 		return xmlRefHandler.getRefType().containsKey(className)
 				|| annRefHandler.getRefType().containsKey(className);
 	}
-	@Override
-	public String getName() {
-		return "LazyDubboBean";
-	}
-    
+	
 }

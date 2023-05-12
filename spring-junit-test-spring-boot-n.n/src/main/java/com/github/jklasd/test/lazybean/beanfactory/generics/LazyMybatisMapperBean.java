@@ -40,6 +40,20 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyMybatisMapperBean.class);
 	}
+	@Override
+	public String getName() {
+		return "LazyMybatisMapperBean";
+	}
+	
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 100;
+	}
 
     private Object defaultFactory;
 
@@ -237,8 +251,4 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 		}
 	}
 
-	@Override
-	public String getName() {
-		return "LazyMybatisMapperBean";
-	}
 }

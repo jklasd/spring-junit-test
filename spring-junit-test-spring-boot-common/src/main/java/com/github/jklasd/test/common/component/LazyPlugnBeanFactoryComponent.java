@@ -1,7 +1,8 @@
 package com.github.jklasd.test.common.component;
 
+import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -10,15 +11,40 @@ import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.interf.register.ObjectProviderBuilder;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 public class LazyPlugnBeanFactoryComponent extends AbstractComponent{
-	static Map<String,LazyPlugnBeanFactory> cacheFactory = Maps.newHashMap();
+	
+	static Set<String> cacheName = Sets.newConcurrentHashSet();
+	
 	@Override
 	<T> void add(T component) {
 		LazyPlugnBeanFactory lazyPlugn = (LazyPlugnBeanFactory) component;
 		
-		cacheFactory.put(lazyPlugn.getName(), lazyPlugn);
+		if(cacheName.contains(lazyPlugn.getName())) {
+			return;
+		}
+		cacheName.add(lazyPlugn.getName());
+		
+		if(lazyPlugn.isClassBean()) {
+			classBeanFactorys.add(lazyPlugn);
+			classBeanFactorys.sort(new Comparator<LazyPlugnBeanFactory>() {
+				@Override
+				public int compare(LazyPlugnBeanFactory o1, LazyPlugnBeanFactory o2) {
+					return o1.getOrder()-o2.getOrder();
+				}
+			});
+		}
+		
+		if(lazyPlugn.isInterfaceBean()) {
+			interfaceBeanFactorys.add(lazyPlugn);
+			interfaceBeanFactorys.sort(new Comparator<LazyPlugnBeanFactory>() {
+				@Override
+				public int compare(LazyPlugnBeanFactory o1, LazyPlugnBeanFactory o2) {
+					return o1.getOrder()-o2.getOrder();
+				}
+			});
+		}
 	}
 
 	static LazyPlugnBeanFactoryComponent instance;
@@ -34,17 +60,9 @@ public class LazyPlugnBeanFactoryComponent extends AbstractComponent{
 		return instance;
 	}
 	
-	private List<String> interfaceBeanFactorys = Lists.newArrayList(
-			"LazyMybatisMapperBean",
-			"LazyDubboBean",
-			"LazyLocalGenericsBean",
-			"LazyMethodBean");
+	private static List<LazyPlugnBeanFactory> interfaceBeanFactorys = Lists.newArrayList();
 	public Object getTagertObjectCustomForInterface(BeanModel beanModel) {
-		for(String name : interfaceBeanFactorys) {
-			LazyPlugnBeanFactory lpbf = cacheFactory.get(name);
-			if(lpbf == null) {
-				continue;
-			}
+		for(LazyPlugnBeanFactory lpbf : interfaceBeanFactorys) {
 			if(lpbf.finded(beanModel)) {
 				Object obj = lpbf.buildBean(beanModel);
 				lpbf.afterPropertiesSet(obj,beanModel);
@@ -58,17 +76,9 @@ public class LazyPlugnBeanFactoryComponent extends AbstractComponent{
 		return null;
 	}
 	
-	private List<String> classBeanFactorys = Lists.newArrayList(
-			"LazyBeanDefBean",
-			"LazyConfigurationPropertiesBean",
-			"LazyMethodBean",
-			"LazyOtherBean"); 
+	private static List<LazyPlugnBeanFactory> classBeanFactorys = Lists.newArrayList(); 
 	public Object getTagertObjectCustomForClass(BeanModel beanModel) {
-		for(String name : classBeanFactorys) {
-			LazyPlugnBeanFactory lpbf = cacheFactory.get(name);
-			if(lpbf == null) {
-				continue;
-			}
+		for(LazyPlugnBeanFactory lpbf : classBeanFactorys) {
 			if(lpbf.finded(beanModel)) {
 				Object obj = lpbf.buildBean(beanModel);
 				lpbf.afterPropertiesSet(obj,beanModel);

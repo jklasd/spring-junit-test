@@ -11,6 +11,20 @@ import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory.RootBeanDefinitionBuilder;
 
 public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
+	@Override
+	public String getName() {
+		return "LazyBeanDefBean";
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 100;
+	}
 
 	private ThreadLocal<BeanDefinition> localCache = new ThreadLocal<>();
 	
@@ -70,8 +84,5 @@ public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
 		return getInstanceByClass(LazyBeanDefBean.class);
 	}
 
-	@Override
-	public String getName() {
-		return "LazyBeanDefBean";
-	}
+	
 }

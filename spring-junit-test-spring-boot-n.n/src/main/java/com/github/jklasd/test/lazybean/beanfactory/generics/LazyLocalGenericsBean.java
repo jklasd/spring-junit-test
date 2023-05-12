@@ -20,6 +20,21 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 	
 	private ThreadLocal<List<Class<?>>> localCache = new ThreadLocal<>();
 	
+	@Override
+	public String getName() {
+		return "LazyLocalGenericsBean";
+	}
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 300;
+	}
+	
+	
 	LazyListableBeanFactory beanFactory = LazyListableBeanFactory.getInstance();
 
 	@Override
@@ -87,11 +102,6 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyLocalGenericsBean.class);
-	}
-
-	@Override
-	public String getName() {
-		return "LazyLocalGenericsBean";
 	}
 
 

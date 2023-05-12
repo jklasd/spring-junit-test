@@ -13,6 +13,25 @@ public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements Lazy
 	private ThreadLocal<JunitMethodDefinition> localCache = new ThreadLocal<>();
 	
 	@Override
+	public String getName() {
+		return "LazyMethodBean";
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 400;
+	}
+	
+	@Override
 	public Object buildBean(BeanModel model) {
 		JunitMethodDefinition jmd = localCache.get();
 		Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),model);
@@ -45,8 +64,5 @@ public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements Lazy
 		return getInstanceByClass(LazyMethodBean.class);
 	}
 
-	@Override
-	public String getName() {
-		return "LazyMethodBean";
-	}
+	
 }
