@@ -26,39 +26,6 @@ public class TransferInvoker extends AbstractProxyInvoker{
 
 	private final String context_oldTxInfo = "oldTxInfo";
 	private final String context_txStatus = "txStatus";
-	/*
-	 * TransactionAttribute oldTxInfo = null;
-    	TransactionStatus txStatus = null;
-        try {
-            Object newObj = getTagertObj();
-            Object result = null;
-            if(TranstionalManager.isFindTranstional()) {
-            	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            	
-            	txStatus = openTransation(oldTxInfo, txInfo);
-            	
-            	result = method.invoke(newObj, param);
-            	closeTransation(oldTxInfo, txStatus,method);
-            }else {
-            	result = method.invoke(newObj, param);
-            }
-            
-            return result;
-        }catch (JunitException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e;
-        }catch (InvocationTargetException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e.getTargetException();
-		}catch (Exception e) {
-			/**
-			 * 抛出异常，一定要关闭事务
-			 * 否则在批量测试中，会导致其他单元测试，进入事务。
-			 */
-//			rollback(oldTxInfo, txStatus,e);
-//            throw e;
-//        }
 	
 	/**
 	 * 正常关闭事务
