@@ -60,6 +60,11 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
     private static final Class<?> factoryClass = ScanUtil.loadClass("org.apache.ibatis.session.SqlSessionFactory");
     private final Class<?> MapperFactoryBeanClass = ScanUtil.loadClass("org.mybatis.spring.mapper.MapperFactoryBean");
 
+    @Override
+	public boolean canBeInstance() {
+		return MapperFactoryBeanClass!=null;
+	}
+    
     public static final boolean useMybatis() {
         return factoryClass != null;
     }

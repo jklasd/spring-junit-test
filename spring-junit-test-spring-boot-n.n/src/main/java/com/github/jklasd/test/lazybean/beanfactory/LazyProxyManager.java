@@ -5,6 +5,7 @@ import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.Factory;
@@ -115,7 +116,7 @@ public class LazyProxyManager {
         	List<ProxyInvoker> pis = Lists.newArrayList(
         			JunitInvoker.getInstance(),
         			LazyAopInvoker.getInstance(),
-        			TransferInvoker.getInstance());
+        			TransferInvoker.getInstance()).stream().filter(item->item!=null).collect(Collectors.toList());
         	proxyInvoker = pis.get(0);
         	ProxyInvoker point = proxyInvoker;
         	for(int i=1;i<pis.size();i++) {

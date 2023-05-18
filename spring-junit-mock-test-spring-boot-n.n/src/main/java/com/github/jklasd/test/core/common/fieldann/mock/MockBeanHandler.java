@@ -29,12 +29,14 @@ public class MockBeanHandler extends AbstractMockHandler implements FieldHandler
 	Constructor<?> mockDefStructor;
 	{
 		try {
-			Constructor<?>[] structors = MockDefinition.getDeclaredConstructors();
-			mockDefStructor = structors[0];
-			mockDefStructor.setAccessible(true);
-			
-			createMock = MockDefinition.getDeclaredMethod("createMock");
-			createMock.setAccessible(true);
+			if(MockDefinition!=null) {
+				Constructor<?>[] structors = MockDefinition.getDeclaredConstructors();
+				mockDefStructor = structors[0];
+				mockDefStructor.setAccessible(true);
+				
+				createMock = MockDefinition.getDeclaredMethod("createMock");
+				createMock.setAccessible(true);
+			}
 			
 		} catch (SecurityException | IllegalArgumentException | NoSuchMethodException e) {
 			e.printStackTrace();

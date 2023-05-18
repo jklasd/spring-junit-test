@@ -8,16 +8,19 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 
 public class TransferInvoker extends AbstractProxyInvoker{
-	
+	private static Class<?> PlatformTransactionManager = ScanUtil.loadClass("org.springframework.transaction.PlatformTransactionManager");
 	private static TransferInvoker instance;
 	public static TransferInvoker getInstance() {
 		if(instance == null) {
-			synchronized (TransferInvoker.class) {
-				if(instance == null) {
-					instance = new TransferInvoker();
+			if(PlatformTransactionManager!=null) {
+				synchronized (TransferInvoker.class) {
+					if(instance == null) {
+						instance = new TransferInvoker();
+					}
 				}
 			}
 		}
