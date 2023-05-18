@@ -27,4 +27,8 @@ public interface LazyPlugnBeanFactory {
     Object buildBean(BeanModel model);
 
 	boolean finded(BeanModel beanModel);
+	
+	default boolean canBeInstance(){
+		return true;
+	}
 }

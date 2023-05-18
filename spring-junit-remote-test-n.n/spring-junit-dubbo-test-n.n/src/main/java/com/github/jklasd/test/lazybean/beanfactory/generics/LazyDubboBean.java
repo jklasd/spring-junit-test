@@ -31,6 +31,12 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
     public static LazyDubboBean getInstance() {
 		return (LazyDubboBean) getInstanceByClass(LazyDubboBean.class);
 	}
+    
+    @Override
+	public boolean canBeInstance() {
+    	return useDubbo();
+	}
+    
     @Override
 	public String getName() {
 		return "LazyDubboBean";

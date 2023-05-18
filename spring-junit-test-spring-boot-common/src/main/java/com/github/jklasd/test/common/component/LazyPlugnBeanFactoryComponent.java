@@ -21,7 +21,8 @@ public class LazyPlugnBeanFactoryComponent extends AbstractComponent{
 	<T> void add(T component) {
 		LazyPlugnBeanFactory lazyPlugn = (LazyPlugnBeanFactory) component;
 		
-		if(cacheName.contains(lazyPlugn.getName())) {
+		if(cacheName.contains(lazyPlugn.getName()) ||
+				!lazyPlugn.canBeInstance()) {
 			return;
 		}
 		cacheName.add(lazyPlugn.getName());
