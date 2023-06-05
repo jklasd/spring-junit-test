@@ -19,6 +19,14 @@ public class LazyConfPropBind{
 		public void postProcess(Object obj, ConfigurationProperties annotation){
 			handler.postProcess(obj, annotation);
 		}
+		
+		public void postProcess(ConfigurationModel model){
+			handler.postProcess(model);
+		}
+	}
+	
+	public static void processConfigurationProperties(ConfigurationModel model) {
+		lcpb.postProcess(model);
 	}
 	
 	public static void processConfigurationProperties(Object obj) {
@@ -28,9 +36,6 @@ public class LazyConfPropBind{
 	public static void processConfigurationProperties(Object obj, ConfigurationProperties annotation) {
 		if(annotation == null) {
 			return;
-		}
-		if(StringUtils.isBlank(annotation.prefix()) && StringUtils.isNotBlank(annotation.value())) {
-			//处理前缀
 		}
 		lcpb.postProcess(obj, annotation);
 	}

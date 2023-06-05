@@ -38,6 +38,7 @@ import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
+import com.github.jklasd.test.lazyplugn.spring.configprop.ConfigurationModel;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
@@ -162,7 +163,11 @@ public class JavaBeanUtil {
         	ConfigurationProperties prop = null;
         	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null
         			|| (prop = tagObj.getClass().getAnnotation(ConfigurationProperties.class))!=null) {
-        		LazyConfPropBind.processConfigurationProperties(tagObj, prop);
+        		ConfigurationModel cm = new ConfigurationModel();
+        		cm.setMethod(method);
+        		cm.setObj(tagObj);
+        		cm.setProp(prop);
+        		LazyConfPropBind.processConfigurationProperties(cm);
         	}
         	
         	if(assemblyData.getTagClass() == null) {
