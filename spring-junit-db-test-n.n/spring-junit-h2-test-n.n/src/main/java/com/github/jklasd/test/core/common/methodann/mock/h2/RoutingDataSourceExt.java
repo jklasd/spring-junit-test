@@ -44,6 +44,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements D
 		if(routingDataSourceExt == null) {
 			routingDataSourceExt = new RoutingDataSourceExt();
 //			routingDataSourceExt.register();//注册到全局
+			ContainerManager.registComponent( routingDataSourceExt);
 		}
 		return routingDataSourceExt;
 	}
