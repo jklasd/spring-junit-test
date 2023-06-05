@@ -1,11 +1,7 @@
 package com.github.jklasd.test.util;
 
-import java.lang.invoke.MethodHandle;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.Arrays;
 
 import org.springframework.lang.Nullable;
 import org.springframework.util.Assert;
@@ -119,11 +115,13 @@ public class JunitInvokeUtil extends ReflectionUtils{
 		}
 		return false;
 	}
-	public static Object invokeStaticMethod(Class<?> tagClass,String methodStr,MethodType methodType,Object... arg) {
-//	    MethodType methodType = MethodType.methodType(String.class, String.class);
+	public static Object invokeStaticMethod(Class<?> tagClass,String methodStr,Class<?>[] paramType,Object... arg) {
 	    try {
-            MethodHandle method =  MethodHandles.lookup().findStatic(tagClass,methodStr, methodType);
-            return method.invoke(arg);
+	    	Method staticMethod = tagClass.getDeclaredMethod(methodStr, paramType);
+	    	if(!staticMethod.isAccessible()) {
+	    		staticMethod.setAccessible(true);
+	    	}
+	    	return staticMethod.invoke(null, arg);
         } catch (Throwable e) {
              throw new JunitException(e);
         }

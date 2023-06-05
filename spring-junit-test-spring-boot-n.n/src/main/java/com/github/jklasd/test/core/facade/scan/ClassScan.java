@@ -146,7 +146,7 @@ public class ClassScan implements Scan{
 				p = p.replace(URLDecoder.decode(tmp.getPath(),"UTF-8")+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(p);
+					Class<?> c = classLoader.loadClass(p);
 					if(c!=null) {
 						classNames.add(p+CLASS_SUFFIX);
 						applicationAllClassMap.put(p,c);
@@ -265,7 +265,7 @@ public class ClassScan implements Scan{
 			className = className.replace("/", ".").replace("\\", ".").replace(".class", "");
 			// 查看是否class
 			try {
-				Class<?> c = classLoader.junitloadClass(className);
+				Class<?> c = classLoader.loadClass(className);
 				return c;
 			} catch (ClassNotFoundException | NoClassDefFoundError e) {
 				if(TestUtil.getInstance().isScanClassPath(className)) {
@@ -291,7 +291,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(name);
+					Class<?> c = classLoader.loadClass(name);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {
@@ -329,10 +329,6 @@ public class ClassScan implements Scan{
 		return list;
 	}
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent( this);
-	}
 	@Override
 	public String getBeanKey() {
 		return Scan.class.getSimpleName();

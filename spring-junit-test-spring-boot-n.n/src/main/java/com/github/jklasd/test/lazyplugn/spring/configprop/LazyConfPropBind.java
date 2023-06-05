@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.spring.configprop;
 
+import org.junit.platform.commons.util.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,9 @@ public class LazyConfPropBind{
 	public static void processConfigurationProperties(Object obj, ConfigurationProperties annotation) {
 		if(annotation == null) {
 			return;
+		}
+		if(StringUtils.isBlank(annotation.prefix()) && StringUtils.isNotBlank(annotation.value())) {
+			//处理前缀
 		}
 		lcpb.postProcess(obj, annotation);
 	}

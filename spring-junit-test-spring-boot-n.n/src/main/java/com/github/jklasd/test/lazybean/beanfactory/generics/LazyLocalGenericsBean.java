@@ -1,24 +1,28 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
+import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.TypeConverter;
+import org.springframework.beans.factory.ObjectProvider;
 
 import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
-import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
-import com.github.jklasd.test.util.BeanNameUtil;
-import com.google.common.base.Objects;
+import com.google.common.collect.Lists;
 
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
 	
-	private ThreadLocal<List<Class<?>>> localCache = new ThreadLocal<>();
+	private ThreadLocal<String[]> localCache = new ThreadLocal<>();
 	
 	@Override
 	public String getName() {
@@ -40,11 +44,16 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 	@Override
 	public void afterPropertiesSet(Object obj,BeanModel model) {
 		if(obj!=null) {
-			BeanInitModel initModel = new BeanInitModel();
-			initModel.setObj(obj);
-			initModel.setTagClass(obj.getClass());
-			initModel.setBeanName(model.getBeanName());
-    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
+			
+			String[] beanNames = localCache.get();
+			for(String beanName : beanNames) {
+				Object tmpObj = beanFactory.getBean(beanName);
+				BeanInitModel initModel = new BeanInitModel();
+				initModel.setObj(tmpObj);
+				initModel.setTagClass(tmpObj.getClass());
+				initModel.setBeanName(beanName);
+	    		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
+			}
 		}
 		localCache.remove();
 	}
@@ -55,23 +64,14 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 			/**
 			 * 开始创建对象
 			 */
-			String beanName = model.getBeanName();
-			if(localCache.get().size()==1 || StringUtils.isBlank(beanName)) {
-				Class<?> tagClass = localCache.get().get(0);
-				Object obj = beanFactory.getBean(tagClass);
-				return obj;
-			}else {
-				//判断beanName一致
-				Class<?> tagClass = localCache.get().stream().filter(classItem->{
-					String cBeanName = BeanNameUtil.getBeanName(classItem);
-					return Objects.equal(cBeanName, beanName);
-				}).findFirst().orElse(null);
-				if(tagClass != null) {
-					Object obj = beanFactory.getBean(tagClass);
-					return obj;
-				}
-				log.warn("活的多个bean;{}",model.getTagClass());
+			String[] beanNames = localCache.get();
+			List<Object> tmpList = Lists.newArrayList();
+			for(String beanName : beanNames) {
+				Object tmpObj = beanFactory.getBean(beanName);
+				tmpList.add(tmpObj);
 			}
+			TypeConverter typeConverter = beanFactory.getTypeConverter();
+			return typeConverter.convertIfNecessary(tmpList, model.getTagClass());
 		}
 		return null;
 	}
@@ -82,19 +82,20 @@ public class LazyLocalGenericsBean extends LazyAbstractPlugnBeanFactory implemen
 		/**
 		 * 如果在本地找到实现类
 		 */
-		if(beanModel.getTagClass().isInterface()) {
-			List<Class<?>> impleList = ScanUtil.findClassImplInterface(beanModel.getTagClass());
-			if(!impleList.isEmpty()) {
-				localCache.set(impleList);
-				return true;
-			}else {
-				//从beanFactory找
-				impleList = beanFactory.findBeanDefiByClass(beanModel.getTagClass());
-				if(!impleList.isEmpty()) {
-					localCache.set(impleList);
-					return true;
-				}
+		Class<?> tagC = beanModel.getTagClass(); 
+		if(tagC.isInterface() && Collection.class.isAssignableFrom(tagC) && !ObjectProvider.class.isAssignableFrom(tagC)) {
+			
+			Type tmpType = beanModel.getClassGeneric()[0];
+			if(tmpType instanceof ParameterizedType) {
+				return false;
 			}
+			Class<?> itemC = (Class<?>) beanModel.getClassGeneric()[0];
+			BeanModel asse = new BeanModel();
+			asse.setTagClass(itemC);
+			List<BeanInitModel> models = LazyBean.findModelsFromFactory(asse);
+			String[] beanNames = models.stream().filter(item->!Objects.equals(beanModel.getExcludeBean(), item.getBeanName())).map(item->item.getBeanName()).collect(Collectors.toList()).toArray(new String[0]);
+			localCache.set(beanNames);
+			return true;
 		}
 		localCache.remove();
 		return false;

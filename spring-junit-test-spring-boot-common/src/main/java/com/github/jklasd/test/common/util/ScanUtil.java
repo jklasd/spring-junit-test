@@ -56,7 +56,7 @@ public class ScanUtil {
 		return getScanner().findClassMap(scanPath);
 	}
 	
-	private static boolean init = false;
+	private static volatile boolean init = false;
 	/**
 	 * 加载所有class，缓存起来
 	 * 类似加载 AbstractEmbeddedServletContainerFactory
@@ -71,11 +71,11 @@ public class ScanUtil {
 	}
 	
 	public static void loadAllClass() {
-		if(init) {
+		if(isInit()) {
 			return;
 		}
-		init = true;
 		getScanner().scan();
+		init = true;
 	}
 	
 //	@Deprecated
@@ -193,7 +193,7 @@ public class ScanUtil {
 		if(notFundClassSet.contains(className))
 			return null;
 		try {
-			Class classObj = JunitClassLoader.getInstance().junitloadClass(className);
+			Class classObj = JunitClassLoader.getInstance().loadClass(className);
 			return classObj;
 		} catch (NoClassDefFoundError e) {
 			log.debug("#NoClassDefFoundError=>{}",className);
@@ -222,4 +222,17 @@ public class ScanUtil {
         }
         return null;
     }
+	public static boolean isInit() {
+		return init;
+	}
+	public static List<JunitMethodDefinition> findCreateBeanFactoryClasses(BeanModel assemblyData) {
+		if(beanFactoryScaner == null) {
+			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
+			if(beanFactoryScaner == null) {
+				log.warn("beanFactoryScaner 未加载到");
+				return null;
+			}
+		}
+		return beanFactoryScaner.findCreateBeanFactoryClasses(assemblyData);
+	}
 }

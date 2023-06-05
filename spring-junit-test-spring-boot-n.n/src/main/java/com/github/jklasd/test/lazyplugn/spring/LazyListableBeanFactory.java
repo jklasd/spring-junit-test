@@ -16,6 +16,7 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
+import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.CannotLoadBeanClassException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.springframework.beans.factory.support.MethodOverrides;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.AttributeAccessor;
 import org.springframework.core.OrderComparator;
 import org.springframework.core.OrderComparator.OrderSourceProvider;
@@ -65,6 +67,75 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //        super(arg0);
 //    }
 	
+	@Override
+	public <T> Map<String, T> getBeansOfType(Class<T> type, boolean includeNonSingletons, boolean allowEagerInit)
+			throws BeansException {
+		return super.getBeansOfType(type, includeNonSingletons, allowEagerInit);
+	}
+	
+	private Map<String,BeanInitModel> findBeanByMethodSets = Maps.newConcurrentMap();
+	public String[] getBeanNamesForType(@Nullable Class<?> type, boolean includeNonSingletons, boolean allowEagerInit) {
+		if (type != null) {
+			if(cacheClassForName.containsKey(type)) {
+				return new String[] {cacheClassForName.get(type)};
+			}
+			try {
+				//查一次
+				BeanModel asse = new BeanModel();
+				asse.setTagClass(type);
+				asse.setIncludeNonSingletons(includeNonSingletons);
+				List<BeanInitModel> models = LazyBean.findModelsFromFactory(asse);
+				if(models!=null && !models.isEmpty()) {
+					return models.stream().map(item->{
+						findBeanByMethodSets.put(item.getBeanName(),item);
+						return item.getBeanName();
+					}).collect(Collectors.toList()).toArray(new String[0]);
+				}
+			} catch (Exception e) {
+				log.warn("getBeanNamesForType:"+type,e);
+				throw new JunitException("getBeanNamesForType:"+type, true);
+			}
+		}
+		return super.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
+	}
+	@Override
+	protected <T> T doGetBean(String name, Class<T> requiredType, Object[] args, boolean typeCheckOnly)
+			throws BeansException {
+		
+		if(beanDefMap.containsKey(name)) {
+			return (T) beanDefMap.get(name);
+		}else {
+			if(findBeanByMethodSets.containsKey(name)) {
+				return (T) LazyBean.findCreateBeanFromFactory(requiredType, name);
+			}else {
+				log.debug ("未找到:{}",name);
+			}
+		}
+		
+		return super.doGetBean(name, requiredType, args, typeCheckOnly);
+	}
+	/**
+	 * 父级调用，防止有插件，自定义构造器
+	 */
+	@Override
+	public String[] getBeanNamesForType(ResolvableType type, boolean includeNonSingletons, boolean allowEagerInit) {
+		Class<?> resolved = type.resolve();
+		if (resolved != null && !type.hasGenerics()) {
+			
+			String[] beanNames = getBeanNamesForType(resolved, includeNonSingletons, allowEagerInit);
+			return beanNames;
+		}
+		else {
+			return super.getBeanNamesForType(type, includeNonSingletons, allowEagerInit);
+		}
+	}
+	protected boolean isPrimary(String beanName, Object beanInstance) {
+		if(findBeanByMethodSets.containsKey(beanName)) {
+			Primary pri = findBeanByMethodSets.get(beanName).getJmd().getMethod().getAnnotation(Primary.class);
+			return pri!=null;
+		}
+		return super.isPrimary(beanName, beanInstance);
+	}
 	public Class<?> getType(String name) throws NoSuchBeanDefinitionException {
 		if(cacheBeanMap.containsKey(name)){
 			return cacheBeanMap.get(name).getClass();
@@ -73,9 +144,12 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			BeanDefinition beanDef = beanDefMap.get(name);
 			return ScanUtil.loadClass(beanDef.getBeanClassName());
 		}
+		if(findBeanByMethodSets.containsKey(name)) {
+			return findBeanByMethodSets.get(name).getJmd().getReturnType();
+		}
 		return super.getType(name);
 	}
-	
+	Map<Class<?>,String> cacheClassForName = Maps.newConcurrentMap();
 	Map<Class<?>,Object> cacheClassMap = Maps.newConcurrentMap();
 	public void registerResolvableDependency(Class<?> dependencyType, Object autowiredValue) {
 		Assert.notNull(dependencyType, "Dependency type must not be null");
@@ -110,6 +184,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 				log.debug("matchBean=>{}",matchBean);
 				String beanDefName = findMatchOne(requiredType, matchBean);
  				Object obj = doCreateBean(beanDefName, RootBeanDefinitionBuilder.build(beanDefMap.get(beanDefName)), null);
+ 				cacheClassForName.put(requiredType, beanDefName);
  				cacheClassMap.put(requiredType, obj);
  				return (T) obj;
 			}
@@ -120,7 +195,17 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //		else if(requiredType.getName().startsWith("org.springframework")) {
 //			return null;
 //		}
-		return super.getBean(requiredType);
+		try {
+			return super.getBean(requiredType);
+		} catch (NoSuchBeanDefinitionException e) {
+			BeanInitModel model = LazyBean.findCreateBeanFromFactory(requiredType);
+			if(model!=null) {
+				cacheClassForName.put(requiredType, model.getBeanName());
+				cacheClassMap.put(requiredType, model.getObj());
+				return (T) model.getObj();
+			}
+			return null;
+		}
 	}
 
 	public <T> String findMatchOne(Class<T> requiredType, List<String> matchBean) {
@@ -140,9 +225,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 //	Map<String,Object> cacheProxyBean = Maps.newHashMap();
 	
 	public Object getBean(String beanName) {
-//		if(super.containsBean(beanName)) {
-//			return super.getBean(beanName);
-//		}
+		if(findBeanByMethodSets.containsKey(beanName)) {
+			BeanInitModel bim = findBeanByMethodSets.get(beanName);
+			BeanModel assemblyData = new BeanModel();
+			assemblyData.setTagClass(bim.getJmd().getReturnType());
+			assemblyData.setBeanName(bim.getBeanName());
+			return JavaBeanUtil.getInstance().buildBean(bim.getJmd().getConfigurationClass(),bim.getJmd().getMethod(),assemblyData);
+		}
 		if(cacheBeanMap.get(beanName)!=null) {
 			return cacheBeanMap.get(beanName);
 		}
@@ -199,6 +288,8 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 			throw new JunitException("不应该执行",true);
 		}
 		cacheBeanMap.put(beanName, singletonObject);
+		cacheClassMap.put(singletonObject.getClass(), singletonObject);
+		cacheClassForName.put(singletonObject.getClass(), beanName);
 		super.registerSingleton(beanName, singletonObject);
 	}
 
@@ -311,10 +402,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		beanNames.add(beanName);
 	}
 	
+	@Override
+	protected RootBeanDefinition getMergedBeanDefinition(String beanName, BeanDefinition bd)
+			throws BeanDefinitionStoreException {
+		return super.getMergedBeanDefinition(beanName, bd);
+	}
+		
 	public BeanDefinition getBeanDefinition(String beanName) throws NoSuchBeanDefinitionException {
-//    	if(beanName.startsWith("org.springframework")) {
-//    		return ;
-//    	}
     	return beanDefMap.get(beanName);
 	}
 	
@@ -363,6 +457,13 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 				// Bean definition got removed while we were iterating -> ignore.
 			}
 		}
+		
+		beanNameSet.stream().forEach(singleBeanName->{
+			if(tagClass.isAssignableFrom(cacheBeanMap.get(singleBeanName).getClass())) {
+				result.add(singleBeanName);
+			}
+		});
+		
 		return result;
 	}
 	
@@ -538,7 +639,7 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 		if(!matchBean.isEmpty()) {
 			List<Class<?>> tagClasses = matchBean.stream().map(beanName->{
 				try {
-					return JunitClassLoader.getInstance().junitloadClass(beanDefMap.get(beanName).getBeanClassName());
+					return JunitClassLoader.getInstance().loadClass(beanDefMap.get(beanName).getBeanClassName());
 				} catch (ClassNotFoundException e) {
 					return null;
 				}

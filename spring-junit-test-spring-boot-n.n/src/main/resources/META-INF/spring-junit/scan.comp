@@ -10,6 +10,7 @@ com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.
 
 com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory=com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyConfigurationPropertiesBean,\
+com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalInterfaceBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyMethodBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyMybatisMapperBean,\

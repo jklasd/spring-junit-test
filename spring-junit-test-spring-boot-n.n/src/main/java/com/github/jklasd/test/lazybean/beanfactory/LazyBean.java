@@ -11,14 +11,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Callback;
@@ -26,9 +25,8 @@ import org.springframework.cglib.proxy.CallbackFilter;
 import org.springframework.cglib.proxy.Enhancer;
 import org.springframework.cglib.proxy.Factory;
 import org.springframework.cglib.proxy.NoOp;
-import org.springframework.context.ApplicationContext;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.env.Environment;
 import org.springframework.objenesis.ObjenesisStd;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Controller;
@@ -39,6 +37,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
@@ -49,7 +48,7 @@ import com.github.jklasd.test.common.util.SignalNotificationUtil;
 import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
-import com.github.jklasd.test.lazyplugn.spring.ObjectProviderImpl;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.DebugObjectView;
@@ -70,7 +69,7 @@ public class LazyBean implements LazyBeanI{
 //	public static Map<Class<?>, List<Object>> singleton = Maps.newHashMap();
 //	public static Map<String, Object> singletonname = Maps.newHashMap();
 	private static ObjenesisStd objenesis = new ObjenesisStd();
-	private TestUtil util = TestUtil.getInstance();
+//	private TestUtil util = TestUtil.getInstance();
 	private LazyBean() {}
 	private static LazyBean bean;
 	public static LazyBean getInstance() {
@@ -85,6 +84,17 @@ public class LazyBean implements LazyBeanI{
 	}
 	public static <T> T invokeBuildObject(Class<T> tagClass){
 		return objenesis.newInstance(tagClass);
+	}
+	public Object buildProxyForGeneric(Class<?> classBean,Type[] classGeneric,String excludeBean) {
+		Object tagObject = null;
+		if (classBean.isInterface()) {
+		    BeanModel model = new BeanModel();
+		    model.setTagClass(classBean);
+		    model.setExcludeBean(excludeBean);
+		    model.setClassGeneric(classGeneric);
+			tagObject = createBean(model);
+		}
+		return tagObject;
 	}
 	/**
 	 * 
@@ -137,6 +147,8 @@ public class LazyBean implements LazyBeanI{
 				proxyBeanName = beanModel.getTagClass().getName();
 			}
 			
+			TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
+			
 			Object proxyBean = util.getApplicationContext().getProxyBeanByClassAndBeanName(proxyBeanName, beanModel.getTagClass());
 			if(proxyBean!=null && beanModel.getTagClass().isInstance(proxyBean)) {
                 return proxyBean;
@@ -177,6 +189,8 @@ public class LazyBean implements LazyBeanI{
 	        	}
         		throw e;
         	}
+        } catch(NoClassDefFoundError e) {
+        	throw new JunitException(e);
         }
         return tag;
     }
@@ -366,6 +380,7 @@ public class LazyBean implements LazyBeanI{
 			Field tagM = fieldsCache.get(superClass).get(fieldName);
 		    if(tagM!=null) {
 		    	if(value instanceof String) {
+		    		TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
 		    		value = util.valueFromEnvForAnnotation(value.toString(), tagM.getType());	
 				}
 		    	FieldAnnComponent.setObj(tagM, obj, value);
@@ -417,6 +432,7 @@ public class LazyBean implements LazyBeanI{
 			if(Objects.equals(field.getName(), fieldName)) {
 			    Object fv = value;
 				if(value instanceof String) {
+					TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
 					fv = util.valueFromEnvForAnnotation(value.toString(), field.getType());	
 				}
 				FieldAnnComponent.setObj(field, obj, fv);
@@ -432,6 +448,7 @@ public class LazyBean implements LazyBeanI{
     private boolean invokeSet(String field, Object obj, Object value, Method m) {
         Object fv = value;
         if(value instanceof String) {
+        	TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
         	fv = util.valueFromEnvForAnnotation(value.toString(), m.getParameterTypes()[0]);	
         }
         try {
@@ -487,6 +504,7 @@ public class LazyBean implements LazyBeanI{
 	 */
 	public Object findBean(String beanName) {
 		if(beanName.equals("DEFAULT_DATASOURCE")) {
+			TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
 		    return util.getApplicationContext().getProxyBeanByClass(DataSource.class);
 		}
 		Class<?> tagC = ScanUtil.findClassByName(beanName);
@@ -547,28 +565,108 @@ public class LazyBean implements LazyBeanI{
 		Object tagObj = JavaBeanUtil.getInstance().buildBean(ojb_meth.getConfigurationClass(),ojb_meth.getMethod(),asse);
 		return tagObj;
 	}
+	public static BeanInitModel findCreateMethodFromFactory(Class<?> classBean) {
+		return findCreateMethodFromFactory(classBean, null);
+	}
+	public static BeanInitModel findCreateMethodFromFactory(Class<?> classBean, String beanName) {
+		BeanModel asse = new BeanModel();
+		asse.setBeanName(beanName);
+		asse.setTagClass(classBean);
+		asse.setCreateBean(false);
+		/**
+		 * 优先用户自定义Bean
+		 */
+		return findCreateBeanFromFactory(asse);
+	}
+	
 	public static Object findCreateBeanFromFactory(Class<?> classBean, String beanName) {
 		BeanModel asse = new BeanModel();
 		asse.setBeanName(beanName);
 		asse.setTagClass(classBean);
+		asse.setCreateBean(true);
 		/**
 		 * 优先用户自定义Bean
 		 */
-		Object tmpObj = findCreateBeanFromFactory(asse);
+		BeanInitModel tmpObj = findCreateBeanFromFactory(asse);
 		if(tmpObj!=null) {
-			return tmpObj;
+			return tmpObj.getObj();
 		}
 		return null;
 	}
-	public static Object findCreateBeanFromFactory(BeanModel assemblyData) {
-		return StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
+	
+	public static BeanInitModel findCreateBeanFromFactory(Class<?> classBean) {
+		if(!ScanUtil.isInit()) {
+			return null;
+		}
+		BeanModel asse = new BeanModel();
+		asse.setTagClass(classBean);
+		/**
+		 * 优先用户自定义Bean
+		 */
+		asse.setCreateBean(true);
+		BeanInitModel tmpObj = findCreateBeanFromFactory(asse);
+		return tmpObj;
+	}
+	public static BeanInitModel findCreateBeanFromFactory(BeanModel assemblyData) {
+		return (BeanInitModel) StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
 			JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(assemblyData);
 			if(jmd==null) {
 				return null;
 			}
-			Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),assemblyData);
-			return tagObj;
+			BeanInitModel model = new BeanInitModel();
+			if(assemblyData.isCreateBean()) {
+				Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),assemblyData);
+				model.setObj(tagObj);
+			}
+			Bean beanAnn = jmd.getMethod().getAnnotation(Bean.class);
+			if(beanAnn!=null && beanAnn.value().length>0) {
+				model.setBeanName(beanAnn.value()[0]);
+			}else {
+				model.setBeanName(jmd.getMethod().getName());
+			}
+			return model;
 		}, assemblyData));
+	}
+	
+	@SuppressWarnings("unchecked")
+	public static List<BeanInitModel> findModelsFromFactory(BeanModel assemblyData) {
+		if(!ScanUtil.isInit()) {
+			return null;
+		}
+		return (List<BeanInitModel>) StackOverCheckUtil.observeIgnoreException(()->StackOverCheckUtil.observe(()->{
+			List<JunitMethodDefinition> jmds = ScanUtil.findCreateBeanFactoryClasses(assemblyData);
+			return jmds.stream().map(item->{
+				BeanInitModel model = new BeanInitModel();
+				if(assemblyData.isCreateBean()) {
+					Object tagObj = JavaBeanUtil.getInstance().buildBean(item.getConfigurationClass(),item.getMethod(),assemblyData);
+					model.setObj(tagObj);
+				}
+				Bean beanAnn = item.getMethod().getAnnotation(Bean.class);
+				if(beanAnn!=null && beanAnn.value().length>0) {
+					model.setBeanName(beanAnn.value()[0]);
+				}else {
+					model.setBeanName(item.getMethod().getName());
+				}
+				model.setJmd(item);
+				return model;
+			}).collect(Collectors.toList());
+		}, assemblyData));
+	}
+//	public static Object findCreateBeanFromFactory(BeanModel assemblyData) {
+//		
+//	}
+	
+	public static List<?> findListBeanExt(Class<?> requiredType) {
+		List list = Lists.newArrayList();
+		list.addAll(findListBean(requiredType));
+		
+		LazyListableBeanFactory beanFactory = LazyListableBeanFactory.getInstance(); 
+		String[] beanNames = beanFactory.getBeanNamesForType(requiredType);
+		for(String name:beanNames) {
+			list.add(beanFactory.getBean(name));
+		}
+		
+		return list;
 	}
 	
 	/**
@@ -600,10 +698,6 @@ public class LazyBean implements LazyBeanI{
 		} catch (InstantiationException | IllegalAccessException e) {
 			return null;
 		}
-	}
-	@Override
-	public void register() {
-		ContainerManager.registComponent( this);
 	}
 	
 	@Override

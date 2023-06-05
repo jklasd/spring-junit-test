@@ -1,6 +1,5 @@
 package com.github.jklasd.test.common.component;
 
-import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.VersionController;
 
 public class VersionControlComponent extends AbstractComponent{

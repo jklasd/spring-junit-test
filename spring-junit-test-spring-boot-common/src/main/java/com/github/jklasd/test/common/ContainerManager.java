@@ -9,6 +9,9 @@ import org.apache.commons.lang3.StringUtils;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.google.common.collect.Maps;
 
+import lombok.extern.slf4j.Slf4j;
+
+@Slf4j
 public final class ContainerManager {
 	public static int init = 1;
 	public static int inited = 2;
@@ -19,7 +22,17 @@ public final class ContainerManager {
 	}
 	
 	private static Map<String,Object> componentContainer = Maps.newHashMap();
+	
+	public static Object createAndregistComponent(Class<?> componentClass) throws InstantiationException, IllegalAccessException {
+		Object obj = componentClass.newInstance();
+		if(obj instanceof ContainerRegister) {
+			registComponent((ContainerRegister) obj);
+		}
+		return obj;
+	}
+	
 	public static void registComponent(ContainerRegister component) {
+		log.debug("组件注册:{}",component.getBeanKey());
 		componentContainer.put(component.getBeanKey(), component);
 	}
 	@SuppressWarnings("unchecked")
@@ -37,7 +50,7 @@ public final class ContainerManager {
 				}
 				ContainerRegister handler = (ContainerRegister) constructor.newInstance();
 				if(StringUtils.isNotBlank(handler.getBeanKey())) {
-					handler.register();
+					ContainerManager.registComponent( handler);
 				}
 			}
 		}

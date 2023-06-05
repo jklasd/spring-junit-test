@@ -103,7 +103,7 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
                 return tagertObj;
             }
         }
-        log.debug("开始实例化:{}",beanModel);
+//        log.debug("开始实例化:{}",beanModel);
         Object tmp = getTagertObjectCustom();
 		if (tmp != null) {
 			if (!inited) {
@@ -120,6 +120,10 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
 				}
 			}
 		} else {
+			if(!beanModel.isRequired()) {
+				inited = true;
+				return null;
+			}
 			throw new JunitException("未找到bean," + beanModel.getTagClass());
 		}
         return tmp;

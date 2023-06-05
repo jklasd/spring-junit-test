@@ -15,7 +15,9 @@ import java.util.Properties;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +27,9 @@ import org.springframework.core.io.Resource;
 
 import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
@@ -81,7 +85,7 @@ public class JavaBeanUtil {
 		     */
             boolean buildConfigStatus = buildConfigObj(configClass,null);
             if(buildConfigStatus) {
-                log.warn("configClass=>{},method=>{},assemblyData=>{}",configClass.getSimpleName(),method.getName(),assemblyData);
+                log.info("configClass=>{},method=>{},assemblyData=>{}",configClass.getSimpleName(),method.getName(),assemblyData);
             }
         }
 		
@@ -130,8 +134,11 @@ public class JavaBeanUtil {
         		cacheBean.put(key, exitsBean);
         		return;
         	}
+//        	if(method.getName().contains("compositeDiscoveryClient")) {
+//    			log.debug("断点");
+//    		}
         	//如果存在参数
-        	Object[] args = buildParam(method.getGenericParameterTypes(),method.getParameterAnnotations());
+        	Object[] args = buildParam(method.getGenericParameterTypes(),method.getParameterAnnotations(),assemblyData);
         	if(!method.isAccessible()) {
         		method.setAccessible(true);
         	}
@@ -153,7 +160,8 @@ public class JavaBeanUtil {
         	}
         	
         	ConfigurationProperties prop = null;
-        	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null) {
+        	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null
+        			|| (prop = tagObj.getClass().getAnnotation(ConfigurationProperties.class))!=null) {
         		LazyConfPropBind.processConfigurationProperties(tagObj, prop);
         	}
         	
@@ -260,13 +268,7 @@ public class JavaBeanUtil {
         //创建对象并缓存
         factory.put(configClass, minC.newInstance(param));
     }
-    /**
-     * 构建目标对象的方法参数对象
-     * @param paramTypes    参数类型组
-     * @param paramAnnotations    参数的注解组
-     * @return  参数对象组
-     */
-    public Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
+    public Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations,BeanModel assemblyData) {
         Object[] param = new Object[paramTypes.length];
         for(int i=0;i<paramTypes.length;i++) {
         	BeanModel tmp = new BeanModel();
@@ -281,7 +283,18 @@ public class JavaBeanUtil {
         		    if(ann.annotationType() == Qualifier.class) {
         		        tmp.setBeanName(((Qualifier)ann).value());
         		        break;
+        		    }else if(ann.annotationType() == Value.class) {
+        		    	TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
+        		    	param[i] = util.valueFromEnvForAnnotation(((Value)ann).value(), tmp.getTagClass());
+        		    }else if(ann.annotationType() == Autowired.class) {
+        		    	Autowired aw = (Autowired) ann;
+        		    	if(!aw.required()) {
+        		    		tmp.setRequired(false);
+        		    	}
         		    }
+        		}
+        		if(param[i]!=null) {
+        			continue;
         		}
         		Object obj = null;
         		if(tmp.getBeanName()==null) {
@@ -297,13 +310,19 @@ public class JavaBeanUtil {
 //        	tmp.setNameMapTmp(nameSpace);
         	JunitMethodDefinition jmd = ScanUtil.findCreateBeanFactoryClass(tmp);
         	if(jmd!=null) {
+        		/**
+        		 * 查看是否已经存在
+        		 */
+        		
+        		
         		param[i] = buildBean(jmd.getConfigurationClass(),jmd.getMethod(), tmp);
         		if(param[i] == null) {
         		    log.warn("arg 为空，警告");
         		}
         	}else {
         		if(tmp.getClassGeneric()!=null) {
-        			param[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric());
+        			String exculdeName = assemblyData!=null?assemblyData.getBeanName():tmp.getBeanName();
+        			param[i] = LazyBean.getInstance().buildProxyForGeneric(tmp.getTagClass(),tmp.getClassGeneric(),exculdeName);
         		}else {
         			if(tmp.getBeanName()==null) {
         				tmp.setBeanName(BeanNameUtil.fixedBeanName(tmp.getTagClass()));
@@ -313,5 +332,14 @@ public class JavaBeanUtil {
         	}
         }
         return param;
+    }
+    /**
+     * 构建目标对象的方法参数对象
+     * @param paramTypes    参数类型组
+     * @param paramAnnotations    参数的注解组
+     * @return  参数对象组
+     */
+    public Object[] buildParam(Type[] paramTypes, Annotation[][] paramAnnotations) {
+        return buildParam(paramTypes, paramAnnotations, null);
     }
 }

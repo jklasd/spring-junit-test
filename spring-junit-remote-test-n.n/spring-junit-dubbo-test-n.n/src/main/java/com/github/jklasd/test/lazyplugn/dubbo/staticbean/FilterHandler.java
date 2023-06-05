@@ -24,7 +24,7 @@ public class FilterHandler {
 		}
 		
 		MethodType methodType = MethodType.methodType(Class.class);
-		Object extensionLoader = JunitInvokeUtil.invokeStaticMethod(ExtensionLoader, "getExtensionLoader", methodType, Filter);
+		Object extensionLoader = JunitInvokeUtil.invokeStaticMethod(ExtensionLoader, "getExtensionLoader",new Class<?>[] {},  Filter);
 		
 //		List<Filter> filters = ExtensionLoader.getExtensionLoader(Filter.class).getActivateExtension(invoker.getUrl(), key, group);
 		String key = "reference.filter";

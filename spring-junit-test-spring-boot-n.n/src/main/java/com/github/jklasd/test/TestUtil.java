@@ -3,26 +3,28 @@ package com.github.jklasd.test;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Properties;
 import java.util.Set;
 
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.BeanCreationException;
-import org.springframework.beans.factory.NoSuchBeanDefinitionException;
-import org.springframework.beans.factory.NoUniqueBeanDefinitionException;
-import org.springframework.beans.factory.UnsatisfiedDependencyException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.Environment;
 import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.PropertySources;
 import org.springframework.core.env.StandardEnvironment;
 import org.springframework.core.io.Resource;
+import org.springframework.expression.ExpressionParser;
+import org.springframework.expression.common.TemplateParserContext;
+import org.springframework.expression.spel.standard.SpelExpressionParser;
 
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
+import com.github.jklasd.test.common.component.ClassAnnComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
@@ -35,7 +37,8 @@ import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
-import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
+import com.github.jklasd.test.lazyplugn.spring.ObjectProviderFactory;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
 import lombok.Getter;
@@ -69,7 +72,7 @@ public class TestUtil implements JunitCoreComponentI{
 	        return bean;
 	    }
 	    bean = new TestUtil();
-	    bean.register();
+	    ContainerManager.registComponent(bean);
 //	    bean.setApplicationContext(null);
 	    bean.applicationContext = LazyApplicationContext.getInstance();
 	    bean.applicationContext.refresh();
@@ -112,6 +115,7 @@ public class TestUtil implements JunitCoreComponentI{
 	    log.debug("=========加载配置========");
 	    JunitResourceLoaderManager.getInstance().initLoader();
 		ScannerRegistrarComponent.process();
+		ClassAnnComponent.afterScan();
 		BeanFactoryProcessor.getInstance().postProcessBeanFactory(getApplicationContext().getBeanFactory());
 		ContainerManager.stats = ContainerManager.inited;
 		JunitClassLoader.getInstance().processStatic();
@@ -124,9 +128,21 @@ public class TestUtil implements JunitCoreComponentI{
 		Object obj = getApplicationContext().getBean(classD);
 		return obj;
 	}
+	ExpressionParser parser = new SpelExpressionParser();
+	TemplateParserContext ctx = new TemplateParserContext();
 
-	public Object valueFromEnvForAnnotation(String key, Class<?> type) {
+	public Object valueFromEnvForAnnotation(String key, Type type) {
 		String value = getApplicationContext().getEnvironment().resolvePlaceholders(key);
+		if (value.startsWith(ctx.getExpressionPrefix()) && value.endsWith(ctx.getExpressionSuffix())) {
+			if(type instanceof ParameterizedType) {
+				ParameterizedType pt = (ParameterizedType) type;
+				Object result = parser.parseExpression(value,ctx).getValue();
+				return converType(result,pt);
+			}else {
+				Object result = parser.parseExpression(value,ctx).getValue((Class<?>)type);
+				return result;
+			}
+        }
 		try {
 			if (StringUtils.isNotBlank(value)) {
 				if (type == null || type == String.class) {
@@ -147,7 +163,7 @@ public class TestUtil implements JunitCoreComponentI{
 					return value.charAt(0);
 				} else if (type == Class.class) {
                     return ScanUtil.loadClass(value);
-                }else{
+                } else{
 					log.info("TestUil 类型转换=========其他类型========={}=",type);
 				}
 			} else if (type != String.class) {
@@ -159,6 +175,31 @@ public class TestUtil implements JunitCoreComponentI{
 		}
 
 		return value;
+	}
+
+	private Object converType(Object result, ParameterizedType pt) {
+		if(pt.getRawType() == List.class) {
+			if (result instanceof String[]) {
+				return Lists.newArrayList((String[])result);
+			}else if (result instanceof Byte[] || result instanceof byte[]) {
+				return Lists.newArrayList((Byte[])result);
+			}else if (result instanceof Integer[] || result instanceof int[]) {
+				return Lists.newArrayList((Integer[])result);
+			}else if (result instanceof Long[] || result instanceof long[]) {
+				return Lists.newArrayList((Long[])result);
+			}else if (result instanceof Double[] || result instanceof double[]) {
+				return Lists.newArrayList((Double[])result);
+			}else if (result instanceof BigDecimal[]) {
+				return Lists.newArrayList((BigDecimal[])result);
+			}else if (result instanceof Boolean[] || result instanceof boolean[]) {
+				return Lists.newArrayList((Boolean[])result);
+			}else if (result instanceof char[]) {
+				return Lists.newArrayList((char[])result);
+			} else{
+				log.info("TestUil converType=========其他类型========={}=",pt);
+			}
+		}
+		return null;
 	}
 
 	public PropertySources getPropertySource() {
@@ -186,13 +227,13 @@ public class TestUtil implements JunitCoreComponentI{
 //	}
 	
 	public static void resourcePreparation() {
-		if(processInited) {
+		if(isProcessInited()) {
 	        return;
 	    }
 		processInited = true;
 		try {
-			registerComponent();
 			TestUtil launch = getInstance();
+			registerComponent();
 			launch.loadProp();
 			LogbackUtil.resetLog();
 			ScanUtil.loadAllClass();
@@ -206,11 +247,16 @@ public class TestUtil implements JunitCoreComponentI{
 	 * 方便引用jar的代码中用到组件
 	 */
 	private static void registerComponent() {
-		ClassScan.getInstance().register();
-		PropResourceManager.getInstance().register();
-		LazyBean.getInstance().register();
-		BeanCreaterScan.getInstance().register();
-		BeanFactoryProcessor.getInstance().register();
+		ContainerManager.registComponent( ClassScan.getInstance());
+		ContainerManager.registComponent( PropResourceManager.getInstance());
+		ContainerManager.registComponent( LazyBean.getInstance());
+		ContainerManager.registComponent( BeanCreaterScan.getInstance());
+		ContainerManager.registComponent( BeanFactoryProcessor.getInstance());
+		try {
+			ContainerManager.createAndregistComponent(ObjectProviderFactory.class);
+		} catch (InstantiationException | IllegalAccessException e) {
+			e.printStackTrace();
+		}
 //		LazyListableBeanFactory.getInstance().register();
 //		LazyApplicationContext.getInstance().register();
 	}
@@ -249,13 +295,12 @@ public class TestUtil implements JunitCoreComponentI{
 	}
 
 	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
-
-	@Override
 	public String getBeanKey() {
 		return JunitCoreComponentI.class.getSimpleName();
+	}
+
+	public static boolean isProcessInited() {
+		return processInited;
 	}
 
 }
