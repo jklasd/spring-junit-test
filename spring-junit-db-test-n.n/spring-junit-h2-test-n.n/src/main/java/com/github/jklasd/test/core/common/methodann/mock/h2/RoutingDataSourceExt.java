@@ -43,7 +43,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements D
 	public static RoutingDataSourceExt getInstance() {
 		if(routingDataSourceExt == null) {
 			routingDataSourceExt = new RoutingDataSourceExt();
-			routingDataSourceExt.register();//注册到全局
+//			routingDataSourceExt.register();//注册到全局
 		}
 		return routingDataSourceExt;
 	}
@@ -88,10 +88,7 @@ public class RoutingDataSourceExt extends AbstractRoutingDataSource implements D
 		this.afterPropertiesSet();
 		return this;
 	}
-	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
+	
 	@Override
 	public String getBeanKey() {
 		return DatabaseInitialization.class.getName();

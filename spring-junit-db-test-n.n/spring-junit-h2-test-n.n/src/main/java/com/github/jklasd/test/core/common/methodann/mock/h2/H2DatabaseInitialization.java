@@ -7,7 +7,6 @@ import java.sql.Statement;
 import javax.sql.DataSource;
 
 import org.springframework.core.io.Resource;
-import org.springframework.jdbc.datasource.embedded.EmbeddedDatabase;
 import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseFactory;
 
 import com.github.jklasd.test.common.interf.handler.BootHandler;

@@ -155,10 +155,10 @@ public class SqlInterceptor implements ContainerRegister{
         		new IbatisSqlSourceInterceptor(boundSql)));
     }
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
+//	@Override
+//	public void register() {
+//		ContainerManager.registComponent(this);
+//	}
 
 	@Override
 	public String getBeanKey() {
