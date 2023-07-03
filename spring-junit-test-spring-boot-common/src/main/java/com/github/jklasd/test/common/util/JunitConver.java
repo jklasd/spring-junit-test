@@ -10,13 +10,7 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.core.ResolvableType;
 
 import com.google.common.collect.Maps;
-import com.sun.beans.editors.BooleanEditor;
-import com.sun.beans.editors.IntegerEditor;
-import com.sun.beans.editors.ByteEditor;
-import com.sun.beans.editors.LongEditor;
-import com.sun.beans.editors.ShortEditor;
-import com.sun.beans.editors.DoubleEditor;
-import com.sun.beans.editors.FloatEditor;
+import com.sun.beans.editors.*;
 
 import lombok.extern.slf4j.Slf4j;
 
