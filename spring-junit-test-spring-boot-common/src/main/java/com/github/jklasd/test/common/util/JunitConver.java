@@ -10,7 +10,13 @@ import org.springframework.beans.factory.config.DependencyDescriptor;
 import org.springframework.core.ResolvableType;
 
 import com.google.common.collect.Maps;
-import com.sun.beans.editors.*;
+import com.sun.beans.editors.BooleanEditor;
+import com.sun.beans.editors.IntegerEditor;
+import com.sun.beans.editors.ByteEditor;
+import com.sun.beans.editors.LongEditor;
+import com.sun.beans.editors.ShortEditor;
+import com.sun.beans.editors.DoubleEditor;
+import com.sun.beans.editors.FloatEditor;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -22,11 +28,16 @@ public final class JunitConver {
 	static Map<Class<?>,PropertyEditor> peMap = Maps.newHashMap();
 	static {
 		peMap.put(Boolean.class, new BooleanEditor());
-		peMap.put(Integer.class, new IntegerEditor());
 		peMap.put(Byte.class, new ByteEditor());
-		peMap.put(Long.class, new LongEditor());
-		peMap.put(Short.class, new ShortEditor());
+//		ColorEditor.class
 		peMap.put(Double.class, new DoubleEditor());
+//		EnumEditor.class
+		peMap.put(Float.class, new FloatEditor());
+//		FontEditor.class
+		peMap.put(Integer.class, new IntegerEditor());
+		peMap.put(Long.class, new LongEditor());
+//		NumberEditor.class
+		peMap.put(Short.class, new ShortEditor());
 	}
 	
 	public synchronized static Object converValue(String valueText,Class<?> type) {
