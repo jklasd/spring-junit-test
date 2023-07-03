@@ -28,6 +28,7 @@ import com.github.jklasd.test.common.component.ClassAnnComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
+import com.github.jklasd.test.common.util.JunitConver;
 import com.github.jklasd.test.common.util.LogbackUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
@@ -145,26 +146,12 @@ public class TestUtil implements JunitCoreComponentI{
         }
 		try {
 			if (StringUtils.isNotBlank(value)) {
-				if (type == null || type == String.class) {
-					return value;
-				}else if (type == Byte.class || type == byte.class) {
-					return Byte.valueOf(value);
-				}else if (type == Integer.class || type == int.class) {
-					return Integer.valueOf(value);
-				} else if (type == Long.class || type == long.class) {
-					return Long.valueOf(value);
-				} else if (type == Double.class || type == double.class) {
-					return Double.valueOf(value);
-				} else if (type == BigDecimal.class) {
-					return new BigDecimal(value);
-				} else if (type == Boolean.class || type == boolean.class) {
-					return new Boolean(value);
-				} else if (type == char.class) {
+				if (type == char.class) {
 					return value.charAt(0);
 				} else if (type == Class.class) {
                     return ScanUtil.loadClass(value);
                 } else{
-					log.info("TestUil 类型转换=========其他类型========={}=",type);
+                	return JunitConver.converValue(value, (Class<?>)type);
 				}
 			} else if (type != String.class) {
 				return null;

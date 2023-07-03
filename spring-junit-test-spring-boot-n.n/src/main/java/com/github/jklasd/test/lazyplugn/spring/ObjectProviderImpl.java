@@ -86,7 +86,7 @@ public class ObjectProviderImpl<T> implements ObjectProvider<T>, Serializable{
 						Class<?> itemClass = (Class<?>)pt.getActualTypeArguments()[0];
 						List<?> list = LazyBean.findListBeanExt(itemClass);
 						TypeConverter typeConverter = lazyBeanFactory.getTypeConverter();
-						objCache = (T) typeConverter.convertIfNecessary(list, (Class<?>)pt.getOwnerType());
+						objCache = (T) typeConverter.convertIfNecessary(list, (Class<?>)pt.getRawType());
 						return objCache;
 					}else {
 						log.warn("其他类型:{}",rtClass);
