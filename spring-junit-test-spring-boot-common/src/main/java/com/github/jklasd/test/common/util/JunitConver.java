@@ -22,11 +22,16 @@ public final class JunitConver {
 	static Map<Class<?>,PropertyEditor> peMap = Maps.newHashMap();
 	static {
 		peMap.put(Boolean.class, new BooleanEditor());
-		peMap.put(Integer.class, new IntegerEditor());
 		peMap.put(Byte.class, new ByteEditor());
-		peMap.put(Long.class, new LongEditor());
-		peMap.put(Short.class, new ShortEditor());
+//		ColorEditor.class
 		peMap.put(Double.class, new DoubleEditor());
+//		EnumEditor.class
+		peMap.put(Float.class, new FloatEditor());
+//		FontEditor.class
+		peMap.put(Integer.class, new IntegerEditor());
+		peMap.put(Long.class, new LongEditor());
+//		NumberEditor.class
+		peMap.put(Short.class, new ShortEditor());
 	}
 	
 	public synchronized static Object converValue(String valueText,Class<?> type) {
