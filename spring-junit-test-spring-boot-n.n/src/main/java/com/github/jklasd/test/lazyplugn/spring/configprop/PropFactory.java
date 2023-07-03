@@ -70,4 +70,8 @@ class PropFactory implements BinderHandler{
 //			log.error("Could not bind properties to "+obj.getClass()+" (" + annotation + ")",ex);
 //		}
 	}
+	@Override
+	public void postProcess(ConfigurationModel model) {
+		postProcess(model.getObj(), model.getProp());
+	}
 }

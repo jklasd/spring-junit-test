@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -142,12 +143,25 @@ class BeanInitHandler {
 	public void processMethod(BeanInitModel model) {
 		boolean isStatic = model.isStatic();
 		if(ScanUtil.isImple(model.getTagClass(), ApplicationContextAware.class)) {
-			try {
-				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
-				setApplicationContext.invoke(model.getObj(),LazyApplicationContext.getInstance());
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				log.error("不能注入applicationContext",e);
-			}
+			ReflectionUtils.doWithLocalMethods(model.getTagClass(), method -> {
+				if(method.getName().equals("setApplicationContext")) {
+					try {
+						method.invoke(model.getObj(),LazyApplicationContext.getInstance());
+					} catch (InvocationTargetException e) {
+						log.error("不能注入applicationContext",e);
+					}
+				}
+			});
+//			try {
+//				model.getTagClass().getDeclaredMethods();
+//				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
+//				if(!setApplicationContext.isAccessible()) {
+//					setApplicationContext.setAccessible(true);
+//				}
+//				setApplicationContext.invoke(model.getObj(),LazyApplicationContext.getInstance());
+//			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+//				log.error("不能注入applicationContext",e);
+//			}
 		}
 		
 		Object obj = model.getObj();
@@ -183,6 +197,13 @@ class BeanInitHandler {
 	            	}
 	                Resource aw = method.getAnnotation(Resource.class);
 	                String beanName = aw.name();
+	                Object[] param = processParam(method, paramTypes);
+	                Object tmp = method.invoke(obj, param);
+	            }else if(method.getAnnotation(Autowired.class) != null) {
+	            	if(method.getReturnType() != Void.class
+	            			&& method.getReturnType() != void.class) {
+	            		return;
+	            	}
 	                Object[] param = processParam(method, paramTypes);
 	                Object tmp = method.invoke(obj, param);
 	            }

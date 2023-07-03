@@ -16,6 +16,7 @@ import com.github.jklasd.test.common.VersionController;
 import com.github.jklasd.test.common.component.AbstractComponent;
 import com.github.jklasd.test.common.component.BeanDefinitionParserDelegateComponent;
 import com.github.jklasd.test.common.component.BootedHandlerComponent;
+import com.github.jklasd.test.common.component.ClassAnnComponent;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.component.LazyPlugnBeanFactoryComponent;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
@@ -24,6 +25,7 @@ import com.github.jklasd.test.common.component.VersionControlComponent;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.BeanDefinitionParserDelegateHandler;
 import com.github.jklasd.test.common.interf.handler.BootHandler;
+import com.github.jklasd.test.common.interf.handler.ClassAnnHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
@@ -50,6 +52,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 		componentCache.put(ScannerRegistrarI.class.getName(), ScannerRegistrarComponent.class);
 		componentCache.put(BeanDefinitionParserDelegateHandler.class.getName(), BeanDefinitionParserDelegateComponent.class);
 		componentCache.put(LazyPlugnBeanFactory.class.getName(), LazyPlugnBeanFactoryComponent.class);
+		componentCache.put(ClassAnnHandler.class.getName(), ClassAnnComponent.class);
 	}
 	
 
@@ -70,7 +73,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 				Entry<String, Class<?>> item = iterator.next();
 				String beanDefinitionParserDelegateHandlerName = prop.getProperty(item.getKey());
 				if(StringUtils.isNotBlank(beanDefinitionParserDelegateHandlerName)) {
-					AbstractComponent.loadComponent((AbstractComponent) item.getValue().newInstance(),beanDefinitionParserDelegateHandlerName.split(","));
+					AbstractComponent.loadComponent((AbstractComponent) ContainerManager.createAndregistComponent(item.getValue()),beanDefinitionParserDelegateHandlerName.split(","));
 				}
 			}
 			

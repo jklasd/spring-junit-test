@@ -19,6 +19,7 @@ import org.springframework.boot.context.event.EventPublishingRunListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -136,6 +137,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	 *注册代理对象
 	 */
 	public void registProxyBean(String beanName, Object proxyBean, Class<?> tagC) {
+		if(proxyBean instanceof String) {
+			log.error("{}异常处理",beanName);
+			return;
+		}
 		if(StringUtils.isBlank(beanName)) {
 			throw new JunitException("注册bean，beanName不能为空",true);
 		}
@@ -177,10 +182,19 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		return env;
 	}
 
+	private String StandardServletEnvironment = "org.springframework.web.context.support.StandardServletEnvironment";
 	private synchronized void buildEnv() {
 		if(env == null) {
-			
-			env = new StandardEnvironment();
+			Class<?> StandardServletEnvironmentC = JunitClassLoader.getInstance().junitloadClass(StandardServletEnvironment);
+			if(StandardServletEnvironmentC!=null) {
+				try {
+					env = (ConfigurableEnvironment) StandardServletEnvironmentC.newInstance();
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new JunitException(e, true);
+				}
+			}else {
+				env = new StandardEnvironment();
+			}
 			new EventPublishingRunListener(new SpringApplication(),new String[] {})
 				.environmentPrepared(new DefaultBootstrapContext(), env);
 			getBeanFactory().registerSingleton("environment", env);

@@ -2,9 +2,7 @@ package com.github.jklasd.test.common.abstrac;
 
 import org.springframework.context.support.GenericApplicationContext;
 
-import com.github.jklasd.test.common.interf.ContainerRegister;
-
-public abstract class JunitApplicationContext extends GenericApplicationContext //implements ContainerRegister
+public abstract class JunitApplicationContext extends GenericApplicationContext
 {
 
 	public JunitApplicationContext(JunitListableBeanFactory instance) {

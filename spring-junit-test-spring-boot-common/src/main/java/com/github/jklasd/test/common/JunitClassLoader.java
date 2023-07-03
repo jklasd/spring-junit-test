@@ -34,8 +34,12 @@ public class JunitClassLoader extends ClassLoader{
 	}
 	AnnHandlerUtil annHandler = AnnHandlerUtil.getInstance();
 	private ClassUtil scan = ClassUtil.getInstance();
-	public Class<?> junitloadClass(String name) throws ClassNotFoundException {
-		return loadClass(name);
+	public Class<?> junitloadClass(String name) {
+		try {
+			return loadClass(name);
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
 	}
 	private Set<Class<?>> staticComponentClass = Sets.newConcurrentHashSet();
 	private BeanFactoryProcessorI beanFactoryProcessor;

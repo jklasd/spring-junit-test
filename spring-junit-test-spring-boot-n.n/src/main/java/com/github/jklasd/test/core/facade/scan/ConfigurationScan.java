@@ -17,6 +17,7 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.component.ClassAnnComponent;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ClassUtil;
@@ -50,7 +51,7 @@ public class ConfigurationScan {
 	Set<Class<?>> cacheScanConfig = Sets.newConcurrentHashSet();
 	
 	public void scanConfigClass(Class<?> configClass) throws IOException {
-//		if(configClass.getName().contains("ScanConfiguration")) {
+//		if(configClass.getName().contains("ServletWebServerFactoryAutoConfiguration")) {
 //			log.debug("=============加载{}=============",configClass);			
 //		}
 		if(configClass==null || cacheScanConfig.contains(configClass)) {
@@ -141,6 +142,9 @@ public class ConfigurationScan {
 		if(ScanUtil.isImple(configClass, BeanFactoryPostProcessor.class)) {
 			BeanFactoryProcessor.getInstance().loadProcessor(configClass);
 		}
+		
+		//Custom 
+		ClassAnnComponent.scanConfig(configClass);
 	}
 	
 }

@@ -37,14 +37,6 @@ public class MockFieldHandler implements MockFieldHandlerI {
 		return obj;
 	}
 
-	@Override
-	public void register() {
-		if (obj == null) {
-			obj = this;
-		}
-		ContainerManager.registComponent(this);
-	}
-
 	public String getBeanKey() {
 		return MockFieldHandlerI.class.getName();
 	}
