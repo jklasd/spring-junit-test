@@ -9,15 +9,6 @@ import javassist.CannotCompileException;
 
 public class CtTest {
 
-	@Test
-	public void exec() {
-		try {
-			MethodSnoopUtil.getCtMethod(TestUtil.class.getDeclaredMethod("getInstance"));
-		} catch (NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-		}
-	}
-	
 	
 	@Test
 	public void findNotPublicMethod() {
