@@ -128,6 +128,9 @@ public class JunitInvokeUtil extends ReflectionUtils{
     }
 	public static Object invokeReadField(String fieldName,Object source) {
 		Class<?> tagClass = source.getClass();
+		return invokeReadField(fieldName, source, tagClass);
+	}
+	public static Object invokeReadField(String fieldName,Object source,Class<?> tagClass) {
 		try {
 			Field tmpField = tagClass.getDeclaredField(fieldName);
 			if(!tmpField.isAccessible()) {

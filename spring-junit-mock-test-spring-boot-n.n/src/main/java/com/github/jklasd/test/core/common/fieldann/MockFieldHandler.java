@@ -129,7 +129,9 @@ public class MockFieldHandler implements MockFieldHandlerI {
 	public void injeckMock(FieldDef fieldDef) {
 //		MockFieldDef mockField = (MockFieldDef) fieldDef;
 		Field field = fieldDef.getField();
-
+		if(!cacheMockObject.containsKey(testClassId.get())) {
+			return;
+		}
 //		Class<?> testClass = mockField.getTetClass();
 		cacheMockObject.get(testClassId.get()).entrySet().forEach(entry -> {
 			if (field.getType() == entry.getValue()) {

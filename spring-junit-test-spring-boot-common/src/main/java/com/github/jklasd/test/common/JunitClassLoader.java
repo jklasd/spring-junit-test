@@ -1,6 +1,7 @@
 package com.github.jklasd.test.common;
 
 import java.lang.reflect.Modifier;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.stereotype.Component;
@@ -11,6 +12,7 @@ import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.SignalNotificationUtil;
+import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -57,6 +59,8 @@ public class JunitClassLoader extends ClassLoader{
 		}
 	}
 	
+	Map<String,Class<?>> cache = Maps.newConcurrentMap();
+	
 	@SuppressWarnings("unchecked")
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
 		setBean();
@@ -64,17 +68,20 @@ public class JunitClassLoader extends ClassLoader{
 		if(loadClass!=null) {
 			return loadClass;
 		}
+		if(cache.containsKey(name)) {
+			return cache.get(name);//重复处理，会导致java.lang.ClassCircularityError
+		}
 		if(name.equals("module-info")
 				&& version.startsWith("1.8")) {
 			log.warn("module-info 版本不支持");
 			return null;
 		}
-		loadClass = loadClass(name, false);
+		loadClass = loadClass(name, false);//cache 防止并发情况下，重复处理
 		
 		if(Contants.prepareStatic) {
 			handHasstaticMethodClass(loadClass);
 		}
-		
+		cache.put(name, loadClass);
 		return loadClass;
     }
 

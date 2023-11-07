@@ -11,7 +11,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.Contants;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.MethodSnoopUtil;
-import com.github.jklasd.test.common.util.MethodSnoopUtil.PryMethodInfo;
+import com.github.jklasd.test.common.util.viewmethod.PryMethodInfoI;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
 import com.google.common.collect.Sets;
@@ -59,9 +59,9 @@ public class JunitInvoker extends AbstractProxyInvoker{
 		try {
 
 			
-			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(tagMethod);
+			PryMethodInfoI methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(tagMethod);
 			handledMethods.add(tagMethod);
-			if(Contants.prepareStatic) {
+			if(Contants.runPrepareStatic) {
 				if(!methodInfo.getFindToStatic().isEmpty()) {
 					//处理静态方法
 					methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
