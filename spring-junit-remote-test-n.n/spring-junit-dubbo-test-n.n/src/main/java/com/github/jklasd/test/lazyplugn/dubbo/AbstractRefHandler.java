@@ -2,16 +2,13 @@ package com.github.jklasd.test.lazyplugn.dubbo;
 
 import java.util.Map;
 
-import org.springframework.beans.PropertyValue;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.RootBeanDefinition;
 
-import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.dubbo.staticbean.JunitDubboFilterHandler;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
-import com.github.jklasd.test.lazyplugn.spring.xml.XmlBeanUtil;
 import com.google.common.collect.Maps;
 
 import lombok.Getter;
@@ -20,6 +17,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractRefHandler implements DubboHandler{
 	protected static Map<Class<?>,Object> dubboData = Maps.newHashMap();
+	
+	protected JunitDubboFilterHandler filterHandler = new JunitDubboFilterHandler();
+	
 	public static void putAnnService(Class<?> dubboServiceClass) {}
 	
 	public final static Integer TypeXml = 1;

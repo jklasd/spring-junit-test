@@ -46,6 +46,7 @@ public class LazyDubboXmlRefHandler extends AbstractRefHandler{
             FactoryBean<?> fb = (FactoryBean<?>) referenceConfig;
             Object obj = fb.getObject();
             dubboData.put(dubboClass,obj);
+            filterHandler.exec(obj);
             return obj;
         } catch (Exception e) {
             log.error("构建Dubbo 代理服务",e);
