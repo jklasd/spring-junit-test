@@ -69,7 +69,8 @@ public class VelocityUtil {
 		ve.setProperty("classpath.resource.loader.class", ClasspathResourceLoader.class.getName());
 		ve.init();
 
-		Template template = ve.getTemplate("junit-test.ft");// 模版，生成代码关键类
+		Template template = ve.getTemplate("junit-test.ft","UTF-8");// 模版，生成代码关键类
+
 
 		VelocityContext vc = new VelocityContext();// 用于添加模版中的数据
 		Map<String, String> sourceClass = Maps.newHashMap();
