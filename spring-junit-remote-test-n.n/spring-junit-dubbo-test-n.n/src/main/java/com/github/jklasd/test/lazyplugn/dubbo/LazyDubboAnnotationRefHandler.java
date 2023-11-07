@@ -65,6 +65,7 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
             }
             Object obj = JunitInvokeUtil.invokeMethod(referenceConfig, "get");
             dubboData.put(dubboClass,obj);
+            filterHandler.exec(obj);
             return obj;
         } catch (Exception e) {
             log.error("构建Dubbo 代理服务",e);
