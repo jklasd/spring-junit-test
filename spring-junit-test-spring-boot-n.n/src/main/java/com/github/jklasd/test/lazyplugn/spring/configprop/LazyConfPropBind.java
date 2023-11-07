@@ -1,5 +1,6 @@
 package com.github.jklasd.test.lazyplugn.spring.configprop;
 
+import org.junit.platform.commons.util.StringUtils;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,14 @@ public class LazyConfPropBind{
 		public void postProcess(Object obj, ConfigurationProperties annotation){
 			handler.postProcess(obj, annotation);
 		}
+		
+		public void postProcess(ConfigurationModel model){
+			handler.postProcess(model);
+		}
+	}
+	
+	public static void processConfigurationProperties(ConfigurationModel model) {
+		lcpb.postProcess(model);
 	}
 	
 	public static void processConfigurationProperties(Object obj) {

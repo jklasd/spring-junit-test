@@ -8,6 +8,7 @@ import java.util.Set;
 
 import javax.annotation.Resource;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
@@ -62,18 +63,6 @@ class BeanInitHandler {
 		Method[] ms = handlerParam.getMs();
 		for (Method m : ms) {
 		    Type[] paramTypes = m.getGenericParameterTypes();
-			/*
-			 * if (m.getAnnotation(PostConstruct.class) != null) {//当实际对象存在初始化方法时。 try { if
-			 * (!m.isAccessible()) { m.setAccessible(true); } m.invoke(obj, null); } catch
-			 * (IllegalAccessException | IllegalArgumentException |
-			 * InvocationTargetException e) { log.error("初始化方法执行异常{}#{}",obj,m);
-			 * log.error("初始化方法执行异常",e); } }else
-			 */
-//		    if(m.getAnnotation(Autowired.class) != null) {
-//			    String bName = m.getAnnotation(Qualifier.class)!=null?m.getAnnotation(Qualifier.class).value():null;
-//			    Object[] param = processParam(m, paramTypes);
-//                Object tmp = m.invoke(obj, param);
-//			}else 
 			if(m.getAnnotation(Value.class) != null) {
 			    Value aw = m.getAnnotation(Value.class);
 			    if(paramTypes.length>0) {
@@ -93,41 +82,7 @@ class BeanInitHandler {
                 String beanName = aw.name();
                 Object[] param = processParam(m, paramTypes);
                 Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    util.getApplicationContext().registBean(aw.name(), tmp, tmp.getClass());
-//                }
             }
-//            else if(m.getAnnotation(Bean.class) != null) {
-//            	if(m.getReturnType() != Void.class
-//            			&& m.getReturnType() != void.class) {
-//            		return;
-//            	}
-//                Bean aw = m.getAnnotation(Bean.class);
-//                String beanName = null;
-//                if(aw.value().length>0) {
-//                	beanName = aw.value()[0];
-//                }else if(aw.name().length>0){
-//                	beanName = aw.name()[0];
-//                }else {
-//                	beanName = m.getName();
-//                }
-//                boolean exitBean = TestUtil.getInstance().getApplicationContext().containsBean(beanName);
-//                if(exitBean) {
-//                	return;
-//                }
-//                if (!m.isAccessible()) {
-//					m.setAccessible(true);
-//				}
-//                Object[] param = processParam(m, paramTypes);
-//                Object tmp = m.invoke(obj, param);
-//                if(tmp!=null) {
-//                    ConfigurationProperties confPro = m.getAnnotation(ConfigurationProperties.class);
-//                    if(confPro!=null) {
-//                    	LazyConfPropBind.processConfigurationProperties(tmp,confPro);
-//                    }
-//                    TestUtil.getInstance().getApplicationContext().registBean(aw.value().length>0?aw.value()[0]:m.getName(), tmp, tmp.getClass());
-//                }
-//            }
 		}
 	}
 	
@@ -186,18 +141,31 @@ class BeanInitHandler {
 		processSpringAnnMethod(param);
 	}
 	public void processMethod(BeanInitModel model) {
-
+		boolean isStatic = model.isStatic();
 		if(ScanUtil.isImple(model.getTagClass(), ApplicationContextAware.class)) {
-			try {
-				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
-				setApplicationContext.invoke(model.getObj(),LazyApplicationContext.getInstance());
-			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
-				log.error("不能注入applicationContext",e);
-			}
+			ReflectionUtils.doWithLocalMethods(model.getTagClass(), method -> {
+				if(method.getName().equals("setApplicationContext")) {
+					try {
+						method.invoke(model.getObj(),LazyApplicationContext.getInstance());
+					} catch (InvocationTargetException e) {
+						log.error("不能注入applicationContext",e);
+					}
+				}
+			});
+//			try {
+//				model.getTagClass().getDeclaredMethods();
+//				Method setApplicationContext = model.getTagClass().getDeclaredMethod("setApplicationContext", ApplicationContext.class);
+//				if(!setApplicationContext.isAccessible()) {
+//					setApplicationContext.setAccessible(true);
+//				}
+//				setApplicationContext.invoke(model.getObj(),LazyApplicationContext.getInstance());
+//			} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException e) {
+//				log.error("不能注入applicationContext",e);
+//			}
 		}
 		
 		Object obj = model.getObj();
-		boolean isStatic = model.isStatic();
+		
 		if(LazyProxyManager.isProxy(obj)) {
 			if(isStatic) {//假如是存在静态的代理对象，则需要进行预热处理
 				LazyProxyManager.instantiateProxy(obj);
@@ -229,6 +197,13 @@ class BeanInitHandler {
 	            	}
 	                Resource aw = method.getAnnotation(Resource.class);
 	                String beanName = aw.name();
+	                Object[] param = processParam(method, paramTypes);
+	                Object tmp = method.invoke(obj, param);
+	            }else if(method.getAnnotation(Autowired.class) != null) {
+	            	if(method.getReturnType() != Void.class
+	            			&& method.getReturnType() != void.class) {
+	            		return;
+	            	}
 	                Object[] param = processParam(method, paramTypes);
 	                Object tmp = method.invoke(obj, param);
 	            }

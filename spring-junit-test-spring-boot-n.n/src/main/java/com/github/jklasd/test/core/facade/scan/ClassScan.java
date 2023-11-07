@@ -19,7 +19,6 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
@@ -30,11 +29,10 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.Scan;
-import com.github.jklasd.test.common.util.CheckUtil;
+import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.ResourceLoader;
-import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderManager;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -53,11 +51,18 @@ public class ClassScan implements Scan{
 	private static String CLASS_SUFFIX = ".class";
 	
 	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
-	private ResourceLoader resourceLoader = ResourceLoader.getInstance();
+	private JunitResourceLoaderManager resourceLoader = JunitResourceLoaderManager.getInstance();
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
 	}
+	public void loadComponentClassForAnnotation(Class<?> c) {
+		if(!AnnHandlerUtil.isAnnotationPresent(c, Component.class)) {
+			return;
+		}
+		componentClassPathMap.put(c.getName(), c);
+	}
+	
 	
 	@Override
 	public void scan() {
@@ -85,7 +90,7 @@ public class ClassScan implements Scan{
 								JarFile jFile = ((JarURLConnection) connection).getJarFile();
 								JunitCountDownLatchUtils.buildCountDownLatch(jFile.stream().collect(Collectors.toList())).setExecutorService(2).runAndWait(JarEntry->{
 									String name = JarEntry.getName();
-									if(name.endsWith(".class")) {
+									if(name.endsWith(CLASS_SUFFIX)) {
 										classNames.add(name.replace("/", ".").replace("\\", "."));
 									}else {
 										try {
@@ -117,17 +122,14 @@ public class ClassScan implements Scan{
 		if(springBoot.isEmpty()) {
 			throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
 		}
-		springBoot.forEach(startClass ->{
-			TestUtil.getInstance().loadScanPath(startClass.getPackage().getName());
-			/**
-			 * 查看导入资源
-			 */
-			ImportResource resource = startClass.getAnnotation(ImportResource.class);
-			if(resource != null) {
-				XMLResourceLoader.getInstance().loadResource(resource.value());
+		for(Class<?> bootClass : springBoot) {
+			try {
+				ConfigurationScan.getInstance().scanConfigClass(bootClass);
+			} catch (IOException e) {
+				throw new JunitException("scanConfigClass处理 SpringBootApplication类", true);
 			}
-		});
-		loadContextPathClass();
+		}
+//		loadContextPathClass();
 		log.debug("=============加载class结束=============");
 	}
 	@Getter
@@ -144,7 +146,7 @@ public class ClassScan implements Scan{
 				p = p.replace(URLDecoder.decode(tmp.getPath(),"UTF-8")+"\\", "").replace(tmp.getPath()+"/", "").replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(p);
+					Class<?> c = classLoader.loadClass(p);
 					if(c!=null) {
 						classNames.add(p+CLASS_SUFFIX);
 						applicationAllClassMap.put(p,c);
@@ -168,64 +170,41 @@ public class ClassScan implements Scan{
 			}
 		}
 	}
-	public void loadContextPathClass() {
-//		Set<String> classPaths =TestUtil.getInstance().getScanClassPath();
-		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
-		.runAndWait(name->{
-//			if(name.contains("SpringContextUtil")) {
-//				log.info("短点");
+
+//	public void loadContextPathClass() {
+////		Set<String> classPaths =TestUtil.getInstance().getScanClassPath();
+//		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
+//		.runAndWait(name->{
+//			if(name.endsWith(CLASS_SUFFIX) && !componentClassPathMap.containsKey(name)) {
+//				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
+//				// 查看是否class
+//				try {
+//					Class<?> c = classLoader.junitloadClass(name);
+//					try {
+//						ConfigurationScan.getInstance().scanConfigClass(c);
+//					} catch (IOException e) {
+//						log.error("scanConfigClass for loadContextPathClass");
+//					}
+//					
+//					if(CheckUtil.checkClassExists(c)
+//							&& CheckUtil.checkProp(c)) {
+//						componentClassPathMap.putIfAbsent(name,c);
+//					}
+//				} catch (ClassNotFoundException | NoClassDefFoundError e) {
+//					log.error("加载{}=>未找到类{}",name,e.getMessage());
+//				}catch(Error e) {
+//					log.error("未找到类{}=>{}",name,e.getMessage());
+//				}
 //			}
-			if(name.endsWith(CLASS_SUFFIX) && !componentClassPathMap.containsKey(name)) {
-				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
-				// 查看是否class
-				try {
-					Class<?> c = classLoader.junitloadClass(name);
-					try {
-						ConfigurationScan.getInstance().scanConfigClass(c);
-					} catch (IOException e) {
-						log.error("scanConfigClass for loadContextPathClass");
-					}
-					
-					if(CheckUtil.checkClassExists(c)
-							&& CheckUtil.checkProp(c)) {
-						componentClassPathMap.putIfAbsent(name,c);
-					}
-				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-					log.error("加载{}=>未找到类{}",name,e.getMessage());
-				}catch(Error e) {
-					log.error("未找到类{}=>{}",name,e.getMessage());
-				}
-			}
-		});
-	}
+//		});
+//	}
+	
 	public static ClassScan getInstance() {
 		if(scaner==null) {
 			scaner = new ClassScan();
 		}
 		return scaner;
 	}
-	
-//	public List<Class<?>> findStaticMethodClass() {
-//		Set<Class<?>> list = Sets.newHashSet();
-//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(componentClassPathMap.keySet()))
-//		.setException((name,e)->{
-//		    log.error("遗漏#findStaticMethodClass#=>{}",name);
-//		})
-//		.runAndWait(name ->{
-//			Class<?> c = componentClassPathMap.get(name);
-//			if(c.getAnnotations().length>0) {
-//				if(c.isAnnotationPresent(Configuration.class)
-//						|| c.isAnnotationPresent(Service.class)
-//						|| c.isAnnotationPresent(Component.class)
-//						|| c.isAnnotationPresent(Repository.class)) {
-//					if(hasStaticMethod(c)) {
-//						list.add(c);
-//					}
-//				}
-//			}
-//		});
-//		return Lists.newArrayList(list);
-//	}
 	
 	volatile Map<String,Class<?>> cacheBeanNameClass = Maps.newConcurrentMap();
 	public Class<?> findClassByName(String beanName) {
@@ -280,7 +259,27 @@ public class ClassScan implements Scan{
 		}
 		return list;
 	}
-	public static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
+	
+	public List<Class<?>> findClassForList(String scanPath) {
+		return classNames.stream().filter(cn->cn.contains(scanPath)).map(className ->{
+			className = className.replace("/", ".").replace("\\", ".").replace(".class", "");
+			// 查看是否class
+			try {
+				Class<?> c = classLoader.loadClass(className);
+				return c;
+			} catch (ClassNotFoundException | NoClassDefFoundError e) {
+				if(TestUtil.getInstance().isScanClassPath(className)) {
+					log.error("加载{}=>未找到类{}",className,e.getMessage());
+				}
+			}catch(Error e) {
+				log.error("未找到类{}=>{}",className,e.getMessage());
+			}
+			return null;
+		}).collect(Collectors.toList());
+	}
+	
+	private static Map<String,Map<String,Class<?>>> pathForClass = Maps.newConcurrentMap();
+	@Deprecated
 	public Map<String, Class<?>> findClassMap(String scanPath) {
 		if(pathForClass.containsKey(scanPath)) {
 			return pathForClass.get(scanPath);
@@ -292,7 +291,7 @@ public class ClassScan implements Scan{
 				name = name.replace("/", ".").replace("\\", ".").replace(".class", "");
 				// 查看是否class
 				try {
-					Class<?> c = classLoader.junitloadClass(name);
+					Class<?> c = classLoader.loadClass(name);
 					nameMapTmp.put(name,c);
 				} catch (ClassNotFoundException | NoClassDefFoundError e) {
 					if(TestUtil.getInstance().isScanClassPath(name)) {
@@ -330,10 +329,6 @@ public class ClassScan implements Scan{
 		return list;
 	}
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent( this);
-	}
 	@Override
 	public String getBeanKey() {
 		return Scan.class.getSimpleName();

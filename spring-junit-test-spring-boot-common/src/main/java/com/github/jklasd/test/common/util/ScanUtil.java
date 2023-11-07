@@ -20,7 +20,6 @@ import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
@@ -52,12 +51,12 @@ public class ScanUtil {
 	public static boolean exists(Class record) {
 		return scaner.isInScanPath(record);
 	}
-	
+	@Deprecated
 	public static Map<String, Class<?>> findClassMap(String scanPath) {
 		return getScanner().findClassMap(scanPath);
 	}
 	
-	private static boolean init = false;
+	private static volatile boolean init = false;
 	/**
 	 * 加载所有class，缓存起来
 	 * 类似加载 AbstractEmbeddedServletContainerFactory
@@ -72,17 +71,17 @@ public class ScanUtil {
 	}
 	
 	public static void loadAllClass() {
-		if(init) {
+		if(isInit()) {
 			return;
 		}
-		init = true;
 		getScanner().scan();
+		init = true;
 	}
-//	private static Set<String> autoConfigClass = Sets.newConcurrentHashSet();
-//	private static Map<String,Class<?>> autoConfigMap = Maps.newConcurrentMap();
-	public static void loadContextPathClass() {
-		getScanner().loadContextPathClass();
-	}
+	
+//	@Deprecated
+//	public static void loadContextPathClass() {
+//		getScanner().loadContextPathClass();
+//	}
 	
 	public static Class findClassByName(String beanName) {
 		return getScanner().findClassByName(beanName);
@@ -171,9 +170,6 @@ public class ScanUtil {
 		Resource[] rs = getResources(location);
 		return rs.length>0?rs[0]:null;
 	}
-//	public static Class getClassByName(String className) {
-//		return nameMap.get(className);
-//	}
 	
 	public static Resource getRecourceAnyOne(String... paths) throws IOException {
 		for(String path: paths) {
@@ -197,7 +193,7 @@ public class ScanUtil {
 		if(notFundClassSet.contains(className))
 			return null;
 		try {
-			Class classObj = JunitClassLoader.getInstance().junitloadClass(className);
+			Class classObj = JunitClassLoader.getInstance().loadClass(className);
 			return classObj;
 		} catch (NoClassDefFoundError e) {
 			log.debug("#NoClassDefFoundError=>{}",className);
@@ -226,4 +222,17 @@ public class ScanUtil {
         }
         return null;
     }
+	public static boolean isInit() {
+		return init;
+	}
+	public static List<JunitMethodDefinition> findCreateBeanFactoryClasses(BeanModel assemblyData) {
+		if(beanFactoryScaner == null) {
+			beanFactoryScaner = ContainerManager.getComponent(BeanScanI.class.getSimpleName());
+			if(beanFactoryScaner == null) {
+				log.warn("beanFactoryScaner 未加载到");
+				return null;
+			}
+		}
+		return beanFactoryScaner.findCreateBeanFactoryClasses(assemblyData);
+	}
 }

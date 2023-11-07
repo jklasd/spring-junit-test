@@ -37,11 +37,6 @@ public class PropResourceManager implements PropResourceManagerI{
 	}
 
 	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
-
-	@Override
 	public String getBeanKey() {
 		return PropResourceManagerI.class.getSimpleName();
 	}

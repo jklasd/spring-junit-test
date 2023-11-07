@@ -8,4 +8,6 @@ public class BeanInitModel extends BeanModel{
 	private Object obj;
 	
 	private boolean isStatic;
+	
+	private JunitMethodDefinition jmd;
 }

@@ -1,6 +1,5 @@
 package com.github.jklasd.test.lazyplugn.spring;
 
-import java.io.IOException;
 import java.lang.annotation.Annotation;
 import java.util.List;
 import java.util.Map;
@@ -11,17 +10,16 @@ import javax.annotation.Nullable;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeansException;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
-import org.springframework.beans.factory.config.YamlPropertiesFactoryBean;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.boot.DefaultBootstrapContext;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.context.event.EventPublishingRunListener;
 import org.springframework.core.env.ConfigurableEnvironment;
-import org.springframework.core.env.PropertiesPropertySource;
 import org.springframework.core.env.StandardEnvironment;
-import org.springframework.core.io.Resource;
 
-import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.util.ScanUtil;
@@ -75,6 +73,10 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	public Object getBean(String beanName) {
 		if(cacheProxyBean.containsKey(beanName)) {
 			return cacheProxyBean.get(beanName);
+		}
+		Object tmpObject = lazyBeanFactory.getBean(beanName);
+		if(tmpObject != null) {
+			return tmpObject;
 		}
 		BeanDefinition beanDef = lazyBeanFactory.getBeanDefinition(beanName);
 		if(beanDef != null && beanDef instanceof AbstractBeanDefinition) {
@@ -130,13 +132,15 @@ public class LazyApplicationContext extends JunitApplicationContext{
 	}
 	
 	private Map<Class<?>,Set<String>> classMapName = Maps.newHashMap();
+	
 	/**
-	 * bean 注册
-	 * @param beanName
-	 * @param tmp
-	 * @param tagC
+	 *注册代理对象
 	 */
 	public void registProxyBean(String beanName, Object proxyBean, Class<?> tagC) {
+		if(proxyBean instanceof String) {
+			log.error("{}异常处理",beanName);
+			return;
+		}
 		if(StringUtils.isBlank(beanName)) {
 			throw new JunitException("注册bean，beanName不能为空",true);
 		}
@@ -153,6 +157,7 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		}
 		
 		if(!LazyProxyManager.isProxy(proxyBean)) {
+			log.warn("beanName：{},tagC:{}",beanName,tagC);
 			throw new JunitException("注册bean非代理bean，不能在这里处理",true);
 		}
 		
@@ -177,60 +182,37 @@ public class LazyApplicationContext extends JunitApplicationContext{
 		return env;
 	}
 
+	private String StandardServletEnvironment = "org.springframework.web.context.support.StandardServletEnvironment";
 	private synchronized void buildEnv() {
 		if(env == null) {
-			env = new StandardEnvironment();
-			if(properties == null) {
-				properties = new Properties();
+			Class<?> StandardServletEnvironmentC = JunitClassLoader.getInstance().junitloadClass(StandardServletEnvironment);
+			if(StandardServletEnvironmentC!=null) {
 				try {
-					Resource propRes = ScanUtil.getRecourceAnyOne("application.properties","config/application.properties");
-					if(propRes!=null && propRes.exists()) {
-						properties.load(propRes.getInputStream());
-						String active = null;
-						if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
-							Resource activePropRes = ScanUtil.getRecourceAnyOne("application-"+active+".properties","config/application-"+active+".properties");
-							if(activePropRes!=null && activePropRes.exists()) {
-								properties.load(activePropRes.getInputStream());
-							}
-						}
-					}else {
-//						Object yml = Class.forName("Ymal").newInstance();
-						Resource ymlRes = ScanUtil.getRecourceAnyOne("application.yml","config/application.yml");
-						if(ymlRes!=null && ymlRes.exists()) {
-							YamlPropertiesFactoryBean ymlToProp = new YamlPropertiesFactoryBean();
-							ymlToProp.setResources(ymlRes);
-							properties.putAll(ymlToProp.getObject());
-							String active = null;
-							if(StringUtils.isNotBlank(active = properties.getProperty("spring.profiles.active"))) {
-								Resource activeYmlRes = ScanUtil.getRecourceAnyOne("application-"+active+".yml","config/application-"+active+".yml");
-								if(activeYmlRes!=null && activeYmlRes.exists()) {
-									ymlToProp.setResources(activeYmlRes);
-									properties.putAll(ymlToProp.getObject());
-								}
-							}
-							
-						}
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+					env = (ConfigurableEnvironment) StandardServletEnvironmentC.newInstance();
+				} catch (InstantiationException | IllegalAccessException e) {
+					throw new JunitException(e, true);
 				}
+			}else {
+				env = new StandardEnvironment();
 			}
-			env.getPropertySources().addFirst(new PropertiesPropertySource("junitProp", properties));
+			new EventPublishingRunListener(new SpringApplication(),new String[] {})
+				.environmentPrepared(new DefaultBootstrapContext(), env);
 			getBeanFactory().registerSingleton("environment", env);
 		}
 	}
+	
 	public Map<String, Object> getBeansWithAnnotation(Class<? extends Annotation> annotationType)
 			throws BeansException {
 		return LazyBean.findBeanWithAnnotation(annotationType);
 	}
-
-	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
-	}
 	
-	@Override
-	public String getBeanKey() {
-		return JunitApplicationContext.class.getSimpleName();
-	}
+//	@Override
+//	public void register() {
+//		ContainerManager.registComponent(this);
+//	}
+//	
+//	@Override
+//	public String getBeanKey() {
+//		return JunitApplicationContext.class.getSimpleName();
+//	}
 }

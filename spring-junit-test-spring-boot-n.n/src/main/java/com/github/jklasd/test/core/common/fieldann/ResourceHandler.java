@@ -15,6 +15,7 @@ import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 
@@ -33,7 +34,7 @@ public class ResourceHandler  implements FieldHandler{
 				if(item.length == 1) {
 					//处理一个集合注入
 					try {
-						Class<?> itemC = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
+						Class<?> itemC = JunitClassLoader.getInstance().loadClass(item[0].getTypeName());
 						List<?> list = LazyBean.findListBean(itemC);
 						FieldAnnComponent.setObj(attr, obj, list);
 						log.info("{}注入resource集合=>{},{}个对象",obj.getClass(),attr.getName(),list.size());
@@ -44,11 +45,15 @@ public class ResourceHandler  implements FieldHandler{
 					log.info("其他特殊情况");
 				}
 			}else {
-				String beanName = c.name();
-				if(StringUtils.isBlank(beanName)) {
-					beanName = attr.getName();
-				}
-				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(attr.getType(),beanName));
+				//存在beanName不是Resouce指定的名称
+//				if(StringUtils.isBlank(beanName)) {
+//					beanName = attr.getName();
+//				}
+				BeanModel model = new BeanModel();
+				model.setTagClass(attr.getType());
+				model.setBeanName(c.name());
+				model.setFieldName(attr.getName());
+				FieldAnnComponent.setObj(attr, obj, LazyBean.getInstance().buildProxy(model));
 			}
 		}
 	}
@@ -56,7 +61,7 @@ public class ResourceHandler  implements FieldHandler{
 		return Resource.class.getName();
 	}
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {

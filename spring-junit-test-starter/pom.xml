@@ -1,0 +1,71 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<name>spring-junit-test-starter</name>
+	<artifactId>spring-junit-test-starter</artifactId>
+	<packaging>jar</packaging>
+	<url>http://maven.apache.org</url>
+	<scm>
+		<url>https://github.com/jklasd/spring-junit-test</url>
+		<connection>https://github.com/jklasd/spring-junit-test.git</connection>
+		<developerConnection>https://github.com/jklasd/spring-junit-test.git</developerConnection>
+	</scm>
+	<parent>
+		<groupId>com.github.jklasd</groupId>
+		<artifactId>spring-junit-test-parent</artifactId>
+		<version>2.0.1-SNAPSHOT</version>
+	</parent>
+	<description>
+		Spring project junit test util;
+		use dubbo;
+		use mysql docker;
+		use mock;
+	</description>
+	<properties>
+		<spring.junit.version>2.0.1-SNAPSHOT</spring.junit.version>
+	</properties>
+	<distributionManagement>
+		<snapshotRepository>
+			<id>sonatype-snapshot</id>
+			<url>https://s01.oss.sonatype.org/content/repositories/snapshots</url>
+		</snapshotRepository>
+		<repository>
+			<id>sonatype-release</id>
+			<url>https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+		</repository>
+	</distributionManagement>
+	
+	<dependencies>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-dubbo-test</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-mock-suppert-test-spring</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-boot-version-controller</artifactId>
+			<exclusions>
+				<exclusion>
+					<groupId>com.github.jklasd</groupId>
+					<artifactId>spring-junit-test-common</artifactId>
+				</exclusion>
+			</exclusions>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-docker-mysql-test</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>
+	</dependencies>
+
+</project>

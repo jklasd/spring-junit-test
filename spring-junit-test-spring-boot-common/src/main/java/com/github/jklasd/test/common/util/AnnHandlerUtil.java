@@ -5,8 +5,8 @@ import java.lang.reflect.Method;
 import java.util.Map;
 import java.util.Set;
 
-import org.springframework.core.type.AnnotatedTypeMetadata;
 import org.springframework.core.type.AnnotationMetadata;
+import org.springframework.core.type.MethodMetadata;
 import org.springframework.core.type.classreading.CachingMetadataReaderFactory;
 import org.springframework.core.type.classreading.MetadataReader;
 
@@ -30,6 +30,7 @@ public class AnnHandlerUtil {
 		return cachingmetadatareaderfactory.getMetadataReader(configClass.getName()).getAnnotationMetadata()
 				.getAnnotationAttributes(annotation.getName(), true);
 	}
+	
 	public static boolean isAnnotationPresent(Class<?> configClass,Class<?> annotation){
 		try {
 			return bean.getAnnotationValue(configClass, annotation)!=null;
@@ -37,20 +38,27 @@ public class AnnHandlerUtil {
 			return false;
 		}
 	}
-	public static boolean isAnnotationPresent(Method method, Class<?> annotation) {
-		try {
-			return bean.getAnnotationValue(method, annotation)!=null;
-		} catch (IOException e) {
-			return false;
+//	public static boolean isAnnotationPresent(Method method, Class<?> annotation) {
+//		try {
+//			return bean.getAnnotationValue(method, annotation)!=null;
+//		} catch (IOException e) {
+//			return false;
+//		}
+//	}
+	public MethodMetadata getAnnotationValue(Method method, String annName) throws IOException {
+		Set<MethodMetadata> mmds = cachingmetadatareaderfactory.getMetadataReader(method.getDeclaringClass().getName()).getAnnotationMetadata().getAnnotatedMethods(annName);
+		for(MethodMetadata mmd : mmds) {
+			if(mmd.getMethodName().equals(method.getName())
+					&& mmd.getReturnTypeName().equals(method.getReturnType().getName())
+					&& mmd.getDeclaringClassName().equals(method.getDeclaringClass().getName())) {
+				return mmd;
+			}
 		}
+		return null;
 	}
-	private Map<String, Object> getAnnotationValue(Method method, Class<?> annotation) throws IOException {
-		return cachingmetadatareaderfactory.getMetadataReader(method.getName()).getAnnotationMetadata()
-				.getAnnotationAttributes(annotation.getName(), true);
-	}
-	public AnnotatedTypeMetadata getAnnotationMetadata(Method method) throws IOException {
-		return cachingmetadatareaderfactory.getMetadataReader(method.getName()).getAnnotationMetadata();
-	}
+//	public AnnotatedTypeMetadata getAnnotationMetadata(Method method) throws IOException {
+//		return cachingmetadatareaderfactory.getMetadataReader(method.getName()).getAnnotationMetadata();
+//	}
 	public Set<String> loadAnnoName(Class<?> configClass) throws IOException {
 		Set<String> member = cachingmetadatareaderfactory.getMetadataReader(configClass.getName()).getAnnotationMetadata().getAnnotationTypes();
 		if(!member.isEmpty()) {
@@ -58,4 +66,5 @@ public class AnnHandlerUtil {
 		}
 		return null;
 	}
+	
 }

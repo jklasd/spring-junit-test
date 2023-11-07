@@ -11,7 +11,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.core.annotation.AnnotatedElementUtils;
 import org.springframework.core.annotation.AnnotationAttributes;
 
-import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitListableBeanFactory;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.BeanScanI;
@@ -20,6 +19,7 @@ import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
 import com.github.jklasd.test.common.util.ScanUtil;
+import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -31,63 +31,11 @@ import lombok.extern.slf4j.Slf4j;
 public class BeanCreaterScan implements BeanScanI{
 	private BeanCreaterScan() {}
 	private JunitListableBeanFactory beanFactory = LazyListableBeanFactory.getInstance();
-//	private static Set<String> notFoundSet = Sets.newConcurrentHashSet();
 	
 	private JunitMethodDefinition findClassMethodByBeanName(BeanModel assemblyData) {
 		return beanJmdMap.get(assemblyData.getBeanName());
-//		Object[] address = new Object[2];
-//		Object[] tmp = new Object[2];
-//		final String beanName = assemblyData.getBeanName();
-//		final Class<?> tagC = assemblyData.getTagClass();
-//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(customizeConfigClass))
-//		.setError((c,e)->{
-//			log.error(c+"处理异常",e);
-//		})
-//		.setException((c,e)->{
-//			log.error(c+"处理异常",e);
-//		})
-//		.runAndWait(c->matchByBeanName(address, tmp, beanName, tagC, c));
-//		if((address[0] ==null || address[1]==null)
-//				&& (tmp[0] == null || tmp[1]==null)) {
-//			
-//			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(springConfigClass))
-//			.setError((c,e)->{
-//				log.error(c+"处理异常",e);
-//			})
-//			.setException((c,e)->{
-//				log.error(c+"处理异常",e);
-//			})
-//			.runAndWait(c->matchByBeanName(address, tmp, beanName, tagC, c));
-//		}
-//		if((address[0] ==null || address[1]==null)) {
-//			return tmp;
-//		}
-//		return address;
 	}
 	
-//	private void matchByBeanName(Object[] address, Object[] tmp, final String beanName, final Class<?> tagC, Class<?> c) {
-//		Method[] methods = c.getDeclaredMethods();
-//		for(Method m : methods) {
-//			Bean beanA = m.getAnnotation(Bean.class);
-//			if(beanA != null) {
-//			    String[] beanNames = beanA.value();
-//		        for(String bn : beanNames) {
-//		            if(Objects.equals(bn, beanName)) {
-//		                address[0]=c;
-//		                address[1]=m;
-//		                break;
-//		            }
-//		        }
-//		        if(m.getName().equals(beanName) && tagC!=null) {
-//		        	if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
-//						tmp[0] = c;
-//						tmp[1] = m;
-//						break;
-//					}
-//		        }
-//			}
-//		}
-//	}
 	
 	public void checkConfig(String className) {
 		Lists.newArrayList(thridAutoConfigClass).forEach(config->{
@@ -98,27 +46,7 @@ public class BeanCreaterScan implements BeanScanI{
 	}
 	
 	public JunitMethodDefinition findClassMethodByResultType(BeanModel assemblyData) {
-//		Object[] tmp = new Object[2];
 		final Class<?> tagC = assemblyData.getTagClass();
-//		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(customizeConfigClass))
-//		.setError((c,e)->{
-//			log.error(c+"处理异常",e);
-//		})
-//		.setException((c,e)->{
-//			log.error(c+"处理异常",e);
-//		})
-//		.runAndWait(c->matchByClass(tmp, tagC, c));
-//		if(tmp[0] ==null || tmp[1]==null) {
-//			JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(springConfigClass))
-//			.setError((c,e)->{
-//				log.error(c+"处理异常",e);
-//			})
-//			.setException((c,e)->{
-//				log.error(c+"处理异常",e);
-//			})
-//			.runAndWait(c->matchByClass(tmp, tagC, c));
-//		}
-//		return tmp;
 		
 		JunitMethodDefinition tmp = matchByClass(tagC,customizeJmds);
 		if(tmp != null) {
@@ -134,11 +62,25 @@ public class BeanCreaterScan implements BeanScanI{
 	private JunitMethodDefinition matchByClass(final Class<?> tagC, List<JunitMethodDefinition> jmds) {
 		for(JunitMethodDefinition jmd : jmds) {
 			if(jmd == null || jmd.getReturnType() == null) {
-				log.info("查看问题");
+				log.warn("查看异常问题");
 			}
+//			if(tagC.getName().contains("ReactorServiceInstanceLoadBalancer")
+//					&& jmd.getConfigurationClass().getName().contains("LoadBalancerClientConfiguration")) {
+//				log.debug("查看问题");
+//			}
 			if(ScanUtil.isExtends(jmd.getReturnType(), tagC) || ScanUtil.isImple(jmd.getReturnType(), tagC) || jmd.getReturnType() == tagC) {
 				return jmd;
 			}
+			
+			if(ScanUtil.isExtends(tagC, jmd.getReturnType())) {
+				BeanModel assemblyData = new BeanModel();
+				assemblyData.setTagClass(tagC);
+				Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),assemblyData);
+				if(tagC.isAssignableFrom(tagObj.getClass())) {
+					return jmd;
+				}
+			}
+			
 			if(ScanUtil.isImple(jmd.getReturnType(), FactoryBean.class)) {
 				Class<?> resultType =  jmd.getReturnType();
 				try {
@@ -153,41 +95,62 @@ public class BeanCreaterScan implements BeanScanI{
 		return null;
 	}
 	
+	@Override
+	public List<JunitMethodDefinition> findCreateBeanFactoryClasses(BeanModel assemblyData) {
+		registMethodBeanDefinition();
+		return findClassMethodsByResultType(assemblyData);
+	}
 	
-//	private void matchByClass(Object[] tmp, final Class<?> tagC, Class<?> c) {
-////		if(c.getName().contains("ElasticSearchClientConfiguration")) {
-////			log.info("断点");
-////		}
-//		Method[] methods = c.getDeclaredMethods();
-//		for(Method m : methods) {
-//			Bean beanA = m.getAnnotation(Bean.class);
-//			if(beanA != null) {
-//				if(tagC!=null) {
-//					if(!tagC.isInterface() && m.getReturnType().isInterface()) {
-//						continue;
-//					}
-//					if(ScanUtil.isExtends(m.getReturnType(), tagC) || ScanUtil.isImple(m.getReturnType(), tagC) || m.getReturnType() == tagC) {
-//						tmp[0] = c;
-//						tmp[1] = m;
-//						break;
-//					}
-//					if(ScanUtil.isImple(m.getReturnType(), FactoryBean.class)) {
-//						Class<?> resultType =  m.getReturnType();
-//						try {
-//							if(resultType.getMethod("getObject").getReturnType() == tagC) {
-//								tmp[0] = c;
-//								tmp[1] = m;
-//								break;
-//							}
-//						} catch (NoSuchMethodException | SecurityException e) {
-//							throw new JunitException(e);
-//						}
-//					}
-//				}
+	private List<JunitMethodDefinition> findClassMethodsByResultType(BeanModel assemblyData) {
+		final Class<?> tagC = assemblyData.getTagClass();
+		List<JunitMethodDefinition> list = Lists.newArrayList();
+		list.addAll(matchByClasses(tagC,customizeJmds));
+		list.addAll(matchByClasses(tagC,springBootJmds));
+		return list;
+	}
+
+
+	private List<JunitMethodDefinition> matchByClasses(Class<?> tagC, List<JunitMethodDefinition> jmds) {
+		List<JunitMethodDefinition> list = Lists.newArrayList();
+		for(JunitMethodDefinition jmd : jmds) {
+			if(jmd == null || jmd.getReturnType() == null) {
+				log.warn("查看异常问题");
+			}
+//			if(tagC.getName().contains("ReactorServiceInstanceLoadBalancer")
+//					&& jmd.getConfigurationClass().getName().contains("LoadBalancerClientConfiguration")) {
+//				log.debug("查看问题");
 //			}
-//		}
-//	}
-	
+			if(ScanUtil.isExtends(jmd.getReturnType(), tagC) || ScanUtil.isImple(jmd.getReturnType(), tagC) || jmd.getReturnType() == tagC) {
+				list.add(jmd);
+				continue;
+			}
+			
+			if(ScanUtil.isExtends(tagC, jmd.getReturnType())) {
+				BeanModel assemblyData = new BeanModel();
+				assemblyData.setTagClass(tagC);
+				Object tagObj = JavaBeanUtil.getInstance().buildBean(jmd.getConfigurationClass(),jmd.getMethod(),assemblyData);
+				if(tagC.isAssignableFrom(tagObj.getClass())) {
+					list.add(jmd);
+					continue;
+				}
+			}
+			
+			if(ScanUtil.isImple(jmd.getReturnType(), FactoryBean.class)) {
+				Class<?> resultType =  jmd.getReturnType();
+				try {
+					if(resultType.getMethod("getObject").getReturnType() == tagC) {
+						list.add(jmd);
+						continue;
+					}
+				} catch (NoSuchMethodException | SecurityException e) {
+					throw new JunitException(e);
+				}
+			}
+		}
+		return list;
+	}
+
+
 	public JunitMethodDefinition findCreateBeanFactoryClass(BeanModel assemblyData) {
 		registMethodBeanDefinition();
 		if(StringUtils.isNotBlank(assemblyData.getBeanName())) {
@@ -208,11 +171,21 @@ public class BeanCreaterScan implements BeanScanI{
 			log.info("=============不能加载{}=============",configClass);
 			return;
 		}
-		log.debug("=============加载{}=============",configClass);
+//		if(configClass.getName().contains("LoadBalancerClientConfiguration")) {
+//			log.debug("=============加载{}=============",configClass);
+//		}
 		if(configClass.getName().startsWith(ScanUtil.SPRING_PACKAGE)) {
 			springConfigClass.add(configClass);
+			if(init>1) {
+				handSpringJmd(configClass);
+				log.info("after add springBootJmds#size:{}",springBootJmds.size());
+			}
 		}else {
 			customizeConfigClass.add(configClass);
+			if(init>1) {
+				handlCustomizedJmd(configClass);
+				log.info("after add customizeJmds#size:{}",customizeJmds.size());
+			}
 		}
 		thridAutoConfigClass.add(configClass);
 	}
@@ -230,11 +203,6 @@ public class BeanCreaterScan implements BeanScanI{
 		return findClassMethodByResultType(assemblyData);
 	}
 
-	@Override
-	public void register() {
-		ContainerManager.registComponent( this);
-	}
-	
 	@Override
 	public String getBeanKey() {
 		return BeanScanI.class.getSimpleName();
@@ -261,51 +229,88 @@ public class BeanCreaterScan implements BeanScanI{
 		.setError((c,e)->log.error(c+"处理异常",e))
 		.setException((c,e)->log.error(c+"处理异常",e))
 		.runAndWait(configClass->{
-			Method[] methods = configClass.getDeclaredMethods();
-			for(Method m : methods) {
-				
-				if(AnnotatedElementUtils.hasAnnotation(m, Bean.class)) {
-					
-					String beanName = determineBeanNameFor(m);
-					
-					JunitMethodDefinition jmd = new JunitMethodDefinition();
-					jmd.setBeanName(beanName);
-					jmd.setMethod(m);
-					jmd.setReturnType(m.getReturnType());
-					jmd.setConfigurationClass(configClass);
-				
-					customizeJmds.add(jmd);
-					
-					beanJmdMap.put(beanName, jmd);
-				}
-			}
+			handlCustomizedJmd(configClass);
 		});
+		log.info("customizeJmds#size:{}",customizeJmds.size());
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(springConfigClass))
 		.setError((c,e)->log.error(c+"处理异常",e))
 		.setException((c,e)->log.error(c+"处理异常",e))
 		.runAndWait(configClass->{
-			
-			Method[] methods = configClass.getDeclaredMethods();
-			for(Method m : methods) {
-				
-				if(AnnotatedElementUtils.hasAnnotation(m, Bean.class)) {
-					
-					String beanName = determineBeanNameFor(m);
-					
-					JunitMethodDefinition jmd = new JunitMethodDefinition();
-					jmd.setBeanName(beanName);
-					jmd.setMethod(m);
-					jmd.setReturnType(m.getReturnType());
-					jmd.setConfigurationClass(configClass);
-				
-					springBootJmds.add(jmd);
-					
-					beanJmdMap.putIfAbsent(beanName, jmd);
-				}
-			}
-			
+			handSpringJmd(configClass);
 		});
+//		List<Class<?>> tmp = Lists.newArrayList(springConfigClass);
+//		tmp.sort(new Comparator<Class<?>>() {
+//			@Override
+//			public int compare(Class<?> o1, Class<?> o2) {
+//				int t1 = o1.getName().hashCode();
+//				int t2 = o2.getName().hashCode();
+//				return t1-t2;
+//			}
+//		});
+//		for(Class<?> configClass : tmp) {
+//			if(configClass.getName().contains("DiscoveryClientOptionalArgsConfiguration")) {
+//				System.out.println("断点");
+//			}
+//			handSpringJmd(configClass);
+//		}
+		
+		log.info("springBootJmds#size:{}",springBootJmds.size());
+//		springBootJmds.forEach(item->System.out.println("\nc:"+item.getConfigurationClass()+"\nm:"+item.getMethod()+"\nr:"+item.getReturnType()));
 		init = 2;
+	}
+
+
+	private void handSpringJmd(Class<?> configClass) {
+		Method[] methods = configClass.getDeclaredMethods();
+		for(Method m : methods) {
+			
+			if(AnnotatedElementUtils.hasAnnotation(m, Bean.class)) {
+				
+				String beanName = determineBeanNameFor(m);
+				
+				JunitMethodDefinition jmd = new JunitMethodDefinition();
+				jmd.setBeanName(beanName);
+				jmd.setMethod(m);
+				jmd.setReturnType(m.getReturnType());
+				jmd.setConfigurationClass(configClass);
+			
+				if(!CheckUtil.checkClassExistsForMethod(m)) {
+//					log.debug("排除：{}",m.getName());
+					continue;
+				}
+//				System.out.println("m:"+jmd.getMethod()+"r:"+jmd.getReturnType());
+				springBootJmds.add(jmd);
+				
+				beanJmdMap.putIfAbsent(beanName, jmd);
+			}
+		}
+	}
+
+
+	private void handlCustomizedJmd(Class<?> configClass) {
+		Method[] methods = configClass.getDeclaredMethods();
+		for(Method m : methods) {
+			
+			if(AnnotatedElementUtils.hasAnnotation(m, Bean.class)) {
+				
+				String beanName = determineBeanNameFor(m);
+				
+				JunitMethodDefinition jmd = new JunitMethodDefinition();
+				jmd.setBeanName(beanName);
+				jmd.setMethod(m);
+				jmd.setReturnType(m.getReturnType());
+				jmd.setConfigurationClass(configClass);
+				
+				//加强校验
+				if(!CheckUtil.checkClassExistsForMethod(m)) {
+//					log.debug("排除：{}",m.getName());
+					continue;
+				}
+				customizeJmds.add(jmd);
+				
+				beanJmdMap.put(beanName, jmd);
+			}
+		}
 	}
 
 	private String determineBeanNameFor(Method beanMethod) {

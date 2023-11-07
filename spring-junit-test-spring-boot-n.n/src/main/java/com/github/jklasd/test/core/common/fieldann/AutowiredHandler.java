@@ -16,6 +16,7 @@ import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
+import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.FieldDef;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
@@ -37,7 +38,7 @@ public class AutowiredHandler implements FieldHandler{
 			if(item.length == 1) {
 				//处理一个集合注入
 				try {
-					Class<?> c = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
+					Class<?> c = JunitClassLoader.getInstance().loadClass(item[0].getTypeName());
 					List list = LazyBean.findListBean(c);
 					if(list.isEmpty()) {
 						String[] beanNames = LazyApplicationContext.getInstance().getBeanNamesForType(c);
@@ -56,13 +57,11 @@ public class AutowiredHandler implements FieldHandler{
 				log.info("其他特殊情况");
 			}
 		}else {
-			if(StringUtils.isBlank(bName)) {
-				bName = BeanNameUtil.getBeanName(attr.getType());
-				if(StringUtils.isBlank(bName)) {
-					bName = attr.getName();
-				}
-			}
-			FieldAnnComponent.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(attr.getType(),bName));
+			BeanModel model = new BeanModel();
+			model.setTagClass(attr.getType());
+			model.setBeanName(bName);
+			model.setFieldName(attr.getName());
+			FieldAnnComponent.setObj(attr, tagObj,LazyBean.getInstance().buildProxy(model));
 		}
 	}
 
@@ -71,7 +70,7 @@ public class AutowiredHandler implements FieldHandler{
 		return Autowired.class.getName();
 	}
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {

@@ -2,10 +2,10 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<name>spring-junit-test</name>
+	<name>spring-junit-test-parent</name>
 	<groupId>com.github.jklasd</groupId>
 	<artifactId>spring-junit-test-parent</artifactId>
-	<version>2.0.1-SNAPSHOT</version>
+	<version>2.0.1-RELEASE</version>
 	<packaging>pom</packaging>
 	<url>http://maven.apache.org</url>
 	<scm>
@@ -31,6 +31,8 @@
 		<module>spring-junit-test-spring-boot-common</module>
 		<module>spring-junit-test-spring-boot-n.n</module>
 		<module>spring-junit-mock-test-spring-boot-n.n</module>
+		<module>spring-junit-db-test-n.n</module>
+		<module>spring-junit-remote-test-n.n</module>
 	</modules>
 
 	<licenses>
@@ -69,17 +71,17 @@
 			<dependency>
 				<groupId>com.github.jklasd</groupId>
 				<artifactId>spring-junit-test</artifactId>
-				<version>2.0.1-SNAPSHOT</version>
+				<version>2.0.1-RELEASE</version>
 			</dependency>
 			<dependency>
 		    	<groupId>com.github.jklasd</groupId>
 				<artifactId>spring-junit-test-common</artifactId>
-				<version>2.0.1-SNAPSHOT</version>
+				<version>2.0.1-RELEASE</version>
 		    </dependency>
 		    <dependency>
 				<groupId>com.alibaba</groupId>
 				<artifactId>fastjson</artifactId>
-				<version>1.2.80</version>
+				<version>2.0.24</version>
 			</dependency>
 			<dependency>
 				<groupId>commons-logging</groupId>
@@ -87,9 +89,9 @@
 				<version>1.2</version>
 			</dependency>
 			<dependency>
-				<groupId>log4j</groupId>
-				<artifactId>log4j</artifactId>
-				<version>1.2.17</version>
+			    <groupId>org.apache.logging.log4j</groupId>
+			    <artifactId>log4j-core</artifactId>
+			    <version>2.18.0</version>
 			</dependency>
 			<dependency>
 				<groupId>com.google.guava</groupId>
@@ -99,7 +101,7 @@
 			<dependency>
 				<groupId>org.apache.commons</groupId>
 				<artifactId>commons-lang3</artifactId>
-				<version>3.3.2</version>
+				<version>3.11</version>
 			</dependency>
 			<dependency>
 				<groupId>com.github.jklasd</groupId>

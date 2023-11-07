@@ -18,8 +18,7 @@ import java.lang.annotation.Target;
 @Inherited
 public @interface JunitSpecifyAop {
 	/**
-	 * 指定class
-	 * @return
+	 * @return 指定哪些class是用作AOP处理，方便测试
 	 */
 	Class<?>[] value();
 }

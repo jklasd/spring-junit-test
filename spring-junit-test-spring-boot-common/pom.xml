@@ -41,7 +41,7 @@
 	<parent>
 		<groupId>com.github.jklasd</groupId>
 		<artifactId>spring-junit-test-parent</artifactId>
-		<version>2.0.1-SNAPSHOT</version>
+		<version>2.0.1-RELEASE</version>
 	</parent>
 	<properties>
 		<maven.compiler.source>1.8</maven.compiler.source>
@@ -105,8 +105,8 @@
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
-			<groupId>log4j</groupId>
-			<artifactId>log4j</artifactId>
+			<groupId>org.apache.logging.log4j</groupId>
+		    <artifactId>log4j-core</artifactId>
 			<scope>provided</scope>
 		</dependency>
 		<dependency>
@@ -125,6 +125,16 @@
 		<finalName>${project.artifactId}-${project.version}</finalName>
 		<pluginManagement>
 			<plugins>
+				<plugin>
+				    <groupId>org.apache.maven.plugins</groupId>
+				    <artifactId>maven-compiler-plugin</artifactId>
+				    <configuration>
+				        <compilerArguments>  
+						    <verbose />  
+						    <bootclasspath>${JAVA_HOME}/jre/lib/rt.jar</bootclasspath>  
+						</compilerArguments>
+				    </configuration>
+				</plugin>
 				<plugin>
 					<groupId>org.apache.maven.plugins</groupId>
 					<artifactId>maven-source-plugin</artifactId>
