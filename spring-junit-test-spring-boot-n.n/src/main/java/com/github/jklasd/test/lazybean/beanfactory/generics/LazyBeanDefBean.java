@@ -2,6 +2,7 @@ package com.github.jklasd.test.lazybean.beanfactory.generics;
 
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
+import org.springframework.beans.factory.support.RootBeanDefinition;
 
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
@@ -10,6 +11,20 @@ import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory.RootBeanDefinitionBuilder;
 
 public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
+	@Override
+	public String getName() {
+		return "LazyBeanDefBean";
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 100;
+	}
 
 	private ThreadLocal<BeanDefinition> localCache = new ThreadLocal<>();
 	
@@ -17,8 +32,15 @@ public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
 	
 	@Override
 	public Object buildBean(BeanModel model) {
+		RootBeanDefinition rbd = null;
+		BeanDefinition bd = localCache.get();
+		if(bd instanceof RootBeanDefinition) {
+			rbd = (RootBeanDefinition) bd;
+		}else {
+			rbd = RootBeanDefinitionBuilder.build(bd);
+		}
 		
-		return beanFactory.doCreateBean(model.getBeanName(), RootBeanDefinitionBuilder.build(localCache.get()), null);
+		return beanFactory.doCreateBean(model.getBeanName(), rbd, null);
 	}
 
 	@Override
@@ -61,4 +83,6 @@ public class LazyBeanDefBean extends LazyAbstractPlugnBeanFactory{
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyBeanDefBean.class);
 	}
+
+	
 }

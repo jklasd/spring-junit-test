@@ -9,6 +9,20 @@ import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactory{
 
 	@Override
+	public String getName() {
+		return "LazyConfigurationPropertiesBean";
+	}
+	
+	public Integer getOrder() {
+		return 200;
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	
+	@Override
 	public Object buildBean(BeanModel beanModel) {
 		return LazyBean.findCreateByProp(beanModel.getTagClass());
 	}
@@ -30,4 +44,6 @@ public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactor
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyConfigurationPropertiesBean.class);
 	}
+
+	
 }

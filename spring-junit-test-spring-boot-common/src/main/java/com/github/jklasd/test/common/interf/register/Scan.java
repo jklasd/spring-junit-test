@@ -10,7 +10,8 @@ public interface Scan extends ContainerRegister{
 
 	Map<String, Class<?>> findClassMap(String scanPath);
 
-	void loadContextPathClass();
+//	@Deprecated
+//	void loadContextPathClass();
 
 	Class<?> findClassByName(String beanName);
 

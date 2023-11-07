@@ -52,7 +52,7 @@ public class AopContextSuppert{
                     aopContext = LazyBean.getInstance().buildProxy(AopContextClass);
                 }else {
                     //非抽象类处理
-                    aopContext = LazyBean.getInstance().invokeBuildObject(AopContextClass);
+                    aopContext = LazyBean.invokeBuildObject(AopContextClass);
                 }
             }
             if(setCurrentProxy == null) {

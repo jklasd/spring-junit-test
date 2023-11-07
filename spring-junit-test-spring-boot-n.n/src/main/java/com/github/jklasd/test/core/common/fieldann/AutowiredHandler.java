@@ -38,7 +38,7 @@ public class AutowiredHandler implements FieldHandler{
 			if(item.length == 1) {
 				//处理一个集合注入
 				try {
-					Class<?> c = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
+					Class<?> c = JunitClassLoader.getInstance().loadClass(item[0].getTypeName());
 					List list = LazyBean.findListBean(c);
 					if(list.isEmpty()) {
 						String[] beanNames = LazyApplicationContext.getInstance().getBeanNamesForType(c);
@@ -70,7 +70,7 @@ public class AutowiredHandler implements FieldHandler{
 		return Autowired.class.getName();
 	}
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {

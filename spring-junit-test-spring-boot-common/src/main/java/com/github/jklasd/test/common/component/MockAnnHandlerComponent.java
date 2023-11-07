@@ -12,20 +12,17 @@ import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
 import com.google.common.collect.Maps;
 
-public class MockAnnHandlerComponent {
+public class MockAnnHandlerComponent extends AbstractComponent{
 	private static Map<String,MockClassHandler> handlerMap = Maps.newHashMap();
-	public static class HandlerLoader{
-		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException{
-			for(String hclass :handlerClasses) {
-				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
-				MockClassHandler handler = (MockClassHandler) handlerClass.newInstance();
-				if(StringUtils.isNotBlank(handler.getType())) {
-					handlerMap.put(handler.getType(), handler);
-				}
-			}
-		}
-	}
 	public static void handlerMethod(Method method) {
+//		try {
+//			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(method);
+//			if(!methodInfo.getFindToStatic().isEmpty()) {
+//				//处理静态方法
+//				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+//			}
+//		} catch (Exception e) {
+//		}
 		Annotation[] anns = method.getAnnotations();
 		for(Annotation ann : anns) {
 			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());
@@ -64,7 +61,7 @@ public class MockAnnHandlerComponent {
 		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
 			handlerClass(testClass.getSuperclass());
 		}
-		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 		if(injectMocksHandler!=null) {
 			injectMocksHandler.hand(testClass);
 		}
@@ -81,16 +78,24 @@ public class MockAnnHandlerComponent {
 		if(testClass.getSuperclass()!=null && testClass.getSuperclass()!=Object.class) {
 			releaseClass(testClass.getSuperclass());
 		}
-		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 		if(injectMocksHandler!=null) {
 			injectMocksHandler.releaseClass(testClass);
 		}
 	}
 
 	public static void beforeAll(Class<?> testClass) {
-		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+		MockFieldHandlerI injectMocksHandler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 		if(injectMocksHandler!=null) {
 			injectMocksHandler.registId();
+		}
+	}
+
+	@Override
+	<T> void add(T component) {
+		MockClassHandler handler = (MockClassHandler) component;
+		if(StringUtils.isNotBlank(handler.getType())) {
+			handlerMap.put(handler.getType(), handler);
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package com.github.jklasd.test.common.util;
 
 import java.io.IOException;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -11,7 +12,6 @@ import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.beans.factory.support.BeanDefinitionRegistry;
 import org.springframework.boot.autoconfigure.condition.ConditionOutcome;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.SpringBootCondition;
 import org.springframework.context.annotation.ConditionContext;
 import org.springframework.context.annotation.Conditional;
@@ -69,7 +69,7 @@ public class CheckUtil {
 		@Override
 		public BeanDefinitionRegistry getRegistry() {
 			// TODO Auto-generated method stub
-			return null;
+			return bean.getApplicationContext();
 		}
 
 		@Override
@@ -168,8 +168,40 @@ public class CheckUtil {
 
 	public static boolean checkClassExistsForMethod(Method method) {
 		// @ConditionalOnClass
-		if (AnnHandlerUtil.isAnnotationPresent(method, ConditionalOnClass.class)) {
+		try {
+			
+			Annotation[] anns = method.getAnnotations();
+			
+			if (anns.length < 1) {
+				return false;
+			}
+			for (Annotation ann : anns) {
+				String annName = ann.annotationType().getName();
+				if (checkClassMap.containsKey(annName)) {
+					if(annName.equals(ConditionalOnBean.class.getName())) {//这里校验class是否存在
+						Map<String, Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(method, annName)
+								.getAnnotationAttributes(annName);
+						Class<?>[] classes = (Class[]) attr.get("value");
+						for(Class<?> forBeanClass : classes) {
+							if(forBeanClass==null) {
+								return false;
+							}
+						}
+						continue;
+					}
+					SpringBootCondition condition = checkClassMap.get(annName);
+					ConditionOutcome outcome = condition.getMatchOutcome(context,
+							AnnHandlerUtil.getInstance().getAnnotationValue(method,annName));
+					if(!outcome.isMatch()) {
+						return outcome.isMatch();
+					}
+				}
+			}
+			return true;//没有condition校验
+		} catch (IOException e) {
+			log.error("checkClassExists", e);
 		}
+		
 		return false;
 	}
 

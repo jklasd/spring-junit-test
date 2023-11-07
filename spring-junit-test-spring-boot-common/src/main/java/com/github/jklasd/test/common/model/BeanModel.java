@@ -1,7 +1,6 @@
 package com.github.jklasd.test.common.model;
 
 import java.lang.reflect.Type;
-import java.util.Map;
 
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.config.ConstructorArgumentValues;
@@ -20,4 +19,8 @@ public class BeanModel {
     private ConstructorArgumentValues constructorArgs;
     private boolean isThrows;
     private String fieldName;
+    private boolean includeNonSingletons;
+    private String excludeBean;
+    private boolean createBean;
+    private boolean required = true;
 }

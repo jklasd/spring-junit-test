@@ -1,23 +1,19 @@
 package com.github.jklasd.test.common;
 
-import java.io.IOException;
 import java.lang.reflect.Modifier;
-import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.core.type.AnnotationMetadata;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Repository;
-import org.springframework.stereotype.Service;
 
-import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.BeanFactoryProcessorI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.SignalNotificationUtil;
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 
 import lombok.extern.slf4j.Slf4j;
 
@@ -40,10 +36,14 @@ public class JunitClassLoader extends ClassLoader{
 	}
 	AnnHandlerUtil annHandler = AnnHandlerUtil.getInstance();
 	private ClassUtil scan = ClassUtil.getInstance();
-	public Class<?> junitloadClass(String name) throws ClassNotFoundException {
-		return loadClass(name);
+	public Class<?> junitloadClass(String name) {
+		try {
+			return loadClass(name);
+		} catch (ClassNotFoundException e) {
+			return null;
+		}
 	}
-	private List<Class<?>> staticComponentClass = Lists.newArrayList();
+	private Set<Class<?>> staticComponentClass = Sets.newConcurrentHashSet();
 	private BeanFactoryProcessorI beanFactoryProcessor;
 	private LazyBeanI lazyBean;
 	private boolean staticClassHandled;
@@ -59,6 +59,8 @@ public class JunitClassLoader extends ClassLoader{
 		}
 	}
 	
+	Map<String,Class<?>> cache = Maps.newConcurrentMap();
+	
 	@SuppressWarnings("unchecked")
 	public Class<?> loadClass(String name) throws ClassNotFoundException {
 		setBean();
@@ -66,48 +68,49 @@ public class JunitClassLoader extends ClassLoader{
 		if(loadClass!=null) {
 			return loadClass;
 		}
+		if(cache.containsKey(name)) {
+			return cache.get(name);//重复处理，会导致java.lang.ClassCircularityError
+		}
 		if(name.equals("module-info")
 				&& version.startsWith("1.8")) {
 			log.warn("module-info 版本不支持");
 			return null;
 		}
-		loadClass = loadClass(name, false);
-		try {
-			if(!Modifier.isAbstract(loadClass.getModifiers())
-					&& !loadClass.getName().startsWith("org.springframework")) {
-				AnnotationMetadata meta = annHandler.getAnnotationMetadata(loadClass);
-				if(meta.hasAnnotation(Component.class.getName())
-						|| meta.hasAnnotation(Service.class.getName())
-						|| meta.hasAnnotation(Configuration.class.getName())
-						|| meta.hasAnnotation(Repository.class.getName())
-						) {
-					log.debug("查看{}是否是静态类",loadClass);
-					if(scan.hasStaticMethod(loadClass)) {
-//						scan.hasStaticMethod(loadClass);
-//						if(loadClass.getName().contains("CostConfiguration")) {
-//							log.debug("断点");
-//						}
-						int process = ContainerManager.stats;
-						if(process < ContainerManager.inited) {
-							staticComponentClass.add(loadClass);
-						}else {
-							//预热静态方法的实例对象
-							if(beanFactoryProcessor.notBFProcessor(loadClass)) {
-								String value = SignalNotificationUtil.get(loadClass.getName());
-								if(value == null) {
-									lazyBean.processStatic(loadClass);
-								}else {
-									SignalNotificationUtil.put(loadClass.getName(), "false");
-								}
+		loadClass = loadClass(name, false);//cache 防止并发情况下，重复处理
+		
+		if(Contants.prepareStatic) {
+			handHasstaticMethodClass(loadClass);
+		}
+		cache.put(name, loadClass);
+		return loadClass;
+    }
+
+	/**
+	 * 部分其他非springbean中调用了静态方法，需要提前处理
+	 * @param loadClass
+	 */
+	private void handHasstaticMethodClass(Class<?> loadClass) {
+		if(!Modifier.isAbstract(loadClass.getModifiers())
+				&& !loadClass.getName().startsWith("org.springframework")) {
+			if(AnnHandlerUtil.isAnnotationPresent(loadClass, Component.class)) {
+				log.debug("查看{}是否是静态类",loadClass);
+				if(scan.hasStaticMethod(loadClass)) {
+					int process = ContainerManager.stats;
+					if(process < ContainerManager.inited) {
+						staticComponentClass.add(loadClass);
+					}else {
+						//预热静态方法的实例对象
+						if(beanFactoryProcessor.notBFProcessor(loadClass)) {
+							String value = SignalNotificationUtil.get(loadClass.getName());
+							if(value == null) {
+								lazyBean.processStatic(loadClass);
+							}else {
+								SignalNotificationUtil.put(loadClass.getName(), "false");
 							}
 						}
 					}
 				}
 			}
-		} catch (IOException e) {
-			e.printStackTrace();
 		}
-		
-		return loadClass;
-    }
+	}
 }

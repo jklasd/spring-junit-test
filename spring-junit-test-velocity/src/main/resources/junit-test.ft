@@ -1,0 +1,87 @@
+## Package declaration
+#if($StringUtils.isNotEmpty($sourceClass.packageName))
+package $sourceClass.packageName;
+#end
+
+
+## spring-junit-test 引入包
+#junitTestImport()
+##
+## 同一包下不用引用，业务类
+## import ${sourceClass.packageName}.${sourceClass.name};
+import org.springframework.beans.factory.annotation.Autowired;
+## service 引入包
+#serviceImport()
+##
+
+${junitAnn}
+class ${sourceClass.name}_Test {
+
+    @Autowired
+    private ${sourceClass.name} ${sourceClass.testClassMemberName};
+
+#foreach($method in $methods)
+#if($method.name.indexOf('lambda$')<0)
+#set($tmpName = $methodNames.get($MethodParamUtil.convertionMethodName($method)))
+	@DefaultTestMethod//移除后将不会覆盖该方法
+    @Test
+    public void ${tmpName}_test() ${MethodParamUtil.throwException($method)}{
+##		构建参数
+#junitBuildParams($method,$tmp)
+##		构建返回结果
+#junitBuildResult($method,$test_result)
+##		调用方法
+		${sourceClass.testClassMemberName}.${method.name}($tmp);
+    }
+#end
+#end
+
+}
+
+## junit 导入判断 ##
+#macro(junitTestImport)
+#if(${junitAnn.indexOf("RunSpringJunitTestFor5")}!=-1)
+import com.github.jklasd.test.ann.RunSpringJunitTestFor5;
+import com.github.jklasd.test.common.ann.DefaultTestMethod;
+import org.junit.jupiter.api.Test;
+#else
+import com.github.jklasd.test.ann.RunSpringJunitTest;
+import com.github.jklasd.test.common.ann.DefaultTestMethod;
+import org.junit.runner.RunWith;
+import org.junit.Test;
+#end
+#end
+## ##
+
+## service 导入判断 ##
+#macro(serviceImport)
+#set($tmpImportMap={})
+#foreach($method in $methods)
+#if($method.name.indexOf('lambda$')<0)
+#set($serviceImports = "")
+##foreach($param in $method.parameters)
+##set($serviceImports = $MethodParamUtil.handlerImport($param,$serviceImports,$tmpImportMap))
+##end
+#set($serviceImports = $MethodParamUtil.handlerImport($method,$tmpImportMap))
+#set($serviceImports = $MethodParamUtil.handlerExceptionImport($method,$serviceImports,$tmpImportMap))
+#if($serviceImports.length()>0)
+$serviceImports
+#end
+#end
+#end
+#end
+## ##
+## junit 构建入参 ##
+#macro(junitBuildParams $method,$tmp)
+	#set($params = "")
+		$MethodParamUtil.beforeHandFixedParamsByMethod($method)
+	#set($tmp = $MethodParamUtil.handParams($method))
+#end
+## ##
+## junit 构建返回结果 ##
+#macro(junitBuildResult $method,$test_result)
+	#set($tmpResult = "")
+	#set($tmpResult = $MethodParamUtil.handResult($method,$tmpResult))
+	#set($test_result = $tmpResult)
+#end
+## ##

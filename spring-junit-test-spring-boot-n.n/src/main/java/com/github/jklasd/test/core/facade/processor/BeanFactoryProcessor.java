@@ -27,7 +27,7 @@ public class BeanFactoryProcessor implements BeanFactoryProcessorI{
 	private synchronized static void buildBean() {
 		if(processor==null) {
 			processor = new BeanFactoryProcessor();
-			processor.register();
+			ContainerManager.registComponent(processor);
 		}
 	}
 //	List<BeanFactoryPostProcessor> processorList = Lists.newArrayList();
@@ -59,10 +59,6 @@ public class BeanFactoryProcessor implements BeanFactoryProcessorI{
 	}
 	public boolean notBFProcessor(Class<?> classItem) {
 		return !filter.contains(classItem);
-	}
-	@Override
-	public void register() {
-		ContainerManager.registComponent(this);
 	}
 	@Override
 	public String getBeanKey() {

@@ -33,6 +33,9 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
         return delegate;
     }
 
+    protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
+    	super.processBeanDefinition(ele, delegate);
+    }
 //    protected void processBeanDefinition(Element ele, BeanDefinitionParserDelegate delegate) {
     	
 //        BeanDefinitionHolder holder = delegate.parseBeanDefinitionElement(ele);
@@ -53,13 +56,19 @@ public class LazyBeanDefinitionDocumentReader extends DefaultBeanDefinitionDocum
 //    }
 
     protected void processAliasRegistration(Element ele) {
-
+    	log.info("Alias:{}",ele.getNodeName());
     }
 
+    /**
+     * 解析import
+     */
     protected void importBeanDefinitionResource(Element ele) {
     	XMLResourceLoader.getInstance().readNode(ele.getAttribute(RESOURCE_ATTRIBUTE));
     }
 
+    /**
+     * 解析beans
+     */
     public void parseBeanDefinitions(Element root, BeanDefinitionParserDelegate delegate) {
         super.parseBeanDefinitions(root, delegate);
     }

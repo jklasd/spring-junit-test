@@ -34,7 +34,7 @@ public class ResourceHandler  implements FieldHandler{
 				if(item.length == 1) {
 					//处理一个集合注入
 					try {
-						Class<?> itemC = JunitClassLoader.getInstance().junitloadClass(item[0].getTypeName());
+						Class<?> itemC = JunitClassLoader.getInstance().loadClass(item[0].getTypeName());
 						List<?> list = LazyBean.findListBean(itemC);
 						FieldAnnComponent.setObj(attr, obj, list);
 						log.info("{}注入resource集合=>{},{}个对象",obj.getClass(),attr.getName(),list.size());
@@ -61,7 +61,7 @@ public class ResourceHandler  implements FieldHandler{
 		return Resource.class.getName();
 	}
 	
-	private MockFieldHandlerI handler = ContainerManager.getComponent(ContainerManager.NameConstants.MockFieldHandler);
+	private MockFieldHandlerI handler = ContainerManager.getComponent(MockFieldHandlerI.class.getName());
 
 	@Override
 	public void injeckMock(FieldDef fieldDef, Annotation ann) {

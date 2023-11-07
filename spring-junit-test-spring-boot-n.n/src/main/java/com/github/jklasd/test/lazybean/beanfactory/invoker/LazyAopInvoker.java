@@ -37,7 +37,12 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 		Object newObj = dto.getRealObj();
 		Object oldObj = AopContextSuppert.getProxyObject();
 		context.put("oldObj", oldObj);
-        AopContextSuppert.setProxyObj(dto.getPoxy());
+		
+		if(dto.getBeanModel().getTagClass().isInterface()) {//防止接口代理对象被实现类强转
+			AopContextSuppert.setProxyObj(dto.getRealObj());
+		}else {
+			AopContextSuppert.setProxyObj(dto.getPoxy());
+		}
         LazyBeanFilter.processLazyConfig(newObj, dto.getMethod(), dto.getParam());
 		
 		return false;
@@ -101,7 +106,7 @@ public class LazyAopInvoker extends AbstractProxyInvoker{
 	private AdvisedSupport advised = new AdvisedSupport();
 	/**
 	 * Advisor 顺序 由 Advisor自身执行顺序控制
-	 * @param classAdvisors
+	 * @param classAdvisors 需要注册的AOP处理方法【包含before,after,around,exception等等】
 	 */
 	public void regist(List<Advisor> classAdvisors) {
 		advised.addAdvisors(classAdvisors);

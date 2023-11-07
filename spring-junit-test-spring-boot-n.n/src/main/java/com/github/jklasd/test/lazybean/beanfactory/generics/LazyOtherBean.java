@@ -13,6 +13,22 @@ public class LazyOtherBean extends LazyAbstractPlugnBeanFactory{
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyOtherBean.class);
 	}
+	
+	@Override
+	public String getName() {
+		return "LazyOtherBean";
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		
+		return 500;
+	}
 
 	@Override
 	public Object buildBean(BeanModel model) {
@@ -40,4 +56,5 @@ public class LazyOtherBean extends LazyAbstractPlugnBeanFactory{
     		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
 		}
 	}
+
 }

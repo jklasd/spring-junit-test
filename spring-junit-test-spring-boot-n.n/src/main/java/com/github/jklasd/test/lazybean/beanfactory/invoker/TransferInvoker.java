@@ -8,16 +8,19 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
+import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazyplugn.db.TranstionalManager;
 
 public class TransferInvoker extends AbstractProxyInvoker{
-	
+	private static Class<?> PlatformTransactionManager = ScanUtil.loadClass("org.springframework.transaction.PlatformTransactionManager");
 	private static TransferInvoker instance;
 	public static TransferInvoker getInstance() {
 		if(instance == null) {
-			synchronized (TransferInvoker.class) {
-				if(instance == null) {
-					instance = new TransferInvoker();
+			if(PlatformTransactionManager!=null) {
+				synchronized (TransferInvoker.class) {
+					if(instance == null) {
+						instance = new TransferInvoker();
+					}
 				}
 			}
 		}
@@ -26,39 +29,6 @@ public class TransferInvoker extends AbstractProxyInvoker{
 
 	private final String context_oldTxInfo = "oldTxInfo";
 	private final String context_txStatus = "txStatus";
-	/*
-	 * TransactionAttribute oldTxInfo = null;
-    	TransactionStatus txStatus = null;
-        try {
-            Object newObj = getTagertObj();
-            Object result = null;
-            if(TranstionalManager.isFindTranstional()) {
-            	oldTxInfo = TranstionalManager.getInstance().getTxInfo();
-            	TransactionAttribute txInfo = TranstionalManager.getInstance().processAnnoInfo(method, newObj);
-            	
-            	txStatus = openTransation(oldTxInfo, txInfo);
-            	
-            	result = method.invoke(newObj, param);
-            	closeTransation(oldTxInfo, txStatus,method);
-            }else {
-            	result = method.invoke(newObj, param);
-            }
-            
-            return result;
-        }catch (JunitException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e;
-        }catch (InvocationTargetException e) {
-        	rollback(oldTxInfo, txStatus,e);
-        	throw e.getTargetException();
-		}catch (Exception e) {
-			/**
-			 * 抛出异常，一定要关闭事务
-			 * 否则在批量测试中，会导致其他单元测试，进入事务。
-			 */
-//			rollback(oldTxInfo, txStatus,e);
-//            throw e;
-//        }
 	
 	/**
 	 * 正常关闭事务
@@ -115,9 +85,9 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	
 	/**
 	 * 回滚事务
-	 * @param oldTxInfo
-	 * @param txStatus
-	 * @param e
+	 * @param oldTxInfo 旧事务信息
+     * @param txStatus 当前事务状态
+	 * @param e 导致回滚事务的异常
 	 */
 	
 	protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
@@ -160,10 +130,11 @@ public class TransferInvoker extends AbstractProxyInvoker{
         return txStatus;
     }
     /**
+     * 
      * 关闭事务
      * @param oldTxInfo 旧事务信息
-     * @param txStatus 当前事务
-     * @param method 
+     * @param txStatus 当前事务状态
+     * @param method 存在事务的方法 
      */
     protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
         if (txStatus != null) {

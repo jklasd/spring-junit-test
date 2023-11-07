@@ -7,6 +7,8 @@ import java.util.Set;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.autoconfigure.AutoConfigureAfter;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
+import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.springframework.context.annotation.ImportResource;
@@ -15,13 +17,16 @@ import org.springframework.core.io.Resource;
 import org.springframework.core.type.classreading.MetadataReader;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.component.ClassAnnComponent;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
+import com.github.jklasd.test.common.util.ClassUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.core.facade.JunitResourceLoader;
+import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.github.jklasd.test.core.facade.loader.XMLResourceLoader;
 import com.github.jklasd.test.core.facade.processor.BeanFactoryProcessor;
-import com.github.jklasd.test.util.ClassUtil;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 
@@ -33,7 +38,7 @@ public class ConfigurationScan {
 	private static ConfigurationScan scaner = new ConfigurationScan();
 	public static ConfigurationScan getInstance() {return scaner;};
 	
-	JunitResourceLoader xmlResourceLoader = XMLResourceLoader.getInstance();
+	JunitResourceLoaderI xmlResourceLoader = XMLResourceLoader.getInstance();
 	PropResourceManager propLoader = PropResourceManager.getInstance();
 	BeanCreaterScan beanCreaterScan = BeanCreaterScan.getInstance();
 	
@@ -46,13 +51,12 @@ public class ConfigurationScan {
 	Set<Class<?>> cacheScanConfig = Sets.newConcurrentHashSet();
 	
 	public void scanConfigClass(Class<?> configClass) throws IOException {
+//		if(configClass.getName().contains("ServletWebServerFactoryAutoConfiguration")) {
+//			log.debug("=============加载{}=============",configClass);			
+//		}
 		if(configClass==null || cacheScanConfig.contains(configClass)) {
 			return;
 		}
-		
-//		if(configClass.getName().contains("MongoReactiveDataAutoConfiguration")) {
-//			log.debug("=============加载{}=============",configClass);			
-//		}
 		
 		cacheScanConfig.add(configClass);
 		//@Configuration
@@ -79,6 +83,7 @@ public class ConfigurationScan {
 		if(!CheckUtil.checkProp(configClass)) {
 			return;
 		}
+		
 		beanCreaterScan.loadConfigurationClass(configClass);
 		MetadataReader sourceToProcess = null;
 		try {
@@ -114,14 +119,32 @@ public class ConfigurationScan {
 				TestUtil.getInstance().loadEnv(sourcePath,resource.getFilename());
 			}
 		}
-		
-		if(!configClass.getName().startsWith("org.springframework") && ClassUtil.getInstance().hasStaticMethod(configClass)) {
+		//@ComponentScan;
+		if(AnnHandlerUtil.isAnnotationPresent(configClass,ComponentScan.class)) {
+			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, ComponentScan.class);
+//			ClassScan.getInstance().loadContextPathClass((String[]) attr.get("value"));
+			ClassPathBeanDefinitionScanner scanner = new ClassPathBeanDefinitionScanner(LazyListableBeanFactory.getInstance(),
+					(Boolean)attr.get("useDefaultFilters"), LazyApplicationContext.getInstance().getEnvironment());
+			
+			String[] scanPaths =(String[]) attr.get("value");
+			if(scanPaths.length<1) {
+				scanPaths = new String[] {configClass.getPackage().getName()};
+			}
+			
+			scanner.scan(scanPaths);
+		}
+		if(!configClass.getName().startsWith("org.springframework")
+				&& ClassUtil.getInstance().hasStaticMethod(configClass)
+				) {
 			ClassScan.getInstance().loadComponentClass(configClass);
 		}
 		
 		if(ScanUtil.isImple(configClass, BeanFactoryPostProcessor.class)) {
 			BeanFactoryProcessor.getInstance().loadProcessor(configClass);
 		}
+		
+		//Custom 
+		ClassAnnComponent.scanConfig(configClass);
 	}
 	
 }

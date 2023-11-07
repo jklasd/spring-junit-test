@@ -4,4 +4,6 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 
 public interface BinderHandler {
 	void postProcess(Object obj, ConfigurationProperties annotation);
+
+	void postProcess(ConfigurationModel model);
 }

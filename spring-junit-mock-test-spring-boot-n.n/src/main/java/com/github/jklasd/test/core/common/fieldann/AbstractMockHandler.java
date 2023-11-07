@@ -10,9 +10,11 @@ public abstract class AbstractMockHandler{
 	protected Constructor<?> qualDefStructor;
 	{
 		try {
-			Constructor<?>[] qstructors = QualifierDefinition.getDeclaredConstructors();
-			qualDefStructor = qstructors[0];
-			qualDefStructor.setAccessible(true);
+			if(QualifierDefinition != null) {
+				Constructor<?>[] qstructors = QualifierDefinition.getDeclaredConstructors();
+				qualDefStructor = qstructors[0];
+				qualDefStructor.setAccessible(true);
+			}
 		} catch (SecurityException | IllegalArgumentException e) {
 			e.printStackTrace();
 		}

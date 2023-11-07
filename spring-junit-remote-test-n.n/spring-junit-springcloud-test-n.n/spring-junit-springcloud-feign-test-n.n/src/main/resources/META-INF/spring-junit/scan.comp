@@ -1,0 +1,4 @@
+com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory=com.github.jklasd.test.springcloud.LazyFeignBean
+
+com.github.jklasd.test.common.interf.handler.ClassAnnHandler=com.github.jklasd.test.springcloud.FeignClientClassAnnHandler,\
+com.github.jklasd.test.springcloud.LoadBalancerClientsAnnHandler

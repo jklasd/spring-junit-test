@@ -1,16 +1,35 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
+import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.LazyPlugnBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 
 public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements LazyPlugnBeanFactory{
 
 	private ThreadLocal<JunitMethodDefinition> localCache = new ThreadLocal<>();
+	
+	@Override
+	public String getName() {
+		return "LazyMethodBean";
+	}
+	
+	@Override
+	public boolean isClassBean() {
+		return true;
+	}
+	@Override
+	public boolean isInterfaceBean() {
+		return true;
+	}
+	
+	@Override
+	public Integer getOrder() {
+		return 400;
+	}
 	
 	@Override
 	public Object buildBean(BeanModel model) {
@@ -44,4 +63,6 @@ public class LazyMethodBean extends LazyAbstractPlugnBeanFactory implements Lazy
 	public static LazyAbstractPlugnBeanFactory getInstance() {
 		return getInstanceByClass(LazyMethodBean.class);
 	}
+
+	
 }
