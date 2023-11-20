@@ -63,7 +63,7 @@ public class AnnotationResourceLoader implements JunitResourceLoaderI{
 	public void initResource() {
 		JunitCountDownLatchUtils.buildCountDownLatch(Lists.newArrayList(thridAutoConfigClass)).forEach(configClass->{
 			try {
-				configurationScan.scanConfigClass(configClass);
+				configurationScan.scanConfigClass(configClass,true);
 				ClassScan.getInstance().loadComponentClassForAnnotation(configClass);
 			} catch (IOException e) {
 				log.error("AnnotationResourceLoader#scanConfigClass",e);
