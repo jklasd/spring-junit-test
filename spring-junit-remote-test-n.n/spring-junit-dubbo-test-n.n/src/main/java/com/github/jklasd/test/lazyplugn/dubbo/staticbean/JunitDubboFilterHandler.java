@@ -4,8 +4,6 @@ import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Set;
 
-import org.assertj.core.util.Sets;
-
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.Contants;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
@@ -13,6 +11,7 @@ import com.github.jklasd.test.common.util.MethodSnoopUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.common.util.viewmethod.PryMethodInfoI;
 import com.github.jklasd.test.util.JunitInvokeUtil;
+import com.google.common.collect.Sets;
 
 import javassist.CannotCompileException;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +31,7 @@ public class JunitDubboFilterHandler {
 	private LazyBeanI lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	
 	//见ProtocolFilterWrapper # refer
-	Set<String> cacheHanded = Sets.newHashSet();
+	Set<String> cacheHanded = Sets.newConcurrentHashSet();
 	public void exec(Object refer) {
 		
 		Object handler =  JunitInvokeUtil.invokeReadField("handler", refer);//v 2.7.22
