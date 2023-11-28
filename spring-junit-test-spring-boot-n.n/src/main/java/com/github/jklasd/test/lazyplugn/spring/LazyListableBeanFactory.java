@@ -438,6 +438,16 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 						( !mbd.isLazyInit() || isAllowEagerClassLoading()))) {// && !requiresEagerInitForType(mbd.getFactoryBeanName())mbd.hasBeanClass() ||
 					if(isTypeMatch(beanName, type, false)) {
 						result.add(beanName);
+					}else {
+						List<Class<?>> fined = ClassScan.getInstance().findByFactory(tagClass);
+						if(fined!=null) {
+							for(Class<?> tC : fined) {
+								ResolvableType factoryObjType = ResolvableType.forRawClass(tC);
+								if(isTypeMatch(beanName, factoryObjType, false)) {
+									result.add(beanName);
+								}
+							}
+						}
 					}
 				}
 			}

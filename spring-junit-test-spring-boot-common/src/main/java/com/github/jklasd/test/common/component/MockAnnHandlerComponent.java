@@ -7,22 +7,25 @@ import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 import com.github.jklasd.test.common.ContainerManager;
-import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
 import com.github.jklasd.test.common.interf.handler.MockFieldHandlerI;
+import com.github.jklasd.test.common.interf.register.LazyBeanI;
+import com.github.jklasd.test.common.util.MethodSnoopUtil;
+import com.github.jklasd.test.common.util.viewmethod.PryMethodInfoI;
 import com.google.common.collect.Maps;
 
 public class MockAnnHandlerComponent extends AbstractComponent{
 	private static Map<String,MockClassHandler> handlerMap = Maps.newHashMap();
+	private static LazyBeanI lazyBean = ContainerManager.getComponent(LazyBeanI.class.getSimpleName());
 	public static void handlerMethod(Method method) {
-//		try {
-//			PryMethodInfo methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(method);
-//			if(!methodInfo.getFindToStatic().isEmpty()) {
-//				//处理静态方法
-//				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
-//			}
-//		} catch (Exception e) {
-//		}
+		try {
+			PryMethodInfoI methodInfo = MethodSnoopUtil.findNotPublicMethodForClass(method);
+			if(!methodInfo.getFindToStatic().isEmpty()) {
+				//处理静态方法
+				methodInfo.getFindToStatic().forEach(tagClass->lazyBean.processStatic(tagClass));
+			}
+		} catch (Exception e) {
+		}
 		Annotation[] anns = method.getAnnotations();
 		for(Annotation ann : anns) {
 			MockClassHandler handler = handlerMap.get(ann.annotationType().getName());

@@ -5,6 +5,8 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Modifier;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.net.JarURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
@@ -18,6 +20,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.FactoryBean;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
@@ -25,7 +28,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
-import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.register.Scan;
@@ -48,6 +50,7 @@ public class ClassScan implements Scan{
 	private boolean init;
 	private static Set<String> classNames = Sets.newConcurrentHashSet();
 	Map<String,Class<?>> componentClassPathMap = Maps.newConcurrentMap();
+	Map<String,List<Class<?>>> factoryBeanClassPathMap = Maps.newConcurrentMap();
 	private static String CLASS_SUFFIX = ".class";
 	
 	private JunitClassLoader classLoader = JunitClassLoader.getInstance();
@@ -55,12 +58,32 @@ public class ClassScan implements Scan{
 	
 	public void loadComponentClass(Class<?> c) {
 		componentClassPathMap.put(c.getName(), c);
+		loadComponentClassForFactoryBean(c);
 	}
 	public void loadComponentClassForAnnotation(Class<?> c) {
 		if(!AnnHandlerUtil.isAnnotationPresent(c, Component.class)) {
 			return;
 		}
 		componentClassPathMap.put(c.getName(), c);
+	}
+	
+	public void loadComponentClassForFactoryBean(Class<?> c) {
+		if(!ScanUtil.isImple(c, FactoryBean.class)) {
+			return;
+		}
+		Type[] types = c.getGenericInterfaces();
+		for(Type t:types) {
+			if(t instanceof ParameterizedType) {
+				ParameterizedType p = (ParameterizedType) t;
+				if(p.getRawType() == FactoryBean.class) {
+					String key = p.getActualTypeArguments()[0].getTypeName();
+					if(!factoryBeanClassPathMap.containsKey(key)) {
+						factoryBeanClassPathMap.put(key, Lists.newArrayList());
+					}
+					factoryBeanClassPathMap.get(key).add(c);
+				}
+			}
+		}
 	}
 	
 	
@@ -171,34 +194,6 @@ public class ClassScan implements Scan{
 		}
 	}
 
-//	public void loadContextPathClass() {
-////		Set<String> classPaths =TestUtil.getInstance().getScanClassPath();
-//		JunitCountDownLatchUtils.buildCountDownLatch(classNames.stream().filter(cn->TestUtil.getInstance().isScanClassPath(cn)).collect(Collectors.toList()))
-//		.runAndWait(name->{
-//			if(name.endsWith(CLASS_SUFFIX) && !componentClassPathMap.containsKey(name)) {
-//				name = name.replace("/", ".").replace("\\", ".").replace(CLASS_SUFFIX, "");
-//				// 查看是否class
-//				try {
-//					Class<?> c = classLoader.junitloadClass(name);
-//					try {
-//						ConfigurationScan.getInstance().scanConfigClass(c);
-//					} catch (IOException e) {
-//						log.error("scanConfigClass for loadContextPathClass");
-//					}
-//					
-//					if(CheckUtil.checkClassExists(c)
-//							&& CheckUtil.checkProp(c)) {
-//						componentClassPathMap.putIfAbsent(name,c);
-//					}
-//				} catch (ClassNotFoundException | NoClassDefFoundError e) {
-//					log.error("加载{}=>未找到类{}",name,e.getMessage());
-//				}catch(Error e) {
-//					log.error("未找到类{}=>{}",name,e.getMessage());
-//				}
-//			}
-//		});
-//	}
-	
 	public static ClassScan getInstance() {
 		if(scaner==null) {
 			scaner = new ClassScan();
@@ -332,5 +327,9 @@ public class ClassScan implements Scan{
 	@Override
 	public String getBeanKey() {
 		return Scan.class.getSimpleName();
+	}
+	public List<Class<?>> findByFactory(Class<?> tagClass) {
+		List<Class<?>> tmpClass = factoryBeanClassPathMap.get(tagClass.getName());
+		return tmpClass;
 	}
 }

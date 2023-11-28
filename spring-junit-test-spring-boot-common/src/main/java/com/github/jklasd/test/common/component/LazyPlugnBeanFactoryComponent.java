@@ -3,6 +3,7 @@ package com.github.jklasd.test.common.component;
 import java.lang.reflect.Type;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.ObjectProvider;
