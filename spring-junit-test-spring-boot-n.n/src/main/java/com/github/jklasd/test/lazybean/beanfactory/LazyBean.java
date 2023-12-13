@@ -147,6 +147,11 @@ public class LazyBean implements LazyBeanI{
 			String proxyBeanName = beanModel.getBeanName();
 			if(StringUtils.isBlank(proxyBeanName)) {
 				proxyBeanName = beanModel.getTagClass().getName();
+				if(beanModel.getClassGeneric()!=null && beanModel.getClassGeneric().length>0) {
+					for(Type type:beanModel.getClassGeneric()) {
+						proxyBeanName+="#"+type.getTypeName();
+					}
+				}
 			}
 			
 			TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
