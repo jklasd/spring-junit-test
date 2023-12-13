@@ -193,9 +193,9 @@ public class BeanCreaterScan implements BeanScanI{
 	public static BeanCreaterScan getInstance() {
 		return scaner;
 	}
-	public boolean contains(Class<?> configClass) {
-		return thridAutoConfigClass.contains(configClass);
-	}
+//	public boolean contains(Class<?> configClass) {
+//		return thridAutoConfigClass.contains(configClass);
+//	}
 	public JunitMethodDefinition findCreateBeanFactoryClass(Class<?> tagC) {
 		registMethodBeanDefinition();
 		BeanModel assemblyData = new BeanModel();
@@ -308,5 +308,12 @@ public class BeanCreaterScan implements BeanScanI{
 			}
 		}
 		return beanName;
+	}
+
+
+	@Override
+	public boolean isConfigurationClass(Class<?> configClass) {
+		return customizeConfigClass.contains(configClass)
+				|| springConfigClass.contains(configClass);
 	}
 }
