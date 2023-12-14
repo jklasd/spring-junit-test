@@ -31,7 +31,6 @@ public class SpecifyBeanClassHandler implements MockClassHandler{
 			existsClass.add(tmpC);
 			
 			ServiceRegisterComponent.registerConfiguration(tmpC);
-			ServiceRegisterComponent.exportDubboService(tmpC);
 		}
 	}
 
