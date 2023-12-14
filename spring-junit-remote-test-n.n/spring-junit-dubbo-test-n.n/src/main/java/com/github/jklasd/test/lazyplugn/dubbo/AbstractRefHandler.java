@@ -128,7 +128,7 @@ public abstract class AbstractRefHandler implements DubboHandler{
                 // 扫描Configuration
             	providerConfig = scanConfigruation("com.alibaba.dubbo.config.ProviderConfig","org.apache.dubbo.config.ProviderConfig");
             }
-            return registryCenter;
+            return providerConfig;
         }
         
         private Object registryCenter;

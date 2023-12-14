@@ -7,11 +7,14 @@ import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.ApplicationEventPublisher;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Maps;
@@ -92,7 +95,17 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
 		log.debug("ann 注册dubboService=>{}",exportService);
         RootBeanDefinition beanDef = (RootBeanDefinition)dubboServiceCacheDef.get(exportService.getName());
         try {
-            Object serviceConfig = LazyListableBeanFactory.getInstance().doCreateBean(exportService.getName(), beanDef, null);
+        	Object serviceConfig = null;
+        	if(beanDef == null) {
+        		Class<?> ServiceBean = JunitClassLoader.getInstance().junitloadClass("org.apache.dubbo.config.spring.ServiceBean");
+        		serviceConfig = ServiceBean.newInstance();
+        		((ApplicationContextAware)serviceConfig).setApplicationContext(LazyApplicationContext.getInstance());
+        		JunitInvokeUtil.invokeMethodSignParam(serviceConfig, "setRef", Object.class, LazyBean.getInstance().buildProxy(exportService));
+        		JunitInvokeUtil.invokeMethod(serviceConfig, "setInterface", exportService);
+        	}else {
+        		serviceConfig = LazyListableBeanFactory.getInstance().doCreateBean(exportService.getName(), beanDef, null);
+        	}
+        	
             
             JunitInvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
             JunitInvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
