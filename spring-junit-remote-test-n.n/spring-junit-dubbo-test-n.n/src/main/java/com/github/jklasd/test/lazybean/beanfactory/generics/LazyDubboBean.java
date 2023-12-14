@@ -131,7 +131,7 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
 //    }
 	void registerDubboService(Class<?> class1) {
 		String className = class1.getName();
-		if(xmlRefHandler.getRefType().containsKey(className)) {
+		if(xmlRefHandler.getDubboServiceCacheDef().containsKey(className)) {
 			xmlRefHandler.registerDubboService(class1);
 		}else {
 			annRefHandler.registerDubboService(class1);
