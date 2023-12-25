@@ -16,7 +16,14 @@ public final class ServiceRegisterComponent extends AbstractComponent{
 	private static Map<String,RegisterHandler> registerHandlerCollections = Maps.newHashMap();
 	
 	public static void registerConfiguration(Class<?> rClass) {
-		ScanUtil.isBasicClass(rClass);
+		if(ScanUtil.isBasicClass(rClass)) {
+			return;
+		}
+		
+		if(!registerHandlerCollections.containsKey("ConfigurationRegisterHandler")) {
+			return;
+		}
+		registerHandlerCollections.get("ConfigurationRegisterHandler").registClass(rClass);
 	}
 	
 	public static void exportDubboService(TimeUnit time,long timeValue,Class<?>... rClasses) {
