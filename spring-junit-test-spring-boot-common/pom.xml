@@ -70,11 +70,11 @@
 			<artifactId>guava</artifactId>
 			<scope>provided</scope>
 		</dependency>
-		<!-- <dependency>
-		    <groupId>javax.annotation</groupId>
-		    <artifactId>javax.annotation-api</artifactId>
+		<dependency>
+		    <groupId>org.apache.tomcat.embed</groupId>
+		    <artifactId>tomcat-embed-core</artifactId>
 		    <scope>provided</scope>
-	    </dependency> -->
+	    </dependency>
 		<dependency>
 			<groupId>ch.qos.logback</groupId>
 			<artifactId>logback-classic</artifactId>

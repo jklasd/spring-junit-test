@@ -193,9 +193,9 @@ public class BeanCreaterScan implements BeanScanI{
 	public static BeanCreaterScan getInstance() {
 		return scaner;
 	}
-	public boolean contains(Class<?> configClass) {
-		return thridAutoConfigClass.contains(configClass);
-	}
+//	public boolean contains(Class<?> configClass) {
+//		return thridAutoConfigClass.contains(configClass);
+//	}
 	public JunitMethodDefinition findCreateBeanFactoryClass(Class<?> tagC) {
 		registMethodBeanDefinition();
 		BeanModel assemblyData = new BeanModel();
@@ -238,24 +238,8 @@ public class BeanCreaterScan implements BeanScanI{
 		.runAndWait(configClass->{
 			handSpringJmd(configClass);
 		});
-//		List<Class<?>> tmp = Lists.newArrayList(springConfigClass);
-//		tmp.sort(new Comparator<Class<?>>() {
-//			@Override
-//			public int compare(Class<?> o1, Class<?> o2) {
-//				int t1 = o1.getName().hashCode();
-//				int t2 = o2.getName().hashCode();
-//				return t1-t2;
-//			}
-//		});
-//		for(Class<?> configClass : tmp) {
-//			if(configClass.getName().contains("DiscoveryClientOptionalArgsConfiguration")) {
-//				System.out.println("断点");
-//			}
-//			handSpringJmd(configClass);
-//		}
 		
 		log.info("springBootJmds#size:{}",springBootJmds.size());
-//		springBootJmds.forEach(item->System.out.println("\nc:"+item.getConfigurationClass()+"\nm:"+item.getMethod()+"\nr:"+item.getReturnType()));
 		init = 2;
 	}
 
@@ -324,5 +308,12 @@ public class BeanCreaterScan implements BeanScanI{
 			}
 		}
 		return beanName;
+	}
+
+
+	@Override
+	public boolean isConfigurationClass(Class<?> configClass) {
+		return customizeConfigClass.contains(configClass)
+				|| springConfigClass.contains(configClass);
 	}
 }

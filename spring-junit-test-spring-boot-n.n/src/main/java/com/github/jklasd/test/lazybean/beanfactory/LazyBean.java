@@ -18,6 +18,8 @@ import javax.sql.DataSource;
 
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
+import org.springframework.beans.factory.FactoryBean;
+import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Callback;
@@ -145,6 +147,11 @@ public class LazyBean implements LazyBeanI{
 			String proxyBeanName = beanModel.getBeanName();
 			if(StringUtils.isBlank(proxyBeanName)) {
 				proxyBeanName = beanModel.getTagClass().getName();
+				if(beanModel.getClassGeneric()!=null && beanModel.getClassGeneric().length>0) {
+					for(Type type:beanModel.getClassGeneric()) {
+						proxyBeanName+="#"+type.getTypeName();
+					}
+				}
 			}
 			
 			TestUtil util = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
@@ -687,7 +694,22 @@ public class LazyBean implements LazyBeanI{
 			tags = ScanUtil.findClassExtendAbstract(requiredType);
 		}
 		if (!tags.isEmpty()) {
-			tags.stream().forEach(item ->list.add(LazyBean.getInstance().buildProxy(item)));
+			tags.stream().filter(item->ScanUtil.isExtends(item, requiredType)).forEach(item ->{
+				list.add(LazyBean.getInstance().buildProxy(item));
+			});
+			tags.stream().filter(item->!ScanUtil.isExtends(item, requiredType)).forEach(item ->{
+				Object tagObj = LazyBean.getInstance().buildProxy(item);
+				if(tagObj instanceof FactoryBean) {
+	        		FactoryBean fb = (FactoryBean) tagObj;
+	        		try{
+	        			((InitializingBean) tagObj).afterPropertiesSet();
+	        			tagObj = fb.getObject();
+	        			list.add(tagObj);
+	        		}catch (Exception e) {
+	        			log.error("afterPropertiesSet",e);
+					}
+	        	}
+			});
 		}
 		return list;
 	}

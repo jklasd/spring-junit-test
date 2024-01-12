@@ -4,10 +4,12 @@ import java.util.Collection;
 import java.util.List;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Primary;
 
 import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
+import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
@@ -67,6 +69,10 @@ public class LazyLocalInterfaceBean extends LazyAbstractPlugnBeanFactory impleme
 					String cBeanName = BeanNameUtil.getBeanName(classItem);
 					return Objects.equal(cBeanName, beanName);
 				}).findFirst().orElse(null);
+				if(tagClass == null) {
+					tagClass = localCache.get().stream().filter(classItem->AnnHandlerUtil.isAnnotationPresent(classItem, Primary.class))
+							.findFirst().orElse(null);
+				}
 				if(tagClass != null) {
 					Object obj = beanFactory.getBean(tagClass);
 					return obj;
