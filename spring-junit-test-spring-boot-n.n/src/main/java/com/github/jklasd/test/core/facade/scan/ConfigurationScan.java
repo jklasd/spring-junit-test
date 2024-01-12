@@ -49,8 +49,8 @@ public class ConfigurationScan {
 	}
 	
 	Set<Class<?>> cacheScanConfig = Sets.newConcurrentHashSet();
-	
-	public void scanConfigClass(Class<?> configClass) throws IOException {
+	public void scanConfigClass(Class<?> configClass,boolean skipAnnPre) throws IOException {
+//		if(configClass.getName().contains("SftpPoolAutoConfiguration")) {
 //		if(configClass.getName().contains("ServletWebServerFactoryAutoConfiguration")) {
 //			log.debug("=============加载{}=============",configClass);			
 //		}
@@ -60,7 +60,7 @@ public class ConfigurationScan {
 		
 		cacheScanConfig.add(configClass);
 		//@Configuration
-		if(!AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {
+		if(!skipAnnPre && !AnnHandlerUtil.isAnnotationPresent(configClass, Configuration.class)) {
 			return;
 		}
 		if(!CheckUtil.checkClassExists(configClass)) {
@@ -145,6 +145,9 @@ public class ConfigurationScan {
 		
 		//Custom 
 		ClassAnnComponent.scanConfig(configClass);
+	}
+	public void scanConfigClass(Class<?> configClass) throws IOException {
+		scanConfigClass(configClass, false);
 	}
 	
 }

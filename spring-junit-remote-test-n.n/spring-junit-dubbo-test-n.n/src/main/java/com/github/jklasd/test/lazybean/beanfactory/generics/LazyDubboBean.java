@@ -129,8 +129,13 @@ public class LazyDubboBean extends LazyAbstractPlugnBeanFactory implements BeanD
 //    public void processAttr(Object tagertObj, Class<?> objClassOrSuper) {
 //    	LazyDubboAnnotationRefHandler.getInstance().processAttr(tagertObj, objClassOrSuper);
 //    }
-	public void registerDubboService(Class<?> class1) {
-		xmlRefHandler.registerDubboService(class1);
+	void registerDubboService(Class<?> class1) {
+		String className = class1.getName();
+		if(xmlRefHandler.getDubboServiceCacheDef().containsKey(className)) {
+			xmlRefHandler.registerDubboService(class1);
+		}else {
+			annRefHandler.registerDubboService(class1);
+		}
 	}
 	@Override
 	public boolean finded(BeanModel beanModel) {

@@ -6,9 +6,16 @@ import java.lang.reflect.Method;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.support.RootBeanDefinition;
+import org.springframework.context.ApplicationContextAware;
+import org.springframework.context.ApplicationEventPublisher;
 
+import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
+import com.github.jklasd.test.lazyplugn.spring.LazyApplicationContext;
+import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Maps;
 
@@ -85,7 +92,36 @@ public class LazyDubboAnnotationRefHandler extends AbstractRefHandler{
 
 	@Override
 	public void registerDubboService(Class<?> exportService) {
-		
+		log.debug("ann 注册dubboService=>{}",exportService);
+        RootBeanDefinition beanDef = (RootBeanDefinition)dubboServiceCacheDef.get(exportService.getName());
+        try {
+        	Object serviceConfig = null;
+        	if(beanDef == null) {
+        		Class<?> ServiceBean = JunitClassLoader.getInstance().junitloadClass("org.apache.dubbo.config.spring.ServiceBean");
+        		serviceConfig = ServiceBean.newInstance();
+        		((ApplicationContextAware)serviceConfig).setApplicationContext(LazyApplicationContext.getInstance());
+        		JunitInvokeUtil.invokeMethodSignParam(serviceConfig, "setRef", Object.class, LazyBean.getInstance().buildProxy(exportService));
+        		JunitInvokeUtil.invokeMethod(serviceConfig, "setInterface", exportService);
+        	}else {
+        		serviceConfig = LazyListableBeanFactory.getInstance().doCreateBean(exportService.getName(), beanDef, null);
+        	}
+        	
+            
+            JunitInvokeUtil.invokeMethod(serviceConfig, "setApplication",getApplication());
+            JunitInvokeUtil.invokeMethod(serviceConfig, "setRegistry",getRegistryConfig());
+            JunitInvokeUtil.invokeMethod(serviceConfig, "setProvider",getProviderConfig());
+            JunitInvokeUtil.invokeMethod(serviceConfig, "setProtocol",getProtocol());
+            JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setApplicationEventPublisher",new Class[] {ApplicationEventPublisher.class},
+                new Object[] {TestUtil.getInstance().getApplicationContext()});
+            if(getConfigCenterConfig()!=null) {
+                JunitInvokeUtil.invokeMethodByParamClass(serviceConfig, "setConfigCenter",new Class[] {ScanUtil.loadClass("org.apache.dubbo.config.ConfigCenterConfig")},new Object[] {getConfigCenterConfig()});
+            }
+            
+            JunitInvokeUtil.invokeMethod(serviceConfig, "export");
+            log.debug("注册=========={}===============成功",exportService);
+        } catch (Exception e) {
+            log.error("构建Dubbo 代理服务",e);
+        }
 	}
 
 	public void registerBeanDef(Field field, Annotation ann) {

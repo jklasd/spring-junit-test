@@ -30,10 +30,27 @@ public class JunitInvokeUtil extends ReflectionUtils{
 	public static Object invokeMethod(Object obj,String methodStr,Object... arg) {
 		Class<?> tagClass = obj.getClass();
 		Method method = getMethod(tagClass,methodStr, arg);
+		if(method == null) {
+			method = getMethodByMName(tagClass,methodStr);
+		}
 		if(!method.isAccessible()) {
 			method.setAccessible(true);
 		}
 		return invokeMethod(method, obj, arg);
+	}
+	private static Method getMethodByMName(Class<?> tagClass, String methodStr) {
+		Class<?> searchType = tagClass;
+		while (searchType != null) {
+			Method[] methods = (searchType.isInterface() ? searchType.getMethods() :
+					getDeclaredMethods(searchType));
+			for (Method method : methods) {
+				if (methodStr.equals(method.getName())) {
+					return method;
+				}
+			}
+			searchType = searchType.getSuperclass();
+		}
+		return null;
 	}
 	private static Method getMethodByParamClass(Class<?> tagClass,String methodStr, Class<?>[] argClasses) {
         Method method = null;

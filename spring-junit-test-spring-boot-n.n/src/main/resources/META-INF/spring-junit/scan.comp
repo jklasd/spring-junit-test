@@ -8,7 +8,8 @@ com.github.jklasd.test.common.interf.register.ScannerRegistrarI=com.github.jklas
 com.github.jklasd.test.common.interf.handler.MockClassHandler=com.github.jklasd.test.ann.AopClassHandler
 
 
-com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory=com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean,\
+com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory=com.github.jklasd.test.lazybean.beanfactory.generics.LazyCollectionBean,\
+com.github.jklasd.test.lazybean.beanfactory.generics.LazyBeanDefBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyConfigurationPropertiesBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalInterfaceBean,\
 com.github.jklasd.test.lazybean.beanfactory.generics.LazyLocalGenericsBean,\

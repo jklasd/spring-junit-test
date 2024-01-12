@@ -21,6 +21,7 @@ import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.component.LazyPlugnBeanFactoryComponent;
 import com.github.jklasd.test.common.component.MockAnnHandlerComponent;
 import com.github.jklasd.test.common.component.ScannerRegistrarComponent;
+import com.github.jklasd.test.common.component.ServiceRegisterComponent;
 import com.github.jklasd.test.common.component.VersionControlComponent;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.interf.handler.BeanDefinitionParserDelegateHandler;
@@ -29,6 +30,7 @@ import com.github.jklasd.test.common.interf.handler.ClassAnnHandler;
 import com.github.jklasd.test.common.interf.handler.FieldHandler;
 import com.github.jklasd.test.common.interf.handler.LazyPlugnBeanFactory;
 import com.github.jklasd.test.common.interf.handler.MockClassHandler;
+import com.github.jklasd.test.common.interf.handler.RegisterHandler;
 import com.github.jklasd.test.common.interf.register.ScannerRegistrarI;
 import com.github.jklasd.test.core.facade.JunitResourceLoaderI;
 import com.google.common.collect.Maps;
@@ -53,6 +55,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 		componentCache.put(BeanDefinitionParserDelegateHandler.class.getName(), BeanDefinitionParserDelegateComponent.class);
 		componentCache.put(LazyPlugnBeanFactory.class.getName(), LazyPlugnBeanFactoryComponent.class);
 		componentCache.put(ClassAnnHandler.class.getName(), ClassAnnComponent.class);
+		componentCache.put(RegisterHandler.class.getName(), ServiceRegisterComponent.class);
 	}
 	
 

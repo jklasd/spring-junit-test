@@ -12,4 +12,5 @@ public interface BeanScanI extends ContainerRegister{
 
 	List<JunitMethodDefinition> findCreateBeanFactoryClasses(BeanModel assemblyData);
 
+	boolean isConfigurationClass(Class<?> configClass);
 }
