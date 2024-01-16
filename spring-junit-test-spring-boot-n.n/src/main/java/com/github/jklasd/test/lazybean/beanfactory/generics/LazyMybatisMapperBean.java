@@ -23,6 +23,7 @@ import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory.RootBeanDefinitionBuilder;
+import com.github.jklasd.test.spring.suppert.JunitDataSourceBuild;
 import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -77,9 +78,9 @@ public class LazyMybatisMapperBean extends LazyAbstractPlugnBeanFactory implemen
 	    	if(dataBaseEnv!=null) {
 //	    		System.out.println(dataBaseEnv);
 	    		DataSource dataSource = (DataSource) JunitInvokeUtil.invokeMethod(dataBaseEnv, "getDataSource");
-	    		LazyDataSourceUtil.defaultDataSouce(dataSource);
+//	    		LazyDataSourceUtil.defaultDataSouce(dataSource);
 	    		
-	    		Object newDataSource = dataInitia.build(dataSource);
+	    		Object newDataSource = JunitDataSourceBuild.rebuildDataSource(dataSource);
 	    		if(newDataSource != null) {
 	    			Class<?> EnvironmentClass = ScanUtil.loadClass("org.apache.ibatis.mapping.Environment");
 	    			Class<?> TransactionFactory = ScanUtil.loadClass("org.apache.ibatis.transaction.TransactionFactory");
