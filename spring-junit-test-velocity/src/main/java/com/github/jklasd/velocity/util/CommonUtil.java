@@ -10,8 +10,6 @@ public class CommonUtil {
 	}
 	/**
 	 * 判断类型，是否是引用对象
-	 * @param arr
-	 * @return
 	 */
 	public static boolean checkParams(String typeStr) {
 		//arr[0]

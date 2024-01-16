@@ -11,8 +11,6 @@ import com.google.common.base.Objects;
 import lombok.extern.slf4j.Slf4j;
 /**
  * 通过类构建json
- * @param tagClassName
- * @return
  */
 @Slf4j
 public class BuildJSONObjectByClass {

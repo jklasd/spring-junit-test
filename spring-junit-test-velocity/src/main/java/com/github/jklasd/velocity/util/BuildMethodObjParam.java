@@ -13,8 +13,7 @@ import com.github.jklasd.test.common.exception.JunitException;
 import lombok.extern.slf4j.Slf4j;
 /**
  * 构建执行方法参数
- * @param arr
- * @return
+ *
  */
 @Slf4j
 public class BuildMethodObjParam {
