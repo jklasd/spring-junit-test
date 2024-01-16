@@ -18,17 +18,17 @@ import com.github.jklasd.test.spring.suppert.JunitDataSourceBuild;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-public class TransactionalManager {
-    private static TransactionalManager transtionManager;
+public class JunitTransactionManager {
+    private static JunitTransactionManager transtionManager;
     private volatile DataSourceTransactionManager txManager;
-    private TransactionalManager() {}
+    private JunitTransactionManager() {}
     private static Class<?> DataSourceTransactionManager = ScanUtil.loadClass("org.springframework.jdbc.datasource.DataSourceTransactionManager");
     public static boolean isFindTranstional() {
     	return DataSourceTransactionManager != null;
     }
-    public synchronized static TransactionalManager getInstance() {
+    public synchronized static JunitTransactionManager getInstance() {
         if(transtionManager == null) {
-            transtionManager = new TransactionalManager();
+            transtionManager = new JunitTransactionManager();
         }
         return transtionManager;
     }
