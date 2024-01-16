@@ -9,7 +9,7 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.interceptor.TransactionAttribute;
 
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.lazyplugn.db.TransactionalManager;
+import com.github.jklasd.test.lazyplugn.db.JunitTransactionManager;
 
 public class TransferInvoker extends AbstractProxyInvoker{
 	private static Class<?> PlatformTransactionManager = ScanUtil.loadClass("org.springframework.transaction.PlatformTransactionManager");
@@ -35,7 +35,7 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	 */
 	@Override
 	protected void afterInvoke(InvokeDTO dto, Map<String, Object> context) {
-		if(!TransactionalManager.isFindTranstional()) {
+		if(!JunitTransactionManager.isFindTranstional()) {
 			return ;
 		}
 		TransactionAttribute oldTxInfo = (TransactionAttribute) context.get(context_oldTxInfo);	
@@ -55,16 +55,16 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	@Override
 	protected boolean beforeInvoke(InvokeDTO dto, Map<String, Object> context)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
-		if(!TransactionalManager.isFindTranstional()) {
+		if(!JunitTransactionManager.isFindTranstional()) {
 			return true;
 		}
 		TransactionAttribute oldTxInfo = null;
 		TransactionStatus txStatus = null;
 		
 		Object newObj = dto.getRealObj();
-    	oldTxInfo = TransactionalManager.getInstance().getTxInfo();
+    	oldTxInfo = JunitTransactionManager.getInstance().getTxInfo();
     	context.put(context_oldTxInfo,oldTxInfo);	
-    	TransactionAttribute txInfo = TransactionalManager.getInstance().processAnnoInfo(dto.getMethod(), newObj);
+    	TransactionAttribute txInfo = JunitTransactionManager.getInstance().processAnnoInfo(dto.getMethod(), newObj);
     	txStatus = openTransation(oldTxInfo, txInfo);
     	context.put(context_txStatus,txStatus);	
     	return true;
@@ -75,7 +75,7 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	 */
 	@Override
 	protected void exceptionInvoke(InvokeDTO dto, Map<String, Object> context, Exception e) {
-		if(!TransactionalManager.isFindTranstional()) {
+		if(!JunitTransactionManager.isFindTranstional()) {
 			return ;
 		}
 		TransactionAttribute oldTxInfo = (TransactionAttribute) context.get(context_oldTxInfo);	
@@ -93,16 +93,16 @@ public class TransferInvoker extends AbstractProxyInvoker{
 	protected void rollback(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Exception e) {
 		
     	if(txStatus!=null) {
-    		TransactionAttribute currentTxInfo = TransactionalManager.getInstance().getTxInfo();
+    		TransactionAttribute currentTxInfo = JunitTransactionManager.getInstance().getTxInfo();
     		if(currentTxInfo.rollbackOn(e)) {
-    			TransactionalManager.getInstance().rollbackTx(txStatus);
+    			JunitTransactionManager.getInstance().rollbackTx(txStatus);
     		}else {
-    			TransactionalManager.getInstance().commitTx(txStatus);
+    			JunitTransactionManager.getInstance().commitTx(txStatus);
     		}
-    		TransactionalManager.getInstance().clearThradLocal();
+    		JunitTransactionManager.getInstance().clearThradLocal();
     	}
     	if (oldTxInfo != null) {
-            TransactionalManager.getInstance().setTxInfo(oldTxInfo);
+            JunitTransactionManager.getInstance().setTxInfo(oldTxInfo);
         }
     }
 	
@@ -115,17 +115,17 @@ public class TransferInvoker extends AbstractProxyInvoker{
     protected TransactionStatus openTransation(TransactionAttribute oldTxInfo, TransactionAttribute txInfo) {
         TransactionStatus txStatus = null;
         if (txInfo != null) {
-            TransactionalManager.getInstance().setTxInfo(txInfo);
+            JunitTransactionManager.getInstance().setTxInfo(txInfo);
             if (oldTxInfo != null) {
                 // 看情况开启新事务
 //                if (txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_NOT_SUPPORTED
 //                    || txInfo.getPropagationBehavior() == TransactionDefinition.PROPAGATION_REQUIRES_NEW) {
             	if (txInfo.getPropagationBehavior() > TransactionDefinition.PROPAGATION_REQUIRED) {
-                    txStatus = TransactionalManager.getInstance().beginTx(txInfo);
+                    txStatus = JunitTransactionManager.getInstance().beginTx(txInfo);
                 }
             } else {
                 // 开启事务
-                txStatus = TransactionalManager.getInstance().beginTx(txInfo);
+                txStatus = JunitTransactionManager.getInstance().beginTx(txInfo);
             }
         }
         return txStatus;
@@ -139,11 +139,11 @@ public class TransferInvoker extends AbstractProxyInvoker{
      */
     protected void closeTransation(TransactionAttribute oldTxInfo, TransactionStatus txStatus, Method method) {
         if (txStatus != null) {
-            TransactionalManager.getInstance().commitTx(txStatus);
-            TransactionalManager.getInstance().clearThradLocal();
+            JunitTransactionManager.getInstance().commitTx(txStatus);
+            JunitTransactionManager.getInstance().clearThradLocal();
         }
         if (oldTxInfo != null) {
-            TransactionalManager.getInstance().setTxInfo(oldTxInfo);
+            JunitTransactionManager.getInstance().setTxInfo(oldTxInfo);
         }
         
     }
