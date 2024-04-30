@@ -10,7 +10,6 @@ import javax.annotation.Resource;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
 import org.springframework.context.annotation.CommonAnnotationBeanPostProcessor;
 import org.springframework.util.ReflectionUtils;
@@ -202,6 +201,10 @@ class BeanInitHandler {
 	            }else if(method.getAnnotation(Autowired.class) != null) {
 	            	if(method.getReturnType() != Void.class
 	            			&& method.getReturnType() != void.class) {
+	            		return;
+	            	}
+	            	Autowired aw = method.getAnnotation(Autowired.class);
+	            	if(!aw.required()) {
 	            		return;
 	            	}
 	                Object[] param = processParam(method, paramTypes);
