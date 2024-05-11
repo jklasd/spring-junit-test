@@ -13,15 +13,14 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;
 import org.springframework.beans.factory.config.BeanDefinition;
 import org.springframework.beans.factory.support.AbstractBeanDefinition;
-import org.springframework.boot.DefaultBootstrapContext;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.context.event.EventPublishingRunListener;
 import org.springframework.core.env.ConfigurableEnvironment;
 import org.springframework.core.env.StandardEnvironment;
 
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.ConfigurationAnnI;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
@@ -195,8 +194,12 @@ public class LazyApplicationContext extends JunitApplicationContext{
 			}else {
 				env = new StandardEnvironment();
 			}
-			new EventPublishingRunListener(new SpringApplication(),new String[] {})
-				.environmentPrepared(new DefaultBootstrapContext(), env);
+			
+			ContainerManager.execu(ConfigurationAnnI.class,anni->{
+				((ConfigurationAnnI)anni).environmentPrepared(env);
+			});
+			
+			
 			getBeanFactory().registerSingleton("environment", env);
 		}
 	}

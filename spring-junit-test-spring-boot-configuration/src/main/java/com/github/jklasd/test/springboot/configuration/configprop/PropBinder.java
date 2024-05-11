@@ -1,13 +1,11 @@
-package com.github.jklasd.test.lazyplugn.spring.configprop;
+package com.github.jklasd.test.springboot.configuration.configprop;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.AnnotatedElement;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.Map;
 
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.Bindable;
@@ -17,13 +15,13 @@ import org.springframework.core.ResolvableType;
 import org.springframework.core.annotation.MergedAnnotation;
 import org.springframework.core.annotation.MergedAnnotations;
 import org.springframework.core.annotation.MergedAnnotations.SearchStrategy;
-import org.springframework.validation.annotation.Validated;
 
-import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.abstrac.JunitApplicationContext;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
+import com.github.jklasd.test.common.util.JunitInvokeUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
-import com.github.jklasd.test.util.JunitInvokeUtil;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -45,7 +43,7 @@ class PropBinder implements BinderHandler{
 	public static BinderHandler getBinderHandler() {
 		if(ConfigurationPropertiesBean!=null) {
 			PropBinder signBean = new PropBinder();
-			signBean.applicationContext= TestUtil.getInstance().getApplicationContext();
+			signBean.applicationContext= ((JunitCoreComponentI) ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName())).getApplicationContext();
 			return signBean;
 		}
 		return null;

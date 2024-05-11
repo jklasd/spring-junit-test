@@ -56,6 +56,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 		componentCache.put(LazyPlugnBeanFactory.class.getName(), LazyPlugnBeanFactoryComponent.class);
 		componentCache.put(ClassAnnHandler.class.getName(), ClassAnnComponent.class);
 		componentCache.put(RegisterHandler.class.getName(), ServiceRegisterComponent.class);
+		
 	}
 	
 
@@ -81,7 +82,7 @@ public class JunitComponentResourceLoader implements JunitResourceLoaderI{
 			}
 			
 			
-		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+		} catch (IOException | ClassNotFoundException | InstantiationException | IllegalAccessException | IllegalArgumentException e) {
 			log.error("=====================loadResource=====================",e);
 		}
 	}

@@ -21,15 +21,16 @@ import java.util.jar.JarFile;
 import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.FactoryBean;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.ResourcePatternResolver;
 import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
 import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.ConfigurationAnnI;
 import com.github.jklasd.test.common.interf.register.Scan;
 import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.JunitCountDownLatchUtils;
@@ -141,17 +142,20 @@ public class ClassScan implements Scan{
 			throw new JunitException();
 		}
 		log.info("=============加载class结束=============");
-		List<Class<?>> springBoot = ScanUtil.findClassWithAnnotation(SpringBootApplication.class,applicationAllClassMap);
-		if(springBoot.isEmpty()) {
-			throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
-		}
-		for(Class<?> bootClass : springBoot) {
-			try {
-				ConfigurationScan.getInstance().scanConfigClass(bootClass);
-			} catch (IOException e) {
-				throw new JunitException("scanConfigClass处理 SpringBootApplication类", true);
+		ContainerManager.execu(ConfigurationAnnI.class,cai->{
+			List<Class<?>> springBoot = ((ConfigurationAnnI)cai).findClassWithAnnotation(applicationAllClassMap);
+			if(springBoot.isEmpty()) {
+				throw new JunitException("未找到 SpringBootApplication 注解相关类", true);
 			}
-		}
+			for(Class<?> bootClass : springBoot) {
+				try {
+					ConfigurationScan.getInstance().scanConfigClass(bootClass);
+				} catch (IOException e) {
+					throw new JunitException("scanConfigClass处理 SpringBootApplication类", true);
+				}
+			}
+		});
+		
 //		loadContextPathClass();
 		log.debug("=============加载class结束=============");
 	}

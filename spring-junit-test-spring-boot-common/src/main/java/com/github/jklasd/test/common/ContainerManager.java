@@ -1,12 +1,14 @@
 package com.github.jklasd.test.common;
 
 import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
 
+import com.alibaba.fastjson.JSONObject;
+import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.ContainerRegister;
+import com.github.jklasd.test.common.runner.RunnerI;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -40,19 +42,35 @@ public final class ContainerManager {
 		return (T) componentContainer.get(beanKey);
 	}
 	
+	public static <T> T getComponent(Class<T> beanClass) {
+		return (T) componentContainer.get(beanClass.getName());
+	}
+	
 	public static class HandlerLoader{
-		public static void load(String... handlerClasses) throws ClassNotFoundException, InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException{
-			for(String hclass :handlerClasses) {
-				Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
-				Constructor<?> constructor = handlerClass.getDeclaredConstructors()[0];
-				if(!constructor.isAccessible()) {
-					constructor.setAccessible(true);
+		public static void load(String... handlerClasses){
+			try {
+				for(String hclass :handlerClasses) {
+					Class<?> handlerClass = JunitClassLoader.getInstance().loadClass(hclass);
+					Constructor<?> constructor = handlerClass.getDeclaredConstructors()[0];
+					if(!constructor.isAccessible()) {
+						constructor.setAccessible(true);
+					}
+					ContainerRegister handler = (ContainerRegister) constructor.newInstance();
+					if(StringUtils.isNotBlank(handler.getBeanKey())) {
+						ContainerManager.registComponent( handler);
+					}
 				}
-				ContainerRegister handler = (ContainerRegister) constructor.newInstance();
-				if(StringUtils.isNotBlank(handler.getBeanKey())) {
-					ContainerManager.registComponent( handler);
-				}
+			} catch (Exception e) {
+				log.error("handlerClasses->{}",JSONObject.toJSONString(handlerClasses));
+				throw new JunitException(e);
 			}
+		}
+	}
+
+	public static void execu(Class<?> containerClass,RunnerI runner) {
+		Object anni = getComponent(containerClass);
+		if(anni!=null) {
+			runner.execute(anni);
 		}
 	}
 }

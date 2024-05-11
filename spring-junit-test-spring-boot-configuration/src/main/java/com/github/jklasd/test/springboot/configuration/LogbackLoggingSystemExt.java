@@ -1,4 +1,4 @@
-package com.github.jklasd.test.common;
+package com.github.jklasd.test.springboot.configuration;
 
 import org.springframework.boot.logging.LogFile;
 import org.springframework.boot.logging.LoggingInitializationContext;

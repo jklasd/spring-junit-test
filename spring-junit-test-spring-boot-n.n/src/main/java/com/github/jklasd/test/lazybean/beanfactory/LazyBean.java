@@ -21,7 +21,6 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.cglib.proxy.Callback;
 import org.springframework.cglib.proxy.CallbackFilter;
 import org.springframework.cglib.proxy.Enhancer;
@@ -39,6 +38,7 @@ import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.JunitClassLoader;
 import com.github.jklasd.test.common.component.FieldAnnComponent;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.ConfigurationPropertiesI;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.interf.register.LazyBeanI;
 import com.github.jklasd.test.common.model.BeanInitModel;
@@ -51,7 +51,6 @@ import com.github.jklasd.test.core.facade.scan.ClassScan;
 import com.github.jklasd.test.core.facade.scan.PropResourceManager;
 import com.github.jklasd.test.lazyplugn.spring.JavaBeanUtil;
 import com.github.jklasd.test.lazyplugn.spring.LazyListableBeanFactory;
-import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.DebugObjectView;
 import com.github.jklasd.test.util.StackOverCheckUtil;
@@ -304,9 +303,10 @@ public class LazyBean implements LazyBeanI{
 
 		BeanInitHandler.getInstance().processMethod(model);
 		
-		ConfigurationProperties proconfig = (ConfigurationProperties) objClassOrSuper.getAnnotation(ConfigurationProperties.class);
+		
+		ConfigurationPropertiesI proconfig = ContainerManager.getComponent(ConfigurationPropertiesI.class.getSimpleName());
 		if(proconfig!=null) {
-			LazyConfPropBind.processConfigurationProperties(obj,proconfig);
+			proconfig.processConfigurationProperties(obj,objClassOrSuper);
 		}
 	}
 	

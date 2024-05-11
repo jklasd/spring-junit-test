@@ -23,7 +23,7 @@
 		use mock;
 	</description>
 	<properties>
-		<spring.junit.version>2.0.1-RELEASE</spring.junit.version>
+		<spring.junit.version>2.0.1-SNAPSHOT</spring.junit.version>
 	</properties>
 	<distributionManagement>
 		<snapshotRepository>
@@ -44,6 +44,11 @@
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-dubbo-test</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-test-configuration</artifactId>
 			<version>${spring.junit.version}</version>
 		</dependency>
 		<dependency>

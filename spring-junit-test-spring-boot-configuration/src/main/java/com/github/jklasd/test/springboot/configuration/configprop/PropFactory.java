@@ -1,4 +1,4 @@
-package com.github.jklasd.test.lazyplugn.spring.configprop;
+package com.github.jklasd.test.springboot.configuration.configprop;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -7,8 +7,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.core.env.PropertySources;
 import org.springframework.util.StringUtils;
 
-import com.github.jklasd.test.TestUtil;
+import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.util.ScanUtil;
 
 import lombok.extern.slf4j.Slf4j;
@@ -28,13 +29,16 @@ class PropFactory implements BinderHandler{
 		}
 		return null;
 	}
+	
+	private JunitCoreComponentI testUtil = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
+	
 	@Override
 	public void postProcess(Object obj, ConfigurationProperties annotation) {
 		try {
 			Object factory = PropertiesConfigurationFactory.getDeclaredConstructors()[0].newInstance(obj);
 			
 			Method setPropertySources = PropertiesConfigurationFactory.getDeclaredMethod("setPropertySources", PropertySources.class);
-			setPropertySources.invoke(factory, TestUtil.getInstance().getPropertySource());
+			setPropertySources.invoke(factory, testUtil.getPropertySource());
 			
 			Method setIgnoreInvalidFields = PropertiesConfigurationFactory.getDeclaredMethod("setIgnoreInvalidFields", boolean.class);
 			setIgnoreInvalidFields.invoke(factory, annotation.ignoreInvalidFields());

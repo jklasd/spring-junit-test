@@ -18,8 +18,6 @@ import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.PropertySource;
 import org.springframework.core.env.PropertiesPropertySource;
@@ -29,17 +27,16 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.TestUtil;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.exception.JunitException;
+import com.github.jklasd.test.common.interf.register.ConfigurationAnnI;
+import com.github.jklasd.test.common.interf.register.ConfigurationPropertiesI;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 import com.github.jklasd.test.common.model.BeanInitModel;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.common.model.JunitMethodDefinition;
-import com.github.jklasd.test.common.util.AnnHandlerUtil;
 import com.github.jklasd.test.common.util.CheckUtil;
 import com.github.jklasd.test.common.util.ScanUtil;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
 import com.github.jklasd.test.lazybean.beanfactory.LazyProxyManager;
-import com.github.jklasd.test.lazyplugn.spring.configprop.ConfigurationModel;
-import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 import com.github.jklasd.test.util.BeanNameUtil;
 import com.github.jklasd.test.util.StackOverCheckUtil;
 import com.google.common.collect.Maps;
@@ -60,6 +57,8 @@ public class JavaBeanUtil {
 	    }
 	    return bean;
 	}
+	
+	ConfigurationPropertiesI proconfig = ContainerManager.getComponent(ConfigurationPropertiesI.class);
 	/**
 	 * 构建目标对象
 	 * 1、先构建configration对象
@@ -160,15 +159,10 @@ public class JavaBeanUtil {
         		throw new JunitException(e);
         	}
         	
-        	ConfigurationProperties prop = null;
-        	if((prop = method.getAnnotation(ConfigurationProperties.class))!=null
-        			|| (prop = tagObj.getClass().getAnnotation(ConfigurationProperties.class))!=null) {
-        		ConfigurationModel cm = new ConfigurationModel();
-        		cm.setMethod(method);
-        		cm.setObj(tagObj);
-        		cm.setProp(prop);
-        		LazyConfPropBind.processConfigurationProperties(cm);
-        	}
+        	
+    		if(proconfig!=null) {
+    			proconfig.processConfigurationProperties(method,tagObj);
+    		}
         	
         	if(assemblyData.getTagClass() == null) {
         		assemblyData.setTagClass(tagObj.getClass());
@@ -197,16 +191,23 @@ public class JavaBeanUtil {
     	}
     	
         try {
-        	Map<String, Object> annoData = AnnHandlerUtil.getInstance().getAnnotationValue(configClass,AutoConfigureAfter.class);
-            if(annoData!=null && !annoData.isEmpty()) {//先加载另外一个类
-            	String[] classArr = (String[]) annoData.get("value");
-            	for(String className : classArr) {
-            		Class<?> tmp = ScanUtil.loadClass(className);
-            		if(tmp!=null) {
-            			buildConfigObj(tmp,nameSpace);
-            		}
-            	}
-            }
+        	ContainerManager.execu(ConfigurationAnnI.class, ann->{
+        		try {
+        			Map<String, Object> annoData = ((ConfigurationAnnI)ann).getAnnoData(configClass);
+            		if(annoData!=null && !annoData.isEmpty()) {//先加载另外一个类
+                    	String[] classArr = (String[]) annoData.get("value");
+                    	for(String className : classArr) {
+                    		Class<?> tmp = ScanUtil.loadClass(className);
+                    		if(tmp!=null) {
+                    			buildConfigObj(tmp,nameSpace);
+                    		}
+                    	}
+                    }
+    			}catch (Exception e) {
+    				throw new JunitException(e);
+    			}
+        	});
+        	
             PropertySource propSrouce = configClass.getAnnotation(PropertySource.class);
             if(propSrouce!=null) {//先加载配置
             	try {
@@ -234,16 +235,17 @@ public class JavaBeanUtil {
                     findAndCreateBean(configClass, cons);
                 }
             }
-            if(configClass.getAnnotation(ConfigurationProperties.class)!=null) {
-            	LazyConfPropBind.processConfigurationProperties(factory.get(configClass));
-            }
-//            LazyBean.getInstance().processAttr(factory.get(configClass), configClass);
+            
+            if(proconfig!=null) {
+    			proconfig.processConfigurationProperties(factory.get(configClass));
+    		}
+            
             BeanInitModel initModel = new BeanInitModel();
 			initModel.setObj(factory.get(configClass));
 			initModel.setTagClass(configClass);
 			initModel.setBeanName(configClass.getName());
     		LazyBean.getInstance().processAttr(initModel);// 递归注入代理对象
-        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IOException e) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             log.error("构建Configuration Bean=>{}",configClass.getSimpleName());
             log.error("构建Bean",e);
             return false;

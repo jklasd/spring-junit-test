@@ -1,4 +1,4 @@
-package com.github.jklasd.test.lazyplugn.spring.configprop;
+package com.github.jklasd.test.springboot.configuration.configprop;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

@@ -1,12 +1,11 @@
 package com.github.jklasd.test.core.facade.scan;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.springframework.beans.factory.config.BeanFactoryPostProcessor;
-import org.springframework.boot.autoconfigure.AutoConfigureAfter;
-import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.ClassPathBeanDefinitionScanner;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
@@ -70,7 +69,13 @@ public class ConfigurationScan {
 		//@AutoConfigureBefore
 		//@AutoConfigureAfter
 		//@Import
-		Lists.newArrayList(AutoConfigureAfter.class,Import.class).forEach(ann->{
+		
+		Class AutoConfigureAfter = ScanUtil.loadClass("org.springframework.boot.autoconfigure.AutoConfigureAfter");
+		List<Class<?>> configurationClasslist = Lists.newArrayList(Import.class); 
+		if(AutoConfigureAfter!=null) {
+			configurationClasslist.add(AutoConfigureAfter);
+		}
+		configurationClasslist.forEach(ann->{
 			try {
 				Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, ann);
 				if(attr!=null) {
@@ -105,8 +110,9 @@ public class ConfigurationScan {
 			xmlResourceLoader.loadResource((String[]) attr.get("value"));
 		}
 		//@EnableConfigurationProperties
-		if(AnnHandlerUtil.isAnnotationPresent(configClass,EnableConfigurationProperties.class)) {
-			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, EnableConfigurationProperties.class);
+		Class EnableConfigurationProperties = ScanUtil.loadClass("org.springframework.boot.context.properties.EnableConfigurationProperties");
+		if(EnableConfigurationProperties!=null && AnnHandlerUtil.isAnnotationPresent(configClass,EnableConfigurationProperties)) {
+			Map<String,Object> attr = AnnHandlerUtil.getInstance().getAnnotationValue(configClass, EnableConfigurationProperties);
 			for(String cName:(String[]) attr.get("value")) {
 				propLoader.loadResource(ScanUtil.loadClass(cName));
 			}

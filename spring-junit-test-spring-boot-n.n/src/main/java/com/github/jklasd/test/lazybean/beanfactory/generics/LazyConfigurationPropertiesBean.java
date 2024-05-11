@@ -1,10 +1,9 @@
 package com.github.jklasd.test.lazybean.beanfactory.generics;
 
-import org.springframework.boot.context.properties.ConfigurationProperties;
-
+import com.github.jklasd.test.common.ContainerManager;
+import com.github.jklasd.test.common.interf.register.ConfigurationPropertiesI;
 import com.github.jklasd.test.common.model.BeanModel;
 import com.github.jklasd.test.lazybean.beanfactory.LazyBean;
-import com.github.jklasd.test.lazyplugn.spring.configprop.LazyConfPropBind;
 
 public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactory{
 
@@ -29,15 +28,18 @@ public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactor
 
 	@Override
 	public boolean finded(BeanModel beanModel) {
-		ConfigurationProperties propConfig = (ConfigurationProperties) beanModel.getTagClass().getAnnotation(ConfigurationProperties.class);
-		return propConfig!=null;
+		return ContainerManager.getComponent(ConfigurationPropertiesI.class)!=null;
 	}
 
 	@Override
 	public void afterPropertiesSet(Object obj,BeanModel beanModel) {
 		if(obj!=null) {
-			ConfigurationProperties propConfig = (ConfigurationProperties) beanModel.getTagClass().getAnnotation(ConfigurationProperties.class);
-			LazyConfPropBind.processConfigurationProperties(obj,propConfig);
+			ContainerManager.execu(ConfigurationPropertiesI.class, cpi->{
+				((ConfigurationPropertiesI)cpi).processConfigurationProperties(obj,beanModel.getTagClass());
+			});
+//			ContainerManager.getComponent(ConfigurationPropertiesI.class);
+//			ConfigurationProperties propConfig = (ConfigurationProperties) beanModel.getTagClass().getAnnotation(ConfigurationProperties.class);
+//			LazyConfPropBind.processConfigurationProperties(obj,propConfig);
 		}
 	}
 	

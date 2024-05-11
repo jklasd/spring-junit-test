@@ -10,8 +10,6 @@ import javax.xml.parsers.ParserConfigurationException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
-import org.springframework.boot.logging.LogFile;
-import org.springframework.boot.logging.LoggingInitializationContext;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,8 +17,7 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
 import com.github.jklasd.test.common.ContainerManager;
-import com.github.jklasd.test.common.JunitClassLoader;
-import com.github.jklasd.test.common.LogbackLoggingSystemExt;
+import com.github.jklasd.test.common.interf.register.ConfigurationAnnI;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
 
 import ch.qos.logback.classic.Level;
@@ -113,11 +110,10 @@ public class LogbackUtil {
 //                val = TestUtil.getInstance().getPropertiesValue(val, node.getAttribute("defaultValue"));
 //                context.putProperty(key, val);
 //            }
+            ContainerManager.execu(ConfigurationAnnI.class, canni->{
+            	((ConfigurationAnnI)canni).initializeLog(junitCoreComponent.getEnvironment());
+            });
             
-            LoggingInitializationContext initializationContext = new LoggingInitializationContext(
-            		junitCoreComponent.getEnvironment());
-            LogbackLoggingSystemExt logbackSystem = new LogbackLoggingSystemExt(JunitClassLoader.getInstance());
-            logbackSystem.initialize(initializationContext, null, LogFile.get(junitCoreComponent.getEnvironment()));
             return ;
         }
         
