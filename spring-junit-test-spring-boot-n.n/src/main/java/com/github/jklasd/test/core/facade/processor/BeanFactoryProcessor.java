@@ -27,7 +27,6 @@ public class BeanFactoryProcessor implements BeanFactoryProcessorI{
 	private synchronized static void buildBean() {
 		if(processor==null) {
 			processor = new BeanFactoryProcessor();
-			ContainerManager.registComponent(processor);
 		}
 	}
 //	List<BeanFactoryPostProcessor> processorList = Lists.newArrayList();

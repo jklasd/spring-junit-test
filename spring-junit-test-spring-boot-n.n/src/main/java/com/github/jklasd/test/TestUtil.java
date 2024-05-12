@@ -241,11 +241,10 @@ public class TestUtil implements JunitCoreComponentI{
 		ContainerManager.registComponent( BeanFactoryProcessor.getInstance());
 		try {
 			ContainerManager.createAndregistComponent(ObjectProviderFactory.class);
+			ContainerManager.bootLoadComp();
 		} catch (InstantiationException | IllegalAccessException e) {
 			e.printStackTrace();
 		}
-//		LazyListableBeanFactory.getInstance().register();
-//		LazyApplicationContext.getInstance().register();
 	}
 
 	private void loadProp() {

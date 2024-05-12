@@ -1,6 +1,7 @@
 package com.github.jklasd.test.common;
 
 import java.lang.reflect.Constructor;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang3.StringUtils;
@@ -9,6 +10,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.github.jklasd.test.common.exception.JunitException;
 import com.github.jklasd.test.common.interf.ContainerRegister;
 import com.github.jklasd.test.common.runner.RunnerI;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 import lombok.extern.slf4j.Slf4j;
@@ -71,6 +73,15 @@ public final class ContainerManager {
 		Object anni = getComponent(containerClass);
 		if(anni!=null) {
 			runner.execute(anni);
+		}
+	}
+
+	public static void bootLoadComp() throws InstantiationException, IllegalAccessException {
+		List<String> bootConfigurationClass = Lists.newArrayList("com.github.jklasd.test.springboot.configuration.ann.ConfigurationAnnImple",
+				"com.github.jklasd.test.springboot.configuration.BootAnnCheckImpl",
+				"com.github.jklasd.test.springboot.configuration.ann.ConfigurationAnnImple");
+		for (String classpath : bootConfigurationClass) {
+			ContainerManager.createAndregistComponent(JunitClassLoader.getInstance().junitloadClass(classpath));
 		}
 	}
 }

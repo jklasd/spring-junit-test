@@ -178,13 +178,13 @@ public class BeanCreaterScan implements BeanScanI{
 			springConfigClass.add(configClass);
 			if(init>1) {
 				handSpringJmd(configClass);
-				log.info("after add springBootJmds#size:{}",springBootJmds.size());
+				log.debug("after add springBootJmds#size:{}",springBootJmds.size());
 			}
 		}else {
 			customizeConfigClass.add(configClass);
 			if(init>1) {
 				handlCustomizedJmd(configClass);
-				log.info("after add customizeJmds#size:{}",customizeJmds.size());
+				log.debug("after add customizeJmds#size:{}",customizeJmds.size());
 			}
 		}
 		thridAutoConfigClass.add(configClass);
