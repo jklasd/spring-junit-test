@@ -37,6 +37,13 @@ public final class ContainerManager {
 	
 	public static void registComponent(ContainerRegister component) {
 		log.debug("组件注册:{}",component.getBeanKey());
+		if(componentContainer.containsKey(component.getBeanKey())) {
+			if(component.getClass() != componentContainer.get(component.getBeanKey()).getClass()) {
+				throw new JunitException("不重复注册，但实现类不一致");
+			}
+			log.debug("不重复注册->{}",component.getBeanKey());
+			return;
+		}
 		componentContainer.put(component.getBeanKey(), component);
 	}
 	@SuppressWarnings("unchecked")
@@ -77,8 +84,7 @@ public final class ContainerManager {
 	}
 
 	public static void bootLoadComp() throws InstantiationException, IllegalAccessException {
-		List<String> bootConfigurationClass = Lists.newArrayList("com.github.jklasd.test.springboot.configuration.ann.ConfigurationAnnImple",
-				"com.github.jklasd.test.springboot.configuration.BootAnnCheckImpl",
+		List<String> bootConfigurationClass = Lists.newArrayList("com.github.jklasd.test.springboot.configuration.BootAnnCheckImpl",
 				"com.github.jklasd.test.springboot.configuration.ann.ConfigurationAnnImple");
 		for (String classpath : bootConfigurationClass) {
 			ContainerManager.createAndregistComponent(JunitClassLoader.getInstance().junitloadClass(classpath));

@@ -219,17 +219,23 @@ public class TestUtil implements JunitCoreComponentI{
 	    }
 		processInited = true;
 		try {
+			registerBootComponent();
 			TestUtil launch = getInstance();
 			registerComponent();
 			launch.loadProp();
 			LogbackUtil.resetLog();
 			ScanUtil.loadAllClass();
 			launch.processConfig();
-		}catch(Error e) {
+		}catch(Error | Exception e) {
 			log.error("resourcePreparation 异常",e);
 			throw new JunitException(e);
 		}
 	}
+	private static void registerBootComponent() throws InstantiationException, IllegalAccessException {
+		ContainerManager.bootLoadComp();
+		ContainerManager.createAndregistComponent(ObjectProviderFactory.class);
+	}
+
 	/**
 	 * 方便引用jar的代码中用到组件
 	 */
@@ -239,12 +245,6 @@ public class TestUtil implements JunitCoreComponentI{
 		ContainerManager.registComponent( LazyBean.getInstance());
 		ContainerManager.registComponent( BeanCreaterScan.getInstance());
 		ContainerManager.registComponent( BeanFactoryProcessor.getInstance());
-		try {
-			ContainerManager.createAndregistComponent(ObjectProviderFactory.class);
-			ContainerManager.bootLoadComp();
-		} catch (InstantiationException | IllegalAccessException e) {
-			e.printStackTrace();
-		}
 	}
 
 	private void loadProp() {
