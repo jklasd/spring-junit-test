@@ -28,7 +28,8 @@ public class LazyConfigurationPropertiesBean extends LazyAbstractPlugnBeanFactor
 
 	@Override
 	public boolean finded(BeanModel beanModel) {
-		return ContainerManager.getComponent(ConfigurationPropertiesI.class)!=null;
+		ConfigurationPropertiesI cpi = ContainerManager.getComponent(ConfigurationPropertiesI.class);
+		return cpi!=null && cpi.finded(beanModel.getTagClass());
 	}
 
 	@Override

@@ -12,4 +12,6 @@ public interface ConfigurationPropertiesI extends ContainerRegister{
 
 	void processConfigurationProperties(Method method, Object tagObj);
 
+	boolean finded(Class<?> tagClass);
+
 }

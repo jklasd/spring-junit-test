@@ -63,4 +63,10 @@ public class LazyConfPropBind implements ConfigurationPropertiesI{
 	public String getBeanKey() {
 		return ConfigurationPropertiesI.class.getName();
 	}
+
+	@Override
+	public boolean finded(Class<?> tagClass) {
+		ConfigurationProperties propConfig = (ConfigurationProperties) tagClass.getAnnotation(ConfigurationProperties.class);
+		return propConfig!=null;
+	}
 }

@@ -103,7 +103,11 @@ abstract class AbstractLazyProxy extends BaseAbstractLazyProxy{
                 return tagertObj;
             }
         }
-//        log.debug("开始实例化:{}",beanModel);
+        
+//        if(beanModel.getTagClass().getName().contains("HttpConfig")) {
+//        	System.out.println();
+//        }
+        
         Object tmp = getTagertObjectCustom();
 		if (tmp != null) {
 			if (!inited) {

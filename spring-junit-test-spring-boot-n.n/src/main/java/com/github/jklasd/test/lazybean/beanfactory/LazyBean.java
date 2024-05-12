@@ -304,7 +304,7 @@ public class LazyBean implements LazyBeanI{
 		BeanInitHandler.getInstance().processMethod(model);
 		
 		
-		ConfigurationPropertiesI proconfig = ContainerManager.getComponent(ConfigurationPropertiesI.class.getSimpleName());
+		ConfigurationPropertiesI proconfig = ContainerManager.getComponent(ConfigurationPropertiesI.class);
 		if(proconfig!=null) {
 			proconfig.processConfigurationProperties(obj,objClassOrSuper);
 		}
