@@ -28,6 +28,9 @@ public final class ContainerManager {
 	private static Map<String,Object> componentContainer = Maps.newHashMap();
 	
 	public static Object createAndregistComponent(Class<?> componentClass) throws InstantiationException, IllegalAccessException {
+		if(componentClass == null) {
+			return null;
+		}
 		Object obj = componentClass.newInstance();
 		if(obj instanceof ContainerRegister) {
 			registComponent((ContainerRegister) obj);

@@ -1,15 +1,13 @@
-package com.github.jklasd.test.common.util;
+package com.github.jklasd.test.common.util.log;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.UUID;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.lang3.StringUtils;
 import org.slf4j.LoggerFactory;
-import org.slf4j.MDC;
 import org.springframework.core.io.Resource;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -19,6 +17,8 @@ import org.xml.sax.SAXException;
 import com.github.jklasd.test.common.ContainerManager;
 import com.github.jklasd.test.common.interf.register.ConfigurationAnnI;
 import com.github.jklasd.test.common.interf.register.JunitCoreComponentI;
+import com.github.jklasd.test.common.util.ScanUtil;
+import com.google.common.collect.Maps;
 
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.Logger;
@@ -28,23 +28,17 @@ import ch.qos.logback.classic.joran.JoranConfigurator;
 import ch.qos.logback.classic.spi.ILoggingEvent;
 import ch.qos.logback.core.ConsoleAppender;
 import ch.qos.logback.core.joran.spi.JoranException;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
-public class LogbackUtil {
-	private static Level level = Level.INFO;
-	private static boolean useLocal = true;
+public class LogbackHander {
 	private static JunitCoreComponentI junitCoreComponent;
+	private static Map<String,Level> levels = Maps.newHashMap();
 	static {
 		junitCoreComponent = ContainerManager.getComponent(JunitCoreComponentI.class.getSimpleName());
-	}
-	public static void setJunitLevel(Level level) {
-	    LogbackUtil.level = level;
-	    useLocal = false;
+		levels.put("INFO",Level.INFO);
 	}
 	public static void resetLog() {
 	    try {
-            if(useLocal) {
+            if(LogbackUtil.useLocal) {
 //            	System.out.println("===========LogbackUtil=resetLog===========");
                 Resource logback = ScanUtil.getRecourceAnyOne("logback.xml");
                 Resource logback_spring = ScanUtil.getRecourceAnyOne("logback-spring.xml");
@@ -68,7 +62,7 @@ public class LogbackUtil {
                 
                 appender.setEncoder(encoder);
                 appender.setContext(context);
-                root.setLevel(level);
+                root.setLevel(levels.get(LogbackUtil.level));
                 root.addAppender(appender);
                 appender.start();
                 encoder.start();
@@ -85,7 +79,7 @@ public class LogbackUtil {
             
             appender.setEncoder(encoder);
             appender.setContext(context);
-            root.setLevel(level);
+            root.setLevel(levels.get(LogbackUtil.level));
             root.addAppender(appender);
             appender.start();
             encoder.start();
@@ -93,7 +87,8 @@ public class LogbackUtil {
              e.printStackTrace();
         }
 	}
-    private static void loadLogXml(Resource logback,boolean isSpringLogback) throws JoranException, IOException, SAXException, ParserConfigurationException {
+	
+	private static void loadLogXml(Resource logback,boolean isSpringLogback) throws JoranException, IOException, SAXException, ParserConfigurationException {
         JoranConfigurator jc = new JoranConfigurator();
         LoggerContext context = (LoggerContext) LoggerFactory.getILoggerFactory();
         jc.setContext(context);
@@ -127,19 +122,4 @@ public class LogbackUtil {
         }
         jc.doConfigure(logback.getInputStream());
     }
-//    private static volatile boolean test = true;
-	public static void setTraceId() {
-		if(StringUtils.isBlank(MDC.get("traceId"))) {
-			MDC.put("traceId", UUID.randomUUID().toString());
-		}
-//		if(test) {
-//			test = false;
-//			log.info("test");
-//		}
-	}
-	
-	public static void clearTraceId() {
-		MDC.remove("traceId");
-	}
-
 }
