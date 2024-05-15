@@ -52,7 +52,12 @@
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-mvc-junit-configuration</artifactId>
+			<artifactId>spring-boot-junit-test-configuration</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-mvc-junit-test-configuration</artifactId>
 			<version>${spring.junit.version}</version>
 		</dependency>
 		<!--<dependency>

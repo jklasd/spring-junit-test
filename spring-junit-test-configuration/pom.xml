@@ -48,7 +48,7 @@
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 	</properties>
 	<modules>
-		<module>spring-junit-test-mvc-configuration</module>
-		<module>spring-junit-test-spring-boot-configuration</module>
+		<module>spring-boot-junit-test-configuration</module>
+		<module>spring-mvc-junit-test-configuration</module>
 	</modules>
 </project>
