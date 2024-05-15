@@ -16,7 +16,6 @@ import org.springframework.beans.BeansException;
 import org.springframework.beans.MutablePropertyValues;
 import org.springframework.beans.factory.BeanCreationException;
 import org.springframework.beans.factory.BeanDefinitionStoreException;
-import org.springframework.beans.factory.BeanFactory;
 import org.springframework.beans.factory.CannotLoadBeanClassException;
 import org.springframework.beans.factory.FactoryBean;
 import org.springframework.beans.factory.InitializingBean;
@@ -578,17 +577,18 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 					beanDef.setConstructorArgumentValues(new ConstructorArgumentValues(original.getConstructorArgumentValues()));
 				}
 				//4.3.6版本无以下方法
-//				if (originalAbd.hasPropertyValues()) {
-//					beanDef.setPropertyValues(new MutablePropertyValues(original.getPropertyValues()));
-//				}
-//				if (originalAbd.hasMethodOverrides()) {
-//					beanDef.setMethodOverrides(new MethodOverrides(originalAbd.getMethodOverrides()));
-//				}
-//				Boolean lazyInit = originalAbd.getLazyInit();
-//				if (lazyInit != null) {
-//					beanDef.setLazyInit(lazyInit);
-//				}
-//				beanDef.setInstanceSupplier(originalAbd.getInstanceSupplier());
+				if (originalAbd.hasPropertyValues()) {
+					beanDef.setPropertyValues(new MutablePropertyValues(original.getPropertyValues()));
+				}
+				if (originalAbd.hasMethodOverrides()) {
+					beanDef.setMethodOverrides(new MethodOverrides(originalAbd.getMethodOverrides()));
+				}
+				Boolean lazyInit = originalAbd.getLazyInit();
+				if (lazyInit != null) {
+					beanDef.setLazyInit(lazyInit);
+				}
+				beanDef.setInstanceSupplier(originalAbd.getInstanceSupplier());
+				
 				beanDef.setAutowireMode(originalAbd.getAutowireMode());
 				beanDef.setDependencyCheck(originalAbd.getDependencyCheck());
 				beanDef.setDependsOn(originalAbd.getDependsOn());
