@@ -47,15 +47,19 @@
 			<version>${spring.junit.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-junit-test-configuration</artifactId>
-			<version>${spring.junit.version}</version>
+			<groupId>org.springframework</groupId>
+			<artifactId>spring-test</artifactId>
 		</dependency>
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
-			<artifactId>spring-junit-mock-suppert-test-spring</artifactId>
+			<artifactId>spring-mvc-junit-configuration</artifactId>
 			<version>${spring.junit.version}</version>
 		</dependency>
+		<!--<dependency>
+			<groupId>com.github.jklasd</groupId>
+			<artifactId>spring-junit-mock-suppert-test-spring</artifactId>
+			<version>${spring.junit.version}</version>
+		</dependency>-->
 		<dependency>
 			<groupId>com.github.jklasd</groupId>
 			<artifactId>spring-junit-test-boot-version-controller</artifactId>

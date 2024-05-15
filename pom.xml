@@ -35,7 +35,7 @@
 		<module>spring-junit-remote-test-n.n</module>
 		<module>spring-junit-test-starter</module>
 		<module>spring-junit-test-velocity</module>
-		<module>spring-junit-test-spring-boot-configuration</module>
+		<module>spring-junit-test-configuration</module>
 	</modules>
 
 	<licenses>

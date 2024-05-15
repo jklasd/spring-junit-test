@@ -577,23 +577,24 @@ public class LazyListableBeanFactory extends JunitListableBeanFactory {
 				if (originalAbd.hasConstructorArgumentValues()) {
 					beanDef.setConstructorArgumentValues(new ConstructorArgumentValues(original.getConstructorArgumentValues()));
 				}
-				if (originalAbd.hasPropertyValues()) {
-					beanDef.setPropertyValues(new MutablePropertyValues(original.getPropertyValues()));
-				}
-				if (originalAbd.hasMethodOverrides()) {
-					beanDef.setMethodOverrides(new MethodOverrides(originalAbd.getMethodOverrides()));
-				}
-				Boolean lazyInit = originalAbd.getLazyInit();
-				if (lazyInit != null) {
-					beanDef.setLazyInit(lazyInit);
-				}
+				//4.3.6版本无以下方法
+//				if (originalAbd.hasPropertyValues()) {
+//					beanDef.setPropertyValues(new MutablePropertyValues(original.getPropertyValues()));
+//				}
+//				if (originalAbd.hasMethodOverrides()) {
+//					beanDef.setMethodOverrides(new MethodOverrides(originalAbd.getMethodOverrides()));
+//				}
+//				Boolean lazyInit = originalAbd.getLazyInit();
+//				if (lazyInit != null) {
+//					beanDef.setLazyInit(lazyInit);
+//				}
+//				beanDef.setInstanceSupplier(originalAbd.getInstanceSupplier());
 				beanDef.setAutowireMode(originalAbd.getAutowireMode());
 				beanDef.setDependencyCheck(originalAbd.getDependencyCheck());
 				beanDef.setDependsOn(originalAbd.getDependsOn());
 				beanDef.setAutowireCandidate(originalAbd.isAutowireCandidate());
 				beanDef.setPrimary(originalAbd.isPrimary());
 				beanDef.copyQualifiersFrom(originalAbd);
-				beanDef.setInstanceSupplier(originalAbd.getInstanceSupplier());
 				beanDef.setNonPublicAccessAllowed(originalAbd.isNonPublicAccessAllowed());
 				beanDef.setLenientConstructorResolution(originalAbd.isLenientConstructorResolution());
 				beanDef.setInitMethodName(originalAbd.getInitMethodName());

@@ -359,7 +359,7 @@ public class XmlBeanUtil {
     
     public void postProcessMutablePropertyValues(MutablePropertyValues mutProp) {
     	
-    	mutProp.stream().forEach(prop->{
+    	mutProp.getPropertyValueList().stream().forEach(prop->{
     		Object value = prop.getValue();
     		if(value instanceof TypedStringValue) {
     			TypedStringValue tsv = (TypedStringValue) value;

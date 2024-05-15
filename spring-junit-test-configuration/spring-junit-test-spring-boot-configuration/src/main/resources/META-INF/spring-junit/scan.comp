@@ -1,0 +1,3 @@
+com.github.jklasd.test.common.interf.ContainerRegister=com.github.jklasd.test.springboot.configuration.ann.ConfigurationAnnImple,\
+com.github.jklasd.test.springboot.configuration.configprop.LazyConfPropBind,\
+com.github.jklasd.test.springboot.configuration.BootAnnCheckImpl

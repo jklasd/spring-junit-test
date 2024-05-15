@@ -188,6 +188,9 @@ public class ClassScan implements Scan{
 					log.error("加载类异常>{}",p,e);
 				}
 			}else {
+				if(f.getName().contains("xml")) {
+					System.out.println("");
+				}
 				try {
 					resourceLoader.loadResource(f.getName(),new FileInputStream(f));
 				} catch (IOException e) {
